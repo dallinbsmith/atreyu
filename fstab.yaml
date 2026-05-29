@@ -1,2 +1,4 @@
 mountpoints:
-  /: https://content.da.live/dallinbsmith/atreyu/
+  /:
+    url: https://content.da.live/dallinbsmith/atreyu/
+    type: markup
