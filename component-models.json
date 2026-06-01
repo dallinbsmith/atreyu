@@ -96,7 +96,8 @@
             { "name": "Gap XL", "value": "gap-xl" },
             { "name": "Gap XXL", "value": "gap-xxl" },
             { "name": "Align Top", "value": "align-top" },
-            { "name": "Z-Pattern", "value": "z-pattern" }
+            { "name": "Z-Pattern", "value": "z-pattern" },
+            { "name": "Cards", "value": "cards" }
           ]
         }
       ]
