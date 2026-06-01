@@ -1,4 +1,5 @@
-import { loadArea, setConfig } from './ak.js';
+import { loadArea, loadStyle, setConfig } from './ak.js';
+import { runExperiment } from './utils/experimentation.js';
 
 const hostnames = ['authorkit.dev'];
 
@@ -18,10 +19,8 @@ const linkBlocks = [
   { youtube: 'https://www.youtube' },
 ];
 
-// Blocks with self-managed styles
 const components = ['fragment', 'schedule'];
 
-// How to decorate an area before loading it
 const decorateArea = ({ area = document }) => {
   const eagerLoad = (parent, selector) => {
     const img = parent.querySelector(selector);
@@ -33,16 +32,28 @@ const decorateArea = ({ area = document }) => {
   eagerLoad(area, 'img');
 };
 
-export async function loadPage() {
+const loadFonts = () => {
+  if (sessionStorage.getItem('fonts-loaded') || !window.matchMedia('(prefers-reduced-data: no-preference)').matches) {
+    loadStyle('/styles/fonts.css');
+    return;
+  }
+  loadStyle('/styles/fonts.css').then(() => {
+    sessionStorage.setItem('fonts-loaded', 'true');
+  });
+};
+
+export const loadPage = async () => {
   setConfig({ hostnames, locales, linkBlocks, components, decorateArea });
+  loadFonts();
+  await runExperiment();
   await loadArea();
-}
+};
 await loadPage();
 
-(function da() {
+(() => {
   const { searchParams } = new URL(window.location.href);
   const hasPreview = searchParams.has('dapreview');
   if (hasPreview) import('../tools/da/da.js').then((mod) => mod.default(loadPage));
   const hasQE = searchParams.has('quick-edit');
   if (hasQE) import('../tools/quick-edit/quick-edit.js').then((mod) => mod.default());
-}());
+})();

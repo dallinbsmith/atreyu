@@ -3,9 +3,9 @@ import ENV from './env.js';
 
 const { codeBase } = getConfig();
 
-export default async function error(ex, el) {
+export default async (ex, el) => {
   // eslint-disable-next-line no-console
-  console.log(ex);
+  console.error(ex);
   if (el && ENV !== 'prod') {
     await loadStyle(`${codeBase}/styles/error.css`);
     const wrapper = document.createElement('div');
@@ -17,4 +17,4 @@ export default async function error(ex, el) {
     el.insertAdjacentElement('afterend', wrapper);
     wrapper.append(title, el);
   }
-}
+};

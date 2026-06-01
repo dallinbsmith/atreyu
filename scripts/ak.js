@@ -12,19 +12,19 @@
 
 const LOG = async (ex, el) => (await import('./utils/error.js')).default(ex, el);
 
-export function getMetadata(name) {
-  const attr = name && name.includes(':') ? 'property' : 'name';
+export const getMetadata = (name) => {
+  const attr = name?.includes(':') ? 'property' : 'name';
   const meta = document.head.querySelector(`meta[${attr}="${name}"]`);
-  return meta && meta.content;
-}
+  return meta?.content;
+};
 
-export function getLocale(locales = { '': {} }) {
+export const getLocale = (locales = { '': {} }) => {
   const { pathname } = window.location;
   const matches = Object.keys(locales).filter((locale) => pathname.startsWith(`${locale}/`));
-  const prefix = getMetadata('locale') || matches.sort((a, b) => b.length - a.length)?.[0] || '';
+  const prefix = getMetadata('locale') || matches.sort((a, b) => b.length - a.length)?.at(0) || '';
   if (locales[prefix].lang) document.documentElement.lang = locales[prefix].lang;
   return { prefix, ...locales[prefix] };
-}
+};
 
 export const [setConfig, getConfig] = (() => {
   let config;
@@ -42,41 +42,35 @@ export const [setConfig, getConfig] = (() => {
   ];
 })();
 
-export async function loadStyle(href) {
-  return new Promise((resolve) => {
-    if (!document.querySelector(`head > link[href="${href}"]`)) {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = href;
-      link.onload = resolve;
-      link.onerror = resolve;
-      document.head.append(link);
-    } else {
-      resolve();
-    }
-  });
-}
+export const loadStyle = async (href) => {
+  if (document.querySelector(`head > link[href="${href}"]`)) return null;
+  const { promise, resolve } = Promise.withResolvers();
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = href;
+  link.onload = resolve;
+  link.onerror = resolve;
+  document.head.append(link);
+  return promise;
+};
 
-export async function loadExperience(el, type, name, opts) {
+export const loadExperience = async (el, type, name, opts) => {
   const { codeBase, log } = getConfig();
   const path = `${codeBase}/${type}/${name}/${name}`;
   const loading = [];
   if (opts.decorate) {
-    loading.push(new Promise((resolve) => {
-      (async () => {
-        try {
-          await (await import(`${path}.js`)).default(el);
-        } catch (ex) { await log(ex, el); }
-        resolve();
-      })();
-    }));
+    loading.push(
+      import(`${path}.js`)
+        .then((mod) => mod.default(el))
+        .catch((ex) => log(ex, el)),
+    );
   }
   if (opts.style) loading.push(loadStyle(`${path}.css`));
   await Promise.all(loading);
   return el;
-}
+};
 
-export async function loadBlock(block) {
+export const loadBlock = async (block) => {
   const { components } = getConfig();
   const { classList } = block;
   const name = classList[0];
@@ -86,9 +80,9 @@ export async function loadBlock(block) {
     style: !components.some((cmp) => name === cmp),
   };
   return loadExperience(block, 'blocks', name, opts);
-}
+};
 
-function loadTemplate() {
+const loadTemplate = () => {
   const meta = getMetadata('template');
   if (!meta) return;
   const template = meta.replaceAll(' ', '-').toLowerCase();
@@ -98,23 +92,25 @@ function loadTemplate() {
     document.body.classList.add(`${template}-template`);
     document.body.classList.remove('has-template');
   });
-}
+};
 
-function decoratePictures(el) {
+const decoratePictures = (el) => {
   const pics = el.querySelectorAll('picture');
   for (const pic of pics) {
     const source = pic.querySelector('source');
-    const clone = source.cloneNode();
-    const [pathname, params] = clone.getAttribute('srcset').split('?');
-    const search = new URLSearchParams(params);
-    search.set('width', 3000);
-    clone.setAttribute('srcset', `${pathname}?${search.toString()}`);
-    clone.setAttribute('media', '(min-width: 1440px)');
-    pic.prepend(clone);
+    if (source) {
+      const clone = source.cloneNode();
+      const [pathname, params] = clone.getAttribute('srcset').split('?');
+      const search = new URLSearchParams(params);
+      search.set('width', 3000);
+      clone.setAttribute('srcset', `${pathname}?${search.toString()}`);
+      clone.setAttribute('media', '(min-width: 1440px)');
+      pic.prepend(clone);
+    }
   }
-}
+};
 
-function decorateButton(link) {
+const decorateButton = (link) => {
   const isEm = link.closest('em');
   const isStrong = link.closest('strong');
   const isStrike = link.closest('del');
@@ -135,15 +131,14 @@ function decorateButton(link) {
   if (siblings.length > 1) trueParent.classList.add('btn-group');
 
   link.classList.add('btn');
-  if (isStrike) {
-    link.classList.add('btn-negative');
-  } else if (isEm && isStrong) {
-    link.classList.add('btn-accent');
-  } else if (isStrong) {
-    link.classList.add('btn-primary');
-  } else if (isEm) {
-    link.classList.add('btn-secondary');
-  }
+  const variants = [
+    [isStrike, 'btn-negative'],
+    [isEm && isStrong, 'btn-accent'],
+    [isStrong, 'btn-primary'],
+    [isEm, 'btn-secondary'],
+  ];
+  const variant = variants.find(([cond]) => cond)?.[1];
+  if (variant) link.classList.add(variant);
   if (isUnder) {
     link.classList.add('btn-outline');
     link.innerHTML = isUnder.innerHTML;
@@ -151,17 +146,15 @@ function decorateButton(link) {
   }
   const toReplace = [isEm, isStrong, isStrike].find((el) => el?.parentNode === trueParent);
   if (toReplace) trueParent.replaceChild(link, toReplace);
-}
+};
 
-export function localizeUrl({ config, url }) {
+export const localizeUrl = ({ config, url }) => {
   const { locales, locale } = config;
 
-  // If in root locale, do nothing
   if (locale.prefix === '') return null;
 
   const { origin, pathname, search, hash } = url;
 
-  // If the link is already localized, do nothing
   if (pathname.startsWith(`${locale.prefix}/`)) return null;
 
   const localized = Object.keys(locales).some(
@@ -170,9 +163,9 @@ export function localizeUrl({ config, url }) {
   if (localized) return null;
 
   return new URL(`${origin}${locale.prefix}${pathname}${search}${hash}`);
-}
+};
 
-function decorateHash(a, url) {
+const decorateHash = (a, url) => {
   const { hash } = url;
   if (!hash || hash === '#') return {};
 
@@ -188,15 +181,16 @@ function decorateHash(a, url) {
   const dnt = findHash('#_dnt');
   const dnb = findHash('#_dnb');
   return { dnt, dnb };
-}
+};
 
-export function decorateLink(config, a) {
+export const decorateLink = (config, a) => {
   try {
     const url = new URL(a.href);
     const hostMatch = config.hostnames.some((host) => url.hostname.endsWith(host));
     if (hostMatch) a.href = a.href.replace(url.origin, '');
 
     const isRelative = a.getAttribute('href').startsWith('/');
+    if (!isRelative) a.rel = 'noopener noreferrer';
     const { dnt, dnb } = decorateHash(a, url);
     if (isRelative && !dnt) {
       const localized = localizeUrl({ config, url });
@@ -217,25 +211,22 @@ export function decorateLink(config, a) {
     config.log('Could not decorate link', ex);
   }
   return null;
-}
+};
 
-function decorateLinks(el) {
+const decorateLinks = (el) => {
   const config = getConfig();
-  const anchors = [...el.querySelectorAll('a')];
-  return anchors.reduce((acc, a) => {
-    const decorated = decorateLink(config, a);
-    if (decorated) acc.push(decorated);
-    return acc;
-  }, []);
-}
+  return [...el.querySelectorAll('a')]
+    .map((a) => decorateLink(config, a))
+    .filter(Boolean);
+};
 
-function loadIcons(el) {
+const loadIcons = (el) => {
   const icons = el.querySelectorAll('span.icon');
   if (!icons.length) return;
   import('./utils/icons.js').then((mod) => mod.default(icons));
-}
+};
 
-function groupChildren(section) {
+const groupChildren = (section) => {
   const children = section.querySelectorAll(':scope > *');
   const groups = [];
   let currentGroup = null;
@@ -253,49 +244,42 @@ function groupChildren(section) {
     currentGroup.append(child);
   }
   return groups;
-}
+};
 
-function toClassName(name) {
-  return typeof name === 'string'
-    ? name
-      .toLowerCase()
-      .replace(/[^0-9a-z]/gi, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-    : '';
-}
+const toClassName = (name) => (typeof name === 'string'
+  ? name
+    .toLowerCase()
+    .replace(/[^0-9a-z]/gi, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+  : '');
 
-function decorateSection(section) {
-  // Always add section class
+const decorateSection = (section) => {
   section.classList.add('section');
 
-  // Find the legacy DOM-based metadata
   const metaEl = section.querySelector(':scope > .section-metadata');
   if (metaEl) {
     [...metaEl.children].forEach((row) => {
       const key = row.children[0].textContent.trim().toLowerCase();
       const content = row.children[1];
-      if (content) {
-        const text = content.querySelector('img')?.src ?? content.textContent.trim().toLowerCase();
-        if (key && text) {
-          if (key === 'style') {
-            const styles = text.split(',').map((style) => toClassName(style));
-            section.classList.add(...styles);
-            return;
-          }
-          section.dataset[key] = text;
-        }
+      if (!content) return;
+      const text = content.querySelector('img')?.src ?? content.textContent.trim().toLowerCase();
+      if (!(key && text)) return;
+      if (key === 'style') {
+        const styles = text.split(',').map((style) => toClassName(style));
+        section.classList.add(...styles);
+        return;
       }
+      section.dataset[key] = text;
     });
     metaEl.remove();
   }
 
-  // Determine if the section needs section-metadata.js
   const meta = section.classList.length > 1 || Object.keys(section.dataset).length;
   if (meta) section.dataset.meta = meta;
-}
+};
 
-function decorateSections(parent, isDoc) {
+const decorateSections = (parent, isDoc) => {
   const selector = isDoc ? 'main > div' : ':scope > div';
   return [...parent.querySelectorAll(selector)].map((section) => {
     decorateSection(section);
@@ -306,9 +290,9 @@ function decorateSections(parent, isDoc) {
     section.blocks = [...section.querySelectorAll('.block-content > div[class]')];
     return section;
   });
-}
+};
 
-function decorateHeader() {
+const decorateHeader = () => {
   const header = document.querySelector('header');
   if (!header) return;
   const meta = getMetadata('header') || 'header';
@@ -324,15 +308,27 @@ function decorateHeader() {
   if (!(breadcrumbs || breadcrumbsPath)) return;
   document.body.classList.add('has-breadcrumbs');
   if (breadcrumbs) header.append(breadcrumbs);
-}
+};
 
-function decorateSession() {
+const decorateSession = () => {
   sessionStorage.setItem('session', true);
   document.body.classList.add('session');
-}
+};
 
-function decorateDoc() {
+const decorateSkipToContent = () => {
+  const main = document.querySelector('main');
+  if (!main) return;
+  main.id ||= 'main';
+  const skip = document.createElement('a');
+  skip.href = `#${main.id}`;
+  skip.className = 'skip-to-content';
+  skip.textContent = 'Skip to content';
+  document.body.prepend(skip);
+};
+
+const decorateDoc = () => {
   decorateHeader();
+  decorateSkipToContent();
   loadTemplate();
 
   const scheme = localStorage.getItem('color-scheme');
@@ -340,9 +336,9 @@ function decorateDoc() {
 
   const pageId = window.location.hash?.replace('#', '');
   if (pageId) localStorage.setItem('lazyhash', pageId);
-}
+};
 
-export async function loadArea({ area } = { area: document }) {
+export const loadArea = async ({ area } = { area: document }) => {
   const isDoc = area === document;
   const isSession = sessionStorage.getItem('session');
   if (isDoc) {
@@ -355,7 +351,6 @@ export async function loadArea({ area } = { area: document }) {
   const sections = decorateSections(area, isDoc);
   for (const [idx, section] of sections.entries()) {
     loadIcons(section);
-    // Hydrate from inside out
     await Promise.all(section.linkBlocks.map((block) => loadBlock(block)));
     await Promise.all(section.blocks.map((block) => loadBlock(block)));
     if (section.dataset.meta) {
@@ -371,4 +366,4 @@ export async function loadArea({ area } = { area: document }) {
     }
   }
   if (isDoc) import('./lazy.js');
-}
+};

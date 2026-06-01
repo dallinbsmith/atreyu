@@ -1,12 +1,32 @@
 footer {
+  position: relative;
+  background:
+    var(--footer-gradient),
+    var(--color-alpha-dark-80);
+  backdrop-filter: saturate(150%) blur(100px);
+  padding-top: 96px;
+
   a {
     text-decoration: none;
+    color: var(--color-gray-100);
+    transition: var(--transition-color);
+
+    &:hover {
+      color: var(--color-light);
+    }
   }
 
   .footer-content {
     max-width: var(--grid-container-width);
-    margin: 48px auto;
+    padding: 48px 0;
+    margin: 0 auto;
     font-size: 14px;
+    color: var(--color-gray-400);
+    border-top: 1px solid var(--color-alpha-light-10);
+  }
+
+  li {
+    margin-block: 0;
   }
 
   .section-legal ul {
@@ -27,7 +47,7 @@ footer {
   }
 }
 
-@media (width >= 900px) {
+@media (width >= 1240px) {
   footer {
     margin: 0;
 

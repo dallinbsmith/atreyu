@@ -1,7 +1,9 @@
-# Robots.txt - Friendly to LLM and SEO crawlers
-# Last updated: 2025-07-23
+# Robots.txt — Frame.io production site
+# Last updated: 2026-06-01
 
 User-agent: *
 Allow: /
+Disallow: /fragments/
+Disallow: /tools/
 
-Sitemap: https://docs.da.live/sitemap.xml
+Sitemap: https://frame.io/sitemap.xml

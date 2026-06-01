@@ -96,10 +96,7 @@ class AemScheduler extends LitElement {
 
 customElements.define(EL_NAME, AemScheduler);
 
-/**
- * This will toggle the scheduler.
- */
-export default function toggleScheduler() {
+const toggleScheduler = () => {
   const { origin, pathname, searchParams, hash } = new URL(window.location.href);
 
   const querySim = searchParams.get('schedule');
@@ -114,12 +111,14 @@ export default function toggleScheduler() {
   let search = searchParams.toString();
   search = search ? `?${search}` : '';
   window.location = `${origin}${pathname}${search}${hash}`;
-}
+};
+
+export default toggleScheduler;
 
 /**
  * This will automatically detect if scheduler should be shown.
  */
-(async function autoLoadScheduler() {
+(async () => {
   if (ENV === 'prod') return;
 
   // Query param takes most precedence
@@ -148,4 +147,4 @@ export default function toggleScheduler() {
   }
 
   scheduler.current = sim;
-}());
+})();

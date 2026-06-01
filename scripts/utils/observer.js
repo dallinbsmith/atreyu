@@ -1,13 +1,16 @@
-const io = new IntersectionObserver((entries, observer) => {
-  entries.forEach(async (entry) => {
+const callbacks = new WeakMap();
+
+const io = new IntersectionObserver((entries) => {
+  for (const entry of entries) {
     if (entry.isIntersecting) {
-      observer.unobserve(entry.target);
-      entry.target.callback(entry.target);
+      io.unobserve(entry.target);
+      callbacks.get(entry.target)?.(entry.target);
+      callbacks.delete(entry.target);
     }
-  });
+  }
 });
 
-export default function observe(el, callback) {
-  el.callback = callback;
+export default (el, callback) => {
+  callbacks.set(el, callback);
   io.observe(el);
-}
+};

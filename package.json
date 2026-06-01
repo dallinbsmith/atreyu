@@ -11,7 +11,9 @@
     "test:watch": "npm test -- --watch",
     "test:file": "wtr --node-resolve --port=2000 --coverage",
     "test:file:watch": "wtr --config ./web-test-runner.config.mjs --node-resolve --port=2000 --coverage --watch",
-    "build:lit": "esbuild --format=esm --minify ./deps/lit/src/index.js --bundle --outfile=./deps/lit/dist/index.js"
+    "build:lit": "esbuild --format=esm --minify ./deps/lit/src/index.js --bundle --outfile=./deps/lit/dist/index.js",
+    "lighthouse": "lhci autorun",
+    "lighthouse:mobile": "lhci autorun --collect.settings.preset=perf"
   },
   "repository": {
     "type": "git",
@@ -33,6 +35,7 @@
     "eslint": "^9.39.2",
     "eslint-plugin-chai-friendly": "^1.1.0",
     "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prefer-arrow-functions": "^3.9.1",
     "globals": "^16.0.0",
     "sinon": "^21.0.1",
     "stylelint": "^17.1.0",

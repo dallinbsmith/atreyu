@@ -1,0 +1,20 @@
+{
+  "filters": [
+    {
+      "id": "section",
+      "components": [
+        "hero",
+        "columns",
+        "faq",
+        "card",
+        "bentos",
+        "bookend",
+        "table",
+        "advanced-tabs",
+        "youtube",
+        "fragment",
+        "schedule"
+      ]
+    }
+  ]
+}

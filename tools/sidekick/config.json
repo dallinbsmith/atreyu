@@ -4,10 +4,22 @@
   "editUrlPattern": "https://da.live/canvas#/{{org}}/{{site}}{{pathname}}",
   "plugins": [
     {
+      "id": "library",
+      "title": "Library",
+      "environments": ["edit"],
+      "url": "/tools/sidekick/library.json"
+    },
+    {
       "id": "quick-edit",
       "title": "Quick Edit",
       "environments": ["dev", "preview"],
       "event": "quick-edit"
+    },
+    {
+      "id": "validation",
+      "title": "Validate",
+      "environments": ["dev", "preview"],
+      "event": "validation"
     }
   ]
 }

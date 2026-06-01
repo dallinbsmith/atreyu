@@ -12,24 +12,25 @@
 
 import { fetchSchedule, fetchFromAem } from './handlers/aem.js';
 import fetchDaSc from './handlers/dasc.js';
+import fetchRedirect from './handlers/redirects.js';
 
 const ROUTES = [
-  // Handle schedule manifests
+  {
+    match: () => true,
+    handler: fetchRedirect,
+  },
   {
     match: (path) => path.includes('/schedules/') && path.endsWith('json'),
     handler: fetchSchedule,
   },
-  // Handle structured content
   {
     match: (path) => path.includes('/dasc/') && path.endsWith('json'),
     handler: fetchDaSc,
   },
-  // Handle drafts
   {
     match: (path) => path.startsWith('/drafts'),
     handler: () => new Response('Not found - drafts are denied on production.', { status: 404 }),
   },
-  // Default AEM handler should be last
   {
     match: () => true,
     handler: fetchFromAem,
@@ -67,23 +68,24 @@ const getRUMRequest = (request, url) => {
   return null;
 };
 
+const keepOnly = (searchParams, allowed) => {
+  [...searchParams.keys()]
+    .filter((k) => !allowed.includes(k))
+    .forEach((k) => searchParams.delete(k));
+};
+
 const formatSearchParams = (url) => {
   const { search, searchParams } = url;
 
   if (isMediaRequest(url)) {
-    for (const [key] of searchParams.entries()) {
-      if (!['format', 'height', 'optimize', 'width'].includes(key)) searchParams.delete(key);
-    }
+    keepOnly(searchParams, ['format', 'height', 'optimize', 'width']);
   } else if (getExtension(url.pathname) === 'json') {
-    for (const [key] of searchParams.entries()) {
-      if (!['limit', 'offset', 'sheet'].includes(key)) searchParams.delete(key);
-    }
+    keepOnly(searchParams, ['limit', 'offset', 'sheet']);
   } else {
     url.search = '';
   }
   searchParams.sort();
 
-  // Return original search params
   return search;
 };
 
@@ -105,7 +107,7 @@ const formatRequest = (env, request, url) => {
 };
 
 export default {
-  async fetch(req, env) {
+  fetch: async (req, env) => {
     const url = new URL(req.url);
 
     const portResp = getPortRedirect(req, url);
@@ -118,8 +120,14 @@ export default {
 
     const savedSearch = formatSearchParams(url);
 
-    const { handler, cache } = ROUTES.find((route) => route.match(url.pathname));
+    for (const { match, handler, cache } of ROUTES) {
+      if (match(url.pathname)) {
+        // eslint-disable-next-line no-await-in-loop
+        const resp = await handler({ url, env, request, cache, savedSearch });
+        if (resp) return resp;
+      }
+    }
 
-    return handler({ url, env, request, cache, savedSearch });
+    return new Response('Not Found', { status: 404 });
   },
 };

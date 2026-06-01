@@ -1,0 +1,19 @@
+[
+  {
+    "resourceSizes": [
+      { "resourceType": "script", "budget": 50 },
+      { "resourceType": "stylesheet", "budget": 15 },
+      { "resourceType": "image", "budget": 300 },
+      { "resourceType": "font", "budget": 120 },
+      { "resourceType": "document", "budget": 30 },
+      { "resourceType": "total", "budget": 500 },
+      { "resourceType": "third-party", "budget": 50 }
+    ],
+    "resourceCounts": [
+      { "resourceType": "script", "budget": 15 },
+      { "resourceType": "stylesheet", "budget": 5 },
+      { "resourceType": "font", "budget": 4 },
+      { "resourceType": "third-party", "budget": 10 }
+    ]
+  }
+]

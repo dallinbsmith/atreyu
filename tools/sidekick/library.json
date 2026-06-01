@@ -1,0 +1,84 @@
+{
+  "blocks": {
+    "data": [
+      {
+        "name": "Hero",
+        "path": "/tools/sidekick/blocks/hero",
+        "searchTags": ["hero, banner, header, landing, full-width, background, video"]
+      },
+      {
+        "name": "Columns",
+        "path": "/tools/sidekick/blocks/columns",
+        "searchTags": ["columns, grid, multi-column, layout, side-by-side, split"]
+      },
+      {
+        "name": "FAQ",
+        "path": "/tools/sidekick/blocks/faq",
+        "searchTags": ["faq, accordion, questions, answers, frequently asked, support"]
+      },
+      {
+        "name": "Card",
+        "path": "/tools/sidekick/blocks/card",
+        "searchTags": ["card, tile, content card, cta, thumbnail, teaser"]
+      },
+      {
+        "name": "Bentos",
+        "path": "/tools/sidekick/blocks/bentos",
+        "searchTags": ["bentos, bento, grid, cards, features, mosaic, layout"]
+      },
+      {
+        "name": "Bookend",
+        "path": "/tools/sidekick/blocks/bookend",
+        "searchTags": ["bookend, cta, call to action, closing, signup, conversion"]
+      },
+      {
+        "name": "Table",
+        "path": "/tools/sidekick/blocks/table",
+        "searchTags": ["table, data table, comparison, pricing, grid, spreadsheet"]
+      },
+      {
+        "name": "Advanced Tabs",
+        "path": "/tools/sidekick/blocks/advanced-tabs",
+        "searchTags": ["tabs, tabbed, tab panel, switchable, sections, advanced tabs"]
+      },
+      {
+        "name": "YouTube",
+        "path": "/tools/sidekick/blocks/youtube",
+        "searchTags": ["youtube, video, embed, media, player"]
+      },
+      {
+        "name": "Section Metadata",
+        "path": "/tools/sidekick/blocks/section-metadata",
+        "searchTags": ["section metadata, section, background, spacing, grid, theme, style, layout"]
+      },
+      {
+        "name": "Fragment",
+        "path": "/tools/sidekick/blocks/fragment",
+        "searchTags": ["fragment, include, reuse, shared content, embed, inline"]
+      },
+      {
+        "name": "Schedule",
+        "path": "/tools/sidekick/blocks/schedule",
+        "searchTags": ["schedule, timed content, date, event, time-based, conditional"]
+      },
+      {
+        "name": "Header",
+        "path": "/tools/sidekick/blocks/header",
+        "searchTags": ["header, navigation, nav, menu, global header, site header"]
+      },
+      {
+        "name": "Footer",
+        "path": "/tools/sidekick/blocks/footer",
+        "searchTags": ["footer, global footer, site footer, copyright, legal"]
+      }
+    ]
+  },
+  "placeholders": {
+    "data": [
+      {
+        "key": "library-title",
+        "value": "Frame.io Block Library"
+      }
+    ]
+  }
+}

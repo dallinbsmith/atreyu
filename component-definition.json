@@ -1,0 +1,208 @@
+{
+  "groups": [
+    {
+      "title": "Layout",
+      "id": "layout",
+      "components": [
+        {
+          "title": "Hero",
+          "id": "hero",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Hero",
+                  "model": "hero"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Columns",
+          "id": "columns",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Columns",
+                  "model": "columns"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Section Metadata",
+          "id": "section-metadata",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/section",
+                "template": {
+                  "name": "Section Metadata",
+                  "model": "section-metadata"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Content",
+      "id": "content",
+      "components": [
+        {
+          "title": "FAQ",
+          "id": "faq",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "FAQ",
+                  "model": "faq"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Card",
+          "id": "card",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Card",
+                  "model": "card"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Bentos",
+          "id": "bentos",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Bentos",
+                  "model": "bentos"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Bookend",
+          "id": "bookend",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Bookend",
+                  "model": "bookend"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Table",
+          "id": "table",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Table",
+                  "model": "table"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Advanced Tabs",
+          "id": "advanced-tabs",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Advanced Tabs",
+                  "model": "advanced-tabs"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Media",
+      "id": "media",
+      "components": [
+        {
+          "title": "YouTube",
+          "id": "youtube",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "YouTube",
+                  "model": "youtube"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Utility",
+      "id": "utility",
+      "components": [
+        {
+          "title": "Fragment",
+          "id": "fragment",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Fragment",
+                  "model": "fragment"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Schedule",
+          "id": "schedule",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Schedule",
+                  "model": "schedule"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -3,5 +3,9 @@
 LICENSE
 package.json
 package-lock.json
+eslint.config.js
 test/
+tools/
+deps/
+node_modules/
 workers/

@@ -1,58 +1,4 @@
-@font-face {
-  font-family: Montserrat;
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url("/styles/fonts/montserrat.woff2") format("woff2");
-  unicode-range:
-    U+0000-00FF,
-    U+0131,
-    U+0152-0153,
-    U+02BB-02BC,
-    U+02C6,
-    U+02DA,
-    U+02DC,
-    U+0304,
-    U+0308,
-    U+0329,
-    U+2000-206F,
-    U+20AC,
-    U+2122,
-    U+2191,
-    U+2193,
-    U+2212,
-    U+2215,
-    U+FEFF,
-    U+FFFD;
-}
-
-@font-face {
-  font-family: Montserrat;
-  font-style: italic;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url("/styles/fonts/montserrat-italic.woff2") format("woff2");
-  unicode-range:
-    U+0000-00FF,
-    U+0131,
-    U+0152-0153,
-    U+02BB-02BC,
-    U+02C6,
-    U+02DA,
-    U+02DC,
-    U+0304,
-    U+0308,
-    U+0329,
-    U+2000-206F,
-    U+20AC,
-    U+2122,
-    U+2191,
-    U+2193,
-    U+2212,
-    U+2215,
-    U+FEFF,
-    U+FFFD;
-}
+@layer reset, base, tokens, blocks, sections, utilities;
 
 :root {
   /* grid */
@@ -68,19 +14,19 @@
   --spacing-s: 8px;
   --spacing-xs: 4px;
 
-  /* color schemes */
-  color-scheme: light dark;
+  /* color schemes — Frame.io dark theme */
+  color-scheme: dark;
 
-  /* color tokens */
-  --color-gray-100: #f1f1f1;
-  --color-gray-200: #d3d3d3;
-  --color-gray-300: #b5b5b5;
-  --color-gray-400: #999;
-  --color-gray-500: #7d7d7d;
-  --color-gray-600: #636363;
-  --color-gray-700: #494949;
-  --color-gray-800: #313131;
-  --color-gray-900: #1b1b1b;
+  /* color tokens — remapped to Frame.io palette */
+  --color-gray-100: rgb(240 240 247 / 100%);
+  --color-gray-200: rgb(213 214 234 / 100%);
+  --color-gray-300: rgb(163 164 191 / 100%);
+  --color-gray-400: rgb(129 133 159 / 100%);
+  --color-gray-500: rgb(106 107 131 / 100%);
+  --color-gray-600: rgb(79 81 103 / 100%);
+  --color-gray-700: rgb(54 56 74 / 100%);
+  --color-gray-800: rgb(29 31 44 / 100%);
+  --color-gray-900: rgb(13 13 24 / 100%);
   --color-green-100: #e1f5e3;
   --color-green-200: #a3e1a8;
   --color-green-300: #60cb6a;
@@ -154,29 +100,47 @@
   --color-yellow-800: #373100;
   --color-yellow-900: #1e1b00;
 
-  /* named colors */
-  --color-light-base: 255 255 255;
+  /* Frame.io accent colors */
+  --color-cobalt: rgb(91 83 255 / 100%);
+  --color-cobalt-light: rgb(99 105 255 / 100%);
+  --color-cobalt-dark: rgb(82 55 249 / 100%);
+  --color-electric: rgb(71 235 235 / 100%);
+  --color-electric-light: rgb(135 255 255 / 100%);
+  --color-electric-dark: rgb(0 184 185 / 100%);
+  --color-iris: rgb(137 82 253 / 100%);
+  --color-coral: rgb(252 133 109 / 100%);
+
+  /* named colors — forced dark */
+  --color-light-base: 252 252 252;
   --color-dark-base: 0 0 0;
-  --color-light: rgb(255 255 255);
-  --color-dark: rgb(0 0 0);
-  --color-text: light-dark(var(--color-dark), var(--color-light));
-  --color-link: light-dark(var(--color-gray-900), var(--color-gray-100));
-  --color-brand: var(--color-purple-500);
-  --color-accent: light-dark(var(--color-magenta-600), var(--color-magenta-500));
-  --color-background: light-dark(var(--color-light), var(--color-dark));
-  --color-shaded: light-dark(#f9f9f9, #111);
+  --color-light: rgb(252 252 252 / 100%);
+  --color-dark: rgb(0 0 0 / 100%);
+  --color-text: var(--color-light);
+  --color-link: var(--color-gray-100);
+  --color-brand: var(--color-cobalt);
+  --color-accent: var(--color-electric);
+  --color-background: var(--color-dark);
+  --color-shaded: rgb(22 23 34 / 100%);
 
-  /* fonts */
-  --font-family: montserrat, "Trebuchet MS", sans-serif;
+  /* Frame.io alpha colors */
+  --color-alpha-light-50: rgb(234 234 255 / 50%);
+  --color-alpha-light-70: rgb(233 233 255 / 70%);
+  --color-alpha-light-20: rgb(209 209 251 / 20%);
+  --color-alpha-light-10: rgb(189 189 244 / 10%);
+  --color-alpha-dark-30: rgb(13 13 24 / 30%);
+  --color-alpha-dark-80: rgb(13 13 24 / 80%);
 
-  /* headings */
-  --heading-font-size-xxl: 32.44px;
-  --heading-font-size-xl: 28.83px;
-  --heading-font-size-l: 25.63px;
-  --heading-font-size-m: 22.78px;
-  --heading-font-size-s: 20.25px;
-  --heading-font-size-xs: 18px;
-  --heading-line-height: 1.15;
+  /* fonts — fallback fonts match web font metrics to prevent CLS */
+  --font-family: framegothic, "FrameGothic-fallback", "Trebuchet MS", sans-serif;
+
+  /* headings — Frame.io title scale (mobile-first) */
+  --heading-font-size-xxl: 44px;
+  --heading-font-size-xl: 30px;
+  --heading-font-size-l: 24px;
+  --heading-font-size-m: 20px;
+  --heading-font-size-s: 18px;
+  --heading-font-size-xs: 15px;
+  --heading-line-height: 1.1;
 
   /* body */
   --body-font-size-xxxl: 25px;
@@ -186,10 +150,105 @@
   --body-font-size-m: 16px;
   --body-font-size-s: 14px;
   --body-font-size-xs: 12px;
-  --body-line-height: 1.6;
+  --body-line-height: 1.45;
+
+  /* card tokens — used by bento/card blocks */
+  --card-background: linear-gradient(140deg, #1b1b26 -42%, #09090d 77%);
+  --card-border: 1px solid var(--color-alpha-light-10);
+  --card-border-radius: 16px;
+  --card-padding: 32px;
+  --card-padding-desktop: 40px;
+  --card-hover-scale: 1.02;
+  --card-background-blur: 75px;
+
+  /* font secondary */
+  --font-secondary: montserrat, "Montserrat-fallback", "Courier New", monospace;
+
+  /* z-index scale */
+  --z-index-neg: -1;
+  --z-index-0: 0;
+  --z-index-1: 1;
+  --z-index-2: 2;
+  --z-index-3: 3;
+  --z-index-5: 5;
+  --z-index-10: 10;
+  --z-index-nav: 100;
+  --z-index-modal: 110;
+
+  /* easing tokens — from Frame.io variables.css */
+  --ease-in: cubic-bezier(0.49, 0.025, 0.65, 0.65);
+  --ease-out: cubic-bezier(0.28, 0.44, 0.49, 1);
+  --ease-in-out: cubic-bezier(0.49, 0.025, 0.49, 1);
+  --ease-micro-bounce: cubic-bezier(0, 0.44, 0.6, 1);
+  --ease-default: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-basic-butter: cubic-bezier(0.42, 0, 0.28, 0.99);
+  --ease-embellishment: cubic-bezier(0.42, 0, 0, 1);
+  --ease-mini-bounce: cubic-bezier(0.17, 0.89, 0.47, 1.13);
+
+  /* duration tokens */
+  --duration-60: 0.06s;
+  --duration-150: 0.15s;
+  --duration-200: 0.2s;
+  --duration-300: 0.3s;
+  --duration-400: 0.4s;
+  --duration-500: 0.5s;
+  --duration-600: 0.6s;
+
+  /* border radius scale */
+  --radius-2: 2px;
+  --radius-5: 5px;
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-10: 10px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-18: 18px;
+  --radius-20: 20px;
+  --radius-40: 40px;
+  --radius-large: min(4vw, 40px);
+
+  /* alpha colors — from Frame.io tokens/colors.js */
+  --color-alpha-light-5: rgb(157 157 255 / 5%);
+  --color-alpha-light-15: rgb(209 209 251 / 15%);
+  --color-alpha-light-30: rgb(220 220 255 / 30%);
+  --color-alpha-light-40: rgb(228 228 255 / 40%);
+  --color-alpha-light-60: rgb(234 234 255 / 60%);
+  --color-alpha-light-80: rgb(240 240 255 / 80%);
+  --color-alpha-light-90: rgb(241 244 255 / 90%);
+  --color-alpha-dark-5: rgb(13 13 24 / 5%);
+  --color-alpha-dark-10: rgb(13 13 24 / 10%);
+  --color-alpha-dark-20: rgb(13 13 24 / 20%);
+  --color-alpha-dark-40: rgb(13 13 24 / 40%);
+  --color-alpha-dark-50: rgb(13 13 24 / 50%);
+  --color-alpha-dark-60: rgb(13 13 24 / 60%);
+  --color-alpha-dark-70: rgb(13 13 24 / 70%);
+  --color-alpha-dark-90: rgb(13 13 24 / 90%);
+
+  /* accent color variants */
+  --color-iris-light: rgb(159 117 249 / 100%);
+  --color-iris-dark: rgb(99 44 218 / 100%);
+  --color-coral-light: rgb(252 164 147 / 100%);
+  --color-coral-dark: rgb(227 107 82 / 100%);
+  --color-cobalt-20: rgb(91 83 255 / 20%);
+
+  /* additional typography tokens */
+  --heading-font-size-stats: 72px;
+  --eyebrow-font-size: 12px;
+  --eyebrow-letter-spacing: 0.06em;
+
+  /* box shadows */
+  --shadow-card: 25px 38px 38px 0 rgb(0 0 0 / 45%);
+  --shadow-button: 5px 7px 18px rgb(0 0 0 / 10%), 0 8px 21px rgb(1 0 19 / 15%);
+
+  /* footer tokens */
+  --footer-gradient: none;
+
+  /* transition tokens */
+  --transition-color: color var(--duration-300) var(--ease-out);
+  --transition-ease-out: var(--ease-out);
 
   /* misc */
-  --header-height: 64px;
+  --header-height: 72px;
   --breadcrumb-height: 24px;
 }
 
@@ -205,19 +264,51 @@ html {
   scroll-padding-top: calc(var(--header-height) + 1rem);
 }
 
+::selection {
+  /* --color-cobalt at 40% opacity */
+  background: color-mix(in srgb, var(--color-cobalt) 40%, transparent);
+  color: var(--color-light);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-electric);
+  outline-offset: 2px;
+}
+
+.skip-to-content {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: var(--z-index-modal);
+  background: var(--color-dark);
+  color: var(--color-light);
+  padding: var(--spacing-s) var(--spacing-m);
+  font-size: var(--body-font-size-s);
+  text-decoration: none;
+  border-radius: var(--radius-4);
+
+  &:focus {
+    position: fixed;
+    top: var(--spacing-s);
+    left: var(--spacing-s);
+    width: auto;
+    height: auto;
+  }
+}
+
 body {
   margin: 0;
   background-color: var(--color-background);
   color: var(--color-text);
-  font-family: "Trebuchet MS", sans-serif;
+  font-family: var(--font-family);
   font-size: var(--body-font-size-m);
   line-height: var(--body-line-height);
   padding: var(--header-height) 0 0;
-
-  &.session {
-    /* only allow font loading if a session */
-    font-family: var(--font-family);
-  }
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 
   &.has-breadcrumb {
     margin: calc(var(--header-height) + var(--breadcrumb-height)) 0 0;
@@ -238,15 +329,29 @@ header {
 
 a {
   color: var(--color-link);
+  text-decoration: none;
+  transition: var(--transition-color);
+
+  &:hover {
+    color: var(--color-light);
+  }
 
   &.btn {
     display: inline-block;
     line-height: 1;
-    font-weight: 500;
+    font-weight: 600;
     text-decoration: none;
     border: 2px solid;
-    padding: 8px 12px;
+    padding: 12px 24px;
+    border-radius: 40px;
     box-sizing: border-box;
+    font-size: 14px;
+    letter-spacing: 0.01em;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
 
     &.btn-outline {
       background: transparent;
@@ -254,33 +359,38 @@ a {
   }
 
   &.btn-accent {
-    color: #fff;
-    background: var(--color-accent);
-    border: 2px solid var(--color-accent);
+    color: var(--color-dark);
+    background: var(--color-cobalt);
+    border: 2px solid var(--color-cobalt);
 
     &.btn-outline {
-      color: var(--color-accent);
+      color: var(--color-cobalt);
+      background: transparent;
     }
   }
 
   &.btn-primary {
-    color: var(--color-background);
-    background-color: var(--color-text);
-    border: 2px solid var(--color-text);
+    color: var(--color-dark);
+    background-color: var(--color-light);
+    border: 2px solid var(--color-light);
 
     &.btn-outline {
-      color: var(--color-text);
+      color: var(--color-light);
       background: transparent;
     }
   }
 
   &.btn-secondary {
-    color: var(--color-background);
-    background-color: var(--color-gray-500);
-    border: 2px solid var(--color-gray-500);
+    color: var(--color-light);
+    background-color: transparent;
+    border: 1px solid var(--color-gray-600);
+
+    &:hover {
+      border-color: var(--color-gray-400);
+    }
 
     &.btn-outline {
-      color: var(--color-gray-500);
+      color: var(--color-gray-300);
     }
   }
 
@@ -303,6 +413,10 @@ a {
     max-width: var(--grid-container-width);
     margin: 0 auto;
   }
+}
+
+main .section {
+  padding: var(--spacing-xl) 0;
 }
 
 main {
@@ -334,14 +448,45 @@ h5,
 h6 {
   font-weight: 600;
   line-height: var(--heading-line-height);
+  letter-spacing: -0.03em;
 }
 
-h1 { font-size: var(--heading-font-size-xxl); }
-h2 { font-size: var(--heading-font-size-xl); }
-h3 { font-size: var(--heading-font-size-l); }
-h4 { font-size: var(--heading-font-size-m); }
-h5 { font-size: var(--heading-font-size-s); }
-h6 { font-size: var(--heading-font-size-xs); }
+h1 {
+  font-size: var(--heading-font-size-xxl);
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+}
+
+h2 {
+  font-size: var(--heading-font-size-xl);
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+}
+
+h3 {
+  font-size: var(--heading-font-size-l);
+  letter-spacing: -0.035em;
+  line-height: 1.16;
+}
+
+h4 {
+  font-size: var(--heading-font-size-m);
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+
+h5 {
+  font-size: var(--heading-font-size-s);
+  letter-spacing: -0.025em;
+  line-height: 1.23;
+}
+
+h6 {
+  font-size: var(--heading-font-size-xs);
+  letter-spacing: 0;
+  line-height: 1.3;
+  font-weight: 500;
+}
 
 strong {
   font-weight: 600;
@@ -364,11 +509,29 @@ svg {
   height: 20px;
 }
 
-/* @media (width >= 600px) {} */
+@media (width >= 768px) {
+  :root {
+    --header-height: 80px;
+    --heading-font-size-xxl: 56px;
+    --heading-font-size-xl: 38px;
+    --heading-font-size-l: 30px;
+    --heading-font-size-m: 20px;
+    --heading-font-size-s: 17px;
+    --heading-font-size-xs: 15px;
+  }
+}
 
-/* @media (width >= 900px) {} */
-
-/* @media (width >= 1200px) {} */
+@media (width >= 1240px) {
+  :root {
+    --heading-font-size-xxl: 80px;
+    --heading-font-size-xl: 48px;
+    --heading-font-size-l: 38px;
+    --heading-font-size-m: 25px;
+    --heading-font-size-s: 20px;
+    --heading-font-size-xs: 15px;
+    --body-font-size-xxxl: 32px;
+  }
+}
 
 @media (width >= 1440px) {
   :root {
@@ -382,10 +545,3 @@ div[data-status] {
   display: none;
 }
 
-aem-sidekick {
-  opacity: 0;
-
-  &[open="true"].is-ready {
-    opacity: 1;
-  }
-}
