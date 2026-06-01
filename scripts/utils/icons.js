@@ -1,19 +1,24 @@
 import { getConfig } from '../ak.js';
 
-const SVGNS = 'http://www.w3.org/2000/svg';
-const XLINKNS = 'http://www.w3.org/1999/xlink';
 const { codeBase } = getConfig();
+const cache = new Map();
 
-export default (icons) => {
-  for (const icon of icons) {
-    const name = icon.classList[1].substring(5);
-    const svg = document.createElementNS(SVGNS, 'svg');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.setAttribute('class', icon.className);
-    const use = document.createElementNS(SVGNS, 'use');
-    use.setAttributeNS(XLINKNS, 'href', `${codeBase}/icons/${name}.svg#${name}`);
-    svg.append(use);
-    icon.insertAdjacentElement('afterend', svg);
-    icon.remove();
+const fetchIcon = (name) => {
+  if (!cache.has(name)) {
+    cache.set(name, fetch(`${codeBase}/icons/${name}.svg`).then((r) => (r.ok ? r.text() : '')));
   }
+  return cache.get(name);
 };
+
+const upgradeIcon = async (icon) => {
+  const name = icon.classList[1].substring(5);
+  const text = await fetchIcon(name);
+  if (!text || !icon.parentNode) return;
+  const svg = new DOMParser().parseFromString(text, 'image/svg+xml').querySelector('svg');
+  if (!svg) return;
+  svg.setAttribute('class', icon.className);
+  svg.setAttribute('aria-hidden', 'true');
+  icon.replaceWith(svg);
+};
+
+export default (icons) => Promise.all([...icons].map(upgradeIcon));
