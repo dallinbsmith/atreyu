@@ -9,7 +9,7 @@ export default (icons) => {
     const name = icon.classList[1].substring(5);
     const svg = document.createElementNS(SVGNS, 'svg');
     svg.setAttribute('aria-hidden', 'true');
-    svg.className = icon.className;
+    svg.setAttribute('class', icon.className);
     const use = document.createElementNS(SVGNS, 'use');
     use.setAttributeNS(XLINKNS, 'href', `${codeBase}/icons/${name}.svg#${name}`);
     svg.append(use);
