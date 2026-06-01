@@ -40,7 +40,8 @@
     margin-top: auto;
     padding-top: var(--spacing-xl);
     display: flex;
-    flex-direction: column;
+    flex-flow: row wrap;
+    align-items: center;
     gap: var(--spacing-m);
   }
 }
