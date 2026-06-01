@@ -155,6 +155,10 @@
     .hero-foreground {
       justify-content: center;
       text-align: center;
+
+      .hero-heading {
+        max-width: 14ch;
+      }
     }
   }
 }
