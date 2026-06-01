@@ -1,0 +1,134 @@
+.form {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) 0;
+
+  & .form-field {
+    margin-bottom: var(--spacing-l);
+  }
+
+  & label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-weight: 600;
+    font-size: var(--type-body-s-size, 14px);
+  }
+
+  & .form-required::after {
+    content: ' *';
+    color: var(--color-red-400, #e74c3c);
+  }
+
+  & input,
+  & textarea,
+  & select {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-m) var(--spacing-l);
+    border: 1px solid var(--color-gray-600, #4f5167);
+    border-radius: 6px;
+    background: var(--color-gray-800, #1d1f2c);
+    color: inherit;
+    font: inherit;
+    font-size: var(--type-body-m-size, 16px);
+    transition: border-color 0.2s;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-blue-400, #5898ff);
+      outline-offset: 1px;
+    }
+
+    &.form-invalid {
+      border-color: var(--color-red-400, #e74c3c);
+    }
+  }
+
+  & textarea {
+    resize: vertical;
+  }
+
+  & .form-error {
+    display: block;
+    min-height: 1.2em;
+    margin-top: var(--spacing-xs);
+    font-size: var(--type-body-xs-size, 12px);
+    color: var(--color-red-400, #e74c3c);
+  }
+
+  & .form-hp {
+    position: absolute;
+    left: -9999px;
+    opacity: 0;
+  }
+
+  & .form-submit {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-m) var(--spacing-xl);
+    border: none;
+    border-radius: 6px;
+    background: var(--color-blue-500, #2176ff);
+    color: white;
+    font: inherit;
+    font-weight: 600;
+    font-size: var(--type-body-m-size, 16px);
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--color-blue-600, #0058e4);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  & .form-success {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-green-400, #24b032);
+    font-weight: 600;
+  }
+
+  & .form-error-msg {
+    text-align: center;
+    padding: var(--spacing-m);
+    color: var(--color-red-400, #e74c3c);
+  }
+
+  &.inline form {
+    display: flex;
+    gap: var(--spacing-m);
+    align-items: flex-end;
+
+    & .form-field {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    & .form-submit {
+      width: auto;
+      white-space: nowrap;
+    }
+  }
+
+  &.compact {
+    & label {
+      font-size: var(--type-body-xs-size, 12px);
+    }
+
+    & input,
+    & textarea,
+    & select {
+      padding: var(--spacing-s) var(--spacing-m);
+      font-size: var(--type-body-s-size, 14px);
+    }
+
+    & .form-submit {
+      padding: var(--spacing-s) var(--spacing-l);
+      font-size: var(--type-body-s-size, 14px);
+    }
+  }
+}

@@ -1,13 +1,16 @@
 .advanced-tabs {
-  .section {
-    display: none;
-
-    &.is-visible {
-      display: block;
+  [role="tabpanel"] {
+    &[hidden] {
+      display: none;
     }
 
     &[data-status] {
       display: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid currentcolor;
+      outline-offset: 2px;
     }
   }
 }
@@ -29,8 +32,9 @@
     border-bottom: 2px solid transparent;
     box-sizing: border-box;
     transition: border-bottom 0.2s ease-in-out;
+    cursor: pointer;
 
-    &.is-active {
+    &[aria-selected="true"] {
       border-bottom: 2px solid light-dark(#000, #fff);
     }
   }

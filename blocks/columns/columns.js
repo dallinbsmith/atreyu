@@ -1,4 +1,4 @@
-function decorateCover(col) {
+const decorateCover = (col) => {
   const children = [...col.children];
   if (children.length === 1 && children[0].nodeName === 'PICTURE') {
     col.classList.add('cover-image');
@@ -6,26 +6,26 @@ function decorateCover(col) {
   } else {
     col.classList.add('cover-content');
   }
-}
+};
 
-function decorateCols(el, cols) {
+const decorateCols = (el, cols) => {
   const hasCover = el.classList.contains('image-cover');
   for (const [idx, col] of cols.entries()) {
     col.classList.add('col', `col-${idx + 1}`);
     if (hasCover) decorateCover(col);
   }
-}
+};
 
-function decorateRows(el, rows) {
+const decorateRows = (el, rows) => {
   for (const [idx, row] of rows.entries()) {
     row.classList.add('row', `row-${idx + 1}`);
     const cols = [...row.children];
     row.style = `--child-count: ${cols.length}`;
     decorateCols(el, cols);
   }
-}
+};
 
-export default function init(el) {
+export default (el) => {
   const rows = [...el.children];
   decorateRows(el, rows);
-}
+};

@@ -7,20 +7,20 @@ const importMap = {
   },
 };
 
-function addImportmap() {
+const addImportmap = () => {
   const importmapEl = document.createElement('script');
   importmapEl.type = 'importmap';
   importmapEl.textContent = JSON.stringify(importMap);
   document.head.appendChild(importmapEl);
-}
+};
 
-async function loadMoudle(origin, payload) {
+const loadMoudle = async (origin, payload) => {
   const { default: loadQuickEdit } = await import(`${origin}/nx/public/plugins/quick-edit/quick-edit.js`);
   loadQuickEdit(payload, loadPage);
-}
+};
 
 // creates sidekick payload when loading QE from query param
-function generateSidekickPayload() {
+const generateSidekickPayload = () => {
   let { hostname } = window.location;
   if (hostname === 'localhost') {
     hostname = document.querySelector('meta[property="hlx:proxyUrl"]').content;
@@ -34,9 +34,9 @@ function generateSidekickPayload() {
       location: { pathname: window.location.pathname },
     },
   };
-}
+};
 
-export default function init(payload) {
+const init = (payload) => {
   const { search } = window.location;
   const ref = new URLSearchParams(search).get('quick-edit');
   let origin;
@@ -45,4 +45,6 @@ export default function init(payload) {
   if (!origin) origin = `https://${ref}--da-nx--adobe.aem.live`;
   addImportmap();
   loadMoudle(origin, payload || generateSidekickPayload());
-}
+};
+
+export default init;

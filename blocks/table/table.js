@@ -1,4 +1,4 @@
-export default function init(el) {
+export default (el) => {
   const tables = el.querySelectorAll('table');
   for (const table of tables) {
     let thead = table.querySelector('table > thead');
@@ -16,6 +16,7 @@ export default function init(el) {
           const th = document.createElement('th');
           th.className = td.className;
           th.innerHTML = td.innerHTML;
+          th.setAttribute('scope', 'col');
           td.parentElement.replaceChild(th, td);
         }
       }
@@ -25,4 +26,4 @@ export default function init(el) {
       row.classList.add('table-content-row');
     }
   }
-}
+};

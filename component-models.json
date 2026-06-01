@@ -1,0 +1,382 @@
+{
+  "models": [
+    {
+      "id": "hero",
+      "fields": [
+        {
+          "component": "select",
+          "name": "variant",
+          "label": "Variant",
+          "options": [
+            { "name": "Default", "value": "" },
+            { "name": "Small", "value": "small" },
+            { "name": "Large", "value": "large" },
+            { "name": "Full", "value": "full" },
+            { "name": "Light", "value": "light" },
+            { "name": "Dark", "value": "dark" },
+            { "name": "Stack", "value": "stack" },
+            { "name": "Center", "value": "center" },
+            { "name": "Quiet Background", "value": "quiet-background" }
+          ]
+        },
+        {
+          "component": "reference",
+          "name": "backgroundImage",
+          "label": "Background Image",
+          "multi": false,
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "heading",
+          "label": "Heading",
+          "valueType": "string",
+          "required": true
+        },
+        {
+          "component": "richtext",
+          "name": "body",
+          "label": "Body",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "cta",
+          "label": "CTA Label",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "ctaLink",
+          "label": "CTA Link",
+          "valueType": "string"
+        }
+      ]
+    },
+    {
+      "id": "faq",
+      "fields": [
+        {
+          "component": "container",
+          "name": "items",
+          "label": "FAQ Items",
+          "collapsible": true,
+          "fields": [
+            {
+              "component": "text",
+              "name": "question",
+              "label": "Question",
+              "valueType": "string",
+              "required": true
+            },
+            {
+              "component": "richtext",
+              "name": "answer",
+              "label": "Answer",
+              "valueType": "string",
+              "required": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "columns",
+      "fields": [
+        {
+          "component": "multiselect",
+          "name": "classes",
+          "label": "Variants",
+          "options": [
+            { "name": "Image Cover", "value": "image-cover" },
+            { "name": "Gap XS", "value": "gap-xs" },
+            { "name": "Gap S", "value": "gap-s" },
+            { "name": "Gap M", "value": "gap-m" },
+            { "name": "Gap L", "value": "gap-l" },
+            { "name": "Gap XL", "value": "gap-xl" },
+            { "name": "Gap XXL", "value": "gap-xxl" },
+            { "name": "Align Top", "value": "align-top" },
+            { "name": "Z-Pattern", "value": "z-pattern" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "youtube",
+      "fields": [
+        {
+          "component": "text",
+          "name": "url",
+          "label": "YouTube URL",
+          "valueType": "string",
+          "required": true,
+          "description": "Full YouTube URL (e.g., https://www.youtube.com/watch?v=...)"
+        }
+      ]
+    },
+    {
+      "id": "card",
+      "fields": [
+        {
+          "component": "multiselect",
+          "name": "classes",
+          "label": "Variants",
+          "options": [
+            { "name": "Center", "value": "center" },
+            { "name": "Quiet", "value": "quiet" },
+            { "name": "Hash Aware", "value": "hash-aware" }
+          ]
+        },
+        {
+          "component": "reference",
+          "name": "image",
+          "label": "Card Image",
+          "multi": false,
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "heading",
+          "label": "Heading",
+          "valueType": "string"
+        },
+        {
+          "component": "richtext",
+          "name": "body",
+          "label": "Body",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "ctaLabel",
+          "label": "CTA Label",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "ctaLink",
+          "label": "CTA Link",
+          "valueType": "string"
+        }
+      ]
+    },
+    {
+      "id": "bentos",
+      "fields": [
+        {
+          "component": "container",
+          "name": "rows",
+          "label": "Bento Rows",
+          "collapsible": true,
+          "fields": [
+            {
+              "component": "text",
+              "name": "heading",
+              "label": "Heading",
+              "valueType": "string"
+            },
+            {
+              "component": "richtext",
+              "name": "body",
+              "label": "Body",
+              "valueType": "string"
+            },
+            {
+              "component": "text",
+              "name": "ctaLabel",
+              "label": "CTA Label",
+              "valueType": "string"
+            },
+            {
+              "component": "text",
+              "name": "ctaLink",
+              "label": "CTA Link",
+              "valueType": "string"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bookend",
+      "fields": [
+        {
+          "component": "text",
+          "name": "heading",
+          "label": "Heading",
+          "valueType": "string",
+          "required": true
+        },
+        {
+          "component": "richtext",
+          "name": "body",
+          "label": "Body",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "primaryCtaLabel",
+          "label": "Primary CTA Label",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "primaryCtaLink",
+          "label": "Primary CTA Link",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "secondaryCtaLabel",
+          "label": "Secondary CTA Label",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "secondaryCtaLink",
+          "label": "Secondary CTA Link",
+          "valueType": "string"
+        }
+      ]
+    },
+    {
+      "id": "table",
+      "fields": [
+        {
+          "component": "richtext",
+          "name": "content",
+          "label": "Table Content",
+          "valueType": "string",
+          "description": "Author tables using standard markdown table syntax."
+        }
+      ]
+    },
+    {
+      "id": "advanced-tabs",
+      "fields": [
+        {
+          "component": "container",
+          "name": "tabs",
+          "label": "Tab Labels",
+          "collapsible": true,
+          "description": "Each tab label corresponds to a following section that becomes the tab panel.",
+          "fields": [
+            {
+              "component": "text",
+              "name": "label",
+              "label": "Tab Label",
+              "valueType": "string",
+              "required": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fragment",
+      "fields": [
+        {
+          "component": "text",
+          "name": "path",
+          "label": "Fragment Path",
+          "valueType": "string",
+          "required": true,
+          "description": "Path to the fragment page (e.g., /fragments/promo-banner)"
+        }
+      ]
+    },
+    {
+      "id": "schedule",
+      "fields": [
+        {
+          "component": "text",
+          "name": "jsonPath",
+          "label": "Schedule JSON Path",
+          "valueType": "string",
+          "required": true,
+          "description": "Path to the schedule JSON endpoint (e.g., /schedules/homepage-hero.json)"
+        }
+      ]
+    },
+    {
+      "id": "section-metadata",
+      "fields": [
+        {
+          "component": "text",
+          "name": "style",
+          "label": "Style Classes",
+          "valueType": "string",
+          "description": "CSS class names applied to the section"
+        },
+        {
+          "component": "text",
+          "name": "background",
+          "label": "Background",
+          "valueType": "string",
+          "description": "URL, CSS color, or color token (e.g., color-token-accent)"
+        },
+        {
+          "component": "select",
+          "name": "grid",
+          "label": "Grid Columns",
+          "options": [
+            { "name": "None", "value": "" },
+            { "name": "2 Columns", "value": "2" },
+            { "name": "3 Columns", "value": "3" },
+            { "name": "4 Columns", "value": "4" },
+            { "name": "5 Columns", "value": "5" },
+            { "name": "6 Columns", "value": "6" }
+          ]
+        },
+        {
+          "component": "select",
+          "name": "gap",
+          "label": "Grid Gap",
+          "options": [
+            { "name": "None", "value": "" },
+            { "name": "Extra Small", "value": "xs" },
+            { "name": "Small", "value": "s" },
+            { "name": "Medium", "value": "m" },
+            { "name": "Large", "value": "l" },
+            { "name": "Extra Large", "value": "xl" },
+            { "name": "2X Large", "value": "xxl" }
+          ]
+        },
+        {
+          "component": "select",
+          "name": "spacing",
+          "label": "Vertical Spacing",
+          "options": [
+            { "name": "None", "value": "" },
+            { "name": "Extra Small", "value": "xs" },
+            { "name": "Small", "value": "s" },
+            { "name": "Medium", "value": "m" },
+            { "name": "Large", "value": "l" },
+            { "name": "Extra Large", "value": "xl" },
+            { "name": "2X Large", "value": "xxl" }
+          ]
+        },
+        {
+          "component": "select",
+          "name": "container",
+          "label": "Container Width",
+          "options": [
+            { "name": "Default", "value": "" },
+            { "name": "Narrow (2)", "value": "2" },
+            { "name": "Medium (4)", "value": "4" },
+            { "name": "Full (6)", "value": "6" }
+          ]
+        },
+        {
+          "component": "select",
+          "name": "layout",
+          "label": "Layout",
+          "options": [
+            { "name": "Default", "value": "" },
+            { "name": "Bento", "value": "bento" }
+          ]
+        }
+      ]
+    }
+  ]
+}

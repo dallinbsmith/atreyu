@@ -1,23 +1,16 @@
-const loadStyle = (() => {
-  const styles = {};
+const styles = new Map();
 
-  return (href) => {
-    const path = href.endsWith('.js') ? href.replace('.js', '.css') : href;
-    if (!styles[path]) {
-      styles[path] = new Promise((resolve) => {
-        (async () => {
-          const resp = await fetch(path);
-          const text = await resp.text();
-          const style = new CSSStyleSheet();
-          style.path = path;
-          style.replaceSync(text);
-          resolve(style);
-        })();
-      });
-    }
-
-    return styles[path];
-  };
-})();
-
-export default loadStyle;
+export default (href) => {
+  const path = href.endsWith('.js') ? href.replace('.js', '.css') : href;
+  if (!styles.has(path)) {
+    styles.set(path, fetch(path)
+      .then((resp) => resp.text())
+      .then((text) => {
+        const style = new CSSStyleSheet();
+        style.path = path;
+        style.replaceSync(text);
+        return style;
+      }));
+  }
+  return styles.get(path);
+};

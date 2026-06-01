@@ -1,5 +1,6 @@
 import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
+import preferArrow from 'eslint-plugin-prefer-arrow-functions';
 import { recommended, source, test } from '@adobe/eslint-config-helix';
 
 export default defineConfig([
@@ -9,6 +10,7 @@ export default defineConfig([
   {
     languageOptions: {
       ...recommended.languageOptions,
+      ecmaVersion: 2025,
       globals: {
         ...globals.serviceworker,
         ...globals.browser,
@@ -21,52 +23,66 @@ export default defineConfig([
       'import/core-modules': ['eslint/config'],
     },
     rules: {
-      // it's 2026
       'no-await-in-loop': 0,
 
-      // it's 2026, six is sensible (if they're short names)
       'object-curly-newline': ['error', {
         multiline: true,
         minProperties: 6,
         consistent: true,
       }],
 
-      // existing rule is placebo in AEM projects
       'import/no-cycle': 'off',
 
-      // common to have loops that run a single function
       'max-statements-per-line': ['error', { max: 2 }],
 
-      // customer projects should not have license headers
-      // unless they open source and want them.
       'header/header': 0,
 
-      // quality of life for classes & web components
       'class-methods-use-this': 0,
 
-      // allow external evergreen imports
       'import/no-unresolved': ['error', {
-        ignore: ['^https?://']
+        ignore: ['^https?://'],
       }],
 
-      // allow template literals to span lines without looking weird
-      'indent': ['error', 2, {
+      indent: ['error', 2, {
         ignoredNodes: ['TemplateLiteral *'],
         SwitchCase: 1,
       }],
 
-      // allow objct property mutations
-      'no-param-reassign': [2, { props: false }],
+      'no-param-reassign': ['error', { props: false }],
+
+      // arrow-only: all function declarations/expressions → arrow functions
+      'prefer-arrow-functions/prefer-arrow-functions': ['error', {
+        allowNamedFunctions: false,
+        classPropertiesAllowed: false,
+        disallowPrototype: true,
+        returnStyle: 'implicit',
+        singleReturnOnly: false,
+      }],
+
+      'prefer-arrow-callback': ['error', { allowNamedFunctions: false }],
+      'arrow-body-style': ['error', 'as-needed'],
+      'func-style': ['error', 'expression'],
+
+      // terse expressions: prefer modern array methods over manual loops
+      'no-restricted-syntax': ['error',
+        {
+          selector: 'ForInStatement',
+          message: 'Use Object.keys/values/entries with for...of or array methods.',
+        },
+      ],
+
+      // no nested ternaries (inherited from Helix, enforced here explicitly)
+      'no-nested-ternary': 'error',
     },
     plugins: {
       import: recommended.plugins.import,
+      'prefer-arrow-functions': preferArrow,
     },
     extends: [recommended],
   },
   source,
   test,
   {
-    // Allow console in test files
     files: ['test/**/*.js'],
     rules: {
       'max-classes-per-file': 0,
@@ -74,5 +90,5 @@ export default defineConfig([
       'no-underscore-dangle': 0,
       'no-unused-expressions': 0,
     },
-  }
+  },
 ]);

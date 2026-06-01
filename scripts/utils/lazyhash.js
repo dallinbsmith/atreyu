@@ -1,6 +1,6 @@
-(async function lazyHash() {
-  const id = window.localStorage.getItem('lazyhash');
+(async () => {
+  const id = localStorage.getItem('lazyhash');
   if (!id) return;
-  window.localStorage.removeItem('lazyhash');
-  window.document.getElementById(id)?.scrollIntoView();
-}());
+  localStorage.removeItem('lazyhash');
+  document.getElementById(id)?.scrollIntoView();
+})();

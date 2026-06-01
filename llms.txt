@@ -1,0 +1,22 @@
+# Frame.io
+
+> Cloud-based video collaboration platform by Adobe for creative teams to review, approve, and deliver video content.
+
+## About
+Frame.io is the world's leading video review and approval platform. Part of Adobe Creative Cloud, it connects the entire video production workflow — from first cut to final delivery — with real-time collaboration tools for teams of any size.
+
+## Key Pages
+- [Pricing](https://frame.io/pricing): Plans and pricing for individuals, teams, and enterprises
+- [Features](https://frame.io/features): Complete feature overview including review, approval, and delivery
+- [Enterprise](https://frame.io/enterprise): Enterprise video collaboration solutions with SSO, advanced security, and dedicated support
+- [Security](https://frame.io/security): Security practices, compliance certifications, and data protection
+- [API Documentation](https://developer.frame.io): Developer API reference and integration guides
+
+## Products
+- **Frame.io**: Video review and approval workflow with frame-accurate comments, version stacking, and approval chains
+- **Camera to Cloud (C2C)**: Direct camera-to-cloud upload enabling real-time on-set collaboration and dailies review
+- **Adobe Creative Cloud Integration**: Native panels in Premiere Pro, After Effects, Photoshop, and other Adobe tools for seamless upload and review
+
+## Contact
+- [Contact Sales](https://frame.io/contact-sales)
+- [Support](https://support.frame.io)

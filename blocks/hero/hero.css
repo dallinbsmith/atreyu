@@ -1,11 +1,11 @@
 .hero {
   --gradient-start: rgb(var(--color-dark-base) / 80%);
   --gradient-end: rgb(var(--color-dark-base) / 20%);
-  --default-min-height: 360px;
+  --default-min-height: 400px;
   --min-height: var(--default-min-height);
 
   position: relative;
-  color: #fff;
+  color: var(--color-light);
   overflow: hidden;
 
   &.small {
@@ -81,16 +81,17 @@
 
   .hero-foreground {
     min-height: var(--min-height);
-    padding: var(--spacing-xxl) 0;
+    padding: 120px 0 80px;
     box-sizing: border-box;
     position: relative;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    background: linear-gradient(90deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+    background: var(--color-background);
 
     p {
       margin: 8px 0;
+      color: var(--color-alpha-light-50);
     }
 
     .fg-text {
@@ -108,10 +109,14 @@
 
     .hero-detail {
       margin: 0;
+      color: var(--color-alpha-light-50);
+      font-size: var(--body-font-size-l);
     }
 
     .hero-heading {
       margin: 0;
+      letter-spacing: -0.045em;
+      line-height: 1.04;
     }
   }
 
@@ -124,12 +129,12 @@
     }
 
     .hero-foreground {
-      background: #111;
+      background: var(--color-shaded);
     }
 
     &.light {
       .hero-foreground {
-        background: #f9f9f9;
+        background: var(--color-shaded);
       }
     }
 
@@ -154,7 +159,7 @@
   }
 }
 
-@media (width >= 600px) {
+@media (width >= 768px) {
   .hero {
     .hero-foreground {
       display: grid;
@@ -162,6 +167,7 @@
       justify-content: space-between;
       max-width: var(--grid-container-width);
       margin: 0 auto;
+      padding: 160px 0 96px;
       background: unset;
 
       .fg-text {
@@ -173,6 +179,8 @@
     &.center {
       .hero-foreground {
         display: flex;
+        max-width: 100%;
+        background: var(--color-background);
       }
     }
 
@@ -208,15 +216,16 @@
   }
 }
 
-@media (width >= 900px) {
+@media (width >= 1240px) {
   .hero {
     .hero-foreground {
       grid-template-columns: 40% 40%;
+      padding: 180px 0 124px;
     }
   }
 }
 
-@media (width >= 1200px) {
+@media (width >= 1440px) {
   .hero {
     .hero-foreground {
       grid-template-columns: 33% 33%;

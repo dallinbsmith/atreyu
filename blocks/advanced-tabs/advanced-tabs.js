@@ -1,70 +1,69 @@
 import { getConfig } from '../../scripts/ak.js';
+import { generateId, rovingTabindex } from '../../scripts/utils/a11y.js';
 
 const { log } = getConfig();
 
-function getTabList(tabs, tabPanels) {
-  const tabItems = tabs.querySelectorAll('li');
+const activateTab = (tabList, panels, idx) => {
+  const tabs = [...tabList.querySelectorAll('[role="tab"]')];
+  tabs.forEach((tab, i) => {
+    const active = i === idx;
+    tab.setAttribute('aria-selected', String(active));
+    tab.setAttribute('tabindex', active ? '0' : '-1');
+  });
+  panels.forEach((panel, i) => {
+    panel.toggleAttribute('hidden', i !== idx);
+  });
+};
+
+const buildTabList = (tabItems, panels) => {
   const tabList = document.createElement('div');
   tabList.className = 'tab-list';
-  tabList.role = 'tablist';
+  tabList.setAttribute('role', 'tablist');
 
-  for (const [idx, tab] of tabItems.entries()) {
+  const tabs = [...tabItems].map((item, idx) => {
+    const tabId = generateId('tab');
+    const panelId = generateId('tabpanel');
     const btn = document.createElement('button');
-    btn.role = 'tab';
-    btn.id = `tab-${idx + 1}`;
-    btn.textContent = tab.textContent;
-    if (idx === 0) {
-      btn.classList.add('is-active');
-      tabPanels[0].classList.add('is-visible');
-    }
+    btn.setAttribute('role', 'tab');
+    btn.id = tabId;
+    btn.textContent = item.textContent;
+    btn.setAttribute('aria-controls', panelId);
+
+    panels[idx].id = panelId;
+    panels[idx].setAttribute('role', 'tabpanel');
+    panels[idx].setAttribute('aria-labelledby', tabId);
+    panels[idx].setAttribute('tabindex', '0');
+
+    btn.addEventListener('click', () => activateTab(tabList, panels, idx));
     tabList.append(btn);
+    return btn;
+  });
 
-    btn.addEventListener('click', () => {
-      // Remove all active styles
-      tabList.querySelectorAll('button')
-        .forEach((button) => { button.classList.remove('is-active'); });
-
-      tabPanels.forEach((sec) => { sec.classList.remove('is-visible'); });
-      tabPanels[idx].classList.add('is-visible');
-      btn.classList.add('is-active');
-    });
-  }
+  activateTab(tabList, panels, 0);
+  rovingTabindex(tabList, tabs, { orientation: 'horizontal' });
 
   return tabList;
-}
+};
 
-export default function init(el) {
-  // Find the top most parent where all tab sections live
+export default (el) => {
   const parent = el.closest('.fragment-content, main');
-
-  // Forefully hide parent because sections may not be loaded yet
   parent.style = 'display: none;';
 
-  // Find the section that contains the actual block
   const currSection = el.closest('.section');
-
-  // Find the tab items
   const tabs = el.querySelector('ul');
+
   if (!tabs) {
     log('Please add an unordered list to the advanced tabs block.');
     return;
   }
 
-  // Filter and format all sections that do not hold the tabs block
-  const tabPanels = [...parent.querySelectorAll(':scope > .section')]
-    .reduce((acc, section, idx) => {
-      if (section !== currSection) {
-        section.id = `tabpanel-${idx + 1}`;
-        section.role = 'tabpanel';
-        section.setAttribute('aria-labelledby', `tab-${idx + 1}`);
-        acc.push(section);
-      }
-      return acc;
-    }, []);
+  const tabItems = tabs.querySelectorAll('li');
+  const panels = [...parent.querySelectorAll(':scope > .section')]
+    .filter((section) => section !== currSection);
 
-  const tabList = getTabList(tabs, tabPanels);
+  const tabList = buildTabList(tabItems, panels);
 
   tabs.remove();
-  el.append(tabList, ...tabPanels);
+  el.append(tabList, ...panels);
   parent.removeAttribute('style');
-}
+};

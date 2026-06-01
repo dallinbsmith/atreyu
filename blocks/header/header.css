@@ -11,7 +11,8 @@ header {
   z-index: 1000;
   overflow: hidden;
   max-height: var(--header-height);
-  background-color: light-dark(var(--color-light), var(--color-dark));
+  background-color: var(--color-alpha-dark-30);
+  backdrop-filter: saturate(150%) blur(125px);
 
   ul {
     margin: 0;
@@ -26,6 +27,7 @@ header {
 
   a {
     text-decoration: none;
+    transition: var(--transition-color);
   }
 
   .btn {
@@ -136,7 +138,7 @@ header {
         font-weight: 700;
         text-decoration: none;
         margin: 0;
-        color: var(--color-brand);
+        color: var(--color-light);
 
         img {
           height: var(--logo-height);
@@ -149,9 +151,9 @@ header {
 
         .brand-text {
           display: block;
-          width: 0;
-          height: 0;
-          overflow: hidden;
+          font-size: 18px;
+          font-weight: 600;
+          letter-spacing: -0.02em;
         }
       }
     }
@@ -163,7 +165,7 @@ header {
 
   .actions-section {
     grid-area: actions;
-    max-height: 64px;
+    max-height: var(--header-height);
     overflow: hidden;
     transition: all 0.2s ease-in-out;
 
@@ -171,10 +173,36 @@ header {
       display: flex;
       justify-content: end;
       align-items: center;
+      height: var(--header-height);
+      gap: 8px;
+
+      p {
+        margin: 0;
+      }
+
+      p a {
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        color: var(--color-light);
+        padding: 0 12px;
+      }
+
+      p:last-child a {
+        background: var(--color-gray-100);
+        color: var(--color-dark);
+        border-radius: 10rem;
+        padding: 8px 20px;
+        display: inline-block;
+
+        &:hover {
+          background: var(--color-alpha-light-70);
+        }
+      }
     }
 
     > .block-content {
-      border-bottom: 1px solid light-dark(var(--color-gray-200), var(--color-gray-600));
+      border-bottom: 1px solid var(--color-alpha-light-10);
     }
 
     .action-wrapper {
@@ -201,7 +229,7 @@ header {
     }
 
     .main-nav-item {
-      border-bottom: 1px solid light-dark(var(--color-gray-200), var(--color-gray-600));
+      border-bottom: 1px solid var(--color-alpha-light-10);
 
       > * {
         max-width: var(--grid-container-width);
@@ -211,7 +239,24 @@ header {
 
     .main-nav-link {
       display: block;
-      line-height: 64px;
+      line-height: var(--header-height);
+    }
+
+    .main-nav-item a {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      line-height: var(--header-height);
+      color: var(--color-light);
+    }
+
+    &:hover .main-nav-item a {
+      color: var(--color-alpha-light-50);
+    }
+
+    &:hover .main-nav-item:hover a,
+    .main-nav-item a:hover {
+      color: var(--color-light);
     }
 
     .menu,
@@ -221,7 +266,7 @@ header {
 
     .is-open {
       .main-nav-link {
-        border-bottom: 1px solid light-dark(var(--color-gray-200), var(--color-gray-600));
+        border-bottom: 1px solid var(--color-alpha-light-10);
       }
 
       .menu,
@@ -242,12 +287,12 @@ header {
     }
 
     .brand-section {
-      border-bottom: 1px solid light-dark(var(--color-gray-200), var(--color-gray-600));
+      border-bottom: 1px solid var(--color-alpha-light-10);
     }
   }
 }
 
-@media (width >= 900px) {
+@media (width >= 1240px) {
   header {
     overflow: initial;
 
