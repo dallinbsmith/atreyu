@@ -5,9 +5,9 @@
 export const decorateTout = (el, prefix = 'tout') => {
   el.classList.add(prefix);
 
-  // Author-driven icon: an authored `:icon:` (span.icon) is hoisted above the
-  // title and classed for styling. No icon → unchanged (backward compatible).
-  const icon = el.querySelector('.icon');
+  // Author-driven icon: a STANDALONE `:icon:` (not one inside a link/button) is
+  // hoisted above the title and classed. Icons inside CTA links stay put.
+  const icon = [...el.querySelectorAll('.icon')].find((i) => !i.closest('a'));
   if (icon) {
     icon.classList.add(`${prefix}-icon`);
     const wrap = icon.closest('p');
@@ -36,10 +36,12 @@ export const decorateTout = (el, prefix = 'tout') => {
   });
 
   // Defer to the framework: links already buttonized by decorateButton (from
-  // authored em/strong/underline) keep that author-intended variant. Only assign
-  // positional primary/secondary to plain links not yet classed.
+  // authored em/strong/underline) keep that author-intended variant. A link that
+  // carries an arrow icon (`:arrow:`) becomes a borderless text-link. Otherwise
+  // assign positional primary/secondary to plain links.
   [...ctaWrapper.querySelectorAll('a')].forEach((a, idx) => {
     if (a.classList.contains('btn')) return;
-    a.classList.add('btn', idx === 0 ? 'btn-primary' : 'btn-secondary');
+    if (a.querySelector('.icon-arrow')) a.classList.add('btn', 'btn-link');
+    else a.classList.add('btn', idx === 0 ? 'btn-primary' : 'btn-secondary');
   });
 };

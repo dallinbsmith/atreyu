@@ -9,6 +9,7 @@
   }
 
   .bento-card {
+    position: relative;
     background: var(--color-alpha-dark-50);
     backdrop-filter: blur(var(--card-background-blur));
     /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
@@ -18,7 +19,23 @@
     padding: var(--card-padding);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     transition: transform 0.3s var(--transition-ease-out);
+
+    /* subtle top-corner glow, matching Frame.io's buttonCards */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(60% 60% at 0% 0%, color-mix(in srgb, var(--color-iris) 16%, transparent), transparent 70%);
+      pointer-events: none;
+    }
+
+    > * {
+      position: relative;
+      z-index: 1;
+    }
 
     &:hover {
       transform: scale(var(--card-hover-scale));
