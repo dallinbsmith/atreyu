@@ -375,6 +375,23 @@ a {
     &:hover .icon-arrow {
       transform: translateX(3px);
     }
+
+    /* A trailing icon on a pill (e.g. `877-702-3623 :phone:`) renders as a
+       circular chip inset at the right edge — Frame.io's icon-button treatment.
+       Author controls position: token last = chip on the right; token first =
+       plain inline icon. The sliding arrow lives on .btn-link, so it's excluded. */
+    &:not(.btn-link):has(.icon:last-child) {
+      padding-right: var(--spacing-xs);
+    }
+
+    &:not(.btn-link) .icon:last-child {
+      width: 2.4em;
+      height: 2.4em;
+      padding: 0.8em;
+      border-radius: 50%;
+      background: var(--color-alpha-light-10);
+      box-sizing: border-box;
+    }
   }
 
   /* borderless text-link button — used for "Contact Us →" style CTAs */
