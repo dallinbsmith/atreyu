@@ -5,6 +5,16 @@
 export const decorateTout = (el, prefix = 'tout') => {
   el.classList.add(prefix);
 
+  // Author-driven icon: an authored `:icon:` (span.icon) is hoisted above the
+  // title and classed for styling. No icon → unchanged (backward compatible).
+  const icon = el.querySelector('.icon');
+  if (icon) {
+    icon.classList.add(`${prefix}-icon`);
+    const wrap = icon.closest('p');
+    el.prepend(icon);
+    if (wrap && wrap !== el && !wrap.textContent.trim() && !wrap.querySelector('a, img')) wrap.remove();
+  }
+
   const heading = el.querySelector('h1, h2, h3, h4, h5, h6');
   if (heading) heading.classList.add(`${prefix}-title`);
 

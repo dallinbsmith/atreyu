@@ -150,4 +150,13 @@ describe('utils/touts decorateTout', () => {
     expect(a.classList.contains('btn-accent')).to.be.true;
     expect(a.classList.contains('btn-primary')).to.be.false;
   });
+
+  it('hoists an authored icon above the title and removes its empty wrapper', () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<p><span class="icon icon-bolt"></span></p><h3>Head</h3><p>copy</p>';
+    decorateTout(el, 'tout');
+    expect(el.firstElementChild.classList.contains('tout-icon')).to.be.true;
+    expect(el.firstElementChild.classList.contains('icon')).to.be.true;
+    expect(el.querySelectorAll('p')).to.have.length(1); // empty icon <p> gone, body stays
+  });
 });
