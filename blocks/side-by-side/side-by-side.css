@@ -68,17 +68,29 @@
     }
   }
 
+  /* Default: a narrow vertical stack (Frame.io sideBySide touts column). */
   .side-by-side-touts {
-    margin-top: var(--spacing-l);
+    margin-top: var(--spacing-xl);
+    max-width: 320px;
     display: grid;
     grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+  }
+
+  /* Author-selectable: switch touts to a multi-column grid (`Side by Side (touts-grid)`). */
+  &.touts-grid .side-by-side-touts {
+    max-width: none;
     gap: var(--spacing-l);
+
+    @media (width >= 768px) {
+      grid-template-columns: repeat(var(--tout-count, 2), 1fr);
+    }
   }
 
   .side-by-side-tout-title {
     margin: 0;
     color: var(--color-light);
-    font-size: var(--heading-font-size-s);
+    font-size: var(--body-font-size-m);
     font-weight: 600;
     line-height: 1.2;
   }
