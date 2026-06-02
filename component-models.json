@@ -190,6 +190,16 @@
           ]
         },
         {
+          "component": "select",
+          "name": "toutsLayout",
+          "label": "Touts Layout",
+          "value": "",
+          "options": [
+            { "name": "Stacked (vertical)", "value": "" },
+            { "name": "Grid (multi-column)", "value": "touts-grid" }
+          ]
+        },
+        {
           "component": "reference",
           "name": "image",
           "label": "Image",
