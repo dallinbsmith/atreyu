@@ -152,13 +152,13 @@
   }
 
   &.center {
-    /* text-only centered title — no background, so drop the hero min-height */
+    /* text-only centered title — no background; spacing is owned by spacer blocks */
     --min-height: 0;
 
     .hero-foreground {
       justify-content: center;
       text-align: center;
-      padding-block: 92px 8px;
+      padding-block: 0;
 
       .hero-heading {
         max-width: 14ch;

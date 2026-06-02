@@ -1,0 +1,51 @@
+/* Vertical rhythm primitive — mirrors Frame.io's module.spacer.
+   Author as `Spacer (s|m|l|xl|xxl)`; height scales up at breakpoints. */
+.spacer {
+  width: 100%;
+  height: var(--spacer-height, 48px);
+  pointer-events: none;
+}
+
+.spacer.s {
+  --spacer-height: 32px;
+}
+
+.spacer.m {
+  --spacer-height: 64px;
+}
+
+.spacer.l {
+  --spacer-height: 88px;
+}
+
+.spacer.xl {
+  --spacer-height: 120px;
+}
+
+.spacer.xxl {
+  --spacer-height: 160px;
+}
+
+@media (width >= 768px) {
+  .spacer.m {
+    --spacer-height: 72px;
+  }
+
+  .spacer.l {
+    --spacer-height: 92px;
+  }
+
+  .spacer.xl {
+    --spacer-height: 200px;
+  }
+
+  .spacer.xxl {
+    --spacer-height: 320px;
+  }
+}
+
+@media (width >= 1240px) {
+  .spacer.xxl {
+    --spacer-height: 480px;
+  }
+}
