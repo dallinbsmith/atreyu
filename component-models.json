@@ -167,6 +167,58 @@
       ]
     },
     {
+      "id": "side-by-side",
+      "fields": [
+        {
+          "component": "select",
+          "name": "layout",
+          "label": "Media Side",
+          "value": "media-left",
+          "options": [
+            { "name": "Media Left", "value": "media-left" },
+            { "name": "Media Right", "value": "media-right" }
+          ]
+        },
+        {
+          "component": "select",
+          "name": "mediaLayout",
+          "label": "Media Treatment",
+          "value": "card",
+          "options": [
+            { "name": "Card (rounded)", "value": "card" },
+            { "name": "Bleed (full)", "value": "bleed" }
+          ]
+        },
+        {
+          "component": "reference",
+          "name": "image",
+          "label": "Image",
+          "multi": false,
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "eyebrow",
+          "label": "Eyebrow",
+          "valueType": "string",
+          "description": "Small uppercase label above the title. Authored as [[eyebrow|text]] in the body if preferred."
+        },
+        {
+          "component": "text",
+          "name": "heading",
+          "label": "Heading",
+          "valueType": "string"
+        },
+        {
+          "component": "richtext",
+          "name": "body",
+          "label": "Body",
+          "valueType": "string",
+          "description": "Subheads, paragraphs, and links. First link renders as primary, the rest as secondary. Touts: author an unordered list — each list item becomes one tout card."
+        }
+      ]
+    },
+    {
       "id": "spacer",
       "fields": [
         {
