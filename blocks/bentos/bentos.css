@@ -19,6 +19,7 @@
     padding: var(--card-padding);
     display: flex;
     flex-direction: column;
+    gap: var(--spacing-m);
     overflow: hidden;
     transition: transform 0.3s var(--transition-ease-out);
 
@@ -52,13 +53,14 @@
   }
 
   .bento-card-body {
-    margin: var(--spacing-s) 0 0;
+    margin: 0;
     color: var(--color-alpha-light-50);
     font-size: var(--body-font-size-s);
     line-height: var(--body-line-height);
   }
 
   .bento-card-cta {
+    /* a touch more breathing room above the buttons, on top of the card gap */
     margin-top: var(--spacing-s);
     display: flex;
     flex-flow: row wrap;
