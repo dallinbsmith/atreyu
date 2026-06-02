@@ -9,8 +9,11 @@
   }
 
   .bento-card {
-    background: var(--card-background);
-    border: var(--card-border);
+    background: color-mix(in srgb, var(--color-light) 6%, transparent);
+    backdrop-filter: blur(var(--card-background-blur));
+    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+    -webkit-backdrop-filter: blur(var(--card-background-blur));
+    border: 1px solid color-mix(in srgb, var(--color-light) 12%, transparent);
     border-radius: var(--card-border-radius);
     padding: var(--card-padding);
     display: flex;

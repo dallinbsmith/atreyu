@@ -9,9 +9,9 @@
     position: absolute;
     bottom: 0;
     left: 50%;
-    width: min(1000px, 92%);
+    width: min(1400px, 120%);
     aspect-ratio: 2 / 1;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(38%);
 
     video,
     img {
