@@ -9,16 +9,16 @@
   }
 
   .bento-card {
-    background: color-mix(in srgb, var(--color-light) 6%, transparent);
+    background: var(--color-alpha-dark-50);
     backdrop-filter: blur(var(--card-background-blur));
     /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
     -webkit-backdrop-filter: blur(var(--card-background-blur));
-    border: 1px solid color-mix(in srgb, var(--color-light) 12%, transparent);
-    border-radius: var(--card-border-radius);
+    border: 1px solid var(--color-alpha-light-5);
+    border-radius: 8px;
     padding: var(--card-padding);
     display: flex;
     flex-direction: column;
-    min-height: 280px;
+    min-height: 28rem;
     transition: transform 0.3s var(--transition-ease-out);
 
     &:hover {
@@ -29,19 +29,22 @@
   .bento-card-title {
     margin: 0;
     color: var(--color-light);
-    font-size: var(--heading-font-size-m);
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.12;
   }
 
   .bento-card-body {
-    margin: var(--spacing-m) 0 0;
+    margin: var(--spacing-xs) 0 0;
     color: var(--color-alpha-light-50);
-    font-size: var(--body-font-size-s);
+    font-size: var(--body-font-size-m);
     line-height: var(--body-line-height);
   }
 
   .bento-card-cta {
     margin-top: auto;
-    padding-top: var(--spacing-xl);
+    padding-top: 0;
     display: flex;
     flex-flow: row wrap;
     align-items: center;
@@ -57,6 +60,10 @@
 
     .bento-card {
       padding: var(--card-padding-desktop);
+    }
+
+    .bento-card-title {
+      font-size: 2.5rem;
     }
   }
 }
