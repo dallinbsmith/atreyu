@@ -1,0 +1,67 @@
+.text-over-image {
+  position: relative;
+  max-width: var(--grid-container-width);
+  margin: 0 auto;
+  min-height: 360px;
+  border-radius: var(--radius-16, 16px);
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  isolation: isolate;
+
+  /* Frame.io `em` decorator = muted second-tone, not italic (two-tone titles) */
+  em {
+    font-style: normal;
+    color: var(--em-color, var(--color-alpha-light-50));
+  }
+
+  .toi-media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+
+    img,
+    video,
+    picture {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--color-dark) 70%, transparent));
+    }
+  }
+
+  /* fallback when no media is authored (CSP-blocked Sanity assets) */
+  &:not(:has(.toi-media)) {
+    background: radial-gradient(80% 120% at 20% 0%, color-mix(in srgb, var(--color-iris) 22%, transparent), transparent 60%), var(--color-alpha-dark-50);
+  }
+
+  .toi-content {
+    padding: var(--spacing-xl);
+    max-width: 44ch;
+  }
+
+  .toi-title {
+    margin: var(--spacing-s) 0 0;
+    color: var(--color-light);
+    font-size: var(--heading-font-size-xl);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+}
+
+@media (width >= 768px) {
+  .text-over-image {
+    min-height: 480px;
+
+    .toi-content {
+      padding: var(--spacing-xxl, 48px);
+    }
+  }
+}

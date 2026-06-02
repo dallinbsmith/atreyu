@@ -1,0 +1,65 @@
+.card-grid-nav {
+  max-width: var(--grid-container-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-l);
+
+  .cgn-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-m);
+    padding: var(--spacing-m);
+    border: 1px solid var(--color-alpha-light-5);
+    border-radius: var(--radius-16, 16px);
+    background: var(--color-alpha-dark-50);
+    color: var(--color-light);
+    text-decoration: none;
+    transition: border-color 0.25s var(--transition-ease-out), background 0.25s var(--transition-ease-out);
+  }
+
+  a.cgn-card:hover {
+    border-color: var(--color-alpha-light-10);
+    background: color-mix(in srgb, var(--color-iris) 8%, var(--color-alpha-dark-50));
+  }
+
+  .cgn-media {
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-12, 12px);
+    overflow: hidden;
+    background: var(--color-alpha-light-5);
+
+    img,
+    video,
+    picture {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  .cgn-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-size: var(--body-font-size-m);
+    font-weight: 600;
+
+    &::after {
+      content: '→';
+      color: var(--color-alpha-light-50);
+      transition: transform 0.2s var(--transition-ease-out);
+    }
+  }
+
+  a.cgn-card:hover .cgn-label::after {
+    transform: translateX(3px);
+  }
+}
+
+@media (width >= 768px) {
+  .card-grid-nav {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
