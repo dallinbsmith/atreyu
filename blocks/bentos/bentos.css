@@ -21,7 +21,6 @@
     flex-direction: column;
     gap: var(--spacing-m);
     overflow: hidden;
-    transition: transform 0.3s var(--transition-ease-out);
 
     /* subtle top-corner glow, matching Frame.io's buttonCards */
     &::before {
@@ -36,10 +35,6 @@
     > * {
       position: relative;
       z-index: 1;
-    }
-
-    &:hover {
-      transform: scale(var(--card-hover-scale));
     }
   }
 
