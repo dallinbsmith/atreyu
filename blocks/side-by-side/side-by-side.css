@@ -87,6 +87,14 @@
     }
   }
 
+  .side-by-side-tout-icon {
+    display: block;
+    width: 28px;
+    height: 28px;
+    margin-bottom: var(--spacing-s);
+    color: var(--color-iris);
+  }
+
   .side-by-side-tout-title {
     margin: 0;
     color: var(--color-light);
