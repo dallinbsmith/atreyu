@@ -1,41 +1,54 @@
+/* Typed custom property so --progress interpolates smoothly and is a single,
+   swappable input — driven by the JS scroll engine today, and ready to be driven
+   natively by animation-timeline: view() where supported, with zero code change. */
+@property --progress {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
+
 .hero-cards {
   position: relative;
-  display: grid;
-  place-items: center;
-  min-height: 76vh;
-  padding: var(--spacing-xxl, 48px) var(--grid-gutter-width);
-  overflow: hidden;
-  isolation: isolate;
-  text-align: center;
 
   em {
     font-style: normal;
     color: var(--em-color, var(--color-alpha-light-50));
   }
 
+  /* Resting / reduced-motion layout: a single-screen centered hero. */
+  .hc-stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 78vh;
+    padding: var(--spacing-xxl, 48px) var(--grid-gutter-width);
+    overflow: hidden;
+    isolation: isolate;
+    text-align: center;
+  }
+
   .hc-wall {
     position: absolute;
-    inset: -5%;
+    inset: -6%;
     z-index: -1;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--spacing-m);
-
-    /* fade the montage toward the center so the title stays legible */
-    mask-image: radial-gradient(120% 90% at 50% 50%, transparent 18%, #000 80%);
-    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
-    -webkit-mask-image: radial-gradient(120% 90% at 50% 50%, transparent 18%, #000 80%);
     opacity: 0.5;
+
+    /* fade the montage toward the centre so the title stays legible */
+    mask-image: radial-gradient(120% 92% at 50% 50%, transparent 16%, #000 78%);
+    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+    -webkit-mask-image: radial-gradient(120% 92% at 50% 50%, transparent 16%, #000 78%);
   }
 
   .hc-tile {
     aspect-ratio: 9 / 16;
     border-radius: var(--radius-12, 12px);
     overflow: hidden;
-    background:
-      linear-gradient(150deg,
-        color-mix(in srgb, var(--color-iris) calc(18% + var(--i) * 6%), transparent),
-        color-mix(in srgb, var(--color-cobalt) 20%, transparent));
+    background: linear-gradient(150deg,
+      color-mix(in srgb, var(--color-iris) calc(18% + var(--col, 0) * 6%), transparent),
+      color-mix(in srgb, var(--color-cobalt) 20%, transparent));
 
     img,
     picture {
@@ -47,13 +60,13 @@
   }
 
   .hc-text {
-    max-width: 18ch;
+    max-width: 16ch;
   }
 
   .hc-title {
     margin: var(--spacing-s) 0 0;
     color: var(--color-light);
-    font-size: clamp(2.5rem, 7vw, 5rem);
+    font-size: clamp(2.5rem, 7vw, 5.25rem);
     font-weight: 600;
     letter-spacing: -0.04em;
     line-height: 1.02;
@@ -63,5 +76,71 @@
 @media (width >= 768px) {
   .hero-cards .hc-wall {
     grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ---- scrub mode: tall section, pinned stage scrubbed by --progress ---- */
+.hero-cards.hc-scrub {
+  min-height: 200vh;
+
+  .hc-stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    min-height: 100vh;
+  }
+
+  /* wall dims as you scroll into the page */
+  .hc-wall {
+    opacity: calc(0.5 - var(--progress) * 0.32);
+  }
+
+  /* per-column parallax (outer columns drift faster) + staggered entry transition */
+  .hc-tile {
+    transform: translate3d(0, calc(var(--progress) * var(--ratio) * -30vh), 0);
+    will-change: transform;
+    transition:
+      opacity 0.8s var(--transition-ease-out) calc(var(--i) * 0.03s),
+      clip-path 0.9s var(--transition-ease-out) calc(var(--i) * 0.03s);
+  }
+
+  /* one-time staggered entry: clip + fade up from the bottom */
+  &:not(.hc-in) .hc-tile {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+  }
+
+  &.hc-in .hc-tile {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+
+  /* title fades + lifts away as the page scrolls under it */
+  .hc-text {
+    transform: translateY(calc(var(--progress) * 12vh));
+    opacity: clamp(0, calc(1 - var(--progress) * 2.4), 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-cards.hc-scrub {
+    min-height: 78vh;
+
+    .hc-stage {
+      position: relative;
+      height: auto;
+    }
+
+    .hc-tile {
+      transform: none;
+      opacity: 1;
+      clip-path: none;
+      transition: none;
+    }
+
+    .hc-text {
+      transform: none;
+      opacity: 1;
+    }
   }
 }

@@ -1,8 +1,19 @@
-// Camera-to-Cloud style hero: a centered eyebrow + large two-tone title set over
-// a montage wall of creator clips. Frame.io's heroCardsTransition scrubs this
-// wall through a GSAP scroll-pinned transition; EDS has no scroll-scrub primitive,
-// so we present a static montage (the transition is the documented shortcoming).
+// Camera-to-Cloud hero: a centered eyebrow + large two-tone title over a montage
+// wall of creator clips. Faithful port of Falkor's heroCardsTransition WITHOUT
+// GSAP or scroll-pinning libraries: a tall section with a pinned stage, where a
+// single 0..1 `--progress` (set by the shared scroll engine) drives CSS-only,
+// compositor-friendly transforms — per-column parallax (--ratio), wall dim, and
+// text fade-out — plus a one-time staggered entry reveal on the tiles. The title
+// renders immediately (LCP-safe); the animation is lazy + motion-gated, falling
+// back to a static montage. `--progress` is a typed @property, so it can later be
+// driven natively by `animation-timeline: view()` with zero JS where supported.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
+import { shouldAnimate, onReveal } from '../../scripts/utils/motion.js';
+import { trackScrollProgress } from '../../scripts/utils/scroll.js';
+
+const COLS = 6;
+// per-column parallax speed — outer columns drift faster (mirrors Falkor)
+const RATIOS = [0.85, 0.4, 0.2, 0.2, 0.4, 0.85];
 
 export default (el) => {
   el.classList.add('hero-cards');
@@ -10,7 +21,7 @@ export default (el) => {
 
   const text = document.createElement('div');
   text.className = 'hc-text';
-  [...el.querySelectorAll('h1, h2, p')].forEach((node) => {
+  [...el.querySelectorAll('h1, h2, h3, p')].forEach((node) => {
     if (!node.querySelector('picture, img')) text.append(node);
   });
   text.querySelector('h1, h2')?.classList.add('hc-title');
@@ -19,15 +30,26 @@ export default (el) => {
   wall.className = 'hc-wall';
   wall.setAttribute('aria-hidden', 'true');
   const count = Math.max(pics.length, 12);
-  Array.from({ length: count }, (_, i) => {
+  Array.from({ length: count }, (_, i) => i).forEach((i) => {
+    const col = i % COLS;
     const tile = document.createElement('div');
     tile.className = 'hc-tile';
-    tile.style.setProperty('--i', i % 6);
+    tile.style.setProperty('--col', col);
+    tile.style.setProperty('--ratio', RATIOS[col]);
+    tile.style.setProperty('--i', i);
     if (pics[i]) tile.append(pics[i]);
     wall.append(tile);
-    return tile;
   });
 
-  el.replaceChildren(wall, text);
+  const stage = document.createElement('div');
+  stage.className = 'hc-stage';
+  stage.append(wall, text);
+  el.replaceChildren(stage);
   decorateRichText(el);
+
+  if (!shouldAnimate()) return; // reduced motion / save-data → static montage
+
+  el.classList.add('hc-scrub'); // opts into the tall pinned-scrub layout
+  trackScrollProgress(el); // maintains --progress (0..1) on el while in view
+  onReveal(el, () => el.classList.add('hc-in'), { threshold: 0 }); // one-time entry
 };
