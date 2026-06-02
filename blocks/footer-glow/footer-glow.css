@@ -20,6 +20,7 @@
     width: min(1400px, 120%);
     aspect-ratio: 2 / 1;
     transform: translateX(-50%) translateY(24%);
+
     /* soften the rings so the bloom reads as diffuse light, not hard arcs */
     filter: blur(1.5px);
 
