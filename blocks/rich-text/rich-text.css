@@ -47,6 +47,13 @@
     }
   }
 
+  /* Frame.io `em` decorator = muted second-tone text color, NOT italic.
+     Powers two-tone titles (line 1 full color, em line muted); --em-color is overridable per section. */
+  em {
+    font-style: normal;
+    color: var(--em-color, var(--color-alpha-light-50));
+  }
+
   /* Inline custom styles — author writes [[style|text]] */
   .rt-eyebrow {
     display: inline-block;
