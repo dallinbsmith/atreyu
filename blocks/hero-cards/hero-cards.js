@@ -15,6 +15,15 @@ const COLS = 6;
 // per-column parallax speed — outer columns drift faster (mirrors Falkor)
 const RATIOS = [0.85, 0.4, 0.2, 0.2, 0.4, 0.85];
 
+// Self-hosted creator-clip stills (pulled from Sanity, optimized to webp and
+// colocated so they serve same-origin/CSP-safe via the code bus). Used to fill
+// the montage wall when the author hasn't supplied imagery.
+const POSTERS = [
+  'hud-trapped', 'turmoil', 'night-silhouettes', 'hazy-recollections', 'lonely-highway',
+  'wanderer', 'midnight-journey', 'cryogenic-battles', 'shadowy-figure', 'delivery',
+];
+const posterUrl = (name) => new URL(`./img/${name}.webp`, import.meta.url).href;
+
 export default (el) => {
   el.classList.add('hero-cards');
   const pics = [...el.querySelectorAll('picture, img')].map((p) => p.closest('picture') ?? p);
@@ -37,7 +46,16 @@ export default (el) => {
     tile.style.setProperty('--col', col);
     tile.style.setProperty('--ratio', RATIOS[col]);
     tile.style.setProperty('--i', i);
-    if (pics[i]) tile.append(pics[i]);
+    if (pics[i]) {
+      tile.append(pics[i]);
+    } else {
+      const img = new Image();
+      img.src = posterUrl(POSTERS[i % POSTERS.length]);
+      img.alt = '';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      tile.append(img);
+    }
     wall.append(tile);
   });
 
