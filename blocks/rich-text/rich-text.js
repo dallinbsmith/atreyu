@@ -1,5 +1,3 @@
-import { emit } from '../../scripts/utils/event-bus.js';
-
 // Inline custom-style convention: [[style|text]] → <span class="rt-style">text</span>
 // (DOM-built, no innerHTML — approximates Portable Text decorators on the EDS richtext field)
 const STYLE_RE = /\[\[([\w-]+)\|([^\]]+)\]\]/;
@@ -20,19 +18,8 @@ const styleTextNode = (start) => {
   }
 };
 
-// Behavioral marks via link-href convention: href /widgets/{name} → data-behavior + event
-const decorateBehaviors = (el) => {
-  for (const a of el.querySelectorAll('a[href*="/widgets/"]')) {
-    const behavior = new URL(a.href, window.location.href).pathname.split('/widgets/')[1];
-    if (behavior) {
-      a.dataset.behavior = behavior;
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        emit(`widget-${behavior}`, { source: a });
-      });
-    }
-  }
-};
+// Behavioral marks (/widgets/{name} links) are handled centrally by the
+// scripts/behaviors.js registry: ak.js tags them, the phase runners init them.
 
 export default (el) => {
   const content = el.querySelector(':scope > div > div') ?? el;
@@ -42,6 +29,4 @@ export default (el) => {
   const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) textNodes.push(n);
   textNodes.forEach(styleTextNode);
-
-  decorateBehaviors(content);
 };

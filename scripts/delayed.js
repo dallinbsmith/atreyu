@@ -3,6 +3,9 @@
 
 import { setAnalyticsProvider } from './utils/analytics.js';
 import { hasConsent, onConsentChange } from './utils/consent.js';
+import { runBehaviors } from './behaviors.js';
+
+runBehaviors('delayed');
 
 const loadAnalytics = () => {
   if (hasConsent('analytics')) {
