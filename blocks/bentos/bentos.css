@@ -1,7 +1,7 @@
 .bentos {
   max-width: var(--grid-container-width);
   margin: 0 auto;
-  padding: var(--spacing-xxl) 0;
+  padding: var(--spacing-s) 0 var(--spacing-xxl);
 
   .bento-grid {
     display: grid;
