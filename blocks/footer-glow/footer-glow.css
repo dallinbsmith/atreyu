@@ -1,15 +1,16 @@
 .footer-glow {
   position: relative;
   width: 100%;
-  min-height: 320px;
+  min-height: 400px;
   overflow: hidden;
   pointer-events: none;
 
-  /* fade the base instead of hard-clipping it, and let the footer ride up over
-     the faded tail so there is no dead black band between glow and footer. */
-  mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+  /* Fade BOTH ends: the top so the rings dissolve into the page instead of being
+     hard-clipped, the base so the footer can ride up over the tail with no dead
+     black band between glow and footer. */
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%);
   /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
-  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%);
   margin-bottom: -80px;
 
   .footer-glow-media {
@@ -18,7 +19,9 @@
     left: 50%;
     width: min(1400px, 120%);
     aspect-ratio: 2 / 1;
-    transform: translateX(-50%) translateY(20%);
+    transform: translateX(-50%) translateY(24%);
+    /* soften the rings so the bloom reads as diffuse light, not hard arcs */
+    filter: blur(1.5px);
 
     video,
     img {
@@ -29,14 +32,16 @@
     }
   }
 
+  /* Oversized, far-reaching bloom — stretches up and out beyond the container
+     (clipped by the mask) so the glow feels expansive rather than contained. */
   .footer-glow-gradient {
     position: absolute;
-    inset: 0 -25% -30%;
+    inset: -25% -25% -30%;
     background: radial-gradient(
-      ellipse 50% 46% at 50% 66%,
-      color-mix(in srgb, var(--color-iris) 55%, transparent),
-      color-mix(in srgb, var(--color-cobalt) 28%, transparent) 40%,
-      transparent 72%
+      ellipse 80% 78% at 50% 72%,
+      color-mix(in srgb, var(--color-iris) 50%, transparent),
+      color-mix(in srgb, var(--color-cobalt) 24%, transparent) 45%,
+      transparent 88%
     );
     mix-blend-mode: screen;
   }
@@ -44,7 +49,7 @@
 
 @media (width >= 768px) {
   .footer-glow {
-    min-height: 460px;
-    margin-bottom: -110px;
+    min-height: 600px;
+    margin-bottom: -130px;
   }
 }
