@@ -405,6 +405,37 @@ a {
   }
 }
 
+/* Button color schemes — set by section/block theme classes (glass, ghost).
+   Override the rendered .btn appearance regardless of its base variant. */
+.glass .btn,
+.ghost .btn {
+  --btn-scheme: 1;
+
+  color: var(--color-light);
+  box-shadow: none;
+}
+
+.glass .btn {
+  background: color-mix(in srgb, rgb(var(--color-light-base)) 12%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-light-base)) 24%, transparent);
+  backdrop-filter: blur(12px);
+  /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+  -webkit-backdrop-filter: blur(12px);
+
+  &:hover {
+    background: color-mix(in srgb, rgb(var(--color-light-base)) 20%, transparent);
+  }
+}
+
+.ghost .btn {
+  background: transparent;
+  border: 2px solid color-mix(in srgb, rgb(var(--color-light-base)) 40%, transparent);
+
+  &:hover {
+    border-color: var(--color-light);
+  }
+}
+
 /* sections */
 .section {
   display: block;

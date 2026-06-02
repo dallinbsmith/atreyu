@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
+import { tagBehavior } from './behaviors.js';
+
 const LOG = async (ex, el) => (await import('./utils/error.js')).default(ex, el);
 
 export const getMetadata = (name) => {
@@ -197,6 +199,7 @@ export const decorateLink = (config, a) => {
       if (localized) a.href = localized.href;
     }
     decorateButton(a);
+    tagBehavior(a);
     if (!dnb) {
       const href = a.getAttribute('href');
       const found = config.linkBlocks.some((pattern) => {

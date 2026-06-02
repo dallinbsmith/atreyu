@@ -1,6 +1,58 @@
 {
   "models": [
     {
+      "id": "button",
+      "fields": [
+        {
+          "component": "text",
+          "name": "text",
+          "label": "Label",
+          "valueType": "string",
+          "required": true
+        },
+        {
+          "component": "aem-content",
+          "name": "link",
+          "label": "Link"
+        },
+        {
+          "component": "select",
+          "name": "variant",
+          "label": "Variant",
+          "options": [
+            { "name": "Primary", "value": "primary" },
+            { "name": "Secondary", "value": "secondary" },
+            { "name": "Accent", "value": "accent" },
+            { "name": "Outline", "value": "outline" },
+            { "name": "Text Link", "value": "textLink" }
+          ]
+        },
+        {
+          "component": "select",
+          "name": "colorScheme",
+          "label": "Color Scheme",
+          "options": [
+            { "name": "Inherit", "value": "inherit" },
+            { "name": "Glass", "value": "glass" },
+            { "name": "Ghost", "value": "ghost" },
+            { "name": "White", "value": "white" }
+          ]
+        },
+        {
+          "component": "select",
+          "name": "behavior",
+          "label": "Behavior",
+          "options": [
+            { "name": "Link", "value": "link" },
+            { "name": "Calendly", "value": "calendly" },
+            { "name": "Outlook", "value": "outlook" },
+            { "name": "Download", "value": "download" },
+            { "name": "Phone", "value": "phone" }
+          ]
+        }
+      ]
+    },
+    {
       "id": "hero",
       "fields": [
         {
