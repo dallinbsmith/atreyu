@@ -22,7 +22,7 @@ export default (el) => {
     const [qCol, aCol] = [...row.children];
     if (qCol && aCol) {
       const question = qCol.textContent.trim();
-      const answer = aCol.innerHTML.trim();
+      const answerText = aCol.textContent.trim();
 
       const details = document.createElement('details');
       details.className = 'faq-item';
@@ -33,12 +33,14 @@ export default (el) => {
 
       const content = document.createElement('div');
       content.className = 'faq-answer';
-      content.innerHTML = answer;
+      // move authored nodes directly — no innerHTML round-trip (avoids re-parsing
+      // authored markup as a string; keeps the decorator's XSS surface minimal)
+      content.append(...aCol.childNodes);
 
       details.append(summary, content);
 
       el.append(details);
-      items.push({ question, answer: aCol.textContent.trim() });
+      items.push({ question, answer: answerText });
     }
   }
 

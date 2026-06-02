@@ -11,14 +11,17 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
 export const rovingTabindex = (container, items, options = {}) => {
   const { orientation = 'horizontal', wrap = true } = options;
   const elements = [...items];
+  if (!elements.length) return () => {};
 
-  const setActive = (index) => {
+  const setActive = (index, moveFocus = true) => {
     for (const el of elements) el.setAttribute('tabindex', '-1');
     elements[index].setAttribute('tabindex', '0');
-    elements[index].focus();
+    if (moveFocus) elements[index].focus();
   };
 
-  setActive(0);
+  // Establish roving state without stealing focus on load (only move focus
+  // in response to actual keyboard navigation).
+  setActive(0, false);
 
   const prevKeys = orientation === 'horizontal' ? ['ArrowLeft'] : ['ArrowUp'];
   const nextKeys = orientation === 'horizontal' ? ['ArrowRight'] : ['ArrowDown'];
