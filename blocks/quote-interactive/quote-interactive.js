@@ -9,6 +9,7 @@ import { decorateRichText } from '../../scripts/utils/richtext.js';
 export default (el) => {
   const rows = [...el.children];
   rows.shift()?.classList.add('qi-head');
+  if (!rows.length) return;
 
   const tablist = document.createElement('div');
   tablist.className = 'qi-tabs';
@@ -35,6 +36,7 @@ export default (el) => {
     panel.id = panelId;
     panel.setAttribute('role', 'tabpanel');
     panel.setAttribute('aria-labelledby', tabId);
+    panel.setAttribute('tabindex', '0');
     if (quote) {
       const bq = document.createElement('blockquote');
       bq.append(...quote.childNodes);
