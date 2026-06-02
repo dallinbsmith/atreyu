@@ -103,6 +103,18 @@
       ]
     },
     {
+      "id": "rich-text",
+      "fields": [
+        {
+          "component": "richtext",
+          "name": "content",
+          "label": "Content",
+          "valueType": "string",
+          "description": "Rich text. Inline custom styles: [[eyebrow|text]], [[highlight|text]], [[label|text]]. Behavioral links: href /widgets/{name}."
+        }
+      ]
+    },
+    {
       "id": "spacer",
       "fields": [
         {

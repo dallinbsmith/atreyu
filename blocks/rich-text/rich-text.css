@@ -1,0 +1,79 @@
+.rich-text {
+  max-width: var(--grid-container-width);
+  margin: 0 auto;
+  color: var(--color-alpha-light-50);
+
+  .rich-text-content {
+    > :first-child {
+      margin-top: 0;
+    }
+
+    /* native rich text → Frame.io title scale via heading level */
+    h1,
+    h2,
+    h3 {
+      color: var(--color-light);
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+    }
+
+    h1 {
+      font-size: var(--heading-font-size-xl);
+    }
+
+    h2 {
+      font-size: var(--heading-font-size-l);
+    }
+
+    h3 {
+      font-size: var(--heading-font-size-m);
+    }
+
+    p {
+      font-size: var(--body-font-size-m);
+      line-height: var(--body-line-height);
+      margin: var(--spacing-m) 0;
+    }
+
+    a:not(.btn) {
+      color: var(--color-light);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    ul,
+    ol {
+      margin: var(--spacing-m) 0;
+    }
+  }
+
+  /* Inline custom styles — author writes [[style|text]] */
+  .rt-eyebrow {
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: var(--body-font-size-s);
+    font-weight: 600;
+    color: var(--color-iris);
+  }
+
+  .rt-label {
+    font-weight: 600;
+    color: var(--color-light);
+  }
+
+  .rt-highlight {
+    padding: 0 0.25em;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-cobalt) 30%, transparent);
+    color: var(--color-light);
+  }
+
+  /* Behavioral marks (href /widgets/*) */
+  a[data-behavior] {
+    color: var(--color-light);
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+}
