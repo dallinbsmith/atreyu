@@ -201,6 +201,22 @@
               }
             }
           }
+        },
+        {
+          "title": "Spacer",
+          "id": "spacer",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Spacer",
+                  "model": "spacer",
+                  "classes": "m"
+                }
+              }
+            }
+          }
         }
       ]
     }

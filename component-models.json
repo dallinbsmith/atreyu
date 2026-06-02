@@ -103,6 +103,23 @@
       ]
     },
     {
+      "id": "spacer",
+      "fields": [
+        {
+          "component": "select",
+          "name": "classes",
+          "label": "Size",
+          "options": [
+            { "name": "Small", "value": "s" },
+            { "name": "Medium", "value": "m" },
+            { "name": "Large", "value": "l" },
+            { "name": "XL", "value": "xl" },
+            { "name": "XXL", "value": "xxl" }
+          ]
+        }
+      ]
+    },
+    {
       "id": "youtube",
       "fields": [
         {
