@@ -144,6 +144,21 @@
               }
             }
           }
+        },
+        {
+          "title": "Rich Text",
+          "id": "rich-text",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Rich Text",
+                  "model": "rich-text"
+                }
+              }
+            }
+          }
         }
       ]
     },
