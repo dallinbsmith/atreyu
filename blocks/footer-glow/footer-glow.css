@@ -8,9 +8,9 @@
   /* Fade BOTH ends: the top so the rings dissolve into the page instead of being
      hard-clipped, the base so the footer can ride up over the tail with no dead
      black band between glow and footer. */
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 86%, transparent 100%);
   /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 86%, transparent 100%);
   margin-bottom: -80px;
 
   .footer-glow-media {
@@ -19,10 +19,10 @@
     left: 50%;
     width: min(1400px, 120%);
     aspect-ratio: 2 / 1;
-    transform: translateX(-50%) translateY(24%);
 
-    /* soften the rings so the bloom reads as diffuse light, not hard arcs */
-    filter: blur(1.5px);
+    /* keep the rings crisp — the arch is the whole point; the diffuse stretch
+       comes from the gradient below, not from blurring the video */
+    transform: translateX(-50%) translateY(34%);
 
     video,
     img {
@@ -33,16 +33,16 @@
     }
   }
 
-  /* Oversized, far-reaching bloom — stretches up and out beyond the container
-     (clipped by the mask) so the glow feels expansive rather than contained. */
+  /* A tall, narrow rising bloom (a dome, not a wide band) so the glow follows the
+     arch of the rings and stretches UP the page rather than flattening across it. */
   .footer-glow-gradient {
     position: absolute;
-    inset: -25% -25% -30%;
+    inset: -15% -10% -30%;
     background: radial-gradient(
-      ellipse 80% 78% at 50% 72%,
-      color-mix(in srgb, var(--color-iris) 50%, transparent),
-      color-mix(in srgb, var(--color-cobalt) 24%, transparent) 45%,
-      transparent 88%
+      ellipse 52% 70% at 50% 82%,
+      color-mix(in srgb, var(--color-iris) 52%, transparent),
+      color-mix(in srgb, var(--color-cobalt) 26%, transparent) 42%,
+      transparent 78%
     );
     mix-blend-mode: screen;
   }
@@ -50,7 +50,7 @@
 
 @media (width >= 768px) {
   .footer-glow {
-    min-height: 600px;
+    min-height: 480px;
     margin-bottom: -130px;
   }
 }
