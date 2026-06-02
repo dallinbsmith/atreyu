@@ -133,9 +133,11 @@ const decorateButton = (link) => {
   if (siblings.length > 1) trueParent.classList.add('btn-group');
 
   link.classList.add('btn');
+  // Frame.io's three button color schemes, reachable via emphasis marks:
+  // **bold** = white, *italic* = ghost, ***bold italic*** = glass.
   const variants = [
     [isStrike, 'btn-negative'],
-    [isEm && isStrong, 'btn-accent'],
+    [isEm && isStrong, 'btn-glass'],
     [isStrong, 'btn-primary'],
     [isEm, 'btn-secondary'],
   ];

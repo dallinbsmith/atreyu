@@ -381,13 +381,16 @@ a {
        Author controls position: token last = chip on the right; token first =
        plain inline icon. The sliding arrow lives on .btn-link, so it's excluded. */
     &:not(.btn-link):has(.icon:last-child) {
+      /* the chip defines the button height with a thin inset (compact, like
+         Frame.io) instead of stacking on top of the default vertical padding */
+      padding-block: var(--spacing-xs);
       padding-right: var(--spacing-xs);
     }
 
     &:not(.btn-link) .icon:last-child {
-      width: 2.4em;
-      height: 2.4em;
-      padding: 0.8em;
+      width: 2.3em;
+      height: 2.3em;
+      padding: 0.72em;
       border-radius: 50%;
       background: var(--color-alpha-light-10);
       box-sizing: border-box;
@@ -418,7 +421,10 @@ a {
     }
   }
 
-  &.btn-primary {
+  /* Frame.io button color schemes (Sanity buttonColorScheme: white / ghost / glass).
+     White and ghost alias the positional primary/secondary; glass is its own. */
+  &.btn-primary,
+  &.btn-white {
     color: var(--color-dark);
     background-color: var(--color-light);
     border: 2px solid var(--color-light);
@@ -429,7 +435,8 @@ a {
     }
   }
 
-  &.btn-secondary {
+  &.btn-secondary,
+  &.btn-ghost {
     color: var(--color-light);
     background-color: transparent;
     border: 2px solid var(--color-gray-400);
@@ -440,6 +447,19 @@ a {
 
     &.btn-outline {
       color: var(--color-gray-300);
+    }
+  }
+
+  &.btn-glass {
+    color: var(--color-light);
+    background: color-mix(in srgb, rgb(var(--color-light-base)) 12%, transparent);
+    border: 1px solid color-mix(in srgb, rgb(var(--color-light-base)) 24%, transparent);
+    backdrop-filter: blur(12px);
+    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+    -webkit-backdrop-filter: blur(12px);
+
+    &:hover {
+      background: color-mix(in srgb, rgb(var(--color-light-base)) 20%, transparent);
     }
   }
 
