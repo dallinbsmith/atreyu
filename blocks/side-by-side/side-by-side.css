@@ -123,19 +123,11 @@
     &.no-text {
       grid-template-columns: 1fr;
     }
-
-    .side-by-side-touts {
-      grid-template-columns: repeat(var(--tout-count, 2), 1fr);
-    }
   }
 }
 
 @media (width >= 1240px) {
   .side-by-side {
     grid-template-columns: 6fr 5fr;
-
-    .side-by-side-title h2 {
-      font-size: var(--heading-font-size-xxl);
-    }
   }
 }
