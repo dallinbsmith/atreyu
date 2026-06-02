@@ -159,4 +159,22 @@ describe('utils/touts decorateTout', () => {
     expect(el.firstElementChild.classList.contains('icon')).to.be.true;
     expect(el.querySelectorAll('p')).to.have.length(1); // empty icon <p> gone, body stays
   });
+
+  it('does NOT hoist an icon that lives inside a CTA link (stays on the button)', () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<h3>Head</h3><p><a href="tel:1"><span class="icon icon-phone"></span>Call</a></p>';
+    decorateTout(el, 'tout');
+    expect(el.querySelector('.tout-cta a .icon-phone')).to.exist;
+    expect(el.querySelector('.tout-icon')).to.not.exist;
+  });
+
+  it('a CTA link carrying an arrow icon becomes a btn-link, not a pill', () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<h3>Head</h3><p><a href="/a">A</a></p><p><a href="/b">More <span class="icon icon-arrow"></span></a></p>';
+    decorateTout(el, 'tout');
+    const links = el.querySelectorAll('.tout-cta a');
+    expect(links[0].classList.contains('btn-primary')).to.be.true;
+    expect(links[1].classList.contains('btn-link')).to.be.true;
+    expect(links[1].classList.contains('btn-secondary')).to.be.false;
+  });
 });

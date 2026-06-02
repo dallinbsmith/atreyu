@@ -337,7 +337,9 @@ a {
   }
 
   &.btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
     line-height: 1;
     font-weight: 600;
     text-decoration: none;
@@ -355,6 +357,36 @@ a {
 
     &.btn-outline {
       background: transparent;
+    }
+
+    /* author-swappable button icons (e.g. :phone:, :arrow:) */
+    .icon {
+      display: inline-flex;
+      width: 1.15em;
+      height: 1.15em;
+      flex: none;
+    }
+
+    /* arrow icon (:arrow:) slides on hover */
+    .icon-arrow {
+      transition: transform 0.2s var(--transition-ease-out);
+    }
+
+    &:hover .icon-arrow {
+      transform: translateX(3px);
+    }
+  }
+
+  /* borderless text-link button — used for "Contact Us →" style CTAs */
+  &.btn-link {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--color-light);
+
+    &:hover {
+      transform: none;
+      color: var(--color-alpha-light-50);
     }
   }
 
