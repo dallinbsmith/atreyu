@@ -159,6 +159,21 @@
               }
             }
           }
+        },
+        {
+          "title": "Side by Side",
+          "id": "side-by-side",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Side by Side",
+                  "model": "side-by-side"
+                }
+              }
+            }
+          }
         }
       ]
     },
