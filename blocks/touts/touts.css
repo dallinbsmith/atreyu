@@ -1,0 +1,54 @@
+.touts {
+  max-width: var(--grid-container-width);
+  margin: 0 auto;
+
+  .touts-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+  }
+
+  .tout-icon {
+    display: block;
+    width: 32px;
+    height: 32px;
+    margin-bottom: var(--spacing-m);
+    color: var(--color-iris);
+  }
+
+  .tout {
+    /* light treatment — no card surface, optional top hairline like Frame.io touts */
+    padding-top: var(--spacing-m);
+    border-top: 1px solid var(--color-alpha-light-10);
+  }
+
+  .tout-title {
+    margin: 0;
+    color: var(--color-light);
+    font-size: var(--heading-font-size-m);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .tout-body {
+    margin: var(--spacing-s) 0 0;
+    color: var(--color-alpha-light-50);
+    font-size: var(--body-font-size-s);
+    line-height: var(--body-line-height);
+  }
+
+  .tout-cta {
+    margin-top: var(--spacing-m);
+    display: flex;
+    flex-flow: row wrap;
+    gap: var(--spacing-m);
+  }
+}
+
+@media (width >= 768px) {
+  .touts .touts-row {
+    grid-template-columns: repeat(var(--tout-count, 4), 1fr);
+    gap: var(--grid-gutter-width);
+  }
+}
