@@ -1,3 +1,12 @@
+/* Typed so --progress interpolates smoothly and can later be driven natively by
+   animation-timeline: scroll() with zero JS change. Duplicate registrations of
+   the same name are harmless (the engine sets it on this block's root). */
+@property --progress {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: true;
+}
+
 .image-sequence.prompter {
   max-width: 1100px;
   margin: 0 auto;
@@ -14,20 +23,99 @@
     text-wrap: balance;
   }
 
-  &.prompter-anim .prompter-word {
-    opacity: 0.18;
-    transition: opacity 0.5s var(--transition-ease-out);
-    transition-delay: calc(var(--i) * 45ms);
+  /* resting state: media is just an inline figure */
+  .prompter-media {
+    margin: var(--spacing-xl) 0 0;
+
+    video {
+      width: 100%;
+      border-radius: var(--radius-16, 16px);
+      display: block;
+    }
+  }
+}
+
+/* ---- scrub mode: tall section pins a 100vh stage scrubbed by --progress ---- */
+.image-sequence.prompter.prompter-scrub {
+  max-width: none;
+  padding: 0;
+  min-height: 260vh;
+  position: relative;
+
+  /* scrubbed video sits behind the text, pinned for the whole scroll */
+  .prompter-media {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    margin: 0;
+    z-index: 0;
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 0;
+    }
+
+    /* darken so prompter text stays legible over footage */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: color-mix(in srgb, var(--color-dark) 55%, transparent);
+    }
   }
 
-  &.prompter-anim.lit .prompter-word {
-    opacity: 1;
+  .prompter-text {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    height: 100vh;
+    display: grid;
+    place-content: center;
+    max-width: 18ch;
+    margin: 0 auto;
+    padding: 0 var(--grid-gutter-width);
+    font-size: clamp(2rem, 5.5vw, 4rem);
+  }
+
+  /* media + text both pin: pull the text up over the video instead of below it */
+  .prompter-media + .prompter-text {
+    margin-top: -100vh;
+  }
+
+  /* each word warms from muted to full white as the scroll line passes it */
+  .prompter-word {
+    --lit: clamp(0, calc(var(--progress) * 1.15 * var(--count) - var(--i)), 1);
+
+    color: color-mix(in srgb, var(--color-light) calc(var(--lit) * 100%), var(--color-alpha-light-40));
+    transition: color 0.1s linear;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .image-sequence.prompter .prompter-word {
-    opacity: 1 !important;
-    transition: none;
+  .image-sequence.prompter.prompter-scrub {
+    min-height: 0;
+
+    .prompter-media {
+      position: relative;
+      height: auto;
+      margin: var(--spacing-xl) 0 0;
+
+      video {
+        height: auto;
+        border-radius: var(--radius-16, 16px);
+      }
+    }
+
+    .prompter-text {
+      position: relative;
+      height: auto;
+      margin: var(--spacing-xl) auto 0;
+    }
+
+    .prompter-media + .prompter-text { margin-top: var(--spacing-xl); }
+
+    .prompter-word { color: var(--color-light); }
   }
 }

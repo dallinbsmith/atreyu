@@ -1,11 +1,32 @@
 .touts {
+  position: relative;
   max-width: var(--grid-container-width);
   margin: 0 auto;
 
+  /* below-fold ambient glow, matching Frame.io's feature-tout band */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 -40%;
+    height: 60%;
+    z-index: -1;
+    background: radial-gradient(60% 100% at 50% 100%, color-mix(in srgb, var(--color-iris) 18%, transparent), transparent 70%);
+    pointer-events: none;
+  }
+
   .touts-row {
+    /* mobile: swipeable horizontal rail (Frame.io touts scroll on small screens) */
     display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-xl);
+    grid-auto-flow: column;
+    grid-auto-columns: 78%;
+    gap: var(--spacing-l);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin-inline: calc(var(--grid-gutter-width) * -1);
+    padding-inline: var(--grid-gutter-width);
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { display: none; }
   }
 
   .tout-icon {
@@ -19,7 +40,8 @@
   .tout {
     /* light treatment — no card surface, optional top hairline like Frame.io touts */
     padding-top: var(--spacing-m);
-    border-top: 1px solid var(--color-alpha-light-10);
+    border-top: 1px solid var(--color-alpha-light-40);
+    scroll-snap-align: start;
   }
 
   .tout-title {
@@ -48,7 +70,12 @@
 
 @media (width >= 768px) {
   .touts .touts-row {
+    grid-auto-flow: row;
     grid-template-columns: repeat(var(--tout-count, 4), 1fr);
+    grid-auto-columns: auto;
     gap: var(--grid-gutter-width);
+    overflow-x: visible;
+    margin-inline: 0;
+    padding-inline: 0;
   }
 }

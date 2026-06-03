@@ -53,7 +53,7 @@ export const trackScrollProgress = (el, cb) => {
         active.delete(entry);
       }
     });
-  }, { rootMargin: '200% 0px' });
+  }, { rootMargin: '100% 0px' });
   io.observe(el);
   return () => {
     io.disconnect();

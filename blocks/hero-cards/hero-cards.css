@@ -32,7 +32,7 @@
     inset: -6%;
     z-index: -1;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-m);
     opacity: 0.5;
 
@@ -43,7 +43,7 @@
   }
 
   .hc-tile {
-    aspect-ratio: 9 / 16;
+    aspect-ratio: 3 / 2;
     border-radius: var(--radius-12, 12px);
     overflow: hidden;
     background: linear-gradient(150deg,
@@ -81,7 +81,7 @@
 
 /* ---- scrub mode: tall section, pinned stage scrubbed by --progress ---- */
 .hero-cards.hc-scrub {
-  min-height: 140vh;
+  min-height: 150vh;
 
   .hc-stage {
     position: sticky;

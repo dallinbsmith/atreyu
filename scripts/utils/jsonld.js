@@ -75,6 +75,14 @@ const buildSoftwareApplication = () => ({
   author: { '@id': `${SITE.url}/#organization` },
 });
 
+// Human labels for slugs that title-casing would mangle (e.g. "c2c" → "C2c").
+const BREADCRUMB_LABELS = {
+  c2c: 'Camera to Cloud',
+};
+
+const labelFor = (segment) => BREADCRUMB_LABELS[segment]
+  ?? segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
 const buildBreadcrumbs = () => {
   const { pathname } = window.location;
   const segments = pathname.split('/').filter(Boolean);
@@ -87,7 +95,7 @@ const buildBreadcrumbs = () => {
     items.push({
       '@type': 'ListItem',
       position: idx + 2,
-      name: segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      name: labelFor(segment),
       item: `${SITE.url}${path}`,
     });
   }
