@@ -25,7 +25,15 @@
   --frem: 0.625rem;
   --hero-card-width: calc(25 * var(--frem));
   --hero-card-gutter: var(--spacing-m, 12px);
+
+  /* `--hero-card-aspect-ratio` (4/3) drives `--hero-card-height` which is the
+     SPACING UNIT between rows in a column — it represents the full card visual
+     (media + chin) so adjacent tiles stack without overlap. The MEDIA itself
+     uses `--hero-media-aspect-ratio` (380/213, ~16:9), matching Falkor's
+     `.mediaInnerWrapper --image-aspect-ratio`. Mixing these up makes the media
+     nearly square (4:3) and the cards bleed into each other. */
   --hero-card-aspect-ratio: calc(4 / 3);
+  --hero-media-aspect-ratio: calc(380 / 213);
   --hero-card-height: calc(var(--hero-card-width) / var(--hero-card-aspect-ratio));
   --col-gap: calc(var(--hero-card-width) + var(--hero-card-gutter));
   --row-gap: calc(var(--hero-card-height) + var(--hero-card-gutter));
@@ -102,7 +110,7 @@
 
   .hc-media {
     position: relative;
-    aspect-ratio: var(--hero-card-aspect-ratio);
+    aspect-ratio: var(--hero-media-aspect-ratio);
     overflow: hidden;
     opacity: var(--card-content-opacity, 1);
 
