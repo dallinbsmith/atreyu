@@ -83,4 +83,19 @@
     text-underline-offset: 3px;
     cursor: pointer;
   }
+
+  /* Centered section-intro variant: `Rich Text (center)` */
+  &.center {
+    text-align: center;
+
+    .rich-text-content {
+      max-width: 760px;
+      margin-inline: auto;
+    }
+
+    .rich-text-content .rt-cta,
+    .rich-text-content p:has(a) {
+      justify-content: center;
+    }
+  }
 }

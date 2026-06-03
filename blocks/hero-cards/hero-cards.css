@@ -81,7 +81,7 @@
 
 /* ---- scrub mode: tall section, pinned stage scrubbed by --progress ---- */
 .hero-cards.hc-scrub {
-  min-height: 200vh;
+  min-height: 140vh;
 
   .hc-stage {
     position: sticky;
@@ -90,14 +90,15 @@
     min-height: 100vh;
   }
 
-  /* wall dims as you scroll into the page */
+  /* wall dims as you scroll in, but floors well above black so the scrub tail
+     reads as "footage receding", never a dead void */
   .hc-wall {
-    opacity: calc(0.5 - var(--progress) * 0.32);
+    opacity: calc(0.55 - var(--progress) * 0.18);
   }
 
   /* per-column parallax (outer columns drift faster) + staggered entry transition */
   .hc-tile {
-    transform: translate3d(0, calc(var(--progress) * var(--ratio) * -30vh), 0);
+    transform: translate3d(0, calc(var(--progress) * var(--ratio) * -18vh), 0);
     will-change: transform;
     transition:
       opacity 0.8s var(--transition-ease-out) calc(var(--i) * 0.03s),
