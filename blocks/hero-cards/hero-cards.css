@@ -15,18 +15,19 @@
     color: var(--em-color, var(--color-alpha-light-50));
   }
 
-  /* Resting / reduced-motion layout: a single-screen hero, content left-aligned
-     within the grid container (matches frame.io/c2c). */
+  /* Resting / reduced-motion layout: a single-screen hero with the title block
+     right-aligned within the grid container, sitting below a dark footage strip
+     (matches frame.io/c2c). */
   .hc-stage {
     position: relative;
     display: grid;
     align-content: center;
-    justify-items: start;
+    justify-items: end;
     min-height: 78vh;
     padding: var(--spacing-xxl, 48px) 0;
     overflow: hidden;
     isolation: isolate;
-    text-align: left;
+    text-align: right;
   }
 
   .hc-text {
@@ -36,19 +37,24 @@
     padding: 0 var(--grid-gutter-width);
   }
 
+  /* a dark band of footage stills across the top; rows past the first are
+     clipped by the fixed height + overflow, leaving a single horizontal strip */
   .hc-wall {
     position: absolute;
-    inset: -6%;
+    inset: 0 0 auto;
+    height: 26vh;
     z-index: -1;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-m);
+    grid-auto-rows: 26vh;
+    gap: var(--spacing-xs, 8px);
+    overflow: hidden;
     opacity: 0.5;
 
-    /* fade the montage toward the centre so the title stays legible */
-    mask-image: radial-gradient(120% 92% at 50% 50%, transparent 16%, #000 78%);
+    /* fade the strip downward into the black stage so the title stays legible */
+    mask-image: linear-gradient(to bottom, #000 55%, transparent);
     /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
-    -webkit-mask-image: radial-gradient(120% 92% at 50% 50%, transparent 16%, #000 78%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
   }
 
   .hc-tile {
@@ -69,29 +75,13 @@
   }
 
   .hc-title {
-    margin: var(--spacing-s) 0 0;
-    max-width: 9ch; /* wrap "Lights. Camera. Cloud." toward one word per line */
+    margin: var(--spacing-s) 0 0 auto; /* hug the right edge of the container */
+    max-width: 9ch; /* wrap "Lights, camera, cloud" toward one word per line */
     color: var(--color-light);
     font-size: clamp(2.5rem, 7vw, 5.25rem);
     font-weight: 600;
     letter-spacing: -0.04em;
     line-height: 1.02;
-  }
-
-  .hc-body {
-    margin: var(--spacing-l) 0 0;
-    max-width: 42ch;
-    color: var(--color-alpha-light-50);
-    font-size: var(--body-font-size-l);
-    line-height: var(--body-line-height);
-  }
-
-  .hc-cta {
-    margin: var(--spacing-xl) 0 0;
-    display: flex;
-    flex-flow: row wrap;
-    align-items: center;
-    gap: var(--spacing-m);
   }
 }
 

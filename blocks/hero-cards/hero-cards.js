@@ -35,18 +35,6 @@ export default (el) => {
   });
   text.querySelector('h1, h2')?.classList.add('hc-title');
 
-  // subcopy paragraph(s): non-link, non-marker text under the title
-  [...text.querySelectorAll('p')].forEach((p) => {
-    if (!p.querySelector('a') && !p.textContent.trim().startsWith('[[')) p.classList.add('hc-body');
-  });
-
-  // CTA row: the paragraph holding link(s) → filled primary + ghost secondary
-  const cta = [...text.querySelectorAll('p')].find((p) => p.querySelector('a'));
-  if (cta) {
-    cta.classList.add('hc-cta');
-    [...cta.querySelectorAll('a')].forEach((a, i) => a.classList.add('btn', i === 0 ? 'btn-primary' : 'btn-secondary'));
-  }
-
   const wall = document.createElement('div');
   wall.className = 'hc-wall';
   wall.setAttribute('aria-hidden', 'true');
