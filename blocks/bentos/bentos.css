@@ -38,16 +38,48 @@
     }
   }
 
-  .bento-card-media {
-    border-radius: var(--radius-12, 12px);
-    overflow: hidden;
-    background: var(--color-alpha-light-5);
+  /* foreground icon / small preview above the title (foregroundOnly) */
+  .bento-card-media.icon {
+    height: 56px;
+    margin-bottom: var(--spacing-s);
 
     img,
     picture {
       display: block;
+      height: 100%;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      object-position: left center;
+    }
+  }
+
+  /* full-bleed background media with text overlaid on a scrim (backgroundOnly) */
+  .bento-card[data-media="bg"] {
+    justify-content: flex-end;
+    min-height: 340px;
+  }
+
+  .bento-card-media.bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    overflow: hidden;
+
+    img,
+    picture {
       width: 100%;
-      height: auto;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 25%, color-mix(in srgb, var(--color-dark) 88%, transparent));
     }
   }
 
