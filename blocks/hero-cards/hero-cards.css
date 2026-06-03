@@ -15,16 +15,25 @@
     color: var(--em-color, var(--color-alpha-light-50));
   }
 
-  /* Resting / reduced-motion layout: a single-screen centered hero. */
+  /* Resting / reduced-motion layout: a single-screen hero, content left-aligned
+     within the grid container (matches frame.io/c2c). */
   .hc-stage {
     position: relative;
     display: grid;
-    place-items: center;
+    align-content: center;
+    justify-items: start;
     min-height: 78vh;
-    padding: var(--spacing-xxl, 48px) var(--grid-gutter-width);
+    padding: var(--spacing-xxl, 48px) 0;
     overflow: hidden;
     isolation: isolate;
-    text-align: center;
+    text-align: left;
+  }
+
+  .hc-text {
+    max-width: var(--grid-container-width);
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 var(--grid-gutter-width);
   }
 
   .hc-wall {
@@ -59,17 +68,30 @@
     }
   }
 
-  .hc-text {
-    max-width: 16ch;
-  }
-
   .hc-title {
     margin: var(--spacing-s) 0 0;
+    max-width: 9ch; /* wrap "Lights. Camera. Cloud." toward one word per line */
     color: var(--color-light);
     font-size: clamp(2.5rem, 7vw, 5.25rem);
     font-weight: 600;
     letter-spacing: -0.04em;
     line-height: 1.02;
+  }
+
+  .hc-body {
+    margin: var(--spacing-l) 0 0;
+    max-width: 42ch;
+    color: var(--color-alpha-light-50);
+    font-size: var(--body-font-size-l);
+    line-height: var(--body-line-height);
+  }
+
+  .hc-cta {
+    margin: var(--spacing-xl) 0 0;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    gap: var(--spacing-m);
   }
 }
 
