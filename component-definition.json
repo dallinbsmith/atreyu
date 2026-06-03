@@ -35,15 +35,15 @@
           }
         },
         {
-          "title": "Hero Cards",
-          "id": "hero-cards",
+          "title": "Hero Cards Transition",
+          "id": "hero-cards-transition",
           "plugins": {
             "xwalk": {
               "page": {
                 "resourceType": "core/franklin/components/block",
                 "template": {
-                  "name": "Hero Cards",
-                  "model": "hero-cards"
+                  "name": "Hero Cards Transition",
+                  "model": "hero-cards-transition"
                 }
               }
             }
