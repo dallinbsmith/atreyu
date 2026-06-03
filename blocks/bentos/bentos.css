@@ -38,6 +38,19 @@
     }
   }
 
+  .bento-card-media {
+    border-radius: var(--radius-12, 12px);
+    overflow: hidden;
+    background: var(--color-alpha-light-5);
+
+    img,
+    picture {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+  }
+
   .bento-card-title {
     margin: 0;
     color: var(--color-light);
