@@ -67,7 +67,7 @@ const buildTile = (i, card) => {
 };
 
 export default (el) => {
-  el.classList.add('hero-cards');
+  el.classList.add('hero-cards-transition');
   const { text: textRows, cards } = collect(el);
 
   const text = document.createElement('div');

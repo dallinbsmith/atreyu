@@ -14,7 +14,7 @@
   inherits: true;
 }
 
-.hero-cards {
+.hero-cards-transition {
   position: relative;
 
   /* Falkor uses rem-based per-column offsets; we mirror them. Browser default
@@ -225,7 +225,7 @@
 }
 
 @media (width >= 768px) {
-  .hero-cards {
+  .hero-cards-transition {
     --hero-card-width: 37.8rem;
     --hero-card-gutter: var(--spacing-l, 24px);
     --first-column-x: -16.2rem;
@@ -251,11 +251,11 @@
 }
 
 @media (width >= 1240px) {
-  .hero-cards { --first-column-x: -20.9rem; }
+  .hero-cards-transition { --first-column-x: -20.9rem; }
 }
 
 @media (width >= 1440px) {
-  .hero-cards {
+  .hero-cards-transition {
     --hero-card-width: 50rem;
     --first-column-x: -40.9rem;
   }
@@ -266,7 +266,7 @@
    Cards are absolutely positioned in 5 staggered columns (3 on mobile),
    with per-column parallax ratios and max opacities matching Falkor.
    ===================================================================== */
-.hero-cards.hc-scrub {
+.hero-cards-transition.hc-scrub {
   min-height: 150vh;
 
   .hc-stage {
@@ -413,7 +413,7 @@
 /* TABLET/DESKTOP — re-layout columns to match Falkor's desktop offsets and
    reveal columns 4 & 5 (cards 7-12). */
 @media (width >= 768px) {
-  .hero-cards.hc-scrub {
+  .hero-cards-transition.hc-scrub {
     /* Column 1 (cards 1, 2) — desktop Y */
     .hc-tile:nth-child(1) { top: calc(var(--base-top) + 10.9rem); }
     .hc-tile:nth-child(2) { top: calc(var(--base-top) + 10.9rem + var(--row-gap)); }
@@ -461,7 +461,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-cards.hc-scrub {
+  .hero-cards-transition.hc-scrub {
     min-height: 78vh;
 
     .hc-stage {

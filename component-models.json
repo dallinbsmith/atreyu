@@ -443,7 +443,7 @@
       ]
     },
     {
-      "id": "hero-cards",
+      "id": "hero-cards-transition",
       "fields": [
         {
           "component": "select",
