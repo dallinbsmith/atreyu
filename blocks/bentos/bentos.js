@@ -10,7 +10,12 @@ const placeMedia = (card) => {
   if (!pic) return null;
   const img = card.querySelector('img');
   const w = img ? Number.parseInt(img.getAttribute('width'), 10) || img.naturalWidth || 0 : 0;
-  const layout = w >= 700 ? 'bg' : 'icon';
+  // Photos (jpg) fill the card as a full-bleed background with text overlaid
+  // (Frame.io `backgroundOnly`); graphics/logos/UI (png, transparent) render as
+  // foreground media above the text (`foregroundOnly`). Width is a fallback.
+  const src = img?.getAttribute('src') ?? '';
+  const isPhoto = /\.jpe?g($|\?)/i.test(src) || /format=(jpe?g|pjpg)/i.test(src);
+  const layout = (isPhoto || w >= 1000) ? 'bg' : 'icon';
   if (layout === 'bg' && img) img.alt = ''; // full-bleed bg is decorative; text carries meaning
   const host = pic.closest('p') ?? pic;
   const media = document.createElement('div');

@@ -39,10 +39,10 @@
     }
   }
 
-  /* foreground icon / small preview above the title (foregroundOnly) */
+  /* foreground graphic / logo / UI preview above the title (foregroundOnly) */
   .bento-card-media.icon {
-    height: 56px;
-    margin-bottom: var(--spacing-s);
+    height: clamp(96px, 14vw, 148px);
+    margin-bottom: var(--spacing-m);
 
     img,
     picture {
