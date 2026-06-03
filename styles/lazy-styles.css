@@ -50,6 +50,27 @@ aem-sidekick {
   view-transition-name: hero;
 }
 
+/* Scroll-reveal: content in below-the-fold sections fades/rises in as it enters
+   view. Native scroll-driven animation — runs on the compositor thread with zero
+   JS, degrades to no animation where unsupported, and is off for reduced motion.
+   The first section (hero/LCP) is excluded so it never starts hidden. */
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    main > .section ~ .section > div {
+      animation: reveal-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 22%;
+    }
+  }
+}
+
 /* Static decorative glow for cards sections */
 .section.glow {
   position: relative;
