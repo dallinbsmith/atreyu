@@ -1,0 +1,7 @@
+/* Back-compat shim — see hero-cards.js. The JS swaps the element class to
+   `hero-cards-transition` before delegation, so we just re-import the canonical
+   block's stylesheet so the framework's auto-load of THIS file is meaningful
+   (otherwise hero-cards-transition.css wouldn't be requested for an element
+   that was authored as `Hero Cards`). Delete with the directory once every
+   page is re-authored. */
+@import url('../hero-cards-transition/hero-cards-transition.css');
