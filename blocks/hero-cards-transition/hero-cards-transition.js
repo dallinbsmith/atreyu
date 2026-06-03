@@ -1,10 +1,7 @@
-// Hero - Cards Transition: vanilla port of Falkor's heroCardsTransition. A
-// 150vh-tall section pins a wall of vapor-styled creator-clip cards (image +
-// chin: title · author · date) behind a centered title lockup. Cards stagger in
-// via a clip-path circle reveal then parallax upward as the reader scrolls.
-// `--progress` (scroll engine) and `--card-entry-progress` (typed @property
-// tweened by a CSS transition staggered from `--from-center`) drive every
-// animation in CSS — GSAP-style sequencing without GSAP. RM → static.
+// Hero - Cards Transition: vanilla port of Falkor's heroCardsTransition. A pinned
+// 150vh wall of vapor cards (image + chin: title · author · date) behind a title
+// lockup. Cards stagger in via clip-path reveal then parallax on scroll; CSS
+// `--progress` + typed `--card-entry-progress` drive everything. RM → static.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { shouldAnimate, onReveal } from '../../scripts/utils/motion.js';
 import { trackScrollProgress } from '../../scripts/utils/scroll.js';
@@ -12,14 +9,22 @@ import { trackScrollProgress } from '../../scripts/utils/scroll.js';
 const MAX_CARDS = 12;
 const CENTER = (MAX_CARDS - 1) / 2;
 
-// Self-hosted creator-clip stills, colocated for same-origin/CSP-safe delivery.
+// Creator-clip stills + decorative chin defaults — cycled when the authored card
+// list runs out. Mirrors Falkor's frame.io vapor-card aesthetic so the wall
+// always reads as a "creator workspace" even with zero authored chin metadata.
 const POSTERS = [
-  'hud-trapped', 'turmoil', 'night-silhouettes', 'hazy-recollections', 'lonely-highway',
-  'wanderer', 'midnight-journey', 'cryogenic-battles', 'shadowy-figure', 'delivery',
+  { slug: 'hud-trapped', title: 'HUD: Trapped', author: 'Lily Snow', date: '2024-03-26' },
+  { slug: 'turmoil', title: 'Turmoil', author: 'Marcus Vega', date: '2024-04-12' },
+  { slug: 'night-silhouettes', title: 'Night Silhouettes', author: 'Aria Chen', date: '2024-02-18' },
+  { slug: 'hazy-recollections', title: 'Hazy Recollections', author: 'James Wright', date: '2024-05-04' },
+  { slug: 'lonely-highway', title: 'Lonely Highway', author: 'Sofia Reyes', date: '2024-01-22' },
+  { slug: 'wanderer', title: 'Wanderer', author: 'Theo Park', date: '2024-06-09' },
+  { slug: 'midnight-journey', title: 'Midnight Journey', author: 'Nora Vance', date: '2024-03-15' },
+  { slug: 'cryogenic-battles', title: 'Cryogenic Battles', author: 'Kai Mori', date: '2024-04-28' },
+  { slug: 'shadowy-figure', title: 'Shadowy Figure', author: 'Eva Lin', date: '2024-05-19' },
+  { slug: 'delivery', title: 'Delivery', author: 'Owen Hart', date: '2024-02-07' },
 ];
-const posterUrl = (n) => new URL(`./img/${n}.webp`, import.meta.url).href;
-
-// "2025-03-14" → "March 14, 2025"; non-dates pass through so plain chin text survives.
+const posterUrl = (slug) => new URL(`./img/${slug}.webp`, import.meta.url).href;
 const fmtDate = (s) => {
   const d = s && new Date(s);
   return !d || Number.isNaN(d.getTime()) ? (s ?? '')
@@ -29,11 +34,10 @@ const fmtDate = (s) => {
 // Parsed once; cloned per tile. Author-provided chin text lands via textContent
 // so no innerHTML round-trip ever touches author input (no XSS surface).
 const TILE_TPL = document.createElement('template');
-TILE_TPL.innerHTML = '<div class="hc-tile"><div class="hc-media"><div class="hc-media-inner"></div></div><div class="hc-chin" hidden><span class="hc-chin-title"></span><div class="hc-chin-row"><span class="hc-chin-sub"><span class="hc-chin-author"></span><span class="hc-chin-date"></span></span><span class="icon icon-more hc-more"></span></div></div></div>';
+TILE_TPL.innerHTML = '<div class="hc-tile"><div class="hc-media"><div class="hc-media-inner"></div></div><div class="hc-chin"><span class="hc-chin-title"></span><div class="hc-chin-row"><span class="hc-chin-sub"><span class="hc-chin-author"></span><span class="hc-chin-date"></span></span><span class="icon icon-more hc-more"></span></div></div></div>';
 
 // Text-only rows fold into the title lockup; rows with a picture yield cards.
-// A card row's sibling cells become the chin (title | author | date) — mirrors
-// Falkor's heroCardsTransition card schema.
+// A card row's sibling cells become the chin (title | author | date).
 const collect = (el) => {
   const text = [];
   const cards = [];
@@ -52,17 +56,15 @@ const collect = (el) => {
 const buildTile = (i, card) => {
   const tile = TILE_TPL.content.firstElementChild.cloneNode(true);
   tile.style.cssText = `--i:${i};--from-center:${Math.abs(i - CENTER)};--from-edge:${CENTER - Math.abs(i - CENTER)}`;
-  const [title = '', author = '', date = ''] = (card?.chin ?? []).map((c) => c.textContent.trim());
+  const fallback = POSTERS[i % POSTERS.length];
+  const [aTitle, aAuthor, aDate] = (card?.chin ?? []).map((c) => c.textContent.trim());
   tile.querySelector('.hc-media-inner').append(card?.pic ?? Object.assign(new Image(), {
-    src: posterUrl(POSTERS[i % POSTERS.length]), alt: '', loading: 'lazy', decoding: 'async',
+    src: posterUrl(fallback.slug), alt: '', loading: 'lazy', decoding: 'async',
   }));
-  if (title || author || date) {
-    const chin = tile.querySelector('.hc-chin');
-    chin.hidden = false;
-    chin.querySelector('.hc-chin-title').textContent = title;
-    chin.querySelector('.hc-chin-author').textContent = author;
-    chin.querySelector('.hc-chin-date').textContent = fmtDate(date);
-  }
+  const chin = tile.querySelector('.hc-chin');
+  chin.querySelector('.hc-chin-title').textContent = aTitle || fallback.title;
+  chin.querySelector('.hc-chin-author').textContent = aAuthor || fallback.author;
+  chin.querySelector('.hc-chin-date').textContent = fmtDate(aDate || fallback.date);
   return tile;
 };
 
