@@ -36,7 +36,7 @@
 
   .qi-tab {
     padding: var(--spacing-s) var(--spacing-l);
-    border: 1px solid var(--color-alpha-light-10);
+    border: 1px solid var(--color-alpha-light-40);
     border-radius: var(--radius-40);
     background: transparent;
     color: var(--color-alpha-light-50);
@@ -75,6 +75,60 @@
       color: var(--color-alpha-light-50);
       font-size: var(--body-font-size-s);
       line-height: 1.4;
+    }
+  }
+}
+
+/* Desktop: editorial two-column module — heading + category tabs on the left,
+   the active quote in a framed, softly-lit stage on the right (Frame.io feel). */
+@media (width >= 768px) {
+  .quote-interactive {
+    display: grid;
+    grid-template:
+      'head stage' auto
+      'tabs stage' 1fr
+      / 0.82fr 1.18fr;
+    column-gap: var(--spacing-xxl, 48px);
+    align-items: start;
+
+    .qi-head {
+      grid-area: head;
+      margin-bottom: var(--spacing-l);
+    }
+
+    .qi-tabs {
+      grid-area: tabs;
+      flex-direction: column;
+      align-items: flex-start;
+      align-content: start;
+      margin-bottom: 0;
+    }
+
+    .qi-stage {
+      grid-area: stage;
+      position: relative;
+      isolation: isolate;
+      padding: var(--spacing-xxl, 48px);
+      border: 1px solid var(--color-alpha-light-10);
+      border-radius: var(--radius-16, 16px);
+      background: var(--color-alpha-dark-50);
+      backdrop-filter: blur(var(--card-background-blur));
+      /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+      -webkit-backdrop-filter: blur(var(--card-background-blur));
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        background: radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, var(--color-iris) 20%, transparent), transparent 65%);
+        pointer-events: none;
+      }
+    }
+
+    .qi-panel blockquote {
+      font-size: var(--heading-font-size-xl);
     }
   }
 }

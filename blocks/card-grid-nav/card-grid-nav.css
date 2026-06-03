@@ -9,18 +9,25 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-m);
-    padding: var(--spacing-m);
-    border: 1px solid var(--color-alpha-light-5);
+    padding: var(--spacing-l) var(--spacing-m);
+    border: 1px solid var(--color-alpha-light-40);
     border-radius: var(--radius-16, 16px);
     background: var(--color-alpha-dark-50);
     color: var(--color-light);
     text-decoration: none;
-    transition: border-color 0.25s var(--transition-ease-out), background 0.25s var(--transition-ease-out);
+    transition: border-color 0.25s var(--transition-ease-out), background 0.25s var(--transition-ease-out), opacity 0.25s var(--transition-ease-out);
   }
 
   a.cgn-card:hover {
-    border-color: var(--color-alpha-light-10);
+    border-color: var(--color-alpha-light-60);
     background: color-mix(in srgb, var(--color-iris) 8%, var(--color-alpha-dark-50));
+  }
+
+  /* dim the rest while hovering one (Frame.io card-grid behaviour) */
+  @media (hover: hover) {
+    &:has(a.cgn-card:hover) a.cgn-card:not(:hover) {
+      opacity: 0.5;
+    }
   }
 
   .cgn-media {

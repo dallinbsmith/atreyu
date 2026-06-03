@@ -13,7 +13,14 @@
         "advanced-tabs",
         "youtube",
         "fragment",
-        "schedule"
+        "schedule",
+        "hero-cards",
+        "image-sequence",
+        "quote-interactive",
+        "tile-table",
+        "text-over-image",
+        "card-grid-nav",
+        "touts"
       ]
     }
   ]

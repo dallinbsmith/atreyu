@@ -5,7 +5,8 @@
 
   .bento-grid {
     display: grid;
-    gap: var(--spacing-l);
+    grid-template-columns: 1fr;
+    gap: var(--spacing-m);
   }
 
   .bento-card {
@@ -109,14 +110,25 @@
   }
 }
 
-@media (width >= 1240px) {
-  .bentos {
-    .bento-grid {
-      grid-template-columns: repeat(var(--card-count), 1fr);
-    }
+@media (width >= 768px) {
+  .bentos .bento-grid {
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--spacing-l);
+  }
 
-    .bento-card {
-      padding: var(--card-padding-desktop);
-    }
+  /* asymmetric mosaic: cards are half-width by default; a trailing 3rd card
+     spans the full row (Frame.io's bento layout feel) */
+  .bentos .bento-card {
+    grid-column: span 6;
+  }
+
+  .bentos .bento-grid:has(> :nth-child(3):last-child) > :nth-child(3) {
+    grid-column: span 12;
+  }
+}
+
+@media (width >= 1240px) {
+  .bentos .bento-card {
+    padding: var(--card-padding-desktop);
   }
 }

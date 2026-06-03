@@ -57,7 +57,7 @@
   }
 
   .tile-detail {
-    color: var(--color-alpha-light-50);
+    color: var(--color-alpha-light-60);
     font-size: var(--body-font-size-s);
     line-height: var(--body-line-height);
   }

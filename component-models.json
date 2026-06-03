@@ -443,6 +443,236 @@
       ]
     },
     {
+      "id": "hero-cards",
+      "fields": [
+        {
+          "component": "select",
+          "name": "classes",
+          "label": "Variant",
+          "options": [
+            { "name": "Default (centered)", "value": "" },
+            { "name": "Scroll Scrub", "value": "scrub" }
+          ]
+        },
+        {
+          "component": "richtext",
+          "name": "heading",
+          "label": "Heading",
+          "valueType": "string",
+          "description": "Large hero title. Wrap a phrase in *italics* to render it as the muted second tone."
+        }
+      ]
+    },
+    {
+      "id": "image-sequence",
+      "fields": [
+        {
+          "component": "richtext",
+          "name": "text",
+          "label": "Prompter Text",
+          "valueType": "string",
+          "description": "Manifesto text revealed word-by-word as the reader scrolls."
+        },
+        {
+          "component": "reference",
+          "name": "video",
+          "label": "Scrubbed Video",
+          "multi": false,
+          "valueType": "string",
+          "description": "Optional. Footage is scrubbed frame-by-frame to scroll position behind the text."
+        }
+      ]
+    },
+    {
+      "id": "quote-interactive",
+      "fields": [
+        {
+          "component": "text",
+          "name": "heading",
+          "label": "Heading",
+          "valueType": "string",
+          "required": true
+        },
+        {
+          "component": "richtext",
+          "name": "intro",
+          "label": "Intro",
+          "valueType": "string"
+        },
+        {
+          "component": "container",
+          "name": "quotes",
+          "label": "Quotes",
+          "collapsible": true,
+          "fields": [
+            {
+              "component": "text",
+              "name": "category",
+              "label": "Tab Label",
+              "valueType": "string",
+              "required": true
+            },
+            {
+              "component": "richtext",
+              "name": "quote",
+              "label": "Quote",
+              "valueType": "string",
+              "required": true
+            },
+            {
+              "component": "richtext",
+              "name": "attribution",
+              "label": "Attribution",
+              "valueType": "string"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tile-table",
+      "fields": [
+        {
+          "component": "container",
+          "name": "tiles",
+          "label": "Partners",
+          "collapsible": true,
+          "fields": [
+            {
+              "component": "text",
+              "name": "name",
+              "label": "Name",
+              "valueType": "string",
+              "required": true
+            },
+            {
+              "component": "text",
+              "name": "detail",
+              "label": "Detail",
+              "valueType": "string",
+              "description": "e.g. supported devices"
+            },
+            {
+              "component": "text",
+              "name": "linkLabel",
+              "label": "Link Label",
+              "valueType": "string"
+            },
+            {
+              "component": "text",
+              "name": "link",
+              "label": "Link",
+              "valueType": "string"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "text-over-image",
+      "fields": [
+        {
+          "component": "reference",
+          "name": "image",
+          "label": "Background Image",
+          "multi": false,
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "eyebrow",
+          "label": "Eyebrow",
+          "valueType": "string"
+        },
+        {
+          "component": "richtext",
+          "name": "title",
+          "label": "Title",
+          "valueType": "string",
+          "description": "Wrap a phrase in *italics* for the muted second tone."
+        }
+      ]
+    },
+    {
+      "id": "card-grid-nav",
+      "fields": [
+        {
+          "component": "container",
+          "name": "cards",
+          "label": "Cards",
+          "collapsible": true,
+          "fields": [
+            {
+              "component": "reference",
+              "name": "image",
+              "label": "Image",
+              "multi": false,
+              "valueType": "string"
+            },
+            {
+              "component": "text",
+              "name": "label",
+              "label": "Label",
+              "valueType": "string",
+              "required": true
+            },
+            {
+              "component": "text",
+              "name": "link",
+              "label": "Link",
+              "valueType": "string",
+              "required": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "touts",
+      "fields": [
+        {
+          "component": "container",
+          "name": "touts",
+          "label": "Touts",
+          "collapsible": true,
+          "fields": [
+            {
+              "component": "text",
+              "name": "icon",
+              "label": "Icon",
+              "valueType": "string",
+              "description": "Icon token name, authored as :iconname: in the heading."
+            },
+            {
+              "component": "text",
+              "name": "heading",
+              "label": "Heading",
+              "valueType": "string",
+              "required": true
+            },
+            {
+              "component": "richtext",
+              "name": "body",
+              "label": "Body",
+              "valueType": "string"
+            },
+            {
+              "component": "text",
+              "name": "ctaLabel",
+              "label": "CTA Label",
+              "valueType": "string"
+            },
+            {
+              "component": "text",
+              "name": "ctaLink",
+              "label": "CTA Link",
+              "valueType": "string"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "section-metadata",
       "fields": [
         {

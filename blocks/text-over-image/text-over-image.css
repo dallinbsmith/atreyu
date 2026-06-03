@@ -33,7 +33,9 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--color-dark) 70%, transparent));
+      background:
+        linear-gradient(180deg, transparent 20%, color-mix(in srgb, var(--color-dark) 88%, transparent)),
+        linear-gradient(60deg, color-mix(in srgb, var(--color-dark) 45%, transparent), transparent 55%);
     }
   }
 
@@ -58,10 +60,16 @@
 
 @media (width >= 768px) {
   .text-over-image {
-    min-height: 480px;
+    min-height: 560px;
 
     .toi-content {
       padding: var(--spacing-xxl, 48px);
     }
+  }
+}
+
+@media (width >= 1240px) {
+  .text-over-image {
+    min-height: 720px;
   }
 }

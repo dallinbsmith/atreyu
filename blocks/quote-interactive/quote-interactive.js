@@ -8,13 +8,16 @@ import { decorateRichText } from '../../scripts/utils/richtext.js';
 
 export default (el) => {
   const rows = [...el.children];
-  rows.shift()?.classList.add('qi-head');
+  const head = rows.shift();
+  head?.classList.add('qi-head');
   if (!rows.length) return;
+
+  const headingText = head?.querySelector('h1, h2, h3, h4, h5, h6')?.textContent.trim();
 
   const tablist = document.createElement('div');
   tablist.className = 'qi-tabs';
   tablist.setAttribute('role', 'tablist');
-  tablist.setAttribute('aria-label', 'Quotes by industry');
+  tablist.setAttribute('aria-label', headingText || 'Customer quotes by industry');
   const stage = document.createElement('div');
   stage.className = 'qi-stage';
 

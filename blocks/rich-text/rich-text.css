@@ -58,8 +58,8 @@
   .rt-eyebrow {
     display: inline-block;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: var(--body-font-size-s);
+    letter-spacing: var(--eyebrow-letter-spacing);
+    font-size: var(--eyebrow-font-size);
     font-weight: 600;
     color: var(--color-iris);
   }

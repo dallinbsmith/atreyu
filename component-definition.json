@@ -35,6 +35,21 @@
           }
         },
         {
+          "title": "Hero Cards",
+          "id": "hero-cards",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Hero Cards",
+                  "model": "hero-cards"
+                }
+              }
+            }
+          }
+        },
+        {
           "title": "Section Metadata",
           "id": "section-metadata",
           "plugins": {
@@ -174,6 +189,66 @@
               }
             }
           }
+        },
+        {
+          "title": "Quote Interactive",
+          "id": "quote-interactive",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Quote Interactive",
+                  "model": "quote-interactive"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Tile Table",
+          "id": "tile-table",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Tile Table",
+                  "model": "tile-table"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Touts",
+          "id": "touts",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Touts",
+                  "model": "touts"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Card Grid Nav",
+          "id": "card-grid-nav",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Card Grid Nav",
+                  "model": "card-grid-nav"
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -191,6 +266,36 @@
                 "template": {
                   "name": "YouTube",
                   "model": "youtube"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Text Over Image",
+          "id": "text-over-image",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Text Over Image",
+                  "model": "text-over-image"
+                }
+              }
+            }
+          }
+        },
+        {
+          "title": "Image Sequence",
+          "id": "image-sequence",
+          "plugins": {
+            "xwalk": {
+              "page": {
+                "resourceType": "core/franklin/components/block",
+                "template": {
+                  "name": "Image Sequence",
+                  "model": "image-sequence"
                 }
               }
             }

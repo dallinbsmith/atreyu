@@ -9,6 +9,8 @@ export default (el) => {
     media.className = 'toi-media';
     const host = pic.closest('p') ?? pic.parentElement;
     media.append(pic.closest('picture') ?? pic);
+    const realImg = media.querySelector('img');
+    if (realImg) realImg.alt = ''; // full-bleed banner is decorative; the title carries meaning
     el.prepend(media);
     if (host && host !== el && !host.textContent.trim()) host.remove();
   }

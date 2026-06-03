@@ -11,6 +11,7 @@ const placeMedia = (card) => {
   const img = card.querySelector('img');
   const w = img ? Number.parseInt(img.getAttribute('width'), 10) || img.naturalWidth || 0 : 0;
   const layout = w >= 700 ? 'bg' : 'icon';
+  if (layout === 'bg' && img) img.alt = ''; // full-bleed bg is decorative; text carries meaning
   const host = pic.closest('p') ?? pic;
   const media = document.createElement('div');
   media.className = `bento-card-media ${layout}`;

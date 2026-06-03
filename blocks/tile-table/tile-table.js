@@ -24,6 +24,7 @@ export default (el) => {
   count.className = 'tile-count';
   count.setAttribute('role', 'status');
   count.setAttribute('aria-live', 'polite');
+  count.setAttribute('aria-atomic', 'true');
   const setCount = (n) => { count.textContent = `${n} partner${n === 1 ? '' : 's'}`; };
   setCount(rows.length);
 
