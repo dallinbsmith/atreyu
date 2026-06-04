@@ -330,6 +330,13 @@
     opacity: 1;
   }
 
+  /* Reach the top of the viewport (Falkor's bg runs under the overlaid header).
+     The page reserves header height + the first section's top padding above us,
+     so extend the bg up by that much; it overshoots under the translucent header. */
+  .hc-bg {
+    top: calc((var(--header-height, 80px) + 2rem) * -1);
+  }
+
   /* small non-zero baseline on landing (Falkor's overlay never sits at 0 — it
      keeps a constant flat-black floor), ramping to FULL black by ~0.83 so the
      tail is solid black; cards sit above it */
