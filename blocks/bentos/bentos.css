@@ -154,11 +154,11 @@
     min-height: 220px;
   }
 
-  /* fullWidthWithShadows (Falkor backgroundOnly + fullWidthWithShadows): the UI
-     screenshot is a wide PNG with a baked, transparent drop-shadow. Show it whole
-     at full card width, natural height, pinned to the top — the shadow reads as a
-     soft float. No cover-zoom (which magnifies a slice of a 2.3:1 image and bleeds
-     past every edge), no fixed band height. */
+  /* fullWidthWithShadows (Falkor backgroundOnly + fullWidthWithShadows): a wide
+     2.33:1 PNG — UI in the top ~60%, a soft baked shadow in the bottom. Falkor
+     drops it into a fixed-aspect band at the card top, full card width, and uses
+     object-fit:cover so the UI scales UP and bleeds to the L/R edges (the shadow
+     halo clips at the card edge), with the shadow reading softly below. */
   .bento-card[data-bg-mode="fullWidthWithShadows"] {
     justify-content: flex-start;
     padding-top: 0;
@@ -168,17 +168,18 @@
     position: relative;
     inset: auto;
     width: calc(100% + var(--bento-pad) * 2);
-    height: auto;
+    aspect-ratio: 2 / 1;
     margin: 0 calc(var(--bento-pad) * -1) var(--spacing-l);
-    overflow: visible;
+    overflow: hidden;
 
     img,
     picture {
-      position: static;
-      display: block;
+      position: absolute;
+      inset: 0;
       width: 100%;
-      height: auto;
-      object-fit: contain;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
     }
 
     &::after {
