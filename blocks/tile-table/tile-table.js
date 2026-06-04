@@ -28,11 +28,15 @@ export default (el) => {
   const setCount = (n) => { count.textContent = `${n} partner${n === 1 ? '' : 's'}`; };
   setCount(rows.length);
 
+  // Cache each row's searchable text once, so filtering doesn't re-read and
+  // re-lowercase textContent for every row on every keystroke (INP cost).
+  const haystacks = rows.map((row) => row.textContent.toLowerCase());
+
   search.addEventListener('input', () => {
     const q = search.value.trim().toLowerCase();
     let shown = 0;
-    rows.forEach((row) => {
-      const match = !q || row.textContent.toLowerCase().includes(q);
+    rows.forEach((row, i) => {
+      const match = !q || haystacks[i].includes(q);
       row.hidden = !match;
       shown += match ? 1 : 0;
     });
