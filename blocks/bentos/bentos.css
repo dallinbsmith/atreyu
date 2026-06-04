@@ -161,7 +161,7 @@
     position: relative;
     inset: auto;
     width: calc(100% + var(--card-padding) * 2);
-    height: clamp(220px, 32vw, 340px);
+    height: clamp(160px, 18vw, 200px);
     margin: 0 calc(var(--card-padding) * -1) var(--spacing-l);
 
     img,
