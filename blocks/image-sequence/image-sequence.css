@@ -42,6 +42,11 @@
   min-height: 340vh;
   position: relative;
 
+  /* Own stacking context below the hero (z-index:1) so the inner sticky
+     .prompter-textwrap (z-index:1) stays contained here and never paints over —
+     or, while invisible, intercepts clicks on — the hero buttons. */
+  z-index: 0;
+
   /* Pulled up to overlap the full-height hero that precedes it (Falkor's
      `--sequence-top-offset: -150vh`), so the scrub range begins at the page top
      — the video is already running behind the hero (which is z-index:1) and is
