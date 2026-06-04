@@ -18,6 +18,12 @@
   position: relative;
   z-index: 1; /* sit above the manifesto, which is pulled up -150vh to overlap this hero */
 
+  /* Full-bleed to the top: cancel the page's header clearance (body padding =
+     --header-height) + the first section's top padding (2rem) so the sticky
+     stage — and its clipped background — reach the viewport top, running under
+     the translucent fixed header (Falkor's bg-to-top treatment). */
+  margin-top: calc((var(--header-height, 80px) + 2rem) * -1);
+
   /* Falkor's stylesheet uses `html { font-size: 62.5% }` so 1 Falkor rem = 10px.
      Atreyu uses the browser default 16px-rem. `--frem` ("Falkor rem") rebases
      every Falkor-derived layout value below so 25rem-in-Falkor renders as
@@ -328,13 +334,6 @@
     /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
     -webkit-mask-image: none;
     opacity: 1;
-  }
-
-  /* Reach the top of the viewport (Falkor's bg runs under the overlaid header).
-     The page reserves header height + the first section's top padding above us,
-     so extend the bg up by that much; it overshoots under the translucent header. */
-  .hc-bg {
-    top: calc((var(--header-height, 80px) + 2rem) * -1);
   }
 
   /* small non-zero baseline on landing (Falkor's overlay never sits at 0 — it
