@@ -147,9 +147,11 @@
     min-height: 220px;
   }
 
-  /* fullWidthWithShadows: the media is a UI screenshot that FITS the card —
-     full-bleed width at the top (shadow baked in), whole image shown, with the
-     text below it. Not a cropped, overflowing cover. */
+  /* fullWidthWithShadows (Falkor backgroundOnly + fullWidthWithShadows): the UI
+     screenshot sits full-bleed-width in a BOUNDED media region at the top of the
+     card, object-fit cover anchored to the hotspot (centre), with the text
+     below — readable, within the card, not a letterboxed strip or a card-filling
+     overflow. */
   .bento-card[data-bg-mode="fullWidthWithShadows"] {
     justify-content: flex-start;
     padding-top: 0;
@@ -159,20 +161,26 @@
     position: relative;
     inset: auto;
     width: calc(100% + var(--card-padding) * 2);
-    height: auto;
+    height: clamp(176px, 24vw, 232px);
     margin: 0 calc(var(--card-padding) * -1) var(--spacing-l);
 
     img,
     picture {
       position: static;
       width: 100%;
-      height: auto;
-      object-fit: contain;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
     }
 
     &::after {
       display: none;
     }
+  }
+
+  /* size short = a shorter media region */
+  .bento-card[data-bg-mode="fullWidthWithShadows"][data-bg-size="short"] .bento-card-media.bg {
+    height: clamp(132px, 18vw, 184px);
   }
 
   .bento-card-title {
