@@ -22,7 +22,10 @@ export default (el) => {
   stage.className = 'qi-stage';
 
   const tabs = rows.map((row, i) => {
-    const [cat, quote, attr] = [...row.children];
+    // A slide may carry a background photo (in its own cell); the remaining
+    // cells are [category, quote, attribution].
+    const pic = row.querySelector('picture, img');
+    const [cat, quote, attr] = [...row.children].filter((c) => !pic || !c.contains(pic));
     const tabId = generateId('qi-tab');
     const panelId = generateId('qi-panel');
 
@@ -49,6 +52,13 @@ export default (el) => {
       const cap = document.createElement('figcaption');
       cap.append(...attr.childNodes);
       panel.append(cap);
+    }
+    if (pic) {
+      const bg = document.createElement('div');
+      bg.className = 'qi-bg';
+      bg.setAttribute('aria-hidden', 'true');
+      bg.append(pic.closest('picture') ?? pic);
+      panel.prepend(bg);
     }
 
     tab.addEventListener('click', () => {
