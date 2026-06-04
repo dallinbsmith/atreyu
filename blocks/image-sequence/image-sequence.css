@@ -39,8 +39,14 @@
 .image-sequence.prompter.prompter-scrub {
   max-width: none;
   padding: 0;
-  min-height: 260vh;
+  min-height: 340vh;
   position: relative;
+
+  /* Pulled up to overlap the full-height hero that precedes it (Falkor's
+     `--sequence-top-offset: -150vh`), so the scrub range begins at the page top
+     — the video is already running behind the hero (which is z-index:1) and is
+     revealed in motion as the hero scrolls away. Couples to the hero's 150vh. */
+  margin-top: -150vh;
 
   /* scrubbed video sits behind the text, pinned for the whole scroll */
   .prompter-media {

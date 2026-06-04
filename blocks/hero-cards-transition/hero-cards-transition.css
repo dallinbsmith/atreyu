@@ -16,6 +16,7 @@
 
 .hero-cards-transition {
   position: relative;
+  z-index: 1; /* sit above the manifesto, which is pulled up -150vh to overlap this hero */
 
   /* Falkor's stylesheet uses `html { font-size: 62.5% }` so 1 Falkor rem = 10px.
      Atreyu uses the browser default 16px-rem. `--frem` ("Falkor rem") rebases
