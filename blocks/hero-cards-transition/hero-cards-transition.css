@@ -326,9 +326,10 @@
     opacity: 1;
   }
 
-  /* invisible on landing, darkens as the hero scrubs out (cards sit above it) */
+  /* invisible on landing, ramps to FULL black by the end of the scrub (reaches
+     1 at ~0.83 so the tail is solid black); cards sit above it */
   .hc-bg::after {
-    opacity: calc(var(--progress) * 0.8);
+    opacity: clamp(0, calc(var(--progress) * 1.2), 1);
   }
 
   .hc-text {
