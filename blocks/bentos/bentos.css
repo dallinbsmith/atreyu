@@ -91,6 +91,10 @@
     max-width: 336px;
     margin: 0 auto var(--spacing-l);
 
+    /* keep padding/border inside the width so width:100% + margin:auto stays
+       centred — content-box lets the glassborder padding overflow and shift it */
+    box-sizing: border-box;
+
     img,
     picture {
       display: block;
