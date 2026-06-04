@@ -88,16 +88,15 @@
       display: block;
     }
 
+    /* Black overlay on the background, BELOW the cards (a later sibling) so the
+       cards stay crisp above it. Static legibility floor here for the resting /
+       reduced-motion state; scrub mode makes it scroll-driven (see below). */
     &::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--color-dark) 72%, transparent),
-        color-mix(in srgb, var(--color-dark) 38%, transparent) 48%,
-        color-mix(in srgb, var(--color-dark) 64%, transparent)
-      );
+      background: var(--color-dark);
+      opacity: 0.4;
     }
   }
 
@@ -325,6 +324,11 @@
     /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
     -webkit-mask-image: none;
     opacity: calc(0.95 - var(--progress) * 0.25);
+  }
+
+  /* invisible on landing, darkens as the hero scrubs out (cards sit above it) */
+  .hc-bg::after {
+    opacity: calc(var(--progress) * 0.8);
   }
 
   .hc-text {
