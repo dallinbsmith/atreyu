@@ -55,10 +55,10 @@ const placeMedia = (card) => {
 };
 
 // Map authored axes to classes the CSS keys off. Defaults mirror Falkor: text at
-// bottom, left-aligned, background images cover, foreground icons small + bordered.
+// bottom, centre-aligned, background images cover, foreground icons small + bordered.
 const applyOptions = (card) => {
   const {
-    textPlacement = 'bottom', textAlign = 'left', mediaSize, decoration, bgMode,
+    textPlacement = 'bottom', textAlign = 'center', mediaSize, decoration, bgMode,
   } = card.dataset;
   card.classList.add(`text-${textPlacement}`, `align-${textAlign}`);
   if (mediaSize) card.classList.add(`media-${mediaSize}`);
