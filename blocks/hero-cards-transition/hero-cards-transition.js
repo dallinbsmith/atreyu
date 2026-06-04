@@ -44,7 +44,9 @@ const collect = (el) => {
   let bg = null;
   [...el.children].forEach((row) => {
     const cells = [...row.children];
-    const pics = [...row.querySelectorAll('picture, img')].map((p) => p.closest('picture') ?? p);
+    // dedupe: querySelectorAll matches both <picture> and its inner <img>, which
+    // closest('picture') collapses to the same node — Set keeps each picture once
+    const pics = [...new Set([...row.querySelectorAll('picture, img')].map((p) => p.closest('picture') ?? p))];
     if (!pics.length) text.push(row);
     // a lone image with no sibling chin text is the section background (Falkor's
     // `background` field), not a card — the first such row wins
