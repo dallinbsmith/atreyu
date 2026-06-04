@@ -20,11 +20,26 @@
           "name": "variant",
           "label": "Variant",
           "options": [
-            { "name": "Primary", "value": "primary" },
-            { "name": "Secondary", "value": "secondary" },
-            { "name": "Accent", "value": "accent" },
-            { "name": "Outline", "value": "outline" },
-            { "name": "Text Link", "value": "textLink" }
+            {
+              "name": "Primary",
+              "value": "primary"
+            },
+            {
+              "name": "Secondary",
+              "value": "secondary"
+            },
+            {
+              "name": "Accent",
+              "value": "accent"
+            },
+            {
+              "name": "Outline",
+              "value": "outline"
+            },
+            {
+              "name": "Text Link",
+              "value": "textLink"
+            }
           ]
         },
         {
@@ -32,10 +47,22 @@
           "name": "colorScheme",
           "label": "Color Scheme",
           "options": [
-            { "name": "Inherit", "value": "inherit" },
-            { "name": "Glass", "value": "glass" },
-            { "name": "Ghost", "value": "ghost" },
-            { "name": "White", "value": "white" }
+            {
+              "name": "Inherit",
+              "value": "inherit"
+            },
+            {
+              "name": "Glass",
+              "value": "glass"
+            },
+            {
+              "name": "Ghost",
+              "value": "ghost"
+            },
+            {
+              "name": "White",
+              "value": "white"
+            }
           ]
         },
         {
@@ -43,11 +70,26 @@
           "name": "behavior",
           "label": "Behavior",
           "options": [
-            { "name": "Link", "value": "link" },
-            { "name": "Calendly", "value": "calendly" },
-            { "name": "Outlook", "value": "outlook" },
-            { "name": "Download", "value": "download" },
-            { "name": "Phone", "value": "phone" }
+            {
+              "name": "Link",
+              "value": "link"
+            },
+            {
+              "name": "Calendly",
+              "value": "calendly"
+            },
+            {
+              "name": "Outlook",
+              "value": "outlook"
+            },
+            {
+              "name": "Download",
+              "value": "download"
+            },
+            {
+              "name": "Phone",
+              "value": "phone"
+            }
           ]
         }
       ]
@@ -60,15 +102,42 @@
           "name": "variant",
           "label": "Variant",
           "options": [
-            { "name": "Default", "value": "" },
-            { "name": "Small", "value": "small" },
-            { "name": "Large", "value": "large" },
-            { "name": "Full", "value": "full" },
-            { "name": "Light", "value": "light" },
-            { "name": "Dark", "value": "dark" },
-            { "name": "Stack", "value": "stack" },
-            { "name": "Center", "value": "center" },
-            { "name": "Quiet Background", "value": "quiet-background" }
+            {
+              "name": "Default",
+              "value": ""
+            },
+            {
+              "name": "Small",
+              "value": "small"
+            },
+            {
+              "name": "Large",
+              "value": "large"
+            },
+            {
+              "name": "Full",
+              "value": "full"
+            },
+            {
+              "name": "Light",
+              "value": "light"
+            },
+            {
+              "name": "Dark",
+              "value": "dark"
+            },
+            {
+              "name": "Stack",
+              "value": "stack"
+            },
+            {
+              "name": "Center",
+              "value": "center"
+            },
+            {
+              "name": "Quiet Background",
+              "value": "quiet-background"
+            }
           ]
         },
         {
@@ -140,16 +209,46 @@
           "name": "classes",
           "label": "Variants",
           "options": [
-            { "name": "Image Cover", "value": "image-cover" },
-            { "name": "Gap XS", "value": "gap-xs" },
-            { "name": "Gap S", "value": "gap-s" },
-            { "name": "Gap M", "value": "gap-m" },
-            { "name": "Gap L", "value": "gap-l" },
-            { "name": "Gap XL", "value": "gap-xl" },
-            { "name": "Gap XXL", "value": "gap-xxl" },
-            { "name": "Align Top", "value": "align-top" },
-            { "name": "Z-Pattern", "value": "z-pattern" },
-            { "name": "Cards", "value": "cards" }
+            {
+              "name": "Image Cover",
+              "value": "image-cover"
+            },
+            {
+              "name": "Gap XS",
+              "value": "gap-xs"
+            },
+            {
+              "name": "Gap S",
+              "value": "gap-s"
+            },
+            {
+              "name": "Gap M",
+              "value": "gap-m"
+            },
+            {
+              "name": "Gap L",
+              "value": "gap-l"
+            },
+            {
+              "name": "Gap XL",
+              "value": "gap-xl"
+            },
+            {
+              "name": "Gap XXL",
+              "value": "gap-xxl"
+            },
+            {
+              "name": "Align Top",
+              "value": "align-top"
+            },
+            {
+              "name": "Z-Pattern",
+              "value": "z-pattern"
+            },
+            {
+              "name": "Cards",
+              "value": "cards"
+            }
           ]
         }
       ]
@@ -175,8 +274,14 @@
           "label": "Media Side",
           "value": "media-left",
           "options": [
-            { "name": "Media Left", "value": "media-left" },
-            { "name": "Media Right", "value": "media-right" }
+            {
+              "name": "Media Left",
+              "value": "media-left"
+            },
+            {
+              "name": "Media Right",
+              "value": "media-right"
+            }
           ]
         },
         {
@@ -185,8 +290,14 @@
           "label": "Media Treatment",
           "value": "card",
           "options": [
-            { "name": "Card (rounded)", "value": "card" },
-            { "name": "Bleed (full)", "value": "bleed" }
+            {
+              "name": "Card (rounded)",
+              "value": "card"
+            },
+            {
+              "name": "Bleed (full)",
+              "value": "bleed"
+            }
           ]
         },
         {
@@ -195,8 +306,14 @@
           "label": "Touts Layout",
           "value": "",
           "options": [
-            { "name": "Stacked (vertical)", "value": "" },
-            { "name": "Grid (multi-column)", "value": "touts-grid" }
+            {
+              "name": "Stacked (vertical)",
+              "value": ""
+            },
+            {
+              "name": "Grid (multi-column)",
+              "value": "touts-grid"
+            }
           ]
         },
         {
@@ -236,11 +353,26 @@
           "name": "classes",
           "label": "Size",
           "options": [
-            { "name": "Small", "value": "s" },
-            { "name": "Medium", "value": "m" },
-            { "name": "Large", "value": "l" },
-            { "name": "XL", "value": "xl" },
-            { "name": "XXL", "value": "xxl" }
+            {
+              "name": "Small",
+              "value": "s"
+            },
+            {
+              "name": "Medium",
+              "value": "m"
+            },
+            {
+              "name": "Large",
+              "value": "l"
+            },
+            {
+              "name": "XL",
+              "value": "xl"
+            },
+            {
+              "name": "XXL",
+              "value": "xxl"
+            }
           ]
         }
       ]
@@ -266,9 +398,18 @@
           "name": "classes",
           "label": "Variants",
           "options": [
-            { "name": "Center", "value": "center" },
-            { "name": "Quiet", "value": "quiet" },
-            { "name": "Hash Aware", "value": "hash-aware" }
+            {
+              "name": "Center",
+              "value": "center"
+            },
+            {
+              "name": "Quiet",
+              "value": "quiet"
+            },
+            {
+              "name": "Hash Aware",
+              "value": "hash-aware"
+            }
           ]
         },
         {
@@ -308,11 +449,167 @@
       "id": "bentos",
       "fields": [
         {
+          "component": "select",
+          "name": "variant",
+          "label": "Layout",
+          "value": "variant-e",
+          "description": "variant-e = 3 equal columns; variant-m = 4 / 8-wide-tall / 4 (one large card right, two stacked left).",
+          "options": [
+            {
+              "name": "Equal columns (variant-e)",
+              "value": "variant-e"
+            },
+            {
+              "name": "One large card (variant-m)",
+              "value": "variant-m"
+            }
+          ]
+        },
+        {
           "component": "container",
-          "name": "rows",
-          "label": "Bento Rows",
+          "name": "cards",
+          "label": "Cards",
           "collapsible": true,
+          "description": "One card per row. Match the count to the layout (variant-e/m = 3).",
           "fields": [
+            {
+              "component": "select",
+              "name": "mediaLayout",
+              "label": "Media Layout",
+              "value": "foreground",
+              "options": [
+                {
+                  "name": "Foreground — icon/graphic above text",
+                  "value": "foreground"
+                },
+                {
+                  "name": "Background — image fills card, text overlaid",
+                  "value": "background"
+                },
+                {
+                  "name": "Background + Foreground",
+                  "value": "backgroundAndForeground"
+                }
+              ]
+            },
+            {
+              "component": "select",
+              "name": "mediaSize",
+              "label": "Foreground Size",
+              "value": "icon",
+              "condition": {
+                "in": [
+                  {
+                    "var": "mediaLayout"
+                  },
+                  [
+                    "foreground",
+                    "backgroundAndForeground"
+                  ]
+                ]
+              },
+              "options": [
+                {
+                  "name": "Icon",
+                  "value": "icon"
+                },
+                {
+                  "name": "Large",
+                  "value": "large"
+                }
+              ]
+            },
+            {
+              "component": "select",
+              "name": "decoration",
+              "label": "Foreground Decoration",
+              "value": "none",
+              "condition": {
+                "===": [
+                  {
+                    "var": "mediaLayout"
+                  },
+                  "foreground"
+                ]
+              },
+              "options": [
+                {
+                  "name": "None",
+                  "value": "none"
+                },
+                {
+                  "name": "Glass border",
+                  "value": "glassborder"
+                }
+              ]
+            },
+            {
+              "component": "select",
+              "name": "bgMode",
+              "label": "Background Display",
+              "value": "cover",
+              "condition": {
+                "in": [
+                  {
+                    "var": "mediaLayout"
+                  },
+                  [
+                    "background",
+                    "backgroundAndForeground"
+                  ]
+                ]
+              },
+              "options": [
+                {
+                  "name": "Cover",
+                  "value": "cover"
+                },
+                {
+                  "name": "Short",
+                  "value": "short"
+                },
+                {
+                  "name": "Full width with shadows",
+                  "value": "fullWidthWithShadows"
+                }
+              ]
+            },
+            {
+              "component": "select",
+              "name": "textPlacement",
+              "label": "Text Placement",
+              "value": "bottom",
+              "options": [
+                {
+                  "name": "Bottom",
+                  "value": "bottom"
+                },
+                {
+                  "name": "Top",
+                  "value": "top"
+                }
+              ]
+            },
+            {
+              "component": "select",
+              "name": "textAlign",
+              "label": "Text Alignment",
+              "value": "left",
+              "options": [
+                {
+                  "name": "Left",
+                  "value": "left"
+                },
+                {
+                  "name": "Center",
+                  "value": "center"
+                },
+                {
+                  "name": "Right",
+                  "value": "right"
+                }
+              ]
+            },
             {
               "component": "text",
               "name": "heading",
@@ -332,10 +629,9 @@
               "valueType": "string"
             },
             {
-              "component": "text",
+              "component": "aem-content",
               "name": "ctaLink",
-              "label": "CTA Link",
-              "valueType": "string"
+              "label": "CTA Link"
             }
           ]
         }
@@ -450,8 +746,14 @@
           "name": "classes",
           "label": "Variant",
           "options": [
-            { "name": "Default (centered)", "value": "" },
-            { "name": "Scroll Scrub", "value": "scrub" }
+            {
+              "name": "Default (centered)",
+              "value": ""
+            },
+            {
+              "name": "Scroll Scrub",
+              "value": "scrub"
+            }
           ]
         },
         {
@@ -694,12 +996,30 @@
           "name": "grid",
           "label": "Grid Columns",
           "options": [
-            { "name": "None", "value": "" },
-            { "name": "2 Columns", "value": "2" },
-            { "name": "3 Columns", "value": "3" },
-            { "name": "4 Columns", "value": "4" },
-            { "name": "5 Columns", "value": "5" },
-            { "name": "6 Columns", "value": "6" }
+            {
+              "name": "None",
+              "value": ""
+            },
+            {
+              "name": "2 Columns",
+              "value": "2"
+            },
+            {
+              "name": "3 Columns",
+              "value": "3"
+            },
+            {
+              "name": "4 Columns",
+              "value": "4"
+            },
+            {
+              "name": "5 Columns",
+              "value": "5"
+            },
+            {
+              "name": "6 Columns",
+              "value": "6"
+            }
           ]
         },
         {
@@ -707,13 +1027,34 @@
           "name": "gap",
           "label": "Grid Gap",
           "options": [
-            { "name": "None", "value": "" },
-            { "name": "Extra Small", "value": "xs" },
-            { "name": "Small", "value": "s" },
-            { "name": "Medium", "value": "m" },
-            { "name": "Large", "value": "l" },
-            { "name": "Extra Large", "value": "xl" },
-            { "name": "2X Large", "value": "xxl" }
+            {
+              "name": "None",
+              "value": ""
+            },
+            {
+              "name": "Extra Small",
+              "value": "xs"
+            },
+            {
+              "name": "Small",
+              "value": "s"
+            },
+            {
+              "name": "Medium",
+              "value": "m"
+            },
+            {
+              "name": "Large",
+              "value": "l"
+            },
+            {
+              "name": "Extra Large",
+              "value": "xl"
+            },
+            {
+              "name": "2X Large",
+              "value": "xxl"
+            }
           ]
         },
         {
@@ -721,13 +1062,34 @@
           "name": "spacing",
           "label": "Vertical Spacing",
           "options": [
-            { "name": "None", "value": "" },
-            { "name": "Extra Small", "value": "xs" },
-            { "name": "Small", "value": "s" },
-            { "name": "Medium", "value": "m" },
-            { "name": "Large", "value": "l" },
-            { "name": "Extra Large", "value": "xl" },
-            { "name": "2X Large", "value": "xxl" }
+            {
+              "name": "None",
+              "value": ""
+            },
+            {
+              "name": "Extra Small",
+              "value": "xs"
+            },
+            {
+              "name": "Small",
+              "value": "s"
+            },
+            {
+              "name": "Medium",
+              "value": "m"
+            },
+            {
+              "name": "Large",
+              "value": "l"
+            },
+            {
+              "name": "Extra Large",
+              "value": "xl"
+            },
+            {
+              "name": "2X Large",
+              "value": "xxl"
+            }
           ]
         },
         {
@@ -735,10 +1097,22 @@
           "name": "container",
           "label": "Container Width",
           "options": [
-            { "name": "Default", "value": "" },
-            { "name": "Narrow (2)", "value": "2" },
-            { "name": "Medium (4)", "value": "4" },
-            { "name": "Full (6)", "value": "6" }
+            {
+              "name": "Default",
+              "value": ""
+            },
+            {
+              "name": "Narrow (2)",
+              "value": "2"
+            },
+            {
+              "name": "Medium (4)",
+              "value": "4"
+            },
+            {
+              "name": "Full (6)",
+              "value": "6"
+            }
           ]
         },
         {
@@ -746,8 +1120,14 @@
           "name": "layout",
           "label": "Layout",
           "options": [
-            { "name": "Default", "value": "" },
-            { "name": "Bento", "value": "bento" }
+            {
+              "name": "Default",
+              "value": ""
+            },
+            {
+              "name": "Bento",
+              "value": "bento"
+            }
           ]
         }
       ]
