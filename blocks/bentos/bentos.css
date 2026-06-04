@@ -155,10 +155,11 @@
   }
 
   /* fullWidthWithShadows (Falkor backgroundOnly + fullWidthWithShadows): a wide
-     2.33:1 PNG — UI in the top ~60%, a soft baked shadow in the bottom. Falkor
-     drops it into a fixed-aspect band at the card top, full card width, and uses
-     object-fit:cover so the UI scales UP and bleeds to the L/R edges (the shadow
-     halo clips at the card edge), with the shadow reading softly below. */
+     2.33:1 screenshot in a fixed-HEIGHT band at the card top, spanning the full
+     card width. The image is scaled to 155% of the band and cover-cropped, so the
+     UI fills the band's height and its left/right edges run past the card and clip
+     — the screenshot reads big, not shrunk to fit. Band height (set per
+     breakpoint below) is the only knob for how large it reads. */
   .bento-card[data-bg-mode="fullWidthWithShadows"] {
     justify-content: flex-start;
     padding-top: 0;
@@ -168,18 +169,16 @@
     position: relative;
     inset: auto;
     width: calc(100% + var(--bento-pad) * 2);
-    aspect-ratio: 2 / 1;
+    height: 218px;
     margin: 0 calc(var(--bento-pad) * -1) var(--spacing-l);
     overflow: hidden;
 
-    img,
     picture {
       position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
+      top: 0;
+      left: 50%;
+      height: 155%;
+      transform: translateX(-50%);
     }
 
     &::after {
@@ -252,10 +251,21 @@
   .bentos.variant-e .bento-card {
     grid-column: span 4;
   }
+
+  /* multi-column: cards are narrower, so the fwws band is shorter (Falkor's
+     backgroundSizeDefault @ md = 16.1rem) */
+  .bentos .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
+    height: 161px;
+  }
 }
 
 @media (width >= 1240px) {
   .bentos .bento-card {
     --bento-pad: var(--card-padding-desktop);
+  }
+
+  /* Falkor's backgroundSizeDefault @ lg = 22.6rem */
+  .bentos .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
+    height: 226px;
   }
 }
