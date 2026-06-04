@@ -41,16 +41,20 @@ TILE_TPL.innerHTML = '<div class="hc-tile"><div class="hc-media"><div class="hc-
 const collect = (el) => {
   const text = [];
   const cards = [];
+  let bg = null;
   [...el.children].forEach((row) => {
     const cells = [...row.children];
     const pics = [...row.querySelectorAll('picture, img')].map((p) => p.closest('picture') ?? p);
     if (!pics.length) text.push(row);
+    // a lone image with no sibling chin text is the section background (Falkor's
+    // `background` field), not a card — the first such row wins
+    else if (pics.length === 1 && !bg && !cells.some((c) => c.textContent.trim())) [bg] = pics;
     else if (pics.length === 1) {
       const picCell = cells.find((c) => c.contains(pics[0]));
       cards.push({ pic: pics[0], chin: cells.filter((c) => c !== picCell) });
     } else pics.forEach((p) => cards.push({ pic: p, chin: [] }));
   });
-  return { text, cards };
+  return { bg, text, cards };
 };
 
 const buildTile = (i, card) => {
@@ -70,7 +74,7 @@ const buildTile = (i, card) => {
 
 export default (el) => {
   el.classList.add('hero-cards-transition');
-  const { text: textRows, cards } = collect(el);
+  const { bg, text: textRows, cards } = collect(el);
 
   const text = document.createElement('div');
   text.className = 'hc-text';
@@ -95,6 +99,13 @@ export default (el) => {
 
   const stage = document.createElement('div');
   stage.className = 'hc-stage';
+  if (bg) {
+    const bgEl = document.createElement('div');
+    bgEl.className = 'hc-bg';
+    bgEl.setAttribute('aria-hidden', 'true');
+    bgEl.append(bg);
+    stage.append(bgEl);
+  }
   stage.append(wall, text);
   el.replaceChildren(stage);
   decorateRichText(el);
