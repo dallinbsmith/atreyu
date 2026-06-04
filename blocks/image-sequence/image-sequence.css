@@ -70,13 +70,18 @@
     }
   }
 
-  .prompter-text {
+  /* wrapper owns the sticky 100vh centering (a grid container); the text inside
+     stays normal flow so its per-word spans wrap as inline text, not grid items */
+  .prompter-textwrap {
     position: sticky;
     top: 0;
     z-index: 1;
     height: 100vh;
     display: grid;
     place-content: center;
+  }
+
+  .prompter-text {
     max-width: min(90vw, 60rem);
     margin: 0 auto;
     padding: 0 var(--grid-gutter-width);
@@ -90,7 +95,7 @@
   }
 
   /* media + text both pin: pull the text up over the video instead of below it */
-  .prompter-media + .prompter-text {
+  .prompter-media + .prompter-textwrap {
     margin-top: -100vh;
   }
 

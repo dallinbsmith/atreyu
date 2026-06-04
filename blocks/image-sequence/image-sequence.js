@@ -45,9 +45,14 @@ export default (el) => {
     media.append(video);
   }
 
-  // Flatten to clean direct children [media?, text] so the sticky video and the
-  // sticky prompter text are adjacent siblings (the -100vh overlap depends on it).
-  el.replaceChildren(...(media ? [media] : []), text);
+  // Flatten to [media?, textwrap] direct children. The text lives inside a
+  // wrapper so the wrapper owns the sticky 100vh centering — the text element
+  // itself must stay normal flow, or its per-word spans become grid items
+  // (one word per line). The -100vh overlap pins text over the video.
+  const textwrap = document.createElement('div');
+  textwrap.className = 'prompter-textwrap';
+  textwrap.append(text);
+  el.replaceChildren(...(media ? [media] : []), textwrap);
 
   if (!shouldAnimate()) return;
   el.classList.add('prompter-scrub');
