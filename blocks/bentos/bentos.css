@@ -142,15 +142,37 @@
     }
   }
 
-  /* bg display mode: short = capped height; fullWidthWithShadows = overscan for baked shadows */
+  /* bg display mode: short = capped height */
   .bento-card[data-bg-mode="short"] {
     min-height: 220px;
   }
 
-  .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg img,
-  .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg picture {
-    height: 155%;
-    object-position: top;
+  /* fullWidthWithShadows: the media is a UI screenshot that FITS the card —
+     full-bleed width at the top (shadow baked in), whole image shown, with the
+     text below it. Not a cropped, overflowing cover. */
+  .bento-card[data-bg-mode="fullWidthWithShadows"] {
+    justify-content: flex-start;
+    padding-top: 0;
+  }
+
+  .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
+    position: relative;
+    inset: auto;
+    width: calc(100% + var(--card-padding) * 2);
+    height: auto;
+    margin: 0 calc(var(--card-padding) * -1) var(--spacing-l);
+
+    img,
+    picture {
+      position: static;
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    &::after {
+      display: none;
+    }
   }
 
   .bento-card-title {
