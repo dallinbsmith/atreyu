@@ -25,7 +25,13 @@ const writeGraph = () => {
     scriptEl.type = 'application/ld+json';
     document.head.append(scriptEl);
   }
-  scriptEl.textContent = JSON.stringify(payload);
+
+  // Escape HTML-significant chars so authored text containing "</script>" can't
+  // break out of the inline JSON-LD <script> and inject markup into <head>.
+  scriptEl.textContent = JSON.stringify(payload)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
 };
 
 export const inject = (data) => {

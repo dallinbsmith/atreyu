@@ -54,7 +54,13 @@ export default (el) => {
   textwrap.append(text);
   el.replaceChildren(...(media ? [media] : []), textwrap);
 
-  if (!shouldAnimate()) return;
+  // No scroll-scrubbing (reduced motion / save-data / low-end): the text rests
+  // fully lit, and the video would otherwise be a dead, control-less element —
+  // give it native controls so it stays manually playable.
+  if (!shouldAnimate()) {
+    if (video) video.controls = true;
+    return;
+  }
   el.classList.add('prompter-scrub');
 
   const words = text.textContent.trim().split(/\s+/);
