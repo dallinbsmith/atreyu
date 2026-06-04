@@ -85,6 +85,11 @@
     height: 100vh;
     display: grid;
     place-content: center;
+
+    /* Hidden while the hero still covers the screen; fades in only as the hero
+       scrolls out of view (~progress 0.45-0.6) — never visible immediately. */
+    opacity: clamp(0, calc((var(--progress) - 0.45) * 6.5), 1);
+    will-change: opacity;
   }
 
   .prompter-text {
@@ -94,6 +99,10 @@
     font-size: clamp(1.6rem, 4vw, 3rem);
     text-align: center;
     text-wrap: balance;
+
+    /* word reveal runs over the VISIBLE window (after the copy has appeared),
+       not during the hidden lead-in behind the hero */
+    --reveal: clamp(0, calc((var(--progress) - 0.5) / 0.48), 1);
 
     /* scroll-driven drift: text rises through centre as the section scrubs */
     transform: translateY(calc((0.5 - var(--progress)) * 22vh));
@@ -107,7 +116,7 @@
 
   /* each word warms from muted to full white as the scroll line passes it */
   .prompter-word {
-    --lit: clamp(0, calc(var(--progress) * 1.15 * var(--count) - var(--i)), 1);
+    --lit: clamp(0, calc(var(--reveal, var(--progress)) * 1.15 * var(--count) - var(--i)), 1);
 
     color: color-mix(in srgb, var(--color-light) calc(var(--lit) * 100%), var(--color-alpha-light-40));
     transition: color 0.1s linear;
