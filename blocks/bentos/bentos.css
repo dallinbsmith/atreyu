@@ -1,7 +1,5 @@
 .bentos {
-  /* Falkor's content grid caps at 112rem (1120px); ours is 1200, which made the
-     1/3-width cards read too wide. Cap to match. */
-  max-width: min(var(--grid-container-width), 1120px);
+  max-width: var(--grid-container-width);
   margin: 0 auto;
   padding: 0;
 

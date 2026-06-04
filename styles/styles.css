@@ -645,7 +645,8 @@ svg {
 
 @media (width >= 1440px) {
   :root {
-    --grid-container-width: 1200px;
+    /* match Falkor's content grid (112rem / 1120px) */
+    --grid-container-width: 1120px;
   }
 }
 
