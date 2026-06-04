@@ -10,9 +10,34 @@ const inferMediaLayout = (img) => {
   return (isPhoto || w >= 1000) ? 'background' : 'foreground';
 };
 
+// DA / Google-Docs fallback: authors set per-card options with a leading config
+// line, e.g. "media: background; bg: full; decoration: glassborder". Recognized
+// keys map to the same dataset axes the UE selects emit; the line is then removed.
+const OPT = {
+  media: 'mediaLayout',
+  size: 'mediaSize',
+  decoration: 'decoration',
+  bg: 'bgMode',
+  placement: 'textPlacement',
+  align: 'textAlign',
+};
+const SHORT = { both: 'backgroundAndForeground', full: 'fullWidthWithShadows' };
+const parseConfig = (card) => {
+  const line = [...card.querySelectorAll('p')]
+    .find((p) => /^\s*(media|size|decoration|bg|placement|align)\s*[:=]/i.test(p.textContent));
+  if (!line) return;
+  line.textContent.split(/[;,\n]/).forEach((pair) => {
+    const [k, v] = pair.split(/[:=]/).map((s) => s?.trim());
+    const key = OPT[k?.toLowerCase()];
+    if (key && v) card.dataset[key] = SHORT[v.toLowerCase()] ?? v;
+  });
+  line.remove();
+};
+
 // Lift an authored image out as card media before tout decoration so it isn't
 // treated as body. The card's authored options (set by the authoring layer as
-// data-attributes) drive placement; absent any, we infer from the asset.
+// data-attributes, or the DA config line above) drive placement; absent any, we
+// infer from the asset.
 const placeMedia = (card) => {
   const pic = card.querySelector('picture, img');
   if (!pic) return null;
@@ -47,6 +72,7 @@ export default (el) => {
     const cards = [...row.children];
     row.style = `--card-count: ${cards.length}`;
     cards.forEach((card) => {
+      parseConfig(card);
       const media = placeMedia(card);
       applyOptions(card);
       decorateTout(card, 'bento-card');
