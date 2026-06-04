@@ -330,10 +330,11 @@
     opacity: 1;
   }
 
-  /* invisible on landing, ramps to FULL black by the end of the scrub (reaches
-     1 at ~0.83 so the tail is solid black); cards sit above it */
+  /* small non-zero baseline on landing (Falkor's overlay never sits at 0 — it
+     keeps a constant flat-black floor), ramping to FULL black by ~0.83 so the
+     tail is solid black; cards sit above it */
   .hc-bg::after {
-    opacity: clamp(0, calc(var(--progress) * 1.2), 1);
+    opacity: clamp(0.05, calc(var(--progress) * 1.2), 1);
   }
 
   .hc-text {
