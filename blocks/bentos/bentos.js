@@ -18,6 +18,7 @@ const OPT = {
   size: 'mediaSize',
   decoration: 'decoration',
   bg: 'bgMode',
+  'bg-size': 'bgSize',
   placement: 'textPlacement',
   align: 'textAlign',
 };
