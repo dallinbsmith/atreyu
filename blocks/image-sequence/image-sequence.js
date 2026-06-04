@@ -30,8 +30,24 @@ export default (el) => {
   if (!text) return;
   text.classList.add('prompter-text');
 
-  const video = el.querySelector('video');
-  video?.closest('p')?.classList.add('prompter-media');
+  // Media: an authored <video>, or an authored link to an .mp4 we upgrade to one
+  // (DA can't insert a <video>, so the manifesto video is authored as a link).
+  let video = el.querySelector('video');
+  const link = video ? null
+    : [...el.querySelectorAll('a')].find((a) => /\.mp4(\?|#|$)/i.test(a.getAttribute('href') ?? ''));
+  if (link) {
+    video = document.createElement('video');
+    video.src = link.getAttribute('href');
+  }
+  const media = video && document.createElement('div');
+  if (media) {
+    media.className = 'prompter-media';
+    media.append(video);
+  }
+
+  // Flatten to clean direct children [media?, text] so the sticky video and the
+  // sticky prompter text are adjacent siblings (the -100vh overlap depends on it).
+  el.replaceChildren(...(media ? [media] : []), text);
 
   if (!shouldAnimate()) return;
   el.classList.add('prompter-scrub');
