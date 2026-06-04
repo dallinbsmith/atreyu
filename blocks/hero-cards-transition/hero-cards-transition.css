@@ -247,7 +247,10 @@
   .hc-body {
     margin: var(--spacing-l, 24px) 0 0;
     max-width: 42ch;
-    color: var(--color-alpha-light-50);
+
+    /* Falkor's title1Block subtitle is grey-90 (a soft near-white), not a 50%
+       alpha wash — gray-200 is our equivalent one notch below the white title. */
+    color: var(--color-gray-200);
     font-size: var(--body-font-size-l, 18px);
     line-height: var(--body-line-height, 1.45);
   }
