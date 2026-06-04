@@ -25,7 +25,10 @@
     /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
     -webkit-backdrop-filter: blur(var(--card-background-blur));
     border: 1px solid var(--color-alpha-light-5);
-    padding: var(--card-padding);
+
+    --bento-pad: var(--card-padding);
+
+    padding: var(--bento-pad);
 
     /* subtle top-corner glow, matching Frame.io's buttonCards */
     &::before {
@@ -152,10 +155,10 @@
   }
 
   /* fullWidthWithShadows (Falkor backgroundOnly + fullWidthWithShadows): the UI
-     screenshot sits full-bleed-width in a BOUNDED media region at the top of the
-     card, object-fit cover anchored to the hotspot (centre), with the text
-     below — readable, within the card, not a letterboxed strip or a card-filling
-     overflow. */
+     screenshot is a wide PNG with a baked, transparent drop-shadow. Show it whole
+     at full card width, natural height, pinned to the top — the shadow reads as a
+     soft float. No cover-zoom (which magnifies a slice of a 2.3:1 image and bleeds
+     past every edge), no fixed band height. */
   .bento-card[data-bg-mode="fullWidthWithShadows"] {
     justify-content: flex-start;
     padding-top: 0;
@@ -164,31 +167,23 @@
   .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
     position: relative;
     inset: auto;
-    width: calc(100% + var(--card-padding) * 2);
-    height: clamp(190px, 22vw, 244px);
-    margin: 0 calc(var(--card-padding) * -1) var(--spacing-l);
+    width: calc(100% + var(--bento-pad) * 2);
+    height: auto;
+    margin: 0 calc(var(--bento-pad) * -1) var(--spacing-l);
+    overflow: visible;
 
     img,
     picture {
       position: static;
+      display: block;
       width: 100%;
-
-      /* overscan (Falkor's fullWidthWithShadows ratio): the screenshot is
-         scaled larger than the region and clipped at the edges, so the UI reads
-         big and the baked shadow bleeds past the card edge */
-      height: 155%;
-      object-fit: cover;
-      object-position: center;
+      height: auto;
+      object-fit: contain;
     }
 
     &::after {
       display: none;
     }
-  }
-
-  /* size short = a shorter media region */
-  .bento-card[data-bg-mode="fullWidthWithShadows"][data-bg-size="short"] .bento-card-media.bg {
-    height: clamp(150px, 17vw, 190px);
   }
 
   .bento-card-title {
@@ -252,13 +247,6 @@
     grid-column: 1 / 5;
   }
 
-  /* variant-m's fwws card sits in a half-row slot, so its media is much shorter
-     than the standalone variant-e one — keeps the two stacked left cards
-     balanced (≈ equal) and the spanning cover card from ballooning. */
-  .bentos.variant-m .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
-    height: clamp(140px, 16vw, 176px);
-  }
-
   /* variant-e (Falkor variantE): three equal columns */
   .bentos.variant-e .bento-card {
     grid-column: span 4;
@@ -267,6 +255,6 @@
 
 @media (width >= 1240px) {
   .bentos .bento-card {
-    padding: var(--card-padding-desktop);
+    --bento-pad: var(--card-padding-desktop);
   }
 }
