@@ -236,6 +236,7 @@
   .hero-cards-transition {
     --hero-card-width: calc(25.2 * var(--frem));
     --hero-card-gutter: var(--spacing-l, 24px);
+
     /* Centre the 5-column cluster on the viewport: place col 0 so the middle
        column (index 2) lands at 50vw. Re-resolves at wider breakpoints when
        --hero-card-width / --col-gap change, so no per-breakpoint override. */
