@@ -441,8 +441,10 @@ a {
 
     /* Frosted glass — Falkor's ghost scheme composes baseGlass (backdrop blur)
        so the background is blurred behind the button rather than shining
-       through sharply, with a soft light border instead of a hard outline. */
-    background-color: transparent;
+       through sharply, with a soft light border instead of a hard outline.
+       Falkor's resting fill is transparent (frost only); we add a faint 10%
+       fill so the button has a little body at rest, deepening on hover. */
+    background-color: var(--color-alpha-light-10);
     border: 1px solid var(--color-alpha-light-20);
     backdrop-filter: blur(15px);
     /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
