@@ -323,7 +323,7 @@
     mask-image: none;
     /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
     -webkit-mask-image: none;
-    opacity: calc(0.95 - var(--progress) * 0.25);
+    opacity: 1;
   }
 
   /* invisible on landing, darkens as the hero scrubs out (cards sit above it) */
@@ -364,16 +364,11 @@
     transition: --card-entry-progress 1s var(--transition-ease-out, ease-out);
     transition-delay: calc(var(--from-center, 0) * 0.05s);
 
-    /* Composed per-card opacity: max-opacity (column tone) × entry × scroll.
-       The scroll term floors at 0.4 so the wall never goes black; the per-card
-       --scroll-rate is keyed to --from-edge so outer columns recede first. */
-    --card-scroll-progress: clamp(0.4, calc(1 - var(--progress, 0) * var(--scroll-rate, 0.6)), 1);
-    --card-content-opacity: calc(
-      var(--card-entry-progress, 1)
-      * var(--card-scroll-progress)
-      * var(--card-max-opacity, 1)
-    );
-    --scroll-rate: calc(0.45 + (var(--from-edge, 0) / 5.5) * 0.6);
+    /* Cards hold FULL opacity for the entire scrub — they leave only by
+       translating off-screen, never by fading or dimming. Opacity tracks just
+       the one-time entry reveal (→ 1 after entry); no scroll fade, no per-column
+       tone. (--card-max-opacity / --scroll-rate are intentionally unused now.) */
+    --card-content-opacity: var(--card-entry-progress, 1);
   }
 
   @media (width >= 768px) {
