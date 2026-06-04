@@ -244,6 +244,13 @@
     grid-column: 1 / 5;
   }
 
+  /* variant-m's fwws card sits in a half-row slot, so its media is much shorter
+     than the standalone variant-e one — keeps the two stacked left cards
+     balanced (≈ equal) and the spanning cover card from ballooning. */
+  .bentos.variant-m .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
+    height: clamp(140px, 16vw, 176px);
+  }
+
   /* variant-e (Falkor variantE): three equal columns */
   .bentos.variant-e .bento-card {
     grid-column: span 4;
