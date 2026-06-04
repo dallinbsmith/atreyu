@@ -23,7 +23,7 @@
      250px here too. Keeping the literal Falkor numbers visible in the source
      means future changes to `HeroCardsTransition.module.css` translate 1:1. */
   --frem: 0.625rem;
-  --hero-card-width: calc(25 * var(--frem));
+  --hero-card-width: calc(16.6 * var(--frem));
   --hero-card-gutter: var(--spacing-m, 12px);
 
   /* `--hero-card-aspect-ratio` (4/3) drives `--hero-card-height` which is the
@@ -234,9 +234,12 @@
 
 @media (width >= 768px) {
   .hero-cards-transition {
-    --hero-card-width: calc(37.8 * var(--frem));
+    --hero-card-width: calc(25.2 * var(--frem));
     --hero-card-gutter: var(--spacing-l, 24px);
-    --first-column-x: calc(-16.2 * var(--frem));
+    /* Centre the 5-column cluster on the viewport: place col 0 so the middle
+       column (index 2) lands at 50vw. Re-resolves at wider breakpoints when
+       --hero-card-width / --col-gap change, so no per-breakpoint override. */
+    --first-column-x: calc((100vw - var(--hero-card-width)) / 2 - var(--col-gap) * 2);
     --normalized-progress: calc(var(--progress) * 0.4);
 
     .hc-wall {
@@ -258,14 +261,9 @@
   }
 }
 
-@media (width >= 1240px) {
-  .hero-cards-transition { --first-column-x: calc(-20.9 * var(--frem)); }
-}
-
 @media (width >= 1440px) {
   .hero-cards-transition {
-    --hero-card-width: calc(50 * var(--frem));
-    --first-column-x: calc(-40.9 * var(--frem));
+    --hero-card-width: calc(33.3 * var(--frem));
   }
 }
 
