@@ -1,15 +1,12 @@
 .text-over-image {
   position: relative;
-  max-width: var(--grid-container-width);
-  margin: 0 auto;
-  min-height: 360px;
-  border-radius: var(--radius-16, 16px);
-  overflow: hidden;
   display: flex;
   align-items: flex-end;
+  min-height: 400px;
+  overflow: hidden;
   isolation: isolate;
+  background-color: var(--color-dark);
 
-  /* Frame.io `em` decorator = muted second-tone, not italic (two-tone titles) */
   em {
     font-style: normal;
     color: var(--em-color, var(--color-alpha-light-50));
@@ -34,33 +31,44 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(180deg, transparent 20%, color-mix(in srgb, var(--color-dark) 88%, transparent)),
-        linear-gradient(60deg, color-mix(in srgb, var(--color-dark) 45%, transparent), transparent 55%);
+        linear-gradient(0deg, rgb(0 0 0 / 20%), rgb(0 0 0 / 20%)),
+        linear-gradient(18.61deg, rgb(0 0 0 / 67.2%) 21.85%, rgb(0 0 0 / 0%) 73.55%);
     }
   }
 
-  /* fallback when no media is authored (CSP-blocked Sanity assets) */
-  &:not(:has(.toi-media)) {
-    background: radial-gradient(80% 120% at 20% 0%, color-mix(in srgb, var(--color-iris) 22%, transparent), transparent 60%), var(--color-alpha-dark-50);
+  .toi-content {
+    position: relative;
+    z-index: 1;
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+    width: 100%;
+    padding: var(--spacing-xxl, 48px) var(--spacing-xl);
   }
 
-  .toi-content {
-    padding: var(--spacing-xl);
-    max-width: 44ch;
+  .rt-eyebrow {
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: var(--eyebrow-letter-spacing);
+    font-size: var(--eyebrow-font-size);
+    font-weight: 400;
+    color: var(--color-alpha-light-70);
+    font-family: var(--body-font-family);
   }
 
   .toi-title {
-    margin: var(--spacing-s) 0 0;
+    margin: var(--spacing-m) 0 0;
     color: var(--color-light);
     font-size: var(--heading-font-size-xl);
+    font-weight: 600;
     letter-spacing: -0.03em;
-    line-height: 1.1;
+    line-height: 1.15;
+    max-width: 16ch;
   }
 }
 
 @media (width >= 768px) {
   .text-over-image {
-    min-height: 560px;
+    min-height: 390px;
 
     .toi-content {
       padding: var(--spacing-xxl, 48px);
@@ -70,6 +78,6 @@
 
 @media (width >= 1240px) {
   .text-over-image {
-    min-height: 720px;
+    min-height: 584px;
   }
 }
