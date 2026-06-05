@@ -97,11 +97,7 @@ export default (el) => {
   const gradient = document.createElement('div');
   gradient.className = 'qi-gradient';
   gradient.setAttribute('aria-hidden', 'true');
-  slides.forEach(({ category }) => {
-    const p = document.createElement('p');
-    p.textContent = category;
-    gradient.append(p);
-  });
+  gradient.innerHTML = slides.map(({ category }) => category).join('<br>');
 
   const tabWrap = document.createElement('div');
   tabWrap.className = 'qi-tab-wrap';
