@@ -94,8 +94,21 @@ export default (el) => {
   });
   [...stage.children].forEach((p, j) => p.toggleAttribute('hidden', j !== 0));
 
+  const gradient = document.createElement('div');
+  gradient.className = 'qi-gradient';
+  gradient.setAttribute('aria-hidden', 'true');
+  slides.forEach(({ category }) => {
+    const p = document.createElement('p');
+    p.textContent = category;
+    gradient.append(p);
+  });
+
+  const tabWrap = document.createElement('div');
+  tabWrap.className = 'qi-tab-wrap';
+  tabWrap.append(tablist, gradient);
+
   rows.forEach((r) => r.remove());
-  el.append(tablist, stage);
+  el.append(tabWrap, stage);
   rovingTabindex(tablist, tabs, { orientation: 'horizontal' });
   decorateRichText(el);
 

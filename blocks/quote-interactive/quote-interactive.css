@@ -14,7 +14,7 @@
     h2, h3 {
       margin: 0;
       color: var(--color-light);
-      font-size: var(--heading-font-size-xl);
+      font-size: var(--heading-font-size-m);
       letter-spacing: -0.03em;
       line-height: 1.12;
     }
@@ -25,6 +25,10 @@
       font-size: var(--body-font-size-m);
       line-height: var(--body-line-height);
     }
+  }
+
+  .qi-gradient {
+    display: none;
   }
 
   .qi-tabs {
@@ -130,25 +134,34 @@
   }
 }
 
-/* Desktop: editorial two-column module — heading + category tabs on the left,
-   the active quote in a framed, softly-lit stage on the right (Frame.io feel). */
+/* Desktop: heading on the left, category titles on the right (Falkor layout).
+   The stage panel is hidden; hover card + modal replace it. */
 @media (width >= 768px) {
   .quote-interactive {
     display: grid;
     grid-template:
-      'head stage' auto
-      'tabs stage' 1fr
-      / 0.82fr 1.18fr;
+      'head tabs' auto
+      / 4fr 6fr;
     column-gap: var(--spacing-xxl, 48px);
     align-items: start;
 
     .qi-head {
       grid-area: head;
-      margin-bottom: var(--spacing-l);
+      margin-bottom: 0;
+
+      h2, h3 {
+        font-size: var(--heading-font-size-xs);
+        font-weight: 500;
+        line-height: 1.3;
+      }
+    }
+
+    .qi-tab-wrap {
+      grid-area: tabs;
+      position: relative;
     }
 
     .qi-tabs {
-      grid-area: tabs;
       flex-direction: column;
       align-items: flex-start;
       align-content: start;
@@ -163,15 +176,15 @@
       background: transparent;
       color: color-mix(in srgb, var(--color-light) 15%, transparent);
       font-size: var(--heading-font-size-xl);
-      font-weight: 700;
+      font-weight: 600;
       letter-spacing: -0.03em;
       line-height: 1.15;
       text-align: left;
       width: auto;
-      transition: color 0.4s var(--transition-ease-out);
+      transition: color 0.5s var(--transition-ease-out);
 
       &:hover {
-        color: color-mix(in srgb, var(--color-light) 60%, transparent);
+        color: var(--color-light);
       }
 
       &[aria-selected='true'] {
@@ -179,6 +192,30 @@
         background: transparent;
         border-color: transparent;
       }
+    }
+
+    .qi-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(70.41deg, #5d3730 -52%, #8b5f4d 26.88%, #343357 75%);
+      background-clip: text;
+      /* stylelint-disable-next-line property-no-vendor-prefix -- Safari needs prefix for background-clip: text */
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      pointer-events: none;
+      transition: opacity 0.5s ease-in-out;
+
+      p {
+        margin: 0;
+        font-size: var(--heading-font-size-xl);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+      }
+    }
+
+    .qi-tabs:hover ~ .qi-gradient {
+      opacity: 0;
     }
 
     .qi-stage {
