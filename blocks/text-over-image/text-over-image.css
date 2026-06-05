@@ -21,9 +21,14 @@
     inset: 0;
     z-index: -1;
 
-    img,
-    video,
     picture {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    img,
+    video {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -34,9 +39,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background:
-        linear-gradient(0deg, rgb(0 0 0 / 20%), rgb(0 0 0 / 20%)),
-        linear-gradient(18.61deg, rgb(0 0 0 / 67.2%) 21.85%, rgb(0 0 0 / 0%) 73.55%);
+      background: rgb(0 0 0 / 20%);
     }
   }
 
@@ -47,22 +50,26 @@
     margin: 0 auto;
     width: 100%;
     padding: var(--spacing-xxl, 48px) var(--spacing-xl);
+
+    p {
+      margin: 0;
+    }
   }
 
   .rt-eyebrow {
     display: inline-block;
+    margin-bottom: var(--spacing-m);
     text-transform: uppercase;
     letter-spacing: var(--eyebrow-letter-spacing);
     font-size: var(--eyebrow-font-size);
     font-weight: 400;
     color: var(--color-alpha-light-70);
-    font-family: var(--body-font-family);
   }
 
   .toi-title {
-    margin: var(--spacing-m) 0 0;
+    margin: 0;
     color: var(--color-light);
-    font-size: var(--heading-font-size-xl);
+    font-size: var(--heading-font-size-l);
     font-weight: 600;
     letter-spacing: -0.03em;
     line-height: 1.15;
