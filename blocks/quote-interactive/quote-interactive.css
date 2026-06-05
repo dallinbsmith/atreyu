@@ -311,8 +311,8 @@
 
 .qi-modal-close {
   position: absolute;
-  top: var(--spacing-l);
-  right: var(--spacing-l);
+  top: var(--spacing-xl);
+  right: var(--spacing-xl);
   z-index: 2;
   display: flex;
   align-items: center;
@@ -362,9 +362,11 @@
 .qi-modal-slide {
   position: relative;
   flex: 0 0 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  padding: 0 var(--spacing-xxl, 48px) calc(8rem + var(--spacing-xl)) var(--spacing-xxl, 48px);
 }
 
 .qi-modal-slide-bg {
@@ -393,8 +395,6 @@
   position: relative;
   z-index: 1;
   max-width: 60ch;
-  padding: var(--spacing-xxl, 48px);
-  padding-bottom: calc(8rem + var(--spacing-xl));
   opacity: var(--item-progress, 1);
   transform: translateX(calc(2rem - var(--item-progress, 1) * 2rem));
 }
@@ -437,10 +437,12 @@
   left: 0;
   z-index: 2;
   width: 100%;
-  padding: 0 var(--spacing-xxl, 48px) var(--spacing-l);
+  box-sizing: border-box;
+  padding: 0 var(--spacing-xxl, 48px) var(--spacing-m);
 }
 
 .qi-modal-nav-inner {
+  position: relative;
   display: flex;
   justify-content: space-between;
   gap: var(--spacing-l);
