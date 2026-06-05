@@ -282,26 +282,31 @@
   }
 }
 
-/* Modal overlay — full-viewport carousel with background images */
+/* Modal — centered card (Falkor: aspect-ratio 1/0.51, not full-viewport) */
 .qi-modal {
   position: fixed;
   inset: 0;
   z-index: var(--z-index-modal);
+  display: grid;
+  place-items: center;
 }
 
 .qi-modal-backdrop {
   position: absolute;
   inset: 0;
-  background: var(--color-alpha-dark-80);
+  background: var(--color-alpha-dark-90);
   cursor: pointer;
 }
 
 .qi-modal-content {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: min(90vw, var(--grid-container-width));
+  aspect-ratio: 1 / 0.51;
+  max-height: calc(100vh - 6rem);
   overflow: hidden;
+  border-radius: var(--radius-16, 16px);
   transform-origin: center center;
+  isolation: isolate;
 }
 
 .qi-modal-close {
@@ -309,27 +314,35 @@
   top: var(--spacing-l);
   right: var(--spacing-l);
   z-index: 2;
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
   padding: 0;
-  border: 1px solid var(--color-alpha-light-40);
+  border: 0;
   border-radius: 50%;
   background: transparent;
   color: var(--color-light);
-  font-size: var(--heading-font-size-s);
   cursor: pointer;
-  transition: border-color var(--duration-200) var(--ease-out);
+  transform-origin: top right;
 
-  span {
-    display: block;
-    transform: rotate(45deg);
-    line-height: 1;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--color-alpha-light-15);
+    border-radius: 50%;
+    transition: transform var(--duration-300) var(--ease-basic-butter);
   }
 
-  &:hover {
-    border-color: var(--color-alpha-light-70);
+  &:hover::before {
+    transform: scale(1.2);
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
   }
 }
 
@@ -352,7 +365,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: var(--spacing-xxl, 48px);
+  padding: var(--spacing-xxl, 48px) var(--spacing-xxl, 48px) calc(8rem + var(--spacing-xl));
 }
 
 .qi-modal-slide-bg {
@@ -372,13 +385,17 @@
 .qi-modal-scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent -20%, rgb(0 0 0 / 85%) 100%);
+  background: linear-gradient(180deg, transparent -20%, rgb(0 0 0 / 85%) 108%);
+  opacity: var(--shadow-opacity, 1);
+  pointer-events: none;
 }
 
 .qi-modal-slide-body {
   position: relative;
   z-index: 1;
   max-width: 60ch;
+  opacity: var(--item-progress, 1);
+  transform: translateX(calc(2rem - var(--item-progress, 1) * 2rem));
 }
 
 .qi-modal-eyebrow {
@@ -420,6 +437,8 @@
   z-index: 2;
   display: flex;
   gap: var(--spacing-s);
+  padding-right: var(--spacing-xxl, 48px);
+  padding-bottom: var(--spacing-m);
 }
 
 .qi-modal-prev,

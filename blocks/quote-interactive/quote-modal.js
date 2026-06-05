@@ -1,7 +1,8 @@
 import { withGsap } from '../../scripts/utils/gsap-loader.js';
 import { trapFocus, announce } from '../../scripts/utils/a11y.js';
 
-const chevron = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${d}"/></svg>`;
+const svg = (d, attrs = '') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"${attrs}><path d="${d}"/></svg>`;
+const plusIcon = svg('M12 5v14M5 12h14');
 
 let modal = null;
 let releaseTrap = null;
@@ -61,7 +62,7 @@ const buildModal = (slides) => {
   backdrop.addEventListener('click', close);
 
   const closeBtn = Object.assign(document.createElement('button'), {
-    className: 'qi-modal-close', innerHTML: '<span>+</span>',
+    className: 'qi-modal-close', innerHTML: plusIcon,
   });
   closeBtn.setAttribute('aria-label', 'Close');
   closeBtn.addEventListener('click', close);
@@ -76,7 +77,7 @@ const buildModal = (slides) => {
   nav.className = 'qi-modal-nav';
   [['prev', 'M15 6l-6 6 6 6', -1], ['next', 'M9 6l6 6-6 6', 1]].forEach(([cls, d, dir]) => {
     const btn = Object.assign(document.createElement('button'), {
-      className: `qi-modal-${cls}`, innerHTML: chevron(d),
+      className: `qi-modal-${cls}`, innerHTML: svg(d),
     });
     btn.setAttribute('aria-label', `${cls === 'prev' ? 'Previous' : 'Next'} slide`);
     btn.addEventListener('click', () => goTo(current + dir));
@@ -118,12 +119,14 @@ export const initModal = (blockEl, tabs, slides) => {
     modal.querySelector('.qi-modal-close').focus();
     triggerTab = tabs[index];
     announce(`Quote carousel opened, slide ${index + 1} of ${count}`);
+    const content = modal.querySelector('.qi-modal-content');
+    const slide = content.querySelectorAll('.qi-modal-slide')[index];
     withGsap(({ gsap }) => {
-      gsap.fromTo(
-        modal.querySelector('.qi-modal-content'),
-        { scale: 0.95, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.4, ease: 'power2.out' },
-      );
+      const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+      tl.fromTo(content, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5 });
+      tl.fromTo(modal.querySelector('.qi-modal-close svg'), { rotate: 0 }, { rotate: 45, duration: 0.5 }, '<');
+      tl.fromTo(modal.querySelector('.qi-modal-backdrop'), { opacity: 0 }, { opacity: 1 }, '<+0.3');
+      if (slide) tl.fromTo(slide, { '--item-progress': 0 }, { '--item-progress': 1, duration: 0.4 }, '<');
     });
   };
 };
