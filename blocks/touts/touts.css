@@ -3,18 +3,7 @@
   max-width: var(--grid-container-width);
   margin: 0 auto;
 
-  /* below-fold ambient glow, matching Frame.io's feature-tout band */
-  &::after {
-    content: '';
-    position: absolute;
-    inset: auto 0 -40%;
-    height: 60%;
-    z-index: -1;
-    background: radial-gradient(60% 100% at 50% 100%, color-mix(in srgb, var(--color-iris) 18%, transparent), transparent 70%);
-    pointer-events: none;
-  }
-
-  .touts-row {
+.touts-row {
     /* mobile: swipeable horizontal rail (Frame.io touts scroll on small screens) */
     display: grid;
     grid-auto-flow: column;
@@ -53,7 +42,7 @@
   .tout-body {
     margin: var(--spacing-s) 0 0;
     color: var(--color-alpha-light-50);
-    font-size: var(--body-font-size-s);
+    font-size: var(--heading-font-size-xs);
     line-height: var(--body-line-height);
   }
 
