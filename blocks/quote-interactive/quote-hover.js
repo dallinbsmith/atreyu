@@ -34,7 +34,7 @@ export const initHover = (blockEl, tabs, slides, mql) => {
   tabsEl.addEventListener('mousemove', (e) => {
     const max = listRect.width;
     const x = ((e.clientX - listRect.x) / max) * (max / 1.5);
-    const y = (e.offsetY / max) * (max / 1.5);
+    const y = ((e.clientY - listRect.y) / max) * (max / 1.5);
     card.style.setProperty('--hover-x', `${x}px`);
     card.style.setProperty('--hover-y', `${y}px`);
   });
