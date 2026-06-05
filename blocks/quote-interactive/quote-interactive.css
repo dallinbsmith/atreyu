@@ -197,7 +197,8 @@
     .qi-gradient {
       display: block;
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: 0;
       background: linear-gradient(70.41deg, #5d3730 -52%, #8b5f4d 26.88%, #343357 75%);
       background-clip: text;
       /* stylelint-disable-next-line property-no-vendor-prefix -- Safari needs prefix for background-clip: text */
