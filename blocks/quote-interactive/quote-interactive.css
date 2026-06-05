@@ -273,7 +273,7 @@
     border-radius: var(--radius-16, 16px);
     overflow: hidden;
     opacity: var(--hover-progress, 0);
-    transform: translate(calc(15% * var(--hover-progress, 0)), -50%) scaleY(var(--scale-y, 0.1));
+    transform: translate(calc(10% * var(--hover-progress, 0)), -50%) scaleY(var(--scale-y, 0.1));
     transform-origin: center center;
   }
 
