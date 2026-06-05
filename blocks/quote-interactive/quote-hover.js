@@ -29,14 +29,9 @@ export const initHover = (blockEl, tabs, slides, mql) => {
 
   const tabsEl = blockEl.querySelector('.qi-tabs');
 
-  let listRect = tabsEl.getBoundingClientRect();
-  window.addEventListener('resize', () => { listRect = tabsEl.getBoundingClientRect(); });
-
   tabsEl.addEventListener('mousemove', (e) => {
-    const x = (e.clientX - listRect.x) / 1.5 + listRect.x;
-    const y = (e.clientY - listRect.y) / 1.5 + listRect.y;
-    card.style.setProperty('--hover-x', `${x}px`);
-    card.style.setProperty('--hover-y', `${y}px`);
+    card.style.setProperty('--hover-x', `${e.clientX}px`);
+    card.style.setProperty('--hover-y', `${e.clientY}px`);
   });
 
   tabs.forEach((tab, i) => {
