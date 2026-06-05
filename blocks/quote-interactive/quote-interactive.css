@@ -188,7 +188,6 @@
       }
 
       &[aria-selected='true'] {
-        color: var(--color-light);
         background: transparent;
         border-color: transparent;
       }
