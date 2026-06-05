@@ -188,6 +188,7 @@
       }
 
       &[aria-selected='true'] {
+        color: color-mix(in srgb, var(--color-light) 15%, transparent);
         background: transparent;
         border-color: transparent;
       }
