@@ -472,13 +472,18 @@
 }
 
 .qi-modal-arrow {
+  position: relative;
   display: inline-flex;
+  align-items: center;
   width: 0.875rem;
-  transition: transform var(--duration-300) var(--ease-basic-butter);
+  height: 1em;
+  transition: transform 0.4s var(--ease-basic-butter);
 
   svg {
-    width: 100%;
-    height: auto;
+    position: absolute;
+    right: 0;
+    height: 0.55rem;
+    width: auto;
   }
 
   &.qi-modal-arrow-prev {
@@ -487,11 +492,11 @@
 }
 
 .qi-modal-prev:hover .qi-modal-arrow {
-  transform: rotate(180deg) translateX(0.35rem);
+  transform: rotate(180deg) translateX(0.5rem);
 }
 
 .qi-modal-next:hover .qi-modal-arrow {
-  transform: translateX(0.35rem);
+  transform: translateX(0.5rem);
 }
 
 @media (width >= 768px) {
