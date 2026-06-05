@@ -311,14 +311,14 @@
 
 .qi-modal-close {
   position: absolute;
-  top: var(--spacing-xl);
-  right: var(--spacing-xl);
+  top: 40px;
+  right: 40px;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 4rem;
-  height: 4rem;
+  width: 2.5rem;
+  height: 2.5rem;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -341,8 +341,8 @@
   }
 
   svg {
-    width: 1rem;
-    height: 1rem;
+    width: 0.625rem;
+    height: 0.625rem;
   }
 }
 
@@ -365,8 +365,8 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: 0 var(--spacing-xxl, 48px) calc(8rem + var(--spacing-xl)) var(--spacing-xxl, 48px);
+  justify-content: space-between;
+  padding: var(--spacing-xxl, 48px) var(--spacing-xxl, 48px) calc(5rem + var(--spacing-xl));
 }
 
 .qi-modal-slide-bg {
@@ -400,21 +400,21 @@
 }
 
 .qi-modal-eyebrow {
+  position: relative;
+  z-index: 1;
   display: block;
-  margin-bottom: var(--spacing-m);
   color: var(--color-alpha-light-70);
-  font-size: var(--body-font-size-s);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: var(--heading-font-size-xs);
+  font-weight: 400;
+  line-height: 1.25;
 }
 
 .qi-modal-quote {
   margin: 0;
   color: var(--color-light);
-  font-size: var(--heading-font-size-l);
-  font-weight: 500;
-  letter-spacing: -0.02em;
+  font-size: var(--body-font-size-xl);
+  font-weight: 600;
+  letter-spacing: -0.015em;
   line-height: 1.2;
   text-wrap: balance;
 }
@@ -473,7 +473,7 @@
 
 .qi-modal-arrow {
   display: inline-flex;
-  width: 1.25rem;
+  width: 0.875rem;
   transition: transform var(--duration-300) var(--ease-basic-butter);
 
   svg {
@@ -487,16 +487,18 @@
 }
 
 .qi-modal-prev:hover .qi-modal-arrow {
-  transform: rotate(180deg) translateX(0.5rem);
+  transform: rotate(180deg) translateX(0.35rem);
 }
 
 .qi-modal-next:hover .qi-modal-arrow {
-  transform: translateX(0.5rem);
+  transform: translateX(0.35rem);
 }
 
 @media (width >= 768px) {
   .qi-modal-quote {
-    font-size: var(--heading-font-size-xl);
+    font-size: var(--body-font-size-xxxl);
+    letter-spacing: -0.03em;
+    line-height: 1.12;
   }
 }
 
