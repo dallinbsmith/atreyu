@@ -1,3 +1,7 @@
+.section:has(> :first-child > .text-over-image:first-child) {
+  padding-top: 0;
+}
+
 .text-over-image {
   position: relative;
   display: flex;
