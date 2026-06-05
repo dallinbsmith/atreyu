@@ -25,7 +25,9 @@ export default (el) => {
     // A slide may carry a background photo (in its own cell); the remaining
     // cells are [category, quote, attribution].
     const pic = row.querySelector('picture, img');
-    const [cat, quote, attr] = [...row.children].filter((c) => !pic || !c.contains(pic));
+    const icon = row.querySelector('.icon');
+    const skip = (c) => (pic && c.contains(pic)) || (icon && c.contains(icon));
+    const [cat, quote, attr] = [...row.children].filter((c) => !skip(c));
     const tabId = generateId('qi-tab');
     const panelId = generateId('qi-panel');
 
@@ -59,6 +61,13 @@ export default (el) => {
       bg.setAttribute('aria-hidden', 'true');
       bg.append(pic.closest('picture') ?? pic);
       panel.prepend(bg);
+    }
+    if (icon) {
+      const logo = document.createElement('div');
+      logo.className = 'qi-logo';
+      logo.setAttribute('aria-hidden', 'true');
+      logo.append(icon);
+      panel.append(logo);
     }
 
     tab.addEventListener('click', () => {
