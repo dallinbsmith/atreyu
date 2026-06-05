@@ -1,10 +1,7 @@
-// Interactive quote switcher. First authored row is [heading, intro]; each
-// remaining row is [category, quote, attribution]. Category tabs swap the active
-// quote — the kind of stateful, keyboard-navigable UI React/component libraries
-// give for free; here the tab state, ARIA wiring, and roving focus are all
-// hand-built in vanilla JS (reusing the shared a11y util for roving tabindex).
 import { generateId, rovingTabindex } from '../../scripts/utils/a11y.js';
 import { decorateRichText } from '../../scripts/utils/richtext.js';
+import { initHover } from './quote-hover.js';
+import { initModal } from './quote-modal.js';
 
 export default (el) => {
   const rows = [...el.children];
@@ -21,13 +18,21 @@ export default (el) => {
   const stage = document.createElement('div');
   stage.className = 'qi-stage';
 
+  const slides = [];
   const tabs = rows.map((row, i) => {
-    // A slide may carry a background photo (in its own cell); the remaining
-    // cells are [category, quote, attribution].
     const pic = row.querySelector('picture, img');
     const icon = row.querySelector('.icon');
     const skip = (c) => (pic && c.contains(pic)) || (icon && c.contains(icon));
     const [cat, quote, attr] = [...row.children].filter((c) => !skip(c));
+
+    slides.push({
+      i,
+      category: cat?.textContent.trim() || `Quote ${i + 1}`,
+      quoteHTML: quote?.innerHTML ?? '',
+      attrHTML: attr?.innerHTML ?? '',
+      pic: pic ? (pic.closest('picture') ?? pic).cloneNode(true) : null,
+      icon: icon?.cloneNode(true) ?? null,
+    });
     const tabId = generateId('qi-tab');
     const panelId = generateId('qi-panel');
 
@@ -93,4 +98,9 @@ export default (el) => {
   el.append(tablist, stage);
   rovingTabindex(tablist, tabs, { orientation: 'horizontal' });
   decorateRichText(el);
+
+  const mql = window.matchMedia('(width >= 768px)');
+  initHover(el, tabs, slides, mql);
+  const openModal = initModal(el, tabs, slides);
+  tabs.forEach((tab, i) => tab.addEventListener('click', () => mql.matches && openModal(i)));
 };
