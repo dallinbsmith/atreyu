@@ -251,7 +251,7 @@
     }
 
     .qi-hover {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       z-index: 3;
@@ -268,7 +268,7 @@
       border-radius: var(--radius-16, 16px);
       overflow: hidden;
       opacity: var(--hover-progress, 0);
-      transform: translate(calc(15% * var(--hover-progress, 0)), 10%) scaleY(var(--scale-y, 0.1));
+      transform: translate(calc(15% * var(--hover-progress, 0)), -50%) scaleY(var(--scale-y, 0.1));
       transform-origin: center center;
     }
 
