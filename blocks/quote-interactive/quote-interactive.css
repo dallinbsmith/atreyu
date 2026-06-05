@@ -88,6 +88,20 @@
       color: var(--color-alpha-light-70);
       font-size: var(--body-font-size-s);
       line-height: 1.4;
+
+      &::before {
+        content: '—\00a0';
+        color: var(--color-alpha-light-50);
+      }
+    }
+
+    .qi-logo {
+      position: absolute;
+      z-index: 1;
+      bottom: var(--spacing-xl);
+      right: var(--spacing-xl);
+      max-height: 2rem;
+      opacity: 0.7;
     }
   }
 
@@ -111,7 +125,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(0deg, color-mix(in srgb, var(--color-dark) 88%, transparent) 6%, transparent 72%);
+      background: linear-gradient(0deg, color-mix(in srgb, var(--color-dark) 92%, transparent) 0%, transparent 80%);
     }
   }
 }
@@ -138,7 +152,33 @@
       flex-direction: column;
       align-items: flex-start;
       align-content: start;
+      gap: 0;
       margin-bottom: 0;
+    }
+
+    .qi-tab {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: color-mix(in srgb, var(--color-light) 15%, transparent);
+      font-size: var(--heading-font-size-xl);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      text-align: left;
+      width: auto;
+      transition: color 0.4s var(--transition-ease-out);
+
+      &:hover {
+        color: color-mix(in srgb, var(--color-light) 60%, transparent);
+      }
+
+      &[aria-selected='true'] {
+        color: var(--color-light);
+        background: transparent;
+        border-color: transparent;
+      }
     }
 
     .qi-stage {
