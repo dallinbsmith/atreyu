@@ -49,13 +49,13 @@ const makeSlide = ({ pic, category, quoteHTML, attrHTML }) => {
   bg.className = 'qi-modal-slide-bg';
   if (pic) bg.append(pic.cloneNode(true));
   bg.append(Object.assign(document.createElement('div'), { className: 'qi-modal-scrim' }));
+  const eye = Object.assign(document.createElement('span'), { className: 'qi-modal-eyebrow', textContent: category });
   const body = document.createElement('div');
   body.className = 'qi-modal-slide-body';
-  const eye = Object.assign(document.createElement('span'), { className: 'qi-modal-eyebrow', textContent: category });
   const bq = Object.assign(document.createElement('blockquote'), { className: 'qi-modal-quote', innerHTML: quoteHTML });
   const fc = Object.assign(document.createElement('figcaption'), { className: 'qi-modal-attr', innerHTML: attrHTML });
-  body.append(eye, bq, fc);
-  el.append(bg, body);
+  body.append(bq, fc);
+  el.append(bg, eye, body);
   return el;
 };
 
