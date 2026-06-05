@@ -38,9 +38,6 @@
   }
 
   .tout {
-    /* light treatment — no card surface, optional top hairline like Frame.io touts */
-    padding-top: var(--spacing-m);
-    border-top: 1px solid var(--color-alpha-light-40);
     scroll-snap-align: start;
   }
 
