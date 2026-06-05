@@ -204,15 +204,11 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       pointer-events: none;
+      font-size: var(--heading-font-size-xl);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
       transition: opacity 0.5s ease-in-out;
-
-      p {
-        margin: 0;
-        font-size: var(--heading-font-size-xl);
-        font-weight: 600;
-        letter-spacing: -0.03em;
-        line-height: 1.15;
-      }
     }
 
     .qi-tabs:hover ~ .qi-gradient {
