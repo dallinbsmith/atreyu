@@ -18,11 +18,11 @@
     }
 
     h1 {
-      font-size: var(--heading-font-size-xl);
+      font-size: var(--heading-font-size-xxl);
     }
 
     h2 {
-      font-size: var(--heading-font-size-l);
+      font-size: var(--heading-font-size-xl);
     }
 
     h3 {
@@ -55,12 +55,16 @@
   }
 
   /* Inline custom styles — author writes [[style|text]] */
+  p:has(> .rt-eyebrow) {
+    margin: 0 0 var(--spacing-m);
+  }
+
   .rt-eyebrow {
     display: inline-block;
     text-transform: uppercase;
     letter-spacing: var(--eyebrow-letter-spacing);
     font-size: var(--eyebrow-font-size);
-    font-weight: 600;
+    font-weight: 400;
     color: var(--color-iris);
   }
 
