@@ -251,13 +251,12 @@
     }
 
     .qi-hover {
-      position: fixed;
-      left: 0;
+      position: absolute;
       top: 0;
+      left: 0;
       z-index: 3;
       pointer-events: none;
-      opacity: var(--hover-progress, 0);
-      transform: translate3d(var(--hover-x, -200vw), var(--hover-y, -200vh), 0) translate(-10%, -50%);
+      transform: translate3d(var(--hover-x, 0), var(--hover-y, 0), 0);
       transition: transform var(--duration-300) var(--ease-out);
     }
 
@@ -268,7 +267,8 @@
       aspect-ratio: 1 / 0.51;
       border-radius: var(--radius-16, 16px);
       overflow: hidden;
-      transform: scaleY(var(--scale-y, 0.1));
+      opacity: var(--hover-progress, 0);
+      transform: translate(calc(15% * var(--hover-progress, 0)), -50%) scaleY(var(--scale-y, 0.1));
       transform-origin: center center;
     }
 

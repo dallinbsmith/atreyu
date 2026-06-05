@@ -25,12 +25,18 @@ export const initHover = (blockEl, tabs, slides, mql) => {
   const card = buildCard();
   const inner = card.querySelector('.qi-hover-inner');
   const tabsEl = blockEl.querySelector('.qi-tabs');
-  blockEl.append(card);
+  tabsEl.append(card);
   let active = -1;
+  let listRect = tabsEl.getBoundingClientRect();
+
+  window.addEventListener('resize', () => { listRect = tabsEl.getBoundingClientRect(); });
 
   tabsEl.addEventListener('mousemove', (e) => {
-    card.style.setProperty('--hover-x', `${e.clientX}px`);
-    card.style.setProperty('--hover-y', `${e.clientY}px`);
+    const max = listRect.width;
+    const x = ((e.clientX - listRect.x) / max) * (max / 1.5);
+    const y = (e.offsetY / max) * (max / 1.5);
+    card.style.setProperty('--hover-x', `${x}px`);
+    card.style.setProperty('--hover-y', `${y}px`);
   });
 
   tabs.forEach((tab, i) => {
