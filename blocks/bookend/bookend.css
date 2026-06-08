@@ -3,9 +3,23 @@
   z-index: 2;
   width: 100%;
   padding-top: 160px;
+  overflow: hidden;
 
   > div {
     padding-bottom: 160px;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    bottom: -750px;
+    left: -100%;
+    width: 300%;
+    height: 1500px;
+    background: radial-gradient(47.08% 45.75% at 50% 50%, #4e55a8 0%, rgb(69 82 158 / 91%) 33.36%, rgb(72 42 105 / 0%) 100%);
+    mix-blend-mode: screen;
+    pointer-events: none;
   }
 
   .bookend-content {
@@ -69,6 +83,12 @@
 
     .bookend-content {
       max-width: 700px;
+    }
+
+    &::after {
+      bottom: -900px;
+      left: -15%;
+      width: 130%;
     }
   }
 }
