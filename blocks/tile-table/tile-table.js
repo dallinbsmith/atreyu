@@ -1,5 +1,7 @@
 import { initTileModal } from './tile-modal.js';
 
+const slugify = (name) => name.toLowerCase().replace(/\s+/g, '-');
+
 export default (el) => {
   const rows = [...el.children].filter((r) => r.textContent.trim());
   const items = rows.map((row) => {
@@ -22,12 +24,19 @@ export default (el) => {
     const tile = document.createElement('button');
     tile.className = 'tt-tile';
     tile.type = 'button';
+    const logo = document.createElement('span');
+    logo.className = 'tt-logo';
     const label = document.createElement('span');
     label.className = 'tt-label';
     label.textContent = item.name;
-    tile.append(label);
+    tile.append(logo, label);
     tile.addEventListener('click', () => openModal(i, tile));
     grid.append(tile);
+
+    fetch(`/icons/partners/${slugify(item.name)}.svg`)
+      .then((r) => (r.ok ? r.text() : ''))
+      .then((svg) => { logo.innerHTML = svg; })
+      .catch(() => {});
   });
 
   el.append(grid);
