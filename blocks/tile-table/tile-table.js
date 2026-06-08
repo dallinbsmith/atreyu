@@ -40,8 +40,10 @@ export default (el) => {
         const svgEl = logo.querySelector('svg');
         const vb = svgEl?.getAttribute('viewBox')?.split(/\s+/).map(Number);
         if (vb?.length === 4) {
-          svgEl.setAttribute('width', vb[2]);
-          svgEl.setAttribute('height', vb[3]);
+          const h = Math.min(vb[3], 24);
+          const w = vb[2] * (h / vb[3]);
+          svgEl.style.width = `${Math.round(w)}px`;
+          svgEl.style.height = `${Math.round(h)}px`;
         }
       })
       .catch(() => {});
