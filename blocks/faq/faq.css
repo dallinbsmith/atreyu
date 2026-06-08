@@ -1,5 +1,5 @@
 .faq {
-  max-width: 800px;
+  max-width: var(--grid-container-width);
   margin: 0 auto;
   padding: var(--spacing-xl) var(--grid-gutter-width);
 
