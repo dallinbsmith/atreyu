@@ -1,4 +1,7 @@
 .tile-table {
+  --tt-surface: rgb(18 19 29);
+  --tt-border-hover: rgb(37 39 54);
+
   max-width: var(--grid-container-width);
   margin: 0 auto;
 }
@@ -17,7 +20,7 @@
   padding: var(--spacing-m) var(--spacing-l);
   border: 1px solid var(--color-alpha-light-5);
   border-radius: 5px;
-  background: color-mix(in srgb, var(--color-light) 8%, transparent);
+  background: var(--tt-surface);
   color: var(--color-alpha-light-70);
   font: inherit;
   font-size: var(--heading-font-size-xs);
@@ -27,7 +30,7 @@
   transition: border-color var(--duration-500) var(--transition-ease-out);
 
   &:hover {
-    border-color: var(--color-alpha-light-15);
+    border-color: var(--tt-border-hover);
   }
 }
 
@@ -38,7 +41,7 @@
   height: 24px;
 
   svg {
-    height: 100%;
+    max-height: 100%;
     width: auto;
   }
 }
