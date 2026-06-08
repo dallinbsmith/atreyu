@@ -8,31 +8,40 @@
       margin-top: 0;
     }
 
-    /* native rich text → Frame.io title scale via heading level */
     h1,
     h2,
     h3 {
+      margin: 0;
       color: var(--color-light);
-      letter-spacing: -0.03em;
-      line-height: 1.12;
+      font-weight: 600;
     }
 
     h1 {
       font-size: var(--heading-font-size-xxl);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
     }
 
     h2 {
       font-size: var(--heading-font-size-xl);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
     }
 
     h3 {
-      font-size: var(--heading-font-size-m);
+      font-size: var(--heading-font-size-l);
+      letter-spacing: -0.015em;
+      line-height: 1.2;
     }
 
     p {
-      font-size: var(--body-font-size-m);
+      font-size: var(--body-font-size-l);
       line-height: var(--body-line-height);
       margin: var(--spacing-m) 0;
+    }
+
+    p + p {
+      margin-top: var(--spacing-l);
     }
 
     a:not(.btn) {
@@ -61,10 +70,11 @@
 
   .rt-eyebrow {
     display: inline-block;
-    text-transform: uppercase;
-    letter-spacing: var(--eyebrow-letter-spacing);
+    font-family: var(--font-secondary);
     font-size: var(--eyebrow-font-size);
     font-weight: 400;
+    letter-spacing: var(--eyebrow-letter-spacing);
+    text-transform: uppercase;
     color: var(--color-iris);
   }
 
