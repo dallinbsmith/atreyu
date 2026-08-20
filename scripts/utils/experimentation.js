@@ -1,6 +1,7 @@
 import { getMetadata } from '../ak.js';
 import { emit } from './event-bus.js';
 import { track } from './analytics.js';
+import { sanitizeMarkup } from './sanitize.js';
 
 const VISITOR_KEY = 'atreyu-visitor-id';
 
@@ -24,7 +25,13 @@ const hash = (str) => {
 
 const getBucket = (experiment, visitorId, count) => hash(`${experiment}:${visitorId}`) % count;
 
+// Only same-origin relative paths are allowed — authors set this via page
+// metadata, but the fetch target must never be able to resolve to a
+// third-party origin (e.g. "//evil.example" or "https://evil.example").
+const isSameOriginPath = (path) => path.startsWith('/') && !path.startsWith('//');
+
 const fetchVariantContent = async (path) => {
+  if (!isSameOriginPath(path)) return null;
   const resp = await fetch(`${path}.plain.html`);
   if (!resp.ok) return null;
   return resp.text();
@@ -33,7 +40,7 @@ const fetchVariantContent = async (path) => {
 const applyVariant = (html) => {
   const main = document.querySelector('main');
   if (!main) return;
-  main.innerHTML = html;
+  main.replaceChildren(...sanitizeMarkup(html).childNodes);
 };
 
 export const runExperiment = async () => {

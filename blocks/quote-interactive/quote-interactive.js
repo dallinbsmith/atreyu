@@ -28,8 +28,8 @@ export default (el) => {
     slides.push({
       i,
       category: cat?.textContent.trim() || `Quote ${i + 1}`,
-      quoteHTML: quote?.innerHTML ?? '',
-      attrHTML: attr?.innerHTML ?? '',
+      quoteNodes: quote ? [...quote.childNodes].map((n) => n.cloneNode(true)) : [],
+      attrNodes: attr ? [...attr.childNodes].map((n) => n.cloneNode(true)) : [],
       pic: pic ? (pic.closest('picture') ?? pic).cloneNode(true) : null,
       icon: icon?.cloneNode(true) ?? null,
     });
@@ -97,7 +97,10 @@ export default (el) => {
   const gradient = document.createElement('div');
   gradient.className = 'qi-gradient';
   gradient.setAttribute('aria-hidden', 'true');
-  gradient.innerHTML = slides.map(({ category }) => category).join('<br>');
+  slides.forEach(({ category }, idx) => {
+    if (idx > 0) gradient.append(document.createElement('br'));
+    gradient.append(document.createTextNode(category));
+  });
 
   const tabWrap = document.createElement('div');
   tabWrap.className = 'qi-tab-wrap';

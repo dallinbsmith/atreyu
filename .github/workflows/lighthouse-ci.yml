@@ -1,0 +1,202 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'blocks/**'
+      - 'scripts/**'
+      - 'styles/**'
+      - 'head.html'
+      - 'workers/**'
+
+concurrency:
+  group: lighthouse-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install LHCI
+        run: npm install -g @lhci/cli@0.14.x
+
+      # The EDS preview URL is built from the PR branch name and repo.
+      # AEM EDS exposes preview at https://main--{repo}--{org}.aem.page
+      # For PRs, it's https://{branch}--{repo}--{org}.aem.page
+      # These must be set as repo secrets: LHCI_AEM_ORG, LHCI_AEM_SITE
+      - name: Derive preview base URL
+        id: preview
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          # Sanitize branch name: lowercase, replace non-alphanumeric with hyphens
+          BRANCH_SLUG=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-\|-$//g')
+          BASE_URL="https://${BRANCH_SLUG}--${{ secrets.LHCI_AEM_SITE }}--${{ secrets.LHCI_AEM_ORG }}.aem.page"
+          echo "base_url=${BASE_URL}" >> "$GITHUB_OUTPUT"
+          echo "Preview base URL: ${BASE_URL}"
+
+      - name: Wait for AEM preview to be ready
+        run: |
+          BASE_URL="${{ steps.preview.outputs.base_url }}"
+          echo "Waiting for preview at ${BASE_URL}/blog to become available..."
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${BASE_URL}/blog")
+            if [ "$STATUS" = "200" ] || [ "$STATUS" = "301" ] || [ "$STATUS" = "302" ]; then
+              echo "Preview is ready (HTTP $STATUS)"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $STATUS — retrying in 15s..."
+            sleep 15
+          done
+          echo "Preview did not become ready after 3 minutes. Proceeding anyway."
+
+      - name: Run Lighthouse CI
+        run: |
+          BASE_URL="${{ steps.preview.outputs.base_url }}"
+          lhci autorun \
+            --collect.url="${BASE_URL}/blog" \
+            --collect.url="${BASE_URL}/blog/introducing-frame-io" \
+            --collect.url="${BASE_URL}/glossary/video-codec" \
+            --collect.url="${BASE_URL}/integrations/adobe-premiere-pro" \
+            --collect.url="${BASE_URL}/customers" \
+            --collect.numberOfRuns=3 \
+            --collect.settings.preset=perf \
+            --collect.settings.formFactor=mobile \
+            --collect.settings.screenEmulation.mobile=true \
+            --collect.settings.screenEmulation.width=390 \
+            --collect.settings.screenEmulation.height=844 \
+            --collect.settings.screenEmulation.deviceScaleFactor=3 \
+            --collect.settings.throttling.cpuSlowdownMultiplier=4 \
+            --collect.settings.throttling.downloadThroughputKbps=10240 \
+            --collect.settings.throttling.uploadThroughputKbps=10240 \
+            --collect.settings.throttling.rttMs=40 \
+            --assert.preset=no-pwa \
+            --assert.assertions.largest-contentful-paint='["error", {"maxNumericValue": 2500, "aggregationMethod": "median-run"}]' \
+            --assert.assertions.total-blocking-time='["error", {"maxNumericValue": 200, "aggregationMethod": "median-run"}]' \
+            --assert.assertions.cumulative-layout-shift='["error", {"maxNumericValue": 0.1, "aggregationMethod": "median-run"}]' \
+            --assert.assertions.server-response-time='["warn", {"maxNumericValue": 800, "aggregationMethod": "median-run"}]' \
+            --assert.assertions.interactive='["warn", {"maxNumericValue": 5000, "aggregationMethod": "median-run"}]' \
+            --assert.assertions.uses-text-compression='["warn", {"aggregationMethod": "pessimistic"}]' \
+            --assert.assertions.uses-optimized-images='["warn", {"aggregationMethod": "pessimistic"}]' \
+            --assert.assertions.uses-responsive-images='["warn", {"aggregationMethod": "pessimistic"}]' \
+            --upload.target=temporary-public-storage
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Post results as PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // Find the most recent LHCI results directory
+            const lhciDir = '.lighthouseci';
+            let summary = '## Lighthouse CI Results\n\n';
+
+            if (!fs.existsSync(lhciDir)) {
+              summary += '_No Lighthouse results found._\n';
+            } else {
+              const files = fs.readdirSync(lhciDir).filter(f => f.endsWith('.json') && f.startsWith('lhr-'));
+
+              if (files.length === 0) {
+                summary += '_No Lighthouse report files found._\n';
+              } else {
+                const results = {};
+
+                for (const file of files) {
+                  const lhr = JSON.parse(fs.readFileSync(path.join(lhciDir, file), 'utf8'));
+                  const url = new URL(lhr.requestedUrl).pathname;
+                  if (!results[url]) results[url] = [];
+                  results[url].push({
+                    lcp: lhr.audits['largest-contentful-paint']?.numericValue,
+                    tbt: lhr.audits['total-blocking-time']?.numericValue,
+                    cls: lhr.audits['cumulative-layout-shift']?.numericValue,
+                    ttfb: lhr.audits['server-response-time']?.numericValue,
+                    score: lhr.categories?.performance?.score,
+                  });
+                }
+
+                const lcpBudget = 2500;
+                const tbtBudget = 200;
+                const clsBudget = 0.1;
+                let allPassed = true;
+
+                summary += '| Page | LCP | TBT | CLS | TTFB | Score | Status |\n';
+                summary += '|------|-----|-----|-----|------|-------|--------|\n';
+
+                for (const [url, runs] of Object.entries(results)) {
+                  // Use median run
+                  const sorted = runs.sort((a, b) => (a.lcp || 0) - (b.lcp || 0));
+                  const median = sorted[Math.floor(sorted.length / 2)];
+                  const lcp = Math.round(median.lcp || 0);
+                  const tbt = Math.round(median.tbt || 0);
+                  const cls = (median.cls || 0).toFixed(3);
+                  const ttfb = Math.round(median.ttfb || 0);
+                  const score = Math.round((median.score || 0) * 100);
+
+                  const lcpPass = lcp <= lcpBudget;
+                  const tbtPass = tbt <= tbtBudget;
+                  const clsPass = parseFloat(cls) <= clsBudget;
+                  const passed = lcpPass && tbtPass && clsPass;
+                  if (!passed) allPassed = false;
+
+                  const status = passed ? '✅ PASS' : '❌ FAIL';
+                  const lcpStr = lcpPass ? `${lcp}ms` : `**${lcp}ms**`;
+                  const tbtStr = tbtPass ? `${tbt}ms` : `**${tbt}ms**`;
+                  const clsStr = clsPass ? cls : `**${cls}**`;
+
+                  summary += `| \`${url}\` | ${lcpStr} | ${tbtStr} | ${clsStr} | ${ttfb}ms | ${score} | ${status} |\n`;
+                }
+
+                summary += '\n**Budgets:** LCP < 2500ms | TBT < 200ms | CLS < 0.1\n';
+                summary += '_Median of 3 runs, mobile preset (390px, 4x CPU throttle, 10Mbps)_\n';
+
+                if (!allPassed) {
+                  summary += '\n> **One or more pages exceeded performance budgets.** Review the failing metrics above.\n';
+                  summary += '> Check: (1) Is the LCP block in the first section? (2) Are third-party scripts in `delayed.js` only? (3) Do images have explicit dimensions?\n';
+                }
+              }
+            }
+
+            // Find existing bot comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('## Lighthouse CI Results')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: summary,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: summary,
+              });
+            }

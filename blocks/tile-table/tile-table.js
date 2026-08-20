@@ -1,6 +1,7 @@
 import { initTileModal } from './tile-modal.js';
+import { sanitizeMarkup } from '../../scripts/utils/sanitize.js';
 
-const slugify = (name) => name.toLowerCase().replace(/\s+/g, '-');
+const slugify = (name) => name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
 
 export default (el) => {
   const rows = [...el.children].filter((r) => r.textContent.trim());
@@ -36,7 +37,8 @@ export default (el) => {
     fetch(`/icons/partners/${slugify(item.name)}.svg`)
       .then((r) => (r.ok ? r.text() : ''))
       .then((svg) => {
-        logo.innerHTML = svg;
+        if (!svg) return;
+        logo.replaceChildren(...sanitizeMarkup(svg).childNodes);
         const svgEl = logo.querySelector('svg');
         const vb = svgEl?.getAttribute('viewBox')?.split(/\s+/).map(Number);
         if (vb?.length === 4) {

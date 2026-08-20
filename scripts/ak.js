@@ -145,7 +145,7 @@ const decorateButton = (link) => {
   if (variant) link.classList.add(variant);
   if (isUnder) {
     link.classList.add('btn-outline');
-    link.innerHTML = isUnder.innerHTML;
+    link.append(...isUnder.childNodes);
     isUnder.remove();
   }
   const toReplace = [isEm, isStrong, isStrike].find((el) => el?.parentNode === trueParent);

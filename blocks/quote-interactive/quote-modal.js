@@ -42,7 +42,7 @@ const close = () => {
   if (!animated) finish();
 };
 
-const makeSlide = ({ pic, category, quoteHTML, attrHTML }) => {
+const makeSlide = ({ pic, category, quoteNodes, attrNodes }) => {
   const el = document.createElement('div');
   el.className = 'qi-modal-slide';
   const bg = document.createElement('div');
@@ -52,8 +52,12 @@ const makeSlide = ({ pic, category, quoteHTML, attrHTML }) => {
   const eye = Object.assign(document.createElement('span'), { className: 'qi-modal-eyebrow', textContent: category });
   const body = document.createElement('div');
   body.className = 'qi-modal-slide-body';
-  const bq = Object.assign(document.createElement('blockquote'), { className: 'qi-modal-quote', innerHTML: quoteHTML });
-  const fc = Object.assign(document.createElement('figcaption'), { className: 'qi-modal-attr', innerHTML: attrHTML });
+  const bq = document.createElement('blockquote');
+  bq.className = 'qi-modal-quote';
+  bq.append(...quoteNodes.map((n) => n.cloneNode(true)));
+  const fc = document.createElement('figcaption');
+  fc.className = 'qi-modal-attr';
+  fc.append(...attrNodes.map((n) => n.cloneNode(true)));
   body.append(bq, fc);
   el.append(bg, eye, body);
   return el;

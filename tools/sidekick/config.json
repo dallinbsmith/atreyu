@@ -1,6 +1,6 @@
 {
   "project": "Atreyu",
-  "editUrlLabel": "Experience Workspace",
+  "editUrlLabel": "Document Authoring",
   "editUrlPattern": "https://da.live/canvas#/{{org}}/{{site}}{{pathname}}",
   "plugins": [
     {

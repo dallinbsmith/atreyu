@@ -70,6 +70,46 @@
         "name": "Footer",
         "path": "/tools/sidekick/blocks/footer",
         "searchTags": ["footer, global footer, site footer, copyright, legal"]
+      },
+      {
+        "name": "Quote Interactive",
+        "path": "/tools/sidekick/blocks/quote-interactive",
+        "searchTags": ["quote, testimonial, customer quote, interactive, tabs, industry"]
+      },
+      {
+        "name": "Hero Cards",
+        "path": "/tools/sidekick/blocks/hero-cards",
+        "searchTags": ["hero, cards, carousel, homepage hero, card wall, transition"]
+      },
+      {
+        "name": "Tile Table",
+        "path": "/tools/sidekick/blocks/tile-table",
+        "searchTags": ["tile, table, feature grid, detail modal, tiles"]
+      },
+      {
+        "name": "Text Over Image",
+        "path": "/tools/sidekick/blocks/text-over-image",
+        "searchTags": ["text over image, banner, overlay text, full-bleed, media"]
+      },
+      {
+        "name": "Side by Side",
+        "path": "/tools/sidekick/blocks/side-by-side",
+        "searchTags": ["side by side, feature callout, image and text, split, media and copy"]
+      },
+      {
+        "name": "Card Grid Nav",
+        "path": "/tools/sidekick/blocks/card-grid-nav",
+        "searchTags": ["card grid, navigation, feature nav, cross-link, content hub"]
+      },
+      {
+        "name": "Touts",
+        "path": "/tools/sidekick/blocks/touts",
+        "searchTags": ["touts, value props, icon columns, highlight, features"]
+      },
+      {
+        "name": "Image Sequence",
+        "path": "/tools/sidekick/blocks/image-sequence",
+        "searchTags": ["image sequence, scroll animation, scrub, prompter, manifesto"]
       }
     ]
   },

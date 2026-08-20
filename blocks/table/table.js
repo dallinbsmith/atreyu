@@ -15,7 +15,7 @@ export default (el) => {
         for (const td of tds) {
           const th = document.createElement('th');
           th.className = td.className;
-          th.innerHTML = td.innerHTML;
+          th.append(...td.childNodes);
           th.setAttribute('scope', 'col');
           td.parentElement.replaceChild(th, td);
         }

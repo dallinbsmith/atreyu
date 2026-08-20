@@ -13,7 +13,35 @@
 import { fetchSchedule, fetchFromAem } from './handlers/aem.js';
 import fetchDaSc from './handlers/dasc.js';
 import fetchRedirect from './handlers/redirects.js';
+import { fetchFromExistingOrigin } from './handlers/existing-origin.js';
+import { matchLocalePrefix, stripLocale } from './utils/locale.js';
 
+// Phase 1 cohort only (master-plan/implementation-plan.md, "Migration Cohort Phases").
+// Grows as each phase ships: Phase 2 adds /customers/ + /resources/, Phase 3 adds
+// / + /enterprise + /demo, Phase 4 adds /pricing. Do not pre-populate ahead of ship.
+const EDS_PATHS = ['/blog/', '/glossary/', '/integrations/'];
+
+// Which locales actually have confirmed, live, translated content on the EDS origin
+// right now — a second axis from EDS_PATHS (cohort), not a duplicate of it. Phase 1
+// is English-only: the GLAAS -> DA translation pipeline doesn't exist yet, so a
+// locale-prefixed path (e.g. /de-de/blog/x) strips to a real EDS_PATHS match but
+// there is no /de-de/blog/x page on the EDS origin — it must keep falling through to
+// the existing origin. This is a subset of LOCALE_PREFIXES by construction (every
+// entry here must also appear there); it never gets ahead of what's actually shipped.
+const EDS_LOCALES = [];
+export const isEdsPath = (pathname) => {
+  const localePrefix = matchLocalePrefix(pathname);
+  if (localePrefix && !EDS_LOCALES.includes(localePrefix)) return false;
+
+  const path = stripLocale(pathname);
+  return EDS_PATHS.some((p) => path.startsWith(p))
+    || EDS_PATHS.map((p) => p.slice(0, -1)).includes(path);
+};
+
+// `global: true` marks a ROUTES entry as Worker-owned regardless of cohort status
+// (drafts denial, schedules, dasc) — the strangler below must never intercept these.
+// isGlobalRoute is derived directly from ROUTES' own match functions so the
+// exemption can never drift out of sync with what these routes actually match.
 const ROUTES = [
   {
     match: () => true,
@@ -22,14 +50,17 @@ const ROUTES = [
   {
     match: (path) => path.includes('/schedules/') && path.endsWith('json'),
     handler: fetchSchedule,
+    global: true,
   },
   {
     match: (path) => path.includes('/dasc/') && path.endsWith('json'),
     handler: fetchDaSc,
+    global: true,
   },
   {
     match: (path) => path.startsWith('/drafts'),
     handler: () => new Response('Not found - drafts are denied on production.', { status: 404 }),
+    global: true,
   },
   {
     match: () => true,
@@ -37,6 +68,8 @@ const ROUTES = [
     cache: true,
   },
 ];
+
+const isGlobalRoute = (pathname) => ROUTES.some(({ match, global }) => global && match(pathname));
 
 const getExtension = (path) => {
   const basename = path.split('/').pop();
@@ -113,12 +146,34 @@ export default {
     const portResp = getPortRedirect(req, url);
     if (portResp) return portResp;
 
+    if (url.hostname === 'blog.frame.io') {
+      return new Response(null, {
+        status: 301,
+        headers: { location: `https://frame.io/blog${url.pathname}${url.search}` },
+      });
+    }
+
     const rumResp = getRUMRequest(req, url);
     if (rumResp) return rumResp;
 
-    const request = formatRequest(env, req, url);
+    // Strangler check: RUM/telemetry beacons and Worker-owned global routes
+    // (drafts denial, schedules, dasc — see ROUTES' `global: true` entries) always
+    // fall through to the EDS pipeline instead of the legacy origin, regardless of
+    // cohort status. Everything else not yet migrated (or the kill switch is set)
+    // falls back to the existing origin, using the original request — not one
+    // already rewritten to the EDS hostname by formatRequest below.
+    if (!isRUMRequest(url) && !isGlobalRoute(url.pathname)
+      && (env.EDS_DISABLED === 'true' || !isEdsPath(url.pathname))) {
+      return fetchFromExistingOrigin({ url, env, request: req });
+    }
 
+    // formatSearchParams normalizes/filters url.search (and mutates `url` in place) —
+    // it must run before formatRequest builds the outbound/cached request from `url`,
+    // otherwise the cache key snapshots the raw, unfiltered query string and every
+    // distinct query permutation fragments the CDN cache.
     const savedSearch = formatSearchParams(url);
+
+    const request = formatRequest(env, req, url);
 
     for (const { match, handler, cache } of ROUTES) {
       if (match(url.pathname)) {

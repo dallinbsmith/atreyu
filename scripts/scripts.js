@@ -3,14 +3,20 @@ import { runExperiment } from './utils/experimentation.js';
 
 const hostnames = ['authorkit.dev'];
 
+// Verified 2026-08-20 against Falkor's real source of truth (tokens/languages.js)
+// and live HTTP checks against frame.io. Real prefixes are full BCP47 codes
+// (e.g. /pt-br, not /pt) — there is no Hindi locale and no Dutch locale.
 const locales = {
   '': { lang: 'en' },
-  '/de': { lang: 'de' },
-  '/es': { lang: 'es' },
-  '/fr': { lang: 'fr' },
-  '/hi': { lang: 'hi' },
-  '/ja': { lang: 'ja' },
-  '/zh': { lang: 'zh' },
+  '/de-de': { lang: 'de' },
+  '/es-es': { lang: 'es' },
+  '/fr-fr': { lang: 'fr' },
+  '/it-it': { lang: 'it' },
+  '/ja-jp': { lang: 'ja' },
+  '/ko-kr': { lang: 'ko' },
+  '/pt-br': { lang: 'pt' },
+  '/ru-ru': { lang: 'ru' },
+  '/zh-cn': { lang: 'zh' },
 };
 
 const linkBlocks = [
