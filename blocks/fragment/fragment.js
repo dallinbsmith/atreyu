@@ -1,4 +1,5 @@
 import { loadFragment, getReplaceEl } from '../../scripts/utils/fragment.js';
+import { isPlatformHost } from '../../scripts/utils/platform-host.js';
 
 export { loadFragment };
 
@@ -7,8 +8,7 @@ const getRequestPath = (a) => {
   const href = a.getAttribute('href');
   if (href.startsWith('/')) return pathname;
   if (hostname === window.location.hostname) return pathname;
-  const isAem = ['.da.', '.aem.', 'local'].some((host) => hostname.includes(host));
-  if (isAem) {
+  if (isPlatformHost(hostname)) {
     const [aemOrg, aemSite] = hostname.split('.')[0].split('--').reverse();
     const [winOrg, winSite] = window.location.hostname.split('.')[0].split('--').reverse();
     if ((aemOrg === winOrg) && (aemSite === winSite)) return pathname;

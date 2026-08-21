@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# Pre-commit guard (P0-48 follow-up). Fast local feedback before a bad
+# commit happens, not just a CI check after the fact — the one part of
+# Bank of America's abandoned ue-compat anti-drift effort that this
+# project's own research (ref_eds_iteration_lessons.md) found was
+# genuinely good, even though the rest of that idea died unshipped.
+#
+# Wired up automatically by `npm install` via package.json's "prepare"
+# script, which points `core.hooksPath` at this directory — no husky or
+# simple-git-hooks dependency, consistent with this project's no-build-step,
+# minimal-tooling stance (this repo had no git-hooks infrastructure before
+# this file).
+#
+# Scope: lints only STAGED .js files (via `git diff --cached`), not the
+# whole tree. That's deliberate, not a shortcut — it means this can never
+# block a commit on a pre-existing lint issue in a file the commit doesn't
+# touch, and it stays fast regardless of repo size. Runs the full `eslint`
+# ruleset (not just the two config-drift rules) on those files, since a
+# lint pass restricted to changed files is already fast enough not to
+# annoy commits. CSS is intentionally not linted here (npm run lint:css is
+# a separate concern) — easy to add later via the same pattern if wanted.
+#
+# Bypass in an emergency: `git commit --no-verify` (use sparingly — that
+# also skips this catching a real config-drift bug).
+
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+staged_js=()
+while IFS= read -r -d '' file; do
+  # Skip files that were deleted/renamed-away and no longer exist on disk.
+  [ -f "$file" ] && staged_js+=("$file")
+done < <(git diff --cached --name-only --diff-filter=ACMR -z -- '*.js')
+
+if [ "${#staged_js[@]}" -eq 0 ]; then
+  exit 0
+fi
+
+echo "pre-commit: running eslint on ${#staged_js[@]} staged JS file(s) (includes the config-drift guard)..."
+npx eslint "${staged_js[@]}"
