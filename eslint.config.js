@@ -2,6 +2,7 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
 import preferArrow from 'eslint-plugin-prefer-arrow-functions';
 import { recommended, source, test } from '@adobe/eslint-config-helix';
+import configDrift from './tools/eslint-rules/config-drift.js';
 
 export default defineConfig([
   globalIgnores([
@@ -73,10 +74,17 @@ export default defineConfig([
 
       // no nested ternaries (inherited from Helix, enforced here explicitly)
       'no-nested-ternary': 'error',
+
+      // config-drift guard (P0-48): catch a locale-prefix list or an
+      // environment/hostname classification re-implemented outside this
+      // project's designated single-source files.
+      'config-drift/no-duplicate-locale-list': 'error',
+      'config-drift/no-inline-env-check': 'error',
     },
     plugins: {
       import: recommended.plugins.import,
       'prefer-arrow-functions': preferArrow,
+      'config-drift': configDrift,
     },
     extends: [recommended],
   },

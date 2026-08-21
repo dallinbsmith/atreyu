@@ -6,12 +6,17 @@
  * never drift into two independently-wrong lists — the exact bug class already
  * found and fixed multiple times in this Worker.
  *
- * Verified 2026-08-20 against the real source of truth (Falkor's tokens/languages.js
- * + web/src/utils/middleware/i18n.ts, DEFAULT_LOCALE 'en-us') and live HTTP checks
- * against frame.io — NOT scripts/scripts.js's locale config in this repo, which is
- * itself stale (wrong short-code format, wrong language set: has a nonexistent
- * '/hi', missing it/ko/pt/ru). Real prefixes are full BCP47 codes, e.g. /pt-br not
- * /pt.
+ * AUTHORITATIVE for the Worker runtime. Verified 2026-08-20 against the real source
+ * of truth (Falkor's tokens/languages.js + web/src/utils/middleware/i18n.ts,
+ * DEFAULT_LOCALE 'en-us') and live HTTP checks against frame.io. Real prefixes are
+ * full BCP47 codes, e.g. /pt-br not /pt.
+ *
+ * scripts/scripts.js's `locales` config (browser runtime) was independently wrong
+ * as of 2026-08-19 and has since been corrected to match this list exactly. The two
+ * files can't literally share a module — this one runs in the Cloudflare Worker
+ * isolate, scripts.js ships to the browser with no build step — but they must stay
+ * content-identical. If this list ever changes, update scripts/scripts.js's
+ * `locales` object to match.
  */
 export const LOCALE_PREFIXES = ['/de-de', '/es-es', '/fr-fr', '/it-it', '/ja-jp', '/ko-kr', '/pt-br', '/ru-ru', '/zh-cn'];
 
