@@ -1,4 +1,5 @@
 import { shouldAnimate } from '../../scripts/utils/motion.js';
+import { decorateRichText } from '../../scripts/utils/richtext.js';
 
 const setBackgroundFocus = (img) => {
   const { title } = img.dataset;
@@ -62,4 +63,5 @@ export default async (el) => {
     bg.classList.add('hero-background');
     decorateBackground(bg);
   }
+  decorateRichText(el);
 };
