@@ -7,6 +7,7 @@ indices:
       - /fragments/**
       - /tools/**
       - /drafts/**
+      - /test/**
     target: /query-index.json
     properties:
       title:
