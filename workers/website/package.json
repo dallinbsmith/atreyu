@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy:prod": "wrangler deploy --env=\"\"",
-    "deploy:stage": "wrangler deploy --env stage"
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
   },
   "author": "",
   "license": "Apache-2.0",

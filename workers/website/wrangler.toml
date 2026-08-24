@@ -5,5 +5,8 @@ keep_vars = true
 
 vars = { AEM_ORG = "aemsites", AEM_SITE = "author-kit" }
 
-[env.dev]
+[env.staging]
+vars = { AEM_ORG = "aemsites", AEM_SITE = "author-kit" }
+
+[env.production]
 vars = { AEM_ORG = "aemsites", AEM_SITE = "author-kit" }
