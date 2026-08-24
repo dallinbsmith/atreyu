@@ -81,6 +81,16 @@ const buildSoftwareApplication = () => ({
   author: { '@id': `${SITE.url}/#organization` },
 });
 
+const buildIntegrationApp = () => ({
+  '@type': 'SoftwareApplication',
+  name: `${getMetadata('og:title') || document.title} for Frame.io`,
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Web',
+  ...(getMetadata('partner') && {
+    provider: { '@type': 'Organization', name: getMetadata('partner') },
+  }),
+});
+
 // Human labels for slugs that title-casing would mangle (e.g. "c2c" → "C2c").
 const BREADCRUMB_LABELS = {
   c2c: 'Camera to Cloud',
@@ -142,6 +152,9 @@ export default () => {
   const template = getMetadata('template');
   if (template === 'pricing' || window.location.pathname.includes('/pricing')) {
     inject(buildSoftwareApplication());
+  }
+  if (window.location.pathname.startsWith('/integrations/')) {
+    inject(buildIntegrationApp());
   }
 
   const breadcrumbs = buildBreadcrumbs();
