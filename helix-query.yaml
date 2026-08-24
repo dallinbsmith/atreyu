@@ -8,6 +8,8 @@ indices:
       - /tools/**
       - /drafts/**
       - /test/**
+      - /library/**
+      - /placeholders
     target: /query-index.json
     properties:
       title:
