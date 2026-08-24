@@ -1,5 +1,6 @@
 import { shouldAnimate } from '../../scripts/utils/motion.js';
 import { decorateRichText } from '../../scripts/utils/richtext.js';
+import { openVideoModal, WISTIA_RE } from '../../scripts/utils/video-modal.js';
 
 const setBackgroundFocus = (img) => {
   const { title } = img.dataset;
@@ -38,6 +39,16 @@ const decorateBackground = (bg) => {
   vidLink.remove();
 };
 
+const decorateVideoModalCta = (fg) => {
+  const link = [...fg.querySelectorAll('a')].find((a) => WISTIA_RE.test(a.href));
+  if (!link) return;
+  const [, id] = link.href.match(WISTIA_RE);
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    openVideoModal(id, link.textContent.trim(), link);
+  });
+};
+
 const decorateForeground = (fg) => {
   [...fg.children].forEach((child, idx) => {
     const heading = child.querySelector('h1, h2, h3, h4, h5, h6');
@@ -58,6 +69,7 @@ export default async (el) => {
   const fg = rows.pop();
   fg.classList.add('hero-foreground');
   decorateForeground(fg);
+  decorateVideoModalCta(fg);
   if (rows.length) {
     const bg = rows.pop();
     bg.classList.add('hero-background');

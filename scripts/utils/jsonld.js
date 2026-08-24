@@ -91,6 +91,15 @@ const buildIntegrationApp = () => ({
   }),
 });
 
+const buildCaseStudyArticle = () => ({
+  '@type': 'Article',
+  headline: getMetadata('og:title') || document.title,
+  publisher: { '@id': `${SITE.url}/#organization` },
+  ...(getMetadata('customer') && {
+    about: { '@type': 'Organization', name: getMetadata('customer') },
+  }),
+});
+
 // Human labels for slugs that title-casing would mangle (e.g. "c2c" → "C2c").
 const BREADCRUMB_LABELS = {
   c2c: 'Camera to Cloud',
@@ -155,6 +164,9 @@ export default () => {
   }
   if (window.location.pathname.startsWith('/integrations/')) {
     inject(buildIntegrationApp());
+  }
+  if (window.location.pathname.startsWith('/case-studies/')) {
+    inject(buildCaseStudyArticle());
   }
 
   const breadcrumbs = buildBreadcrumbs();
