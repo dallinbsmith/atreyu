@@ -1,15 +1,10 @@
-auto-generated: true
 indices:
   pages:
     include:
       - /**
     exclude:
-      - /fragments/**
+      - /system/**
       - /tools/**
-      - /drafts/**
-      - /test/**
-      - /library/**
-      - /placeholders
     target: /query-index.json
     properties:
       title:
