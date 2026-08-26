@@ -481,19 +481,19 @@ Content Security Policy is set in `handlers/aem.js` on all HTML responses. Each 
 
 ### Fragment loading
 
-Fragments are reusable content chunks authored as separate pages under `/-fragments/`. Load one programmatically:
+Fragments are reusable content chunks authored as separate pages under `/plumbing/fragments/`. Load one programmatically:
 
 ```javascript
 import { loadFragment } from '../../scripts/utils/fragment.js';
 
 export default async (el) => {
-  const path = '/-fragments/shared/promo-banner';
+  const path = '/plumbing/fragments/shared/promo-banner';
   const fragment = await loadFragment(path);
   el.replaceChildren(...fragment.children);
 };
 ```
 
-Authors can also inline fragments by pasting a `/fragments/...` link in their document -- the framework auto-detects it and loads the fragment block.
+Authors can also inline fragments by pasting a `/plumbing/fragments/...` link in their document -- the framework auto-detects it and loads the fragment block.
 
 ### Spreadsheet-driven blocks
 

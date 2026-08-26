@@ -8,7 +8,7 @@ import {
 
 const { locale } = getConfig();
 
-const HEADER_PATH = '/_fragments/nav/header';
+const HEADER_PATH = '/plumbing/fragments/nav/header';
 
 const decorateLanguage = (btn) => {
   const section = btn.closest('.section');
