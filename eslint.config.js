@@ -6,7 +6,7 @@ import configDrift from './tools/eslint-rules/config-drift.js';
 
 export default defineConfig([
   globalIgnores([
-    '**/deps',
+    '**/vendor',
   ]),
   {
     languageOptions: {

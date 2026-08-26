@@ -1,4 +1,4 @@
-import { LitElement, html } from '../deps/lit/dist/index.js';
+import { LitElement, html } from '../vendor/lit/dist/index.js';
 import ENV from '../utils/env.js';
 import loadStyle from '../utils/styles.js';
 import { formatDate } from './utils.js';
