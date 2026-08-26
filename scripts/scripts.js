@@ -65,7 +65,7 @@ await loadPage();
 (() => {
   const { searchParams } = new URL(window.location.href);
   const hasPreview = searchParams.has('dapreview');
-  if (hasPreview) import('../tools/da/da.js').then((mod) => mod.default(loadPage));
+  if (hasPreview) import('./da/da.js').then((mod) => mod.default(loadPage));
   const hasQE = searchParams.has('quick-edit');
-  if (hasQE) import('../tools/quick-edit/quick-edit.js').then((mod) => mod.default());
+  if (hasQE) import('./quick-edit/quick-edit.js').then((mod) => mod.default());
 })();

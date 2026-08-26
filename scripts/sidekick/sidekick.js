@@ -1,4 +1,4 @@
-import toggleScheduler from '../../scripts/scheduler/scheduler.js';
+import toggleScheduler from '../scheduler/scheduler.js';
 import initQuickEdit from '../quick-edit/quick-edit.js';
 import initValidation from './validation.js';
 

@@ -8,7 +8,7 @@ const loadSidekick = async () => {
   const sk = getSk() || await new Promise((resolve) => {
     document.addEventListener('sidekick-ready', () => resolve(getSk()));
   });
-  if (sk) import('../tools/sidekick/sidekick.js').then((mod) => mod.default(sk));
+  if (sk) import('./sidekick/sidekick.js').then((mod) => mod.default(sk));
 };
 
 (() => {

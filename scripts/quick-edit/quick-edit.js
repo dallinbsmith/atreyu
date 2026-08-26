@@ -1,4 +1,4 @@
-import { loadPage } from '../../scripts/scripts.js';
+import { loadPage } from '../scripts.js';
 
 const importMap = {
   imports: {
