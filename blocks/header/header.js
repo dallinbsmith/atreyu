@@ -5,7 +5,7 @@ import { decorateAction, decorateActionSection } from './header-actions.js';
 
 const { locale } = getConfig();
 
-const HEADER_PATH = '/plumbing/fragments/nav/header';
+const HEADER_PATH = '/system/fragments/nav/header';
 const HEADER_ACTIONS = [
   '/tools/widgets/scheme',
   '/tools/widgets/language',

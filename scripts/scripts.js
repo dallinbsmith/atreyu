@@ -26,7 +26,7 @@ const locales = {
 };
 
 const linkBlocks = [
-  { fragment: '/plumbing/fragments/' },
+  { fragment: '/system/fragments/' },
   { schedule: '/schedules/' },
   { youtube: 'https://www.youtube' },
 ];

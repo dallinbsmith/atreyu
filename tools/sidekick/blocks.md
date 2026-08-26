@@ -140,7 +140,7 @@ The block also exports `setColorScheme(section)` and `getColorScheme(section)`, 
 
 **Content structure**:
 
-The header does not read rows from the block element directly. Instead, it loads a fragment from `/plumbing/fragments/nav/header` (or a path specified in the `header` page metadata). The fragment is expected to contain three sections:
+The header does not read rows from the block element directly. Instead, it loads a fragment from `/system/fragments/nav/header` (or a path specified in the `header` page metadata). The fragment is expected to contain three sections:
 
 | Section | Purpose |
 |---------|---------|
@@ -148,7 +148,7 @@ The header does not read rows from the block element directly. Instead, it loads
 | 2 -- Navigation | Unordered list of nav items. Each `<li>` becomes a `.main-nav-item`. Nested fragment content inside a nav item becomes a `.mega-menu`. |
 | 3 -- Actions | Links matching specific widget paths are replaced with buttons: `/tools/widgets/scheme` (color scheme toggle), `/tools/widgets/language` (language selector), `/tools/widgets/toggle` (mobile hamburger menu). |
 
-The language selector lazy-loads a sub-fragment from `/plumbing/fragments/nav/header/languages` when clicked.
+The language selector lazy-loads a sub-fragment from `/system/fragments/nav/header/languages` when clicked.
 
 **Dependencies**:
 - `scripts/ak.js` (`getConfig`, `getMetadata`)
@@ -157,7 +157,7 @@ The language selector lazy-loads a sub-fragment from `/plumbing/fragments/nav/he
 
 **Example**:
 
-Authors do not create the header in page content. It is loaded automatically as a global fragment. The fragment document at `/plumbing/fragments/nav/header` contains the brand, nav list, and action links.
+Authors do not create the header in page content. It is loaded automatically as a global fragment. The fragment document at `/system/fragments/nav/header` contains the brand, nav list, and action links.
 
 ---
 
@@ -169,7 +169,7 @@ Authors do not create the header in page content. It is loaded automatically as 
 
 **Content structure**:
 
-Like the header, the footer loads its content from a fragment at `/plumbing/fragments/nav/footer` (or a path specified in the `footer` page metadata). The fragment is expected to contain multiple sections:
+Like the header, the footer loads its content from a fragment at `/system/fragments/nav/footer` (or a path specified in the `footer` page metadata). The fragment is expected to contain multiple sections:
 
 | Section | Purpose |
 |---------|---------|
@@ -185,7 +185,7 @@ If fewer than two sections exist, the fragment is appended without legal/copyrig
 
 **Example**:
 
-Authors do not create the footer in page content. It is loaded automatically as a global fragment. The fragment document at `/plumbing/fragments/nav/footer` contains footer content sections, legal links, and copyright text.
+Authors do not create the footer in page content. It is loaded automatically as a global fragment. The fragment document at `/system/fragments/nav/footer` contains footer content sections, legal links, and copyright text.
 
 ---
 

@@ -3,7 +3,7 @@ indices:
     include:
       - /**
     exclude:
-      - /plumbing/**
+      - /system/**
       - /tools/**
     target: /query-index.json
     properties:
