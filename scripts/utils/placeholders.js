@@ -7,9 +7,9 @@ export const getPlaceholders = async () => {
   const { locale } = getConfig();
   const { prefix } = locale;
   if (cache.has(prefix)) return cache.get(prefix);
-  const json = await fetchData(`${prefix}/placeholders.json`);
+  const json = await fetchData(`${prefix}/-placeholders.json`);
   const map = new Map(
-    (json?.data ?? []).map(({ Key, Value }) => [Key.toLowerCase(), Value]),
+    (json?.data ?? []).map(({ Key, Text }) => [Key.toLowerCase(), Text]),
   );
   cache.set(prefix, map);
   return map;

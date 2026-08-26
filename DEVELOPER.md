@@ -481,13 +481,13 @@ Content Security Policy is set in `handlers/aem.js` on all HTML responses. Each 
 
 ### Fragment loading
 
-Fragments are reusable content chunks authored as separate pages under `/_fragments/`. Load one programmatically:
+Fragments are reusable content chunks authored as separate pages under `/-fragments/`. Load one programmatically:
 
 ```javascript
 import { loadFragment } from '../../scripts/utils/fragment.js';
 
 export default async (el) => {
-  const path = '/_fragments/shared/promo-banner';
+  const path = '/-fragments/shared/promo-banner';
   const fragment = await loadFragment(path);
   el.replaceChildren(...fragment.children);
 };
