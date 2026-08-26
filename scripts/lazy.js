@@ -22,7 +22,7 @@ const loadSidekick = async () => {
   setTimeout(() => import('./delayed.js'), 3000);
 
   if (ENV !== 'prod') {
-    import('../tools/scheduler/scheduler.js');
+    import('./scheduler/scheduler.js');
     loadSidekick();
   }
 })();
