@@ -3,8 +3,9 @@ indices:
     include:
       - /**
     exclude:
-      - /system/**
+      - /_system/**
       - /tools/**
+      - /_fragments/**
     target: /query-index.json
     properties:
       title:

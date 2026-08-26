@@ -1,7 +1,7 @@
 import { getConfig, getMetadata } from '../../scripts/ak.js';
 import { loadFragment } from '../../scripts/utils/fragment.js';
 
-const FOOTER_PATH = '/fragments/nav/footer';
+const FOOTER_PATH = '/_fragments/nav/footer';
 
 export default async (el) => {
   const { locale } = getConfig();
