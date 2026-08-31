@@ -5,8 +5,7 @@ package.json
 package-lock.json
 eslint.config.js
 test/
-tools/
-!tools/sidekick/
+tools/eslint-rules/
 deps/
 node_modules/
 workers/
