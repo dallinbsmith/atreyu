@@ -6,8 +6,6 @@ package-lock.json
 eslint.config.js
 test/
 tools/
-!tools/sidekick/
 deps/
 node_modules/
 workers/
-spike/
