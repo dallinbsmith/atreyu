@@ -1,0 +1,12 @@
+{
+  "plugins": [
+    {
+      "id": "library",
+      "title": "Library",
+      "environments": ["da-edit"],
+      "isPalette": true,
+      "paletteRect": "top: auto; bottom: 25px; left: 25px; height: 388px; width: 360px;",
+      "url": "/tools/sidekick/library.html"
+    }
+  ]
+}
