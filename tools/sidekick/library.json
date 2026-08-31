@@ -1,0 +1,59 @@
+{
+  ":names": ["blocks", "templates", "placeholders"],
+  "blocks": {
+    "total": 29,
+    "limit": 29,
+    "offset": 0,
+    "data": [
+      { "name": "advanced-tabs", "path": "/system/library/blocks/advanced-tabs" },
+      { "name": "bentos", "path": "/system/library/blocks/bentos" },
+      { "name": "bookend", "path": "/system/library/blocks/bookend" },
+      { "name": "card", "path": "/system/library/blocks/card" },
+      { "name": "card-grid-nav", "path": "/system/library/blocks/card-grid-nav" },
+      { "name": "case-study", "path": "/system/library/blocks/case-study" },
+      { "name": "columns", "path": "/system/library/blocks/columns" },
+      { "name": "faq", "path": "/system/library/blocks/faq" },
+      { "name": "footer", "path": "/system/library/blocks/footer" },
+      { "name": "footer-glow", "path": "/system/library/blocks/footer-glow" },
+      { "name": "form", "path": "/system/library/blocks/form" },
+      { "name": "fragment", "path": "/system/library/blocks/fragment" },
+      { "name": "header", "path": "/system/library/blocks/header" },
+      { "name": "hero", "path": "/system/library/blocks/hero" },
+      { "name": "hero-cards", "path": "/system/library/blocks/hero-cards" },
+      { "name": "hero-cards-transition", "path": "/system/library/blocks/hero-cards-transition" },
+      { "name": "image-sequence", "path": "/system/library/blocks/image-sequence" },
+      { "name": "pricing", "path": "/system/library/blocks/pricing" },
+      { "name": "quote-interactive", "path": "/system/library/blocks/quote-interactive" },
+      { "name": "rich-text", "path": "/system/library/blocks/rich-text" },
+      { "name": "schedule", "path": "/system/library/blocks/schedule" },
+      { "name": "section-metadata", "path": "/system/library/blocks/section-metadata" },
+      { "name": "side-by-side", "path": "/system/library/blocks/side-by-side" },
+      { "name": "spacer", "path": "/system/library/blocks/spacer" },
+      { "name": "table", "path": "/system/library/blocks/table" },
+      { "name": "text-over-image", "path": "/system/library/blocks/text-over-image" },
+      { "name": "tile-table", "path": "/system/library/blocks/tile-table" },
+      { "name": "touts", "path": "/system/library/blocks/touts" },
+      { "name": "youtube", "path": "/system/library/blocks/youtube" }
+    ]
+  },
+  "templates": {
+    "total": 2,
+    "limit": 2,
+    "offset": 0,
+    "data": [
+      { "name": "customer-story", "path": "/system/library/templates/customer-story" },
+      { "name": "integration-page", "path": "/system/library/templates/integration-page" }
+    ]
+  },
+  "placeholders": {
+    "total": 2,
+    "limit": 2,
+    "offset": 0,
+    "data": [
+      { "Key": "freeTrialCta", "Text": "Start Free Trial" },
+      { "Key": "freeTrialUrl", "Text": "https://accounts.frame.io/welcome/?signup_as_v4_account=true" }
+    ]
+  },
+  ":version": 3,
+  ":type": "multi-sheet"
+}
