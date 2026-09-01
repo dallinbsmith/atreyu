@@ -3,12 +3,14 @@
 
 import { setAnalyticsProvider } from './utils/analytics.js';
 import { hasConsent, onConsentChange } from './utils/consent.js';
+import { loadSegment } from './utils/segment.js';
 import { runBehaviors } from './behaviors.js';
 
 runBehaviors('delayed');
 
 const loadAnalytics = () => {
   if (hasConsent('analytics')) {
+    loadSegment();
     setAnalyticsProvider((event, props) => {
       window.analytics?.track(event, props);
     });
