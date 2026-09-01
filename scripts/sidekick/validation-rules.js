@@ -51,6 +51,19 @@ const checkOgImage = () => {
     : { status: 'fail', message: 'Missing og:image meta tag' };
 };
 
+const checkPartnerLogos = () => {
+  const items = [...document.querySelectorAll('main .logo-wall-item, main .tt-tile')];
+  if (!items.length) return { status: 'pass', message: 'No partner logos on this page' };
+  const missing = items.filter((item) => !item.querySelector('svg'));
+  if (!missing.length) return { status: 'pass', message: `All ${items.length} partner logo(s) loaded` };
+  const name = missing[0].querySelector('.logo-wall-label, .tt-label')?.textContent.trim();
+  return {
+    status: 'fail',
+    message: `${missing.length} partner logo(s) failed to load${name ? ` (e.g. "${name}")` : ''} — check the name matches a file in /icons/partners/`,
+    el: missing[0],
+  };
+};
+
 const checkBrokenLinks = async (onUpdate) => {
   const links = [...document.querySelectorAll('main a[href]')]
     .filter((a) => {
@@ -107,6 +120,7 @@ export const runSyncRules = () => [
   { label: 'Empty blocks', ...checkEmptyBlocks() },
   { label: 'Meta description', ...checkMetaDescription() },
   { label: 'OG image', ...checkOgImage() },
+  { label: 'Partner logos', ...checkPartnerLogos() },
 ];
 
 export const runLinkCheck = checkBrokenLinks;

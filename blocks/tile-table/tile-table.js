@@ -1,7 +1,5 @@
 import { initTileModal } from './tile-modal.js';
-import { sanitizeMarkup } from '../../scripts/utils/sanitize.js';
-
-const slugify = (name) => name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+import { loadPartnerLogo } from '../../scripts/utils/partner-logo.js';
 
 export default (el) => {
   const rows = [...el.children].filter((r) => r.textContent.trim());
@@ -27,6 +25,7 @@ export default (el) => {
     tile.type = 'button';
     const logo = document.createElement('span');
     logo.className = 'tt-logo';
+    logo.setAttribute('aria-hidden', 'true');
     const label = document.createElement('span');
     label.className = 'tt-label';
     label.textContent = item.name;
@@ -34,21 +33,7 @@ export default (el) => {
     tile.addEventListener('click', () => openModal(i, tile));
     grid.append(tile);
 
-    fetch(`/icons/partners/${slugify(item.name)}.svg`)
-      .then((r) => (r.ok ? r.text() : ''))
-      .then((svg) => {
-        if (!svg) return;
-        logo.replaceChildren(...sanitizeMarkup(svg).childNodes);
-        const svgEl = logo.querySelector('svg');
-        const vb = svgEl?.getAttribute('viewBox')?.split(/\s+/).map(Number);
-        if (vb?.length === 4) {
-          const h = Math.min(vb[3], 24);
-          const w = vb[2] * (h / vb[3]);
-          svgEl.style.width = `${Math.round(w)}px`;
-          svgEl.style.height = `${Math.round(h)}px`;
-        }
-      })
-      .catch(() => {});
+    loadPartnerLogo(logo, item.name);
   });
 
   el.append(grid);
