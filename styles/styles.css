@@ -208,6 +208,15 @@
   --radius-40: 40px;
   --radius-large: min(4vw, 40px);
 
+  /* button tokens — component tier, referenced by the shared .btn treatment
+     below instead of repeating these as literals across every variant */
+  --button-padding-block: var(--spacing-m);
+  --button-padding-inline: var(--spacing-l);
+  --button-border-width: 2px;
+  --button-border-radius: var(--radius-40);
+  --button-font-size: var(--body-font-size-s);
+  --button-letter-spacing: 0.01em;
+
   /* alpha colors — from Frame.io tokens/colors.js */
   --color-alpha-light-5: rgb(157 157 255 / 5%);
   --color-alpha-light-15: rgb(209 209 251 / 15%);
@@ -345,12 +354,12 @@ a {
     line-height: 1;
     font-weight: 600;
     text-decoration: none;
-    border: 2px solid;
-    padding: 12px 24px;
-    border-radius: 40px;
+    border: var(--button-border-width) solid;
+    padding: var(--button-padding-block) var(--button-padding-inline);
+    border-radius: var(--button-border-radius);
     box-sizing: border-box;
-    font-size: 14px;
-    letter-spacing: 0.01em;
+    font-size: var(--button-font-size);
+    letter-spacing: var(--button-letter-spacing);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 
     &:hover {
@@ -415,7 +424,7 @@ a {
   &.btn-accent {
     color: var(--color-dark);
     background: var(--color-cobalt);
-    border: 2px solid var(--color-cobalt);
+    border: var(--button-border-width) solid var(--color-cobalt);
 
     &.btn-outline {
       color: var(--color-cobalt);
@@ -429,7 +438,7 @@ a {
   &.btn-white {
     color: var(--color-dark);
     background-color: var(--color-light);
-    border: 2px solid var(--color-light);
+    border: var(--button-border-width) solid var(--color-light);
 
     &.btn-outline {
       color: var(--color-light);
@@ -478,7 +487,7 @@ a {
   &.btn-negative {
     color: var(--color-light);
     background-color: var(--color-red-600);
-    border: 2px solid var(--color-red-600);
+    border: var(--button-border-width) solid var(--color-red-600);
 
     &.btn-outline {
       color: var(--color-red-600);
@@ -510,7 +519,7 @@ a {
 
 .ghost .btn {
   background: transparent;
-  border: 2px solid color-mix(in srgb, rgb(var(--color-light-base)) 40%, transparent);
+  border: var(--button-border-width) solid color-mix(in srgb, rgb(var(--color-light-base)) 40%, transparent);
 
   &:hover {
     border-color: var(--color-light);
