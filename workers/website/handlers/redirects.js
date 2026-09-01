@@ -1,4 +1,4 @@
-import { stripLocale } from '../utils/locale.js';
+import { stripLocale, matchLocalePrefix } from '../utils/locale.js';
 
 let redirectMap = null;
 let lastFetch = 0;
@@ -46,7 +46,12 @@ const matchWildcard = (path) => {
   const entry = [...redirectMap].find(([src]) => src.endsWith('/*') && path.startsWith(src.slice(0, -1)));
   if (!entry) return null;
   const [src, dest] = entry;
-  return dest.replace('/*', path.slice(src.length - 1));
+  // Bug found and fixed 2026-08-28, separately from the locale-reprefixing
+  // fix in the default export below: replacing the literal 2-char '/*'
+  // dropped dest's own slash — '/legacy/*' -> '/modern/*' on '/legacy/foo'
+  // produced '/modernfoo' instead of '/modern/foo'. Replacing just the '*'
+  // preserves the slash dest already has immediately before the wildcard.
+  return dest.replace('*', path.slice(src.length - 1));
 };
 
 // Same-origin guard: redirects.json is content-author-controlled, and a wildcard
@@ -68,10 +73,26 @@ export default async ({ request }) => {
   await loadRedirects(request);
 
   const requestUrl = new URL(request.url);
+  const locale = matchLocalePrefix(requestUrl.pathname);
   const path = normalize(requestUrl.pathname);
   const dest = redirectMap.get(path) ?? matchWildcard(path);
 
-  return dest && isSafeRedirectDest(dest, requestUrl)
-    ? new Response('', { status: 301, headers: { location: dest } })
-    : null;
+  if (!dest || !isSafeRedirectDest(dest, requestUrl)) return null;
+
+  // Bug-squash fix, 2026-08-28: normalize() strips the locale prefix so the
+  // request path matches redirects.json's Source keys (authored without
+  // locale prefixes), but `dest` was returned exactly as authored, with the
+  // stripped prefix never re-applied — a /de-de/old-page visitor landed on
+  // the unprefixed English /new-page instead of /de-de/new-page, for every
+  // redirect entry, across all 9 non-default locales. Re-apply the same
+  // prefix that was stripped — only for same-site relative destinations
+  // (isSafeRedirectDest's `//`/cross-host branch isn't a page path to
+  // re-prefix) and only if the author didn't already hardcode a locale
+  // prefix into the destination themselves.
+  const isRelativePath = dest.startsWith('/') && !dest.startsWith('//');
+  const localizedDest = locale && isRelativePath && !matchLocalePrefix(dest)
+    ? `${locale}${dest}`
+    : dest;
+
+  return new Response('', { status: 301, headers: { location: localizedDest } });
 };
