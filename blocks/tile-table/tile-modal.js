@@ -1,4 +1,5 @@
 import { trapFocus, announce } from '../../scripts/utils/a11y.js';
+import { wireModalClose } from '../../scripts/utils/modal.js';
 
 const CLOSE_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 const ARROW_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M4.5 2L8.5 6L4.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -68,10 +69,9 @@ export const initTileModal = (items) => {
     prevBtn.addEventListener('click', () => setSlide(current - 1));
     nextBtn.addEventListener('click', () => setSlide(current + 1));
     closeBtn.addEventListener('click', close);
-    backdrop.addEventListener('click', close);
+    wireModalClose(modal, backdrop, close);
     modal.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') close();
-      else if (e.key === 'ArrowLeft' && current > 0) setSlide(current - 1);
+      if (e.key === 'ArrowLeft' && current > 0) setSlide(current - 1);
       else if (e.key === 'ArrowRight' && current < items.length - 1) setSlide(current + 1);
     });
   };

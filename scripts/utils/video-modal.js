@@ -1,4 +1,5 @@
 import { trapFocus, announce } from './a11y.js';
+import { wireModalClose } from './modal.js';
 
 // Matches https://{account}.wistia.com/medias/{id} or fast.wistia.net/embed/iframe/{id}
 export const WISTIA_RE = /wistia\.(?:com|net)\/(?:medias|embed\/iframe)\/([\w-]+)/i;
@@ -25,7 +26,6 @@ const buildModal = (wistiaId, title) => {
 
   const backdrop = document.createElement('div');
   backdrop.className = 'video-modal-backdrop';
-  backdrop.addEventListener('click', close);
 
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
@@ -45,9 +45,7 @@ const buildModal = (wistiaId, title) => {
   content.append(closeBtn, iframe);
   el.append(backdrop, content);
 
-  el.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') close();
-  });
+  wireModalClose(el, backdrop, close);
 
   return el;
 };

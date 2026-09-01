@@ -1,5 +1,6 @@
 import { withGsap } from '../../scripts/utils/gsap-loader.js';
 import { trapFocus, announce } from '../../scripts/utils/a11y.js';
+import { wireModalClose } from '../../scripts/utils/modal.js';
 
 const plusIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
 const arrow = (prev) => `<span class="qi-modal-arrow${prev ? ' qi-modal-arrow-prev' : ''}"><svg viewBox="0 0 32.2 54.4" fill="currentColor"><path d="M30.8,23.6c2,2,2,5.1,0,7.1L8.6,52.9c-1.9,2-5.1,2-7.1,0c-2-1.9-2-5.1,0-7.1l18.7-18.7L1.5,8.5c-1.9-2-1.8-5.2,.1-7.1c1.9-1.9,5-1.9,6.9,0Z"/></svg></span>`;
@@ -71,7 +72,6 @@ const buildModal = (slides) => {
   el.setAttribute('aria-label', 'Customer quotes');
 
   const backdrop = Object.assign(document.createElement('div'), { className: 'qi-modal-backdrop' });
-  backdrop.addEventListener('click', close);
 
   const closeBtn = Object.assign(document.createElement('button'), {
     className: 'qi-modal-close', innerHTML: plusIcon,
@@ -107,9 +107,9 @@ const buildModal = (slides) => {
   content.append(closeBtn, carousel, nav);
   el.append(backdrop, content);
 
+  wireModalClose(el, backdrop, close);
   el.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') close();
-    else if (e.key === 'ArrowLeft') {
+    if (e.key === 'ArrowLeft') {
       e.preventDefault();
       goTo(current - 1);
     } else if (e.key === 'ArrowRight') {
