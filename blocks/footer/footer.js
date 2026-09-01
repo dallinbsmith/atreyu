@@ -1,5 +1,5 @@
 import { getConfig, getMetadata } from '../../scripts/ak.js';
-import { loadFragment } from '../../scripts/utils/fragment.js';
+import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
 
 const FOOTER_PATH = '/system/fragments/nav/footer';
 
@@ -7,7 +7,7 @@ export default async (el) => {
   const { locale } = getConfig();
   const footerMeta = getMetadata('footer');
   const path = footerMeta || FOOTER_PATH;
-  const fragment = await loadFragment(`${locale.prefix}${path}`);
+  const fragment = await loadFragmentWithFallback([`${locale.prefix}${path}`, path]);
   fragment.classList.add('footer-content');
 
   const sections = [...fragment.querySelectorAll('.section')];

@@ -1,5 +1,5 @@
 import { getConfig, getMetadata } from '../../scripts/ak.js';
-import { loadFragment } from '../fragment/fragment.js';
+import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
 import { decorateNavSection } from './header-nav.js';
 import { decorateAction, decorateActionSection } from './header-actions.js';
 
@@ -39,7 +39,7 @@ const decorateHeaderContent = async (fragment) => {
 export default async (el) => {
   const headerMeta = getMetadata('header');
   const path = headerMeta || HEADER_PATH;
-  const fragment = await loadFragment(`${locale.prefix}${path}`);
+  const fragment = await loadFragmentWithFallback([`${locale.prefix}${path}`, path]);
   fragment.classList.add('header-content');
   await decorateHeaderContent(fragment);
   el.append(fragment);

@@ -42,6 +42,26 @@ export const loadFragment = async (path) => {
   return fragment;
 };
 
+// Bug-squash fix, 2026-08-28: header/footer request a locale-prefixed nav
+// fragment (e.g. /ja-jp/system/fragments/nav/header), but only the root,
+// unprefixed fragments are actually authored in DA — loadFragment() throws
+// on the 404 with nothing upstream to catch it, so the one real translated
+// page (/ja-jp/features/c2c.html) currently has no working nav at all. Tries
+// each path in order, falling back to the next on failure; throws only if
+// every path fails, same failure mode loadFragment() already has today.
+export const loadFragmentWithFallback = async (paths) => {
+  for (const path of paths) {
+    try {
+      // eslint-disable-next-line no-await-in-loop -- fallback paths are tried
+      // in order, only as needed; not a parallelizable batch of independent work.
+      return await loadFragment(path);
+    } catch {
+      // try the next path
+    }
+  }
+  throw Error(`Couldn't fetch any of: ${paths.join(', ')}`);
+};
+
 export const getReplaceEl = (a) => {
   let current = a;
   const ancestor = a.closest('.section');
