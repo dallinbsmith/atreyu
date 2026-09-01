@@ -1,5 +1,5 @@
 import { emit } from '../utils/event-bus.js';
-import { track } from '../utils/analytics.js';
+import { track, EVENTS } from '../utils/analytics.js';
 
 // Consent widget: link href /widgets/consent opens the consent UI.
 // Progressive enhancement — on click, prevent navigation and emit a consent event.
@@ -8,7 +8,7 @@ export default (a) => {
   a.dataset.behaviorBound = '';
   a.addEventListener('click', (e) => {
     e.preventDefault();
-    track('consent_open', { href: a.getAttribute('href') });
+    track(EVENTS.CONSENT_OPEN, { href: a.getAttribute('href') });
     emit('consent-open', { source: a });
   });
 };

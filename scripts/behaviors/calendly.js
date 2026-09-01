@@ -1,6 +1,6 @@
 // TODO: SDK popup requires adding *.calendly.com to worker CSP
 // (media/script/frame-src) — deferred. See Calendly note.
-import { track } from '../utils/analytics.js';
+import { track, EVENTS } from '../utils/analytics.js';
 
 // DELAYED behavior. Documented fallback only: open the Calendly URL in a new tab.
 // The real popup widget needs the Calendly SDK, which is blocked by the current CSP.
@@ -11,7 +11,7 @@ export default (a) => {
   const url = params.get('url') ?? a.href;
   a.addEventListener('click', (e) => {
     e.preventDefault();
-    track('calendly_open', { url });
+    track(EVENTS.CALENDLY_OPEN, { url });
     window.open(url, '_blank', 'noopener,noreferrer');
   });
 };

@@ -1,4 +1,4 @@
-import { track } from '../utils/analytics.js';
+import { track, EVENTS } from '../utils/analytics.js';
 
 // Outlook widget: choose desktop deeplink vs mailto at click time.
 // Link carries ?to=…&subject=…&body=… ; desktop deeplink used on wide viewports.
@@ -27,7 +27,7 @@ export default (a) => {
     e.preventDefault();
     const desktop = window.matchMedia('(width >= 768px)').matches;
     const href = desktop ? buildDeeplink(params) : buildMailto(params);
-    track('outlook_compose', { desktop, to: params.get('to') });
+    track(EVENTS.OUTLOOK_COMPOSE, { desktop, to: params.get('to') });
     window.location.href = href;
   });
 };

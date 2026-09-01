@@ -1,4 +1,4 @@
-import { track } from '../utils/analytics.js';
+import { track, EVENTS } from '../utils/analytics.js';
 
 // Download widget: resolve the correct asset for the visitor's platform/architecture.
 // Link carries candidate URLs as query params, e.g. ?mac=…&win=…&mac-arm=…
@@ -25,5 +25,5 @@ export default async (a) => {
     || params.get('default');
   if (!target) return;
   a.href = target;
-  a.addEventListener('click', () => track('download', { os, arm, href: target }));
+  a.addEventListener('click', () => track(EVENTS.DOWNLOAD, { os, arm, href: target }));
 };
