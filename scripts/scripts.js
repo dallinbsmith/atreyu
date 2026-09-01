@@ -1,7 +1,11 @@
 import { loadArea, loadStyle, setConfig } from './ak.js';
 import { runExperiment } from './utils/experimentation.js';
 
-const hostnames = ['authorkit.dev'];
+// frame.io is the canonical production host (ARCHITECTURE-DECISIONS.md); www.frame.io
+// permanently redirects to it. Deliberately excludes blog/app/accounts.frame.io and
+// other real subdomains — those are separate platforms (DA-CONTENT-STRUCTURE.md) and
+// must stay absolute links, not get relativized as if they were this site.
+const hostnames = ['frame.io'];
 
 // AUTHORITATIVE for the browser runtime. Verified 2026-08-20 against Falkor's real
 // source of truth (tokens/languages.js) and live HTTP checks against frame.io. Real
