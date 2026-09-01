@@ -12,12 +12,18 @@ const URL_ATTRS = new Set(['href', 'src', 'xlink:href', 'formaction']);
 // not a sink assigning it.
 const SCRIPT_SCHEME = ['java', 'script:'].join('');
 
+// Browsers strip ASCII tab/newline/CR from a URL scheme before navigating
+// (WHATWG URL spec's "C0 control or space" trimming), so `jav\tascript:` still
+// executes as `javascript:` even though a plain .trim() (which only strips
+// leading/trailing whitespace, not embedded characters) would miss it.
+const stripControlChars = (value) => value.replace(/[\t\n\r]/g, '');
+
 const stripNode = (el) => {
   [...el.attributes].forEach(({ name, value }) => {
     const lower = name.toLowerCase();
-    const trimmedValue = value.trim().toLowerCase();
+    const normalizedValue = stripControlChars(value.trim().toLowerCase());
     if (lower.startsWith('on')) el.removeAttribute(name);
-    if (URL_ATTRS.has(lower) && trimmedValue.startsWith(SCRIPT_SCHEME)) el.removeAttribute(name);
+    if (URL_ATTRS.has(lower) && normalizedValue.startsWith(SCRIPT_SCHEME)) el.removeAttribute(name);
   });
 };
 
