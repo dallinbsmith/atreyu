@@ -1,5 +1,6 @@
 @layer reset, base, tokens, blocks, sections, utilities;
 
+/* stylelint-disable color-no-hex -- :root is the sole token-definition source; nothing outside :root may hardcode a hex color */
 :root {
   /* grid */
   --grid-container-width: 83.4%;
@@ -251,6 +252,7 @@
   --header-height: 72px;
   --breadcrumb-height: 24px;
 }
+/* stylelint-enable color-no-hex */
 
 .light-scheme {
   color-scheme: light;
@@ -474,7 +476,7 @@ a {
   }
 
   &.btn-negative {
-    color: #fff;
+    color: var(--color-light);
     background-color: var(--color-red-600);
     border: 2px solid var(--color-red-600);
 

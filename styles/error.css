@@ -4,7 +4,7 @@
   overflow: hidden;
 
   > .title {
-    color: #fff;
+    color: var(--color-light);
     background-color: var(--color-red-300);
     padding: 4px 6px 8px;
     margin: 0 0 12px;

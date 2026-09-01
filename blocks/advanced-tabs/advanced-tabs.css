@@ -35,7 +35,7 @@
     cursor: pointer;
 
     &[aria-selected="true"] {
-      border-bottom: 2px solid light-dark(#000, #fff);
+      border-bottom: 2px solid light-dark(var(--color-dark), var(--color-light));
     }
   }
 }

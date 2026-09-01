@@ -90,15 +90,15 @@ aem-sidekick {
    sectionItems; we target the matching section via :has() on its signature
    block, so it stays CSS-only (no section-metadata authoring needed). */
 .section:has(.quote-interactive) {
-  background: linear-gradient(160deg, #13141a 3%, #050608 88%);
+  background: linear-gradient(160deg, rgb(19 20 26) 3%, rgb(5 6 8) 88%);
 }
 
 .section:has(.tile-table) {
-  background: linear-gradient(140deg, #1b1b26 -42%, #000 77%);
+  background: linear-gradient(140deg, rgb(27 27 38) -42%, var(--color-dark) 77%);
 }
 
 .section:has(.card-grid-nav) {
-  background: linear-gradient(172deg, #0d0d14 5%, #000 56%);
+  background: linear-gradient(172deg, rgb(13 13 20) 5%, var(--color-dark) 56%);
 }
 
 /* Video modal (scripts/utils/video-modal.js) */
@@ -154,7 +154,7 @@ aem-sidekick {
   overflow: hidden;
 
   > .title {
-    color: #fff;
+    color: var(--color-light);
     background-color: var(--color-red-300);
     padding: 4px 6px 8px;
     margin: 0 0 12px;

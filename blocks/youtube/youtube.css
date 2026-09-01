@@ -2,7 +2,7 @@
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: #000;
+  background: var(--color-dark);
   cursor: pointer;
   border-radius: 8px;
 
@@ -43,10 +43,10 @@
   }
 
   .youtube-play-icon {
-    fill: #fff;
+    fill: var(--color-light);
   }
 
   &:hover .youtube-play-bg {
-    fill: #f00;
+    fill: red;
   }
 }

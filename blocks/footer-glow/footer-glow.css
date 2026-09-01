@@ -8,9 +8,9 @@
   /* Fade BOTH ends: the top so the rings dissolve into the page instead of being
      hard-clipped, the base so the footer can ride up over the tail with no dead
      black band between glow and footer. */
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, var(--color-dark) 14%, var(--color-dark) 86%, transparent 100%);
   /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, var(--color-dark) 14%, var(--color-dark) 86%, transparent 100%);
   margin-bottom: -80px;
 
   .footer-glow-media {
