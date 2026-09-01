@@ -39,14 +39,25 @@ export const isEdsPath = (pathname) => {
 };
 
 // `global: true` marks a ROUTES entry as Worker-owned regardless of cohort status
-// (drafts denial, schedules, dasc) — the strangler below must never intercept these.
-// isGlobalRoute is derived directly from ROUTES' own match functions so the
-// exemption can never drift out of sync with what these routes actually match.
+// (drafts denial, langstore denial, schedules, dasc) — the strangler below must
+// never intercept these. isGlobalRoute is derived directly from ROUTES' own match
+// functions so the exemption can never drift out of sync with what these routes
+// actually match.
 const ROUTES = [
-  {
-    match: () => true,
-    handler: fetchRedirect,
-  },
+  // Bug-squash fix, 2026-08-28: these `global: true` routes must run
+  // before fetchRedirect, not after. redirects.json is DA-managed content —
+  // a redirect entry whose Source normalizes to a path one of these
+  // would otherwise match (most seriously /drafts/*) returns a 301 and the
+  // loop below returns immediately, so drafts-deny (or the schedules/dasc
+  // handlers) never gets reached at all. `global: true` already documents
+  // the intent that these are Worker-owned regardless of cohort status; the
+  // array order previously didn't actually honor that for the redirect
+  // route specifically. fetchRedirect now only runs once none of these
+  // match, so a content author can never author their way past them.
+  // langstore denial added 2026-09-01 (localization-game-plan-2026-09.md §6):
+  // DA's Loc app stages translation-in-progress content under /langstore/{locale}/
+  // — this path must never fall through to the legacy origin undefined, and must
+  // never be treated as real page content once the EDS_PATHS cohort grows.
   {
     match: (path) => path.includes('/schedules/') && path.endsWith('json'),
     handler: fetchSchedule,
@@ -61,6 +72,15 @@ const ROUTES = [
     match: (path) => path.startsWith('/drafts'),
     handler: () => new Response('Not found - drafts are denied on production.', { status: 404 }),
     global: true,
+  },
+  {
+    match: (path) => path.startsWith('/langstore'),
+    handler: () => new Response('Not found - langstore staging is denied on production.', { status: 404 }),
+    global: true,
+  },
+  {
+    match: () => true,
+    handler: fetchRedirect,
   },
   {
     match: () => true,
