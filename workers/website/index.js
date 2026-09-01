@@ -15,6 +15,7 @@ import fetchDaSc from './handlers/dasc.js';
 import fetchRedirect from './handlers/redirects.js';
 import { fetchFromExistingOrigin } from './handlers/existing-origin.js';
 import { matchLocalePrefix, stripLocale } from './utils/locale.js';
+import { checkRequiredEnv } from './utils/env-guard.js';
 
 // Phase 1 cohort only (master-plan/implementation-plan.md, "Migration Cohort Phases").
 // Grows as each phase ships: Phase 2 adds /customers/ + /resources/, Phase 3 adds
@@ -161,6 +162,9 @@ const formatRequest = (env, request, url) => {
 
 export default {
   fetch: async (req, env) => {
+    const envResp = checkRequiredEnv(env);
+    if (envResp) return envResp;
+
     const url = new URL(req.url);
 
     const portResp = getPortRedirect(req, url);
