@@ -18,6 +18,7 @@ const loadSidekick = async () => {
   import('./utils/footer.js').then(({ default: footer }) => footer());
   import('./utils/jsonld.js').then(({ default: jsonld }) => jsonld());
   import('./utils/hreflang.js').then(({ default: hreflang }) => hreflang());
+  import('./utils/canonical.js').then(({ default: canonical }) => canonical());
 
   setTimeout(() => import('./delayed.js'), 3000);
 
