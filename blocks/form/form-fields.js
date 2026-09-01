@@ -1,4 +1,3 @@
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const fid = (label) => `form-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
 export const makeField = ({ label, type, required, extra }) => {
@@ -12,7 +11,7 @@ export const makeField = ({ label, type, required, extra }) => {
   const setAttrs = (node) => {
     node.id = fieldId;
     node.name = fieldId;
-    if (required) node.setAttribute('aria-required', 'true');
+    if (required) node.required = true;
   };
   let input;
   if (type === 'textarea') {
@@ -54,14 +53,26 @@ export const makeField = ({ label, type, required, extra }) => {
   return wrap;
 };
 
+// Driven by the native Constraint Validation API (checkValidity()/validity),
+// not hand-rolled required/format checks — required alone used to be
+// unenforceable (only aria-required was ever set, which has no effect on
+// validation), and a hand-rolled email regex silently never covered any
+// other type= an author could put in the table (url, tel, pattern, minlength
+// via `extra`). form.noValidate stays true so the browser's native bubble
+// UI never shows — only the custom inline .form-error messaging below does.
+const messageFor = (field) => {
+  const { validity, type, minLength } = field;
+  if (validity.valueMissing) return type === 'checkbox' ? 'This field must be checked' : 'This field is required';
+  if (validity.typeMismatch) return type === 'email' ? 'Enter a valid email' : 'Enter a valid value';
+  if (validity.patternMismatch) return 'Please match the requested format';
+  if (validity.tooShort) return `Enter at least ${minLength} characters`;
+  return '';
+};
+
 export const validate = (form) => {
   let first = null;
-  for (const f of form.querySelectorAll('[aria-required="true"]')) {
-    const empty = f.type === 'checkbox' ? !f.checked : !f.value.trim();
-    const badEmail = !empty && f.type === 'email' && !EMAIL_RE.test(f.value);
-    let msg = '';
-    if (empty) msg = 'This field is required';
-    else if (badEmail) msg = 'Enter a valid email';
+  for (const f of form.querySelectorAll('.form-field input, .form-field select, .form-field textarea')) {
+    const msg = f.checkValidity() ? '' : messageFor(f);
     const err = f.closest('.form-field')?.querySelector('.form-error');
     if (err) err.textContent = msg;
     f.classList.toggle('form-invalid', !!msg);
