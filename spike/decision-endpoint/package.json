@@ -1,0 +1,13 @@
+{
+  "name": "decision-endpoint-spike",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Spike: thin personalization decision endpoint (P0-44). Not deployed.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}

@@ -1,0 +1,73 @@
+/* P0-44 MEASUREMENT SPIKE — not production CSS.
+ *
+ * Three reserved-space strategies for the personalized CTA slot, toggled via
+ * `?reserve=none|height|box` (see test-hero.js), so the CLS question this task
+ * poses — does a fixed-height/fixed-width reserved box actually avoid layout
+ * shift when the two variant lengths differ, or doesn't it? — can be measured
+ * per-strategy instead of assumed. `box`'s min-width below was sized by eyeballing
+ * the longer label at 14px in the real `.btn` styles (styles/styles.css), not by
+ * pixel-measuring it — exactly the kind of number this spike's own CLS pass should
+ * confirm or falsify, not something to trust because it's in a comment.
+ */
+
+[data-pzn-reserve="height"] .pzn-slot {
+  display: inline-flex;
+  min-height: 3rem;
+}
+
+[data-pzn-reserve="box"] .pzn-slot {
+  display: inline-flex;
+  min-height: 3rem;
+  min-width: 23rem;
+}
+
+.pzn-slot {
+  transition: opacity 200ms ease;
+}
+
+.pzn-slot.pzn-transitioning {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pzn-slot {
+    transition: none;
+  }
+}
+
+/* Manual-QA panel — not part of the mechanism under test, just visibility into
+ * its internal state (consent, cookie, applied segment) while poking at the
+ * page by hand. Excluded from any Lighthouse/CLS run against this page's own
+ * content region if that run scopes to <main>. */
+.pzn-debug {
+  position: fixed;
+  inset: auto 0 0 0;
+  background: #111;
+  color: #eee;
+  font: 12px/1.5 monospace;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+  z-index: 999;
+}
+
+.pzn-debug button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.pzn-debug dl {
+  display: flex;
+  gap: 0.4em;
+  margin: 0;
+}
+
+.pzn-debug dt {
+  opacity: 0.6;
+}
+
+.pzn-debug dd {
+  margin: 0;
+}

@@ -1,0 +1,22 @@
+# Spike config only — no Cloudflare account exists for this project yet
+# (see implementation-plan.md P0-0), so this has never been deployed and
+# `wrangler deploy` is not expected to work. It exists so `wrangler dev` can
+# run this Worker fully locally. Do not treat this as the shape of the real
+# P0-44 deploy config without a fresh review once a real account + Clearbit
+# key exist.
+name = "frameio-pzn-decision-spike"
+main = "index.js"
+compatibility_date = "2025-02-14"
+
+# MOCK_CLEARBIT gates whether ?mockSegment/?mockLatency/?mockError query
+# params do anything (see index.js) — kept "true" here because this file is
+# spike-only and never deployed for real traffic. A real deploy config must
+# NOT default this to "true".
+[vars]
+MOCK_CLEARBIT = "true"
+
+# CLEARBIT_API_KEY is a secret, not a var — never put it here. Locally it
+# comes from `.dev.vars` (gitignored repo-wide, see site/.gitignore) or is
+# left unset, in which case the real-Clearbit branch always fails open and
+# only the mock branch is exercisable. In a real deployment it is set via
+# `wrangler secret put CLEARBIT_API_KEY`.

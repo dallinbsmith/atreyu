@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P0-44 personalization spike — hero CTA</title>
+  <!--
+    P0-44 MEASUREMENT SPIKE — not a production EDS page. Real project CSS/JS,
+    loaded unmodified, so LCP/CLS numbers reflect the real mechanism:
+      - styles/styles.css:   tokens, .btn, and the real section reveal-gate CSS
+                              (`.section { display: block }` vs
+                              `div[data-status] { display: none }`)
+      - blocks/hero/hero.css + hero.js: the real, unmodified hero block
+      - spike/test-hero.css: reserved-space + cross-fade CSS for this spike only
+    See spike/test-hero.js for how the markup below is decorated, and
+    scripts/utils/pzn.js for the personalization runtime under test.
+  -->
+  <link rel="stylesheet" href="/styles/styles.css">
+  <link rel="stylesheet" href="/blocks/hero/hero.css">
+  <link rel="stylesheet" href="/spike/test-hero.css">
+</head>
+<body>
+  <main>
+    <!--
+      Hand-authored to match the shape ak.js's decorateSection()/groupChildren()
+      produce (section > .block-content > .hero), not the raw authored-table
+      shape — this spike starts one step downstream of document authoring and
+      exercises block decoration + the reveal gate + personalization, which is
+      the part P0-44 is actually about. `data-pzn="hero-cta"` simulates a
+      `pzn: hero-cta` Section Metadata row (real conversion path verified in
+      ak.js's decorateSection(), not re-implemented here). `data-status`
+      starts present, matching a freshly-decorated, not-yet-revealed section.
+    -->
+    <div class="section" data-status="decorated" data-pzn="hero-cta">
+      <div class="block-content">
+        <div class="hero">
+          <div>
+            <div>
+              <p>Frame.io</p>
+              <h1>Review and approve video, together</h1>
+            </div>
+            <div>
+              <p><a class="btn btn-primary" href="/signup">Get Started</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="pzn-debug">
+    <dl><dt>consent.personalization</dt><dd id="dbg-consent">?</dd></dl>
+    <dl><dt>cookie</dt><dd id="dbg-cookie">?</dd></dl>
+    <dl><dt>applied</dt><dd id="dbg-applied">?</dd></dl>
+    <dl><dt>config</dt><dd id="dbg-config">?</dd></dl>
+    <button type="button" id="grant-consent">Grant personalization consent</button>
+    <button type="button" id="revoke-consent">Revoke consent</button>
+    <button type="button" id="clear-cookie">Clear segment cookie + reload</button>
+  </div>
+
+  <script type="module" src="/spike/test-hero.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Copy to `.dev.vars` (gitignored repo-wide, see site/.gitignore) and fill in
+# ONLY if/when a real Clearbit key exists (P0-0 — not true today). Without it,
+# the real-Clearbit branch always fails open, and local testing must use the
+# ?mockSegment/?mockLatency/?mockError query params instead (see README.md).
+# NEVER commit a real value.
+CLEARBIT_API_KEY=
+
+# Optional, only needed to test the CORS branch (index.js corsHeaders) — the
+# intended deploy shape is co-located with the delivery worker on frame.io's
+# own zone, which needs none of this.
+ALLOWED_ORIGIN=

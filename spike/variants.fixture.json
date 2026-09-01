@@ -1,0 +1,40 @@
+{
+  "total": 3,
+  "offset": 0,
+  "limit": 3,
+  "data": [
+    {
+      "placement": "hero-cta",
+      "segment": "enterprise",
+      "type": "cta",
+      "selector": ".hero-foreground a",
+      "fragment": "",
+      "label": "Talk to Our Enterprise Sales Team",
+      "href": "/enterprise",
+      "weight": "100",
+      "commit_until": ""
+    },
+    {
+      "placement": "hero-cta",
+      "segment": "default",
+      "type": "cta",
+      "selector": ".hero-foreground a",
+      "fragment": "",
+      "label": "Get Started",
+      "href": "/signup",
+      "weight": "50",
+      "commit_until": "2026-09-10"
+    },
+    {
+      "placement": "hero-cta",
+      "segment": "default",
+      "type": "cta",
+      "selector": ".hero-foreground a",
+      "fragment": "",
+      "label": "Start Your Free Trial",
+      "href": "/signup?trial=1",
+      "weight": "50",
+      "commit_until": "2026-09-10"
+    }
+  ]
+}
