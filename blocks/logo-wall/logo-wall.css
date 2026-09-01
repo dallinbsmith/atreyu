@@ -1,0 +1,93 @@
+.logo-wall {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-xl);
+  width: 100%;
+}
+
+/* The viewport is the fixed-width, overflow-clipped box. Its child (the
+   track, doubled to a clone when animating) is width: max-content — a
+   percentage transform on THAT element resolves against its own (doubled)
+   content width, so translateX(-50%) moves exactly one track-width. Putting
+   the transform on .logo-wall itself (a fixed-width box) was the bug: a
+   percentage there resolves against the container, not the overflowing
+   content, so the loop never actually seamed. */
+.logo-wall-viewport {
+  width: 100%;
+
+  &.is-animating {
+    overflow: hidden;
+    display: flex;
+    width: max-content;
+    max-width: 100%;
+    mask-image: linear-gradient(to right, transparent, black var(--spacing-xl), black calc(100% - var(--spacing-xl)), transparent);
+    animation: logo-wall-scroll 30s linear infinite;
+
+    &.is-paused {
+      animation-play-state: paused;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      animation-play-state: paused;
+    }
+  }
+}
+
+.logo-wall-track {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+  flex-shrink: 0;
+  width: max-content;
+  padding-inline: calc(var(--spacing-xl) / 2);
+  margin: 0;
+  list-style: none;
+
+  > li {
+    display: flex;
+  }
+}
+
+.logo-wall-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+  min-width: 60px;
+  color: inherit;
+  text-decoration: none;
+
+  /* Real brand marks — left in their native colors (matches the existing
+     tile-table precedent) rather than forced to currentColor, which would
+     otherwise silently fail on any source SVG using a hardcoded fill on
+     inner elements rather than the root <svg>. */
+  svg {
+    display: block;
+  }
+}
+
+.logo-wall-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  padding: var(--spacing-xs) var(--spacing-s);
+  font-size: var(--eyebrow-font-size);
+  background: none;
+  border: 1px solid currentcolor;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@keyframes logo-wall-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
