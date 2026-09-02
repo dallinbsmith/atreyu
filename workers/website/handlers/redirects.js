@@ -1,6 +1,12 @@
 import { stripLocale, matchLocalePrefix } from '../utils/locale.js';
 
 let redirectMap = null;
+// Backend-audit fix, 2026-09-02: matchWildcard used to rescan `[...redirectMap]`
+// and re-filter by `.endsWith('/*')` on every single unmatched request. Derived
+// once here, alongside redirectMap itself, on the same TTL refresh cadence —
+// same pattern as redirectMap/lastFetch/lastFetchOk, not a second cache with
+// its own invalidation logic.
+let wildcardEntries = [];
 let lastFetch = 0;
 let lastFetchOk = true;
 const TTL = 5 * 60 * 1000;
@@ -41,7 +47,9 @@ const loadRedirects = async (request) => {
     }
 
     const { data = [] } = await resp.json();
-    redirectMap = new Map(data.map(({ Source, Destination }) => [normalize(Source), Destination]));
+    const entries = data.map(({ Source, Destination }) => [normalize(Source), Destination]);
+    redirectMap = new Map(entries);
+    wildcardEntries = entries.filter(([src]) => src.endsWith('/*'));
     lastFetchOk = true;
   } catch {
     // Network failure reaching /redirects.json is the same outage class as a
@@ -55,7 +63,7 @@ const loadRedirects = async (request) => {
 };
 
 const matchWildcard = (path) => {
-  const entry = [...redirectMap].find(([src]) => src.endsWith('/*') && path.startsWith(src.slice(0, -1)));
+  const entry = wildcardEntries.find(([src]) => path.startsWith(src.slice(0, -1)));
   if (!entry) return null;
   const [src, dest] = entry;
   // Bug found and fixed 2026-08-28, separately from the locale-reprefixing
@@ -66,6 +74,19 @@ const matchWildcard = (path) => {
   return dest.replace('*', path.slice(src.length - 1));
 };
 
+// Single source of truth for "is this a same-site relative path" — used by both
+// the open-redirect guard below and the locale-reprefixing logic in the default
+// export. Security-audit fix, 2026-09-02: normalizes backslashes before checking,
+// since a dest of '/\evil.com' previously passed `startsWith('/') &&
+// !startsWith('//')` as "safe" but browsers normalize '\' to '/' per the WHATWG
+// URL spec, so `new URL('/\\evil.com', origin).hostname` actually resolves to
+// 'evil.com' — a real open-redirect bypass, verified against Node's URL parser
+// (same algorithm browsers use).
+const isRelativePath = (path) => {
+  const normalized = path.replace(/\\/g, '/');
+  return normalized.startsWith('/') && !normalized.startsWith('//');
+};
+
 // Same-origin guard: redirects.json is content-author-controlled, and a wildcard
 // destination splices a user-controlled path segment into `dest`, so an unvalidated
 // Location header is an open redirect. No cross-domain destinations were found in
@@ -73,7 +94,7 @@ const matchWildcard = (path) => {
 // unverified against the live authored data) — default to same-origin-only and
 // revisit if a legitimate external-redirect use case is confirmed.
 const isSafeRedirectDest = (dest, requestUrl) => {
-  if (dest.startsWith('/') && !dest.startsWith('//')) return true;
+  if (isRelativePath(dest)) return true;
   try {
     return new URL(dest, requestUrl).hostname === requestUrl.hostname;
   } catch {
@@ -101,8 +122,7 @@ export default async ({ request }) => {
   // (isSafeRedirectDest's `//`/cross-host branch isn't a page path to
   // re-prefix) and only if the author didn't already hardcode a locale
   // prefix into the destination themselves.
-  const isRelativePath = dest.startsWith('/') && !dest.startsWith('//');
-  const localizedDest = locale && isRelativePath && !matchLocalePrefix(dest)
+  const localizedDest = locale && isRelativePath(dest) && !matchLocalePrefix(dest)
     ? `${locale}${dest}`
     : dest;
 

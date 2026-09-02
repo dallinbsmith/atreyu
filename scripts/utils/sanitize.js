@@ -7,10 +7,13 @@
 // removed, and only after that is anything moved into the real DOM.
 const DANGEROUS_TAGS = 'script, style, iframe, object, embed, link';
 const URL_ATTRS = new Set(['href', 'src', 'xlink:href', 'formaction']);
-// Built at runtime (not a literal) so the string never reads as an eval-able
-// URL pragma to static analysis — this is a sanitizer comparing against it,
-// not a sink assigning it.
-const SCRIPT_SCHEME = ['java', 'script:'].join('');
+// Security-audit fix, 2026-09-02: this was previously built via
+// ['java', 'script:'].join('') to dodge a `no-script-url` lint false-positive,
+// but that made the literal ungrep-able for a human reviewer auditing this
+// sanitizer's coverage. Written as a literal + scoped suppression instead —
+// grep-able, still lint-clean.
+// eslint-disable-next-line no-script-url -- sanitizer comparing, not a sink
+const SCRIPT_SCHEME = 'javascript:';
 
 // Browsers strip ASCII tab/newline/CR from a URL scheme before navigating
 // (WHATWG URL spec's "C0 control or space" trimming), so `jav\tascript:` still
