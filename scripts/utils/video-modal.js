@@ -1,5 +1,5 @@
-import { trapFocus, announce } from './a11y.js';
-import { wireModalClose } from './modal.js';
+import { announce } from './a11y.js';
+import { wireModalClose, openModal, closeModal } from './modal.js';
 
 // Matches https://{account}.wistia.com/medias/{id} or fast.wistia.net/embed/iframe/{id}
 export const WISTIA_RE = /wistia\.(?:com|net)\/(?:medias|embed\/iframe)\/([\w-]+)/i;
@@ -10,10 +10,7 @@ let trigger = null;
 
 const close = () => {
   if (!modal) return;
-  releaseTrap?.();
-  modal.remove();
-  document.body.style.overflow = '';
-  trigger?.focus();
+  closeModal(modal, releaseTrap, trigger);
   modal = null;
 };
 
@@ -54,9 +51,6 @@ export const openVideoModal = (wistiaId, title, triggerEl) => {
   if (modal) return;
   modal = buildModal(wistiaId, title);
   trigger = triggerEl;
-  document.body.append(modal);
-  document.body.style.overflow = 'hidden';
-  releaseTrap = trapFocus(modal);
-  modal.querySelector('.video-modal-close').focus();
+  releaseTrap = openModal(modal, '.video-modal-close');
   announce(`${title || 'Video'} opened`);
 };

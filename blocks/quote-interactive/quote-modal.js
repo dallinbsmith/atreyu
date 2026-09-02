@@ -1,6 +1,6 @@
 import { withGsap } from '../../scripts/utils/gsap-loader.js';
-import { trapFocus, announce } from '../../scripts/utils/a11y.js';
-import { wireModalClose } from '../../scripts/utils/modal.js';
+import { announce } from '../../scripts/utils/a11y.js';
+import { wireModalClose, openModal, closeModal } from '../../scripts/utils/modal.js';
 
 const plusIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
 const arrow = (prev) => `<span class="qi-modal-arrow${prev ? ' qi-modal-arrow-prev' : ''}"><svg viewBox="0 0 32.2 54.4" fill="currentColor"><path d="M30.8,23.6c2,2,2,5.1,0,7.1L8.6,52.9c-1.9,2-5.1,2-7.1,0c-2-1.9-2-5.1,0-7.1l18.7-18.7L1.5,8.5c-1.9-2-1.8-5.2,.1-7.1c1.9-1.9,5-1.9,6.9,0Z"/></svg></span>`;
@@ -29,10 +29,7 @@ const close = () => {
   if (!modal) return;
   const content = modal.querySelector('.qi-modal-content');
   const finish = () => {
-    releaseTrap?.();
-    modal.remove();
-    document.body.style.overflow = '';
-    triggerTab?.focus();
+    closeModal(modal, releaseTrap, triggerTab);
     modal = null;
   };
   const animated = withGsap(({ gsap }) => {
@@ -131,10 +128,7 @@ export const initModal = (blockEl, tabs, slides) => {
     modal = buildModal(slides);
     current = index;
     modal.querySelector('.qi-modal-track').style.setProperty('--carousel-index', index);
-    document.body.append(modal);
-    document.body.style.overflow = 'hidden';
-    releaseTrap = trapFocus(modal);
-    modal.querySelector('.qi-modal-close').focus();
+    releaseTrap = openModal(modal, '.qi-modal-close');
     triggerTab = tabs[index];
     updateNav();
     announce(`Quote carousel opened, slide ${index + 1} of ${count}`);

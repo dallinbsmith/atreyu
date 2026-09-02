@@ -1,5 +1,5 @@
-import { trapFocus, announce } from '../../scripts/utils/a11y.js';
-import { wireModalClose } from '../../scripts/utils/modal.js';
+import { announce } from '../../scripts/utils/a11y.js';
+import { wireModalClose, openModal, closeModal } from '../../scripts/utils/modal.js';
 
 const CLOSE_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 const ARROW_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M4.5 2L8.5 6L4.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -37,10 +37,7 @@ export const initTileModal = (items) => {
   };
 
   const close = () => {
-    modal.remove();
-    document.body.style.overflow = '';
-    releaseFocus?.();
-    triggerEl?.focus();
+    closeModal(modal, releaseFocus, triggerEl);
     announce('Partner details closed');
   };
 
@@ -80,10 +77,7 @@ export const initTileModal = (items) => {
     if (!modal) build();
     triggerEl = trigger;
     setSlide(index);
-    document.body.append(modal);
-    document.body.style.overflow = 'hidden';
-    releaseFocus = trapFocus(modal);
-    modal.querySelector('.tt-modal-close').focus();
+    releaseFocus = openModal(modal, '.tt-modal-close');
     announce(`${items[index].name}, partner ${index + 1} of ${items.length}`);
   };
 };
