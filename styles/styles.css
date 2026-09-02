@@ -218,6 +218,15 @@
     --button-font-size: var(--body-font-size-s);
     --button-letter-spacing: 0.01em;
 
+    /* glass/frosted UI treatment — shared by .btn-glass and any .btn inside a
+       .glass-themed section (two different trigger mechanisms, the same
+       visual result), so the two can't drift apart the way they were
+       previously duplicated as literals in both places. */
+    --glass-bg: color-mix(in srgb, rgb(var(--color-light-base)) 12%, transparent);
+    --glass-bg-hover: color-mix(in srgb, rgb(var(--color-light-base)) 20%, transparent);
+    --glass-border: 1px solid color-mix(in srgb, rgb(var(--color-light-base)) 24%, transparent);
+    --glass-blur: 12px;
+
     /* alpha colors — from Frame.io tokens/colors.js */
     --color-alpha-light-5: rgb(157 157 255 / 5%);
     --color-alpha-light-15: rgb(209 209 251 / 15%);
@@ -507,14 +516,14 @@
 
     &.btn-glass {
       color: var(--color-light);
-      background: color-mix(in srgb, rgb(var(--color-light-base)) 12%, transparent);
-      border: 1px solid color-mix(in srgb, rgb(var(--color-light-base)) 24%, transparent);
-      backdrop-filter: blur(12px);
+      background: var(--glass-bg);
+      border: var(--glass-border);
+      backdrop-filter: blur(var(--glass-blur));
       /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
-      -webkit-backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
 
       &:hover {
-        background: color-mix(in srgb, rgb(var(--color-light-base)) 20%, transparent);
+        background: var(--glass-bg-hover);
       }
     }
 
@@ -540,14 +549,14 @@
   }
 
   .glass .btn {
-    background: color-mix(in srgb, rgb(var(--color-light-base)) 12%, transparent);
-    border: 1px solid color-mix(in srgb, rgb(var(--color-light-base)) 24%, transparent);
-    backdrop-filter: blur(12px);
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
     /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
-    -webkit-backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
 
     &:hover {
-      background: color-mix(in srgb, rgb(var(--color-light-base)) 20%, transparent);
+      background: var(--glass-bg-hover);
     }
   }
 

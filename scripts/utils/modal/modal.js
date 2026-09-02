@@ -39,3 +39,7 @@ export const closeModal = (modal, release, trigger) => {
   document.body.style.overflow = '';
   trigger?.focus();
 };
+
+// Clamp a navigable slide/tile index to a collection's bounds — identical
+// logic quote-modal.js and tile-modal.js each had independently.
+export const clampIndex = (i, length) => Math.max(0, Math.min(i, length - 1));

@@ -1,4 +1,6 @@
-const fid = (label) => `form-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+import { slugify } from '../../scripts/utils/slugify.js';
+
+const fid = (label) => `form-${slugify(label)}`;
 
 export const makeField = ({ label, type, required, extra }) => {
   const wrap = document.createElement('div');
