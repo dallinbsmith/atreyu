@@ -86,14 +86,7 @@ let liveRegion;
 export const announce = (message, priority = 'polite') => {
   if (!liveRegion) {
     liveRegion = document.createElement('div');
-    Object.assign(liveRegion.style, {
-      position: 'absolute',
-      width: '1px',
-      height: '1px',
-      overflow: 'hidden',
-      clip: 'rect(0, 0, 0, 0)',
-      whiteSpace: 'nowrap',
-    });
+    liveRegion.className = 'visually-hidden';
     document.body.append(liveRegion);
   }
 

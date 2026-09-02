@@ -1,4 +1,5 @@
 import { getMetadata } from '../ak.js';
+import { getPlaceholder } from './placeholders.js';
 
 const SITE = {
   name: 'Frame.io',
@@ -108,22 +109,21 @@ const BREADCRUMB_LABELS = {
 const labelFor = (segment) => BREADCRUMB_LABELS[segment]
   ?? segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-const buildBreadcrumbs = () => {
+const buildBreadcrumbs = async () => {
   const { pathname } = window.location;
   const segments = pathname.split('/').filter(Boolean);
   if (!segments.length) return null;
 
-  const items = [{ '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url }];
-  let path = '';
-  for (const [idx, segment] of segments.entries()) {
-    path += `/${segment}`;
-    items.push({
+  const homeLabel = await getPlaceholder('breadcrumb_home', 'Home');
+  const items = [
+    { '@type': 'ListItem', position: 1, name: homeLabel, item: SITE.url },
+    ...segments.map((segment, idx) => ({
       '@type': 'ListItem',
       position: idx + 2,
       name: labelFor(segment),
-      item: `${SITE.url}${path}`,
-    });
-  }
+      item: `${SITE.url}/${segments.slice(0, idx + 1).join('/')}`,
+    })),
+  ];
 
   return {
     '@type': 'BreadcrumbList',
@@ -132,7 +132,7 @@ const buildBreadcrumbs = () => {
   };
 };
 
-const buildWebPage = () => {
+const buildWebPage = async () => {
   const { pathname } = window.location;
   const title = getMetadata('og:title') || document.title;
   const description = getMetadata('description');
@@ -148,13 +148,13 @@ const buildWebPage = () => {
   if (description) page.description = description;
   if (image) page.image = image;
 
-  const breadcrumbs = buildBreadcrumbs();
+  const breadcrumbs = await buildBreadcrumbs();
   if (breadcrumbs) page.breadcrumb = { '@id': breadcrumbs['@id'] };
 
   return page;
 };
 
-export default () => {
+export default async () => {
   inject(buildOrganization());
   inject(buildWebSite());
 
@@ -169,9 +169,9 @@ export default () => {
     inject(buildCaseStudyArticle());
   }
 
-  const breadcrumbs = buildBreadcrumbs();
+  const breadcrumbs = await buildBreadcrumbs();
   if (breadcrumbs) inject(breadcrumbs);
 
-  inject(buildWebPage());
+  inject(await buildWebPage());
   flush();
 };

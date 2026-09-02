@@ -12,6 +12,10 @@ export const fetchData = async (url, options = {}) => {
   const entry = fetch(href)
     .then((resp) => (resp.ok ? resp.json() : null))
     .catch(() => null);
+  // Only keep a failed/null result cached long enough for concurrent callers to
+  // share it — delete it once settled so a later call retries instead of being
+  // stuck behind a transient failure for the rest of the session.
+  entry.then((result) => { if (result === null) cache.delete(href); });
   cache.set(href, entry);
   return entry;
 };
