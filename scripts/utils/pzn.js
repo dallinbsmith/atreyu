@@ -134,17 +134,14 @@ const buildDecisionUrl = () => {
 let decisionPromise;
 const fetchDecision = () => {
   decisionPromise ??= (async () => {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), config.timeoutMs);
     try {
-      const res = await fetch(buildDecisionUrl(), { signal: controller.signal });
+      const signal = AbortSignal.timeout(config.timeoutMs);
+      const res = await fetch(buildDecisionUrl(), { signal });
       if (!res.ok) return null;
       const { segment } = await res.json();
       return segment ?? null;
     } catch {
-      return null; // fail-open — baseline stands
-    } finally {
-      clearTimeout(timer);
+      return null; // fail-open — baseline stands (timeout or any other fetch failure)
     }
   })();
   return decisionPromise;

@@ -40,24 +40,21 @@ export const isSameOriginPath = (path) => path.startsWith('/') && !path.startsWi
 // anything decorates, or decorated blocks get clobbered by raw variant HTML
 // with no re-decoration pass) — but that means an unbounded fetch was an
 // unbounded reveal-gate: a hung network request blocked page reveal
-// indefinitely. A tight timeout, matching the same AbortController pattern
-// scripts/utils/pzn.js already uses for its own decision fetch, bounds the
-// worst case to a small, known delay and fails open to the baseline/control
-// content already in the DOM, rather than leaving this open-ended.
+// indefinitely. A tight timeout, matching the same AbortSignal.timeout()
+// pattern scripts/utils/pzn.js already uses for its own decision fetch,
+// bounds the worst case to a small, known delay and fails open to the
+// baseline/control content already in the DOM, rather than leaving this
+// open-ended.
 const VARIANT_FETCH_TIMEOUT_MS = 1500;
 
 const fetchVariantContent = async (path) => {
   if (!isSameOriginPath(path)) return null;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), VARIANT_FETCH_TIMEOUT_MS);
   try {
-    const resp = await fetch(`${path}.plain.html`, { signal: controller.signal });
+    const resp = await fetch(`${path}.plain.html`, { signal: AbortSignal.timeout(VARIANT_FETCH_TIMEOUT_MS) });
     if (!resp.ok) return null;
     return await resp.text();
   } catch {
-    return null; // fail-open — control/baseline content stays
-  } finally {
-    clearTimeout(timer);
+    return null; // fail-open — control/baseline content stays (timeout or any other fetch failure)
   }
 };
 
