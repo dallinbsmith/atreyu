@@ -61,7 +61,7 @@ const handleBackground = async (background, section) => {
   setColorScheme(section);
 };
 
-const handleLayout = async (text, section, type) => {
+const handleLayout = (text, section, type) => {
   delete section.dataset[type];
 
   if (text === '0') return;
