@@ -4,6 +4,13 @@ let redirectMap = null;
 let lastFetch = 0;
 let lastFetchOk = true;
 const TTL = 5 * 60 * 1000;
+// This runs on the catch-all route ahead of fetchFromAem — a hang here (not
+// just an error) previously had no bound at all and would have blocked
+// every single page load, not just redirect lookups. AbortError from the
+// timeout falls into the same catch block as any other fetch failure below,
+// so the existing fail-open (empty Map, page proceeds normally) already
+// covers it with no extra branching needed.
+const FETCH_TIMEOUT_MS = 3000;
 // Shorter backoff than TTL after a failed/errored fetch, so an outage on
 // /redirects.json doesn't turn into a thundering-herd retry on every single
 // request — but we still retry sooner than a full healthy-TTL cycle.
@@ -18,10 +25,13 @@ const loadRedirects = async (request) => {
   const ttl = lastFetchOk ? TTL : ERROR_TTL;
   if (redirectMap && Date.now() - lastFetch < ttl) return;
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const redirectUrl = new URL(request.url);
     redirectUrl.pathname = '/redirects.json';
-    const resp = await fetch(new Request(redirectUrl, { headers: request.headers }));
+    const req = new Request(redirectUrl, { headers: request.headers });
+    const resp = await fetch(req, { signal: controller.signal });
     lastFetch = Date.now();
 
     if (!resp.ok) {
@@ -39,6 +49,8 @@ const loadRedirects = async (request) => {
     lastFetch = Date.now();
     lastFetchOk = false;
     redirectMap ??= new Map();
+  } finally {
+    clearTimeout(timer);
   }
 };
 

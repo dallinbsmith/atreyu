@@ -41,6 +41,14 @@ const formatSchedule = async (response) => {
   return schedule2Response({ ...json, data });
 };
 
+// This proxies a real page render, not a small API call, so the bound is
+// generous — but an origin that hangs indefinitely (never errors, never
+// responds) previously had no bound at all beyond Cloudflare's own
+// platform-level CPU/wall-clock limit, which kills the whole invocation with
+// a generic platform error instead of a controlled 504. Matches Vitamix's
+// own proxy-Worker precedent (AbortController timeout with a fallback).
+const ORIGIN_FETCH_TIMEOUT_MS = 10_000;
+
 export const fetchFromAem = async ({ request, cache, savedSearch }) => {
   // Bug-squash fix, 2026-08-28: no try/catch existed around this fetch — an
   // origin DNS/network failure propagated as an unhandled exception through
@@ -48,11 +56,22 @@ export const fetchFromAem = async ({ request, cache, savedSearch }) => {
   // spike/decision-endpoint Worker's own fail-open pattern. A 502 here is a
   // real, correct signal (upstream fetch failed) rather than Cloudflare's
   // generic default error page for an uncaught exception.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ORIGIN_FETCH_TIMEOUT_MS);
   let resp;
   try {
-    resp = await fetch(request, { method: request.method, cf: { cacheEverything: cache } });
+    resp = await fetch(request, {
+      method: request.method,
+      cf: { cacheEverything: cache },
+      signal: controller.signal,
+    });
   } catch {
-    return new Response('Bad Gateway', { status: 502 });
+    return new Response(
+      controller.signal.aborted ? 'Gateway Timeout' : 'Bad Gateway',
+      { status: controller.signal.aborted ? 504 : 502 },
+    );
+  } finally {
+    clearTimeout(timer);
   }
 
   resp = new Response(resp.body, resp);
