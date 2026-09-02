@@ -1,11 +1,13 @@
-.table {
-  table {
-    width: 100%;
-    border-collapse: collapse;
+@layer blocks {
+  .table {
+    table {
+      width: 100%;
+      border-collapse: collapse;
 
-    th,
-    td {
-      border: 1px solid;
+      th,
+      td {
+        border: 1px solid;
+      }
     }
   }
 }

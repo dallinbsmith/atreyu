@@ -1,291 +1,419 @@
-.quote-interactive {
-  max-width: var(--grid-container-width);
-  margin: 0 auto;
-
-  em {
-    font-style: normal;
-    color: var(--em-color, var(--color-alpha-light-50));
-  }
-
-  .qi-head {
-    max-width: 28ch;
-    margin-bottom: var(--spacing-xl);
-
-    h2, h3 {
-      margin: 0;
-      color: var(--color-light);
-      font-size: var(--heading-font-size-m);
-      letter-spacing: -0.03em;
-      line-height: 1.12;
-    }
-
-    p {
-      margin: var(--spacing-m) 0 0;
-      color: var(--color-alpha-light-50);
-      font-size: var(--body-font-size-m);
-      line-height: var(--body-line-height);
-    }
-  }
-
-  .qi-gradient {
-    display: none;
-  }
-
-  .qi-tabs {
-    display: flex;
-    flex-flow: row wrap;
-    gap: var(--spacing-s);
-    margin-bottom: var(--spacing-l);
-  }
-
-  .qi-tab {
-    padding: var(--spacing-s) var(--spacing-l);
-    border: 1px solid var(--color-alpha-light-40);
-    border-radius: var(--radius-40);
-    background: transparent;
-    color: var(--color-alpha-light-50);
-    font: inherit;
-    font-size: var(--body-font-size-s);
-    font-weight: 600;
-    cursor: pointer;
-    transition: color 0.2s var(--transition-ease-out), border-color 0.2s var(--transition-ease-out), background 0.2s var(--transition-ease-out);
-
-    &:hover {
-      color: var(--color-light);
-    }
-
-    &[aria-selected='true'] {
-      color: var(--color-dark);
-      background: var(--color-light);
-      border-color: var(--color-light);
-    }
-  }
-
-  .qi-panel {
-    position: relative;
-    isolation: isolate;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    min-height: 340px;
-    margin: 0;
-    padding: var(--spacing-xl);
-    overflow: hidden;
-    border-radius: var(--radius-16, 16px);
-
-    blockquote {
-      position: relative;
-      z-index: 1;
-      margin: 0;
-      color: var(--color-light);
-      font-size: var(--heading-font-size-l);
-      font-weight: 500;
-      letter-spacing: -0.02em;
-      line-height: 1.2;
-      text-wrap: balance;
-    }
-
-    figcaption {
-      position: relative;
-      z-index: 1;
-      margin-top: var(--spacing-l);
-      color: var(--color-alpha-light-70);
-      font-size: var(--body-font-size-s);
-      line-height: 1.4;
-
-      &::before {
-        content: '—\00a0';
-        color: var(--color-alpha-light-50);
-      }
-    }
-
-    .qi-logo {
-      position: absolute;
-      z-index: 1;
-      bottom: var(--spacing-xl);
-      right: var(--spacing-xl);
-      max-height: 2rem;
-      opacity: 0.7;
-    }
-  }
-
-  /* per-slide background photo (Falkor's quote-slide imagery) with a bottom
-     scrim so the quote + attribution stay legible over it */
-  .qi-bg {
-    position: absolute;
-    z-index: 0;
-    inset: 0;
-    overflow: hidden;
-
-    img,
-    picture {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(0deg, color-mix(in srgb, var(--color-dark) 92%, transparent) 0%, transparent 80%);
-    }
-  }
-}
-
-/* Desktop: heading on the left, category titles on the right (Falkor layout).
-   The stage panel is hidden; hover card + modal replace it. */
-@media (width >= 768px) {
+@layer blocks {
   .quote-interactive {
-    display: grid;
-    grid-template:
-      'head tabs' auto
-      / 4fr 6fr;
-    column-gap: var(--spacing-xxl, 48px);
-    align-items: start;
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+
+    em {
+      font-style: normal;
+      color: var(--em-color, var(--color-alpha-light-50));
+    }
 
     .qi-head {
-      grid-area: head;
-      margin-bottom: 0;
+      max-width: 28ch;
+      margin-bottom: var(--spacing-xl);
 
       h2, h3 {
-        font-size: var(--body-font-size-l);
-        font-weight: 600;
-        line-height: 1.3;
-        letter-spacing: -0.005em;
+        margin: 0;
+        color: var(--color-light);
+        font-size: var(--heading-font-size-m);
+        letter-spacing: -0.03em;
+        line-height: 1.12;
+      }
+
+      p {
+        margin: var(--spacing-m) 0 0;
+        color: var(--color-alpha-light-50);
+        font-size: var(--body-font-size-m);
+        line-height: var(--body-line-height);
       }
     }
 
-    .qi-tab-wrap {
-      grid-area: tabs;
-      position: relative;
+    .qi-gradient {
+      display: none;
     }
 
     .qi-tabs {
-      flex-direction: column;
-      align-items: flex-start;
-      align-content: start;
-      gap: 0;
-      margin-bottom: 0;
+      display: flex;
+      flex-flow: row wrap;
+      gap: var(--spacing-s);
+      margin-bottom: var(--spacing-l);
     }
 
     .qi-tab {
-      padding: 0;
-      border: 0;
-      border-radius: 0;
+      padding: var(--spacing-s) var(--spacing-l);
+      border: 1px solid var(--color-alpha-light-40);
+      border-radius: var(--radius-40);
       background: transparent;
-      color: color-mix(in srgb, var(--color-light) 15%, transparent);
-      font-size: var(--heading-font-size-xl);
+      color: var(--color-alpha-light-50);
+      font: inherit;
+      font-size: var(--body-font-size-s);
       font-weight: 600;
-      letter-spacing: -0.03em;
-      line-height: 1.15;
-      text-align: left;
-      width: auto;
-      transition: color 0.5s var(--transition-ease-out);
+      cursor: pointer;
+      transition: color 0.2s var(--transition-ease-out), border-color 0.2s var(--transition-ease-out), background 0.2s var(--transition-ease-out);
 
       &:hover {
         color: var(--color-light);
       }
 
       &[aria-selected='true'] {
-        color: color-mix(in srgb, var(--color-light) 15%, transparent);
-        background: transparent;
-        border-color: transparent;
-      }
-    }
-
-    .qi-gradient {
-      display: block;
-      position: absolute;
-      top: 0;
-      left: 0;
-      background: linear-gradient(70.41deg, rgb(93 55 48) -52%, rgb(139 95 77) 26.88%, rgb(52 51 87) 75%);
-      background-clip: text;
-      /* stylelint-disable-next-line property-no-vendor-prefix -- Safari needs prefix for background-clip: text */
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      pointer-events: none;
-      font-size: var(--heading-font-size-xl);
-      font-weight: 600;
-      letter-spacing: -0.03em;
-      line-height: 1.15;
-      transition: opacity 0.5s ease-in-out;
-    }
-
-    .qi-tabs:hover ~ .qi-gradient {
-      opacity: 0;
-    }
-
-    .qi-stage {
-      display: none;
-      grid-area: stage;
-      position: relative;
-      isolation: isolate;
-      padding: 0;
-      border: 1px solid var(--color-alpha-light-10);
-      overflow: hidden;
-      border-radius: var(--radius-16, 16px);
-      background: var(--color-alpha-dark-50);
-      backdrop-filter: blur(var(--card-background-blur));
-      /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
-      -webkit-backdrop-filter: blur(var(--card-background-blur));
-
-      &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: -1;
-        border-radius: inherit;
-        background: radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, var(--color-iris) 20%, transparent), transparent 65%);
-        pointer-events: none;
+        color: var(--color-dark);
+        background: var(--color-light);
+        border-color: var(--color-light);
       }
     }
 
     .qi-panel {
-      min-height: 460px;
-      padding: var(--spacing-xxl, 48px);
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      min-height: 340px;
+      margin: 0;
+      padding: var(--spacing-xl);
+      overflow: hidden;
+      border-radius: var(--radius-16, 16px);
+
+      blockquote {
+        position: relative;
+        z-index: 1;
+        margin: 0;
+        color: var(--color-light);
+        font-size: var(--heading-font-size-l);
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+        text-wrap: balance;
+      }
+
+      figcaption {
+        position: relative;
+        z-index: 1;
+        margin-top: var(--spacing-l);
+        color: var(--color-alpha-light-70);
+        font-size: var(--body-font-size-s);
+        line-height: 1.4;
+
+        &::before {
+          content: '—\00a0';
+          color: var(--color-alpha-light-50);
+        }
+      }
+
+      .qi-logo {
+        position: absolute;
+        z-index: 1;
+        bottom: var(--spacing-xl);
+        right: var(--spacing-xl);
+        max-height: 2rem;
+        opacity: 0.7;
+      }
     }
 
-    .qi-panel blockquote {
-      font-size: var(--heading-font-size-xl);
-    }
+    /* per-slide background photo (Falkor's quote-slide imagery) with a bottom
+       scrim so the quote + attribution stay legible over it */
+    .qi-bg {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      overflow: hidden;
 
+      img,
+      picture {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(0deg, color-mix(in srgb, var(--color-dark) 92%, transparent) 0%, transparent 80%);
+      }
+    }
   }
-}
 
-/* Hover card — appended to document.body so must be outside .quote-interactive scope */
-@media (width >= 768px) {
-  .qi-hover {
+  /* Desktop: heading on the left, category titles on the right (Falkor layout).
+     The stage panel is hidden; hover card + modal replace it. */
+  @media (width >= 768px) {
+    .quote-interactive {
+      display: grid;
+      grid-template:
+        'head tabs' auto
+        / 4fr 6fr;
+      column-gap: var(--spacing-xxl, 48px);
+      align-items: start;
+
+      .qi-head {
+        grid-area: head;
+        margin-bottom: 0;
+
+        h2, h3 {
+          font-size: var(--body-font-size-l);
+          font-weight: 600;
+          line-height: 1.3;
+          letter-spacing: -0.005em;
+        }
+      }
+
+      .qi-tab-wrap {
+        grid-area: tabs;
+        position: relative;
+      }
+
+      .qi-tabs {
+        flex-direction: column;
+        align-items: flex-start;
+        align-content: start;
+        gap: 0;
+        margin-bottom: 0;
+      }
+
+      .qi-tab {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: color-mix(in srgb, var(--color-light) 15%, transparent);
+        font-size: var(--heading-font-size-xl);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+        text-align: left;
+        width: auto;
+        transition: color 0.5s var(--transition-ease-out);
+
+        &:hover {
+          color: var(--color-light);
+        }
+
+        &[aria-selected='true'] {
+          color: color-mix(in srgb, var(--color-light) 15%, transparent);
+          background: transparent;
+          border-color: transparent;
+        }
+      }
+
+      .qi-gradient {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: linear-gradient(70.41deg, rgb(93 55 48) -52%, rgb(139 95 77) 26.88%, rgb(52 51 87) 75%);
+        background-clip: text;
+        /* stylelint-disable-next-line property-no-vendor-prefix -- Safari needs prefix for background-clip: text */
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        pointer-events: none;
+        font-size: var(--heading-font-size-xl);
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      .qi-tabs:hover ~ .qi-gradient {
+        opacity: 0;
+      }
+
+      .qi-stage {
+        display: none;
+        grid-area: stage;
+        position: relative;
+        isolation: isolate;
+        padding: 0;
+        border: 1px solid var(--color-alpha-light-10);
+        overflow: hidden;
+        border-radius: var(--radius-16, 16px);
+        background: var(--color-alpha-dark-50);
+        backdrop-filter: blur(var(--card-background-blur));
+        /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+        -webkit-backdrop-filter: blur(var(--card-background-blur));
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          border-radius: inherit;
+          background: radial-gradient(70% 90% at 100% 0%, color-mix(in srgb, var(--color-iris) 20%, transparent), transparent 65%);
+          pointer-events: none;
+        }
+      }
+
+      .qi-panel {
+        min-height: 460px;
+        padding: var(--spacing-xxl, 48px);
+      }
+
+      .qi-panel blockquote {
+        font-size: var(--heading-font-size-xl);
+      }
+
+    }
+  }
+
+  /* Hover card — appended to document.body so must be outside .quote-interactive scope */
+  @media (width >= 768px) {
+    .qi-hover {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 3;
+      pointer-events: none;
+      transform: translate3d(var(--hover-x, 0), var(--hover-y, 0), 0);
+      transition: transform var(--duration-300) var(--ease-out);
+    }
+
+    .qi-hover-inner {
+      position: relative;
+      width: 30vw;
+      max-width: 50rem;
+      aspect-ratio: 1 / 0.51;
+      border-radius: var(--radius-16, 16px);
+      overflow: hidden;
+      opacity: var(--hover-progress, 0);
+      transform: translate(calc(10% * var(--hover-progress, 0)), -50%) scaleY(var(--scale-y, 0.1));
+      transform-origin: center center;
+    }
+
+    .qi-hover-inner > * {
+      transform: scaleY(var(--inner-scale-y, 2));
+      transform-origin: center center;
+    }
+
+    .qi-hover-media {
+      position: absolute;
+      inset: 0;
+
+      img,
+      picture {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .qi-hover-logo {
+      position: absolute;
+      z-index: 1;
+      bottom: var(--spacing-l);
+      left: var(--spacing-xl);
+      max-height: 2rem;
+      opacity: 0.8;
+      color: var(--color-light);
+    }
+
+    .qi-hover-plus {
+      position: absolute;
+      z-index: 1;
+      top: var(--spacing-m);
+      right: var(--spacing-m);
+      display: grid;
+      place-items: center;
+      width: 3rem;
+      height: 3rem;
+      border: 1px solid var(--color-alpha-light-40);
+      border-radius: 50%;
+      color: var(--color-light);
+      font-size: var(--heading-font-size-s);
+    }
+  }
+
+  /* Modal — centered card (Falkor: aspect-ratio 1/0.51, not full-viewport) */
+  .qi-modal {
     position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 3;
-    pointer-events: none;
-    transform: translate3d(var(--hover-x, 0), var(--hover-y, 0), 0);
-    transition: transform var(--duration-300) var(--ease-out);
+    inset: 0;
+    z-index: var(--z-index-modal);
+    display: grid;
+    place-items: center;
   }
 
-  .qi-hover-inner {
-    position: relative;
-    width: 30vw;
-    max-width: 50rem;
-    aspect-ratio: 1 / 0.51;
-    border-radius: var(--radius-16, 16px);
-    overflow: hidden;
-    opacity: var(--hover-progress, 0);
-    transform: translate(calc(10% * var(--hover-progress, 0)), -50%) scaleY(var(--scale-y, 0.1));
-    transform-origin: center center;
-  }
-
-  .qi-hover-inner > * {
-    transform: scaleY(var(--inner-scale-y, 2));
-    transform-origin: center center;
-  }
-
-  .qi-hover-media {
+  .qi-modal-backdrop {
     position: absolute;
     inset: 0;
+    background: var(--color-alpha-dark-90);
+    cursor: pointer;
+  }
+
+  .qi-modal-content {
+    position: relative;
+    width: min(90vw, var(--grid-container-width));
+    aspect-ratio: 1 / 0.51;
+    max-height: calc(100vh - 6rem);
+    overflow: hidden;
+    border-radius: var(--radius-16, 16px);
+    transform-origin: center center;
+    isolation: isolate;
+  }
+
+  .qi-modal-close {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-light);
+    cursor: pointer;
+    transform-origin: top right;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 1px solid var(--color-alpha-light-15);
+      border-radius: 50%;
+      transition: transform var(--duration-300) var(--ease-basic-butter);
+    }
+
+    &:hover::before {
+      transform: scale(1.2);
+    }
+
+    svg {
+      width: 0.625rem;
+      height: 0.625rem;
+    }
+  }
+
+  .qi-modal-carousel {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .qi-modal-track {
+    display: flex;
+    height: 100%;
+    transform: translateX(calc(var(--carousel-index, 0) * -100%));
+    transition: transform var(--duration-300) var(--ease-basic-butter);
+  }
+
+  .qi-modal-slide {
+    position: relative;
+    flex: 0 0 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--spacing-xxl, 48px) var(--spacing-xxl, 48px) calc(5rem + var(--spacing-xl));
+  }
+
+  .qi-modal-slide-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
 
     img,
     picture {
@@ -296,263 +424,137 @@
     }
   }
 
-  .qi-hover-logo {
-    position: absolute;
-    z-index: 1;
-    bottom: var(--spacing-l);
-    left: var(--spacing-xl);
-    max-height: 2rem;
-    opacity: 0.8;
-    color: var(--color-light);
-  }
-
-  .qi-hover-plus {
-    position: absolute;
-    z-index: 1;
-    top: var(--spacing-m);
-    right: var(--spacing-m);
-    display: grid;
-    place-items: center;
-    width: 3rem;
-    height: 3rem;
-    border: 1px solid var(--color-alpha-light-40);
-    border-radius: 50%;
-    color: var(--color-light);
-    font-size: var(--heading-font-size-s);
-  }
-}
-
-/* Modal — centered card (Falkor: aspect-ratio 1/0.51, not full-viewport) */
-.qi-modal {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-index-modal);
-  display: grid;
-  place-items: center;
-}
-
-.qi-modal-backdrop {
-  position: absolute;
-  inset: 0;
-  background: var(--color-alpha-dark-90);
-  cursor: pointer;
-}
-
-.qi-modal-content {
-  position: relative;
-  width: min(90vw, var(--grid-container-width));
-  aspect-ratio: 1 / 0.51;
-  max-height: calc(100vh - 6rem);
-  overflow: hidden;
-  border-radius: var(--radius-16, 16px);
-  transform-origin: center center;
-  isolation: isolate;
-}
-
-.qi-modal-close {
-  position: absolute;
-  top: 40px;
-  right: 40px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--color-light);
-  cursor: pointer;
-  transform-origin: top right;
-
-  &::before {
-    content: '';
+  .qi-modal-scrim {
     position: absolute;
     inset: 0;
-    border: 1px solid var(--color-alpha-light-15);
-    border-radius: 50%;
-    transition: transform var(--duration-300) var(--ease-basic-butter);
-  }
-
-  &:hover::before {
-    transform: scale(1.2);
-  }
-
-  svg {
-    width: 0.625rem;
-    height: 0.625rem;
-  }
-}
-
-.qi-modal-carousel {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.qi-modal-track {
-  display: flex;
-  height: 100%;
-  transform: translateX(calc(var(--carousel-index, 0) * -100%));
-  transition: transform var(--duration-300) var(--ease-basic-butter);
-}
-
-.qi-modal-slide {
-  position: relative;
-  flex: 0 0 100%;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: var(--spacing-xxl, 48px) var(--spacing-xxl, 48px) calc(5rem + var(--spacing-xl));
-}
-
-.qi-modal-slide-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-
-  img,
-  picture {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.qi-modal-scrim {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent -20%, rgb(0 0 0 / 85%) 108%);
-  opacity: var(--shadow-opacity, 1);
-  pointer-events: none;
-}
-
-.qi-modal-slide-body {
-  position: relative;
-  z-index: 1;
-  max-width: 60ch;
-  opacity: var(--item-progress, 1);
-  transform: translateX(calc(2rem - var(--item-progress, 1) * 2rem));
-}
-
-.qi-modal-eyebrow {
-  position: relative;
-  z-index: 1;
-  display: block;
-  color: var(--color-alpha-light-70);
-  font-size: var(--heading-font-size-xs);
-  font-weight: 400;
-  line-height: 1.25;
-}
-
-.qi-modal-quote {
-  margin: 0;
-  color: var(--color-light);
-  font-size: var(--body-font-size-xl);
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.2;
-  text-wrap: balance;
-}
-
-.qi-modal-attr {
-  margin-top: var(--spacing-l);
-  color: var(--color-alpha-light-70);
-  font-size: var(--body-font-size-s);
-  line-height: 1.4;
-
-  &::before {
-    content: '—\00a0';
-    color: var(--color-alpha-light-50);
-  }
-}
-
-.qi-modal-nav {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0 var(--spacing-xxl, 48px) var(--spacing-m);
-}
-
-.qi-modal-nav-inner {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  gap: var(--spacing-l);
-  padding-top: var(--spacing-l);
-  border-top: 1px solid var(--color-alpha-light-20);
-}
-
-.qi-modal-prev,
-.qi-modal-next {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-s);
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-light);
-  font: inherit;
-  font-size: var(--body-font-size-s);
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity var(--duration-300) var(--ease-basic-butter);
-
-  &:disabled {
-    opacity: 0.1;
+    background: linear-gradient(180deg, transparent -20%, rgb(0 0 0 / 85%) 108%);
+    opacity: var(--shadow-opacity, 1);
     pointer-events: none;
   }
-}
 
-.qi-modal-arrow {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  width: 0.875rem;
-  height: 1em;
-  transition: transform 0.4s var(--ease-basic-butter);
-
-  svg {
-    position: absolute;
-    right: 0;
-    height: 0.55rem;
-    width: auto;
+  .qi-modal-slide-body {
+    position: relative;
+    z-index: 1;
+    max-width: 60ch;
+    opacity: var(--item-progress, 1);
+    transform: translateX(calc(2rem - var(--item-progress, 1) * 2rem));
   }
 
-  &.qi-modal-arrow-prev {
-    transform: rotate(180deg);
+  .qi-modal-eyebrow {
+    position: relative;
+    z-index: 1;
+    display: block;
+    color: var(--color-alpha-light-70);
+    font-size: var(--heading-font-size-xs);
+    font-weight: 400;
+    line-height: 1.25;
   }
-}
 
-.qi-modal-prev:hover .qi-modal-arrow {
-  transform: rotate(180deg) translateX(0.5rem);
-}
-
-.qi-modal-next:hover .qi-modal-arrow {
-  transform: translateX(0.5rem);
-}
-
-@media (width >= 768px) {
   .qi-modal-quote {
-    font-size: var(--body-font-size-xxxl);
-    letter-spacing: -0.03em;
-    line-height: 1.12;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .qi-hover {
-    display: none;
+    margin: 0;
+    color: var(--color-light);
+    font-size: var(--body-font-size-xl);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    text-wrap: balance;
   }
 
-  .qi-modal-track {
-    transition: none;
+  .qi-modal-attr {
+    margin-top: var(--spacing-l);
+    color: var(--color-alpha-light-70);
+    font-size: var(--body-font-size-s);
+    line-height: 1.4;
+
+    &::before {
+      content: '—\00a0';
+      color: var(--color-alpha-light-50);
+    }
+  }
+
+  .qi-modal-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 var(--spacing-xxl, 48px) var(--spacing-m);
+  }
+
+  .qi-modal-nav-inner {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-l);
+    padding-top: var(--spacing-l);
+    border-top: 1px solid var(--color-alpha-light-20);
+  }
+
+  .qi-modal-prev,
+  .qi-modal-next {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-s);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-light);
+    font: inherit;
+    font-size: var(--body-font-size-s);
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity var(--duration-300) var(--ease-basic-butter);
+
+    &:disabled {
+      opacity: 0.1;
+      pointer-events: none;
+    }
+  }
+
+  .qi-modal-arrow {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 0.875rem;
+    height: 1em;
+    transition: transform 0.4s var(--ease-basic-butter);
+
+    svg {
+      position: absolute;
+      right: 0;
+      height: 0.55rem;
+      width: auto;
+    }
+
+    &.qi-modal-arrow-prev {
+      transform: rotate(180deg);
+    }
+  }
+
+  .qi-modal-prev:hover .qi-modal-arrow {
+    transform: rotate(180deg) translateX(0.5rem);
+  }
+
+  .qi-modal-next:hover .qi-modal-arrow {
+    transform: translateX(0.5rem);
+  }
+
+  @media (width >= 768px) {
+    .qi-modal-quote {
+      font-size: var(--body-font-size-xxxl);
+      letter-spacing: -0.03em;
+      line-height: 1.12;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .qi-hover {
+      display: none;
+    }
+
+    .qi-modal-track {
+      transition: none;
+    }
   }
 }

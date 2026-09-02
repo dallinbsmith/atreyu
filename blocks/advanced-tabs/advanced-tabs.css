@@ -1,41 +1,43 @@
-.advanced-tabs {
-  [role="tabpanel"] {
-    &[hidden] {
-      display: none;
-    }
+@layer blocks {
+  .advanced-tabs {
+    [role="tabpanel"] {
+      &[hidden] {
+        display: none;
+      }
 
-    &[data-status] {
-      display: none;
-    }
+      &[data-status] {
+        display: none;
+      }
 
-    &:focus-visible {
-      outline: 2px solid currentcolor;
-      outline-offset: 2px;
+      &:focus-visible {
+        outline: 2px solid currentcolor;
+        outline-offset: 2px;
+      }
     }
   }
-}
 
-.tab-list {
-  display: flex;
-  justify-content: center;
-  list-style: none;
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-
-  button {
-    background-color: transparent;
-    border: none;
-    font-size: var(--body-font-size-xl);
-    padding: 4px 8px;
+  .tab-list {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    gap: 12px;
     margin: 0;
-    border-bottom: 2px solid transparent;
-    box-sizing: border-box;
-    transition: border-bottom 0.2s ease-in-out;
-    cursor: pointer;
+    padding: 0;
 
-    &[aria-selected="true"] {
-      border-bottom: 2px solid light-dark(var(--color-dark), var(--color-light));
+    button {
+      background-color: transparent;
+      border: none;
+      font-size: var(--body-font-size-xl);
+      padding: 4px 8px;
+      margin: 0;
+      border-bottom: 2px solid transparent;
+      box-sizing: border-box;
+      transition: border-bottom 0.2s ease-in-out;
+      cursor: pointer;
+
+      &[aria-selected="true"] {
+        border-bottom: 2px solid light-dark(var(--color-dark), var(--color-light));
+      }
     }
   }
 }

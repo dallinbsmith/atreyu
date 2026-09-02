@@ -1,94 +1,96 @@
-.bookend {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  padding-top: 160px;
-  overflow: hidden;
-
-  > div {
-    padding-bottom: 160px;
-  }
-
-  &::after {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    bottom: -750px;
-    left: -100%;
-    width: 300%;
-    height: 1500px;
-    background: radial-gradient(47.08% 45.75% at 50% 50%, rgb(78 85 168) 0%, rgb(69 82 158 / 91%) 33.36%, rgb(72 42 105 / 0%) 100%);
-    mix-blend-mode: screen;
-    pointer-events: none;
-  }
-
-  .bookend-content {
-    max-width: var(--grid-container-width);
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  /* Frame.io `em` decorator = muted second-tone (two-tone titles), not italic */
-  em {
-    font-style: normal;
-    color: var(--em-color, var(--color-alpha-light-50));
-  }
-
-  .bookend-heading {
-    margin: 0;
-    font-size: var(--heading-font-size-xl);
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: var(--heading-line-height);
-    color: var(--color-light);
-  }
-
-  .bookend-body {
-    margin: var(--spacing-m) 0 0;
-    color: var(--color-alpha-light-50);
-    font-size: var(--body-font-size-l);
-    line-height: var(--body-line-height);
-  }
-
-  .bookend-cta {
-    margin: var(--spacing-xl) 0 0;
-    display: flex;
-    justify-content: center;
-    gap: var(--spacing-m);
-    flex-wrap: wrap;
-  }
-}
-
-@media (width >= 768px) {
+@layer blocks {
   .bookend {
-    padding-top: 150px;
-
-    > div {
-      padding-bottom: 116px;
-    }
-
-    .bookend-content {
-      max-width: 600px;
-    }
-  }
-}
-
-@media (width >= 1240px) {
-  .bookend {
-    padding-top: 260px;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding-top: 160px;
+    overflow: hidden;
 
     > div {
       padding-bottom: 160px;
     }
 
-    .bookend-content {
-      max-width: 700px;
+    &::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      bottom: -750px;
+      left: -100%;
+      width: 300%;
+      height: 1500px;
+      background: radial-gradient(47.08% 45.75% at 50% 50%, rgb(78 85 168) 0%, rgb(69 82 158 / 91%) 33.36%, rgb(72 42 105 / 0%) 100%);
+      mix-blend-mode: screen;
+      pointer-events: none;
     }
 
-    &::after {
-      bottom: -900px;
-      left: -15%;
-      width: 130%;
+    .bookend-content {
+      max-width: var(--grid-container-width);
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    /* Frame.io `em` decorator = muted second-tone (two-tone titles), not italic */
+    em {
+      font-style: normal;
+      color: var(--em-color, var(--color-alpha-light-50));
+    }
+
+    .bookend-heading {
+      margin: 0;
+      font-size: var(--heading-font-size-xl);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: var(--heading-line-height);
+      color: var(--color-light);
+    }
+
+    .bookend-body {
+      margin: var(--spacing-m) 0 0;
+      color: var(--color-alpha-light-50);
+      font-size: var(--body-font-size-l);
+      line-height: var(--body-line-height);
+    }
+
+    .bookend-cta {
+      margin: var(--spacing-xl) 0 0;
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-m);
+      flex-wrap: wrap;
+    }
+  }
+
+  @media (width >= 768px) {
+    .bookend {
+      padding-top: 150px;
+
+      > div {
+        padding-bottom: 116px;
+      }
+
+      .bookend-content {
+        max-width: 600px;
+      }
+    }
+  }
+
+  @media (width >= 1240px) {
+    .bookend {
+      padding-top: 260px;
+
+      > div {
+        padding-bottom: 160px;
+      }
+
+      .bookend-content {
+        max-width: 700px;
+      }
+
+      &::after {
+        bottom: -900px;
+        left: -15%;
+        width: 130%;
+      }
     }
   }
 }

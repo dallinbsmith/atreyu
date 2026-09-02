@@ -1,115 +1,117 @@
-.rich-text {
-  max-width: var(--grid-container-width);
-  margin: 0 auto;
-  color: var(--color-alpha-light-50);
-
-  .rich-text-content {
-    > :first-child {
-      margin-top: 0;
-    }
-
-    h1,
-    h2,
-    h3 {
-      margin: 0;
-      color: var(--color-light);
-      font-weight: 600;
-    }
-
-    h1 {
-      font-size: var(--heading-font-size-xxl);
-      letter-spacing: -0.03em;
-      line-height: 1.15;
-    }
-
-    h2 {
-      font-size: var(--heading-font-size-xl);
-      letter-spacing: -0.03em;
-      line-height: 1.15;
-    }
-
-    h3 {
-      font-size: var(--heading-font-size-l);
-      letter-spacing: -0.015em;
-      line-height: 1.2;
-    }
-
-    p {
-      font-size: var(--body-font-size-l);
-      line-height: var(--body-line-height);
-      margin: var(--spacing-m) 0;
-    }
-
-    p + p {
-      margin-top: var(--spacing-l);
-    }
-
-    a:not(.btn) {
-      color: var(--color-light);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-
-    ul,
-    ol {
-      margin: var(--spacing-m) 0;
-    }
-  }
-
-  /* Frame.io `em` decorator = muted second-tone text color, NOT italic.
-     Powers two-tone titles (line 1 full color, em line muted); --em-color is overridable per section. */
-  em {
-    font-style: normal;
-    color: var(--em-color, var(--color-alpha-light-50));
-  }
-
-  /* Inline custom styles — author writes [[style|text]] */
-  p:has(> .rt-eyebrow) {
-    margin: 0 0 var(--spacing-m);
-  }
-
-  .rt-eyebrow {
-    display: inline-block;
-    font-family: var(--font-secondary);
-    font-size: var(--eyebrow-font-size);
-    font-weight: 400;
-    letter-spacing: var(--eyebrow-letter-spacing);
-    text-transform: uppercase;
-    color: var(--color-iris);
-  }
-
-  .rt-label {
-    font-weight: 600;
-    color: var(--color-light);
-  }
-
-  .rt-highlight {
-    padding: 0 0.25em;
-    border-radius: 4px;
-    background: color-mix(in srgb, var(--color-cobalt) 30%, transparent);
-    color: var(--color-light);
-  }
-
-  /* Behavioral marks (href /widgets/*) */
-  a[data-behavior] {
-    color: var(--color-light);
-    text-decoration: underline dotted;
-    text-underline-offset: 3px;
-    cursor: pointer;
-  }
-
-  /* Centered section-intro variant: `Rich Text (center)` */
-  &.center {
-    text-align: center;
+@layer blocks {
+  .rich-text {
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+    color: var(--color-alpha-light-50);
 
     .rich-text-content {
-      max-width: 760px;
-      margin-inline: auto;
+      > :first-child {
+        margin-top: 0;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        color: var(--color-light);
+        font-weight: 600;
+      }
+
+      h1 {
+        font-size: var(--heading-font-size-xxl);
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+      }
+
+      h2 {
+        font-size: var(--heading-font-size-xl);
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+      }
+
+      h3 {
+        font-size: var(--heading-font-size-l);
+        letter-spacing: -0.015em;
+        line-height: 1.2;
+      }
+
+      p {
+        font-size: var(--body-font-size-l);
+        line-height: var(--body-line-height);
+        margin: var(--spacing-m) 0;
+      }
+
+      p + p {
+        margin-top: var(--spacing-l);
+      }
+
+      a:not(.btn) {
+        color: var(--color-light);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      ul,
+      ol {
+        margin: var(--spacing-m) 0;
+      }
     }
 
-    .rich-text-content .rt-cta,
-    .rich-text-content p:has(a) {
-      justify-content: center;
+    /* Frame.io `em` decorator = muted second-tone text color, NOT italic.
+       Powers two-tone titles (line 1 full color, em line muted); --em-color is overridable per section. */
+    em {
+      font-style: normal;
+      color: var(--em-color, var(--color-alpha-light-50));
+    }
+
+    /* Inline custom styles — author writes [[style|text]] */
+    p:has(> .rt-eyebrow) {
+      margin: 0 0 var(--spacing-m);
+    }
+
+    .rt-eyebrow {
+      display: inline-block;
+      font-family: var(--font-secondary);
+      font-size: var(--eyebrow-font-size);
+      font-weight: 400;
+      letter-spacing: var(--eyebrow-letter-spacing);
+      text-transform: uppercase;
+      color: var(--color-iris);
+    }
+
+    .rt-label {
+      font-weight: 600;
+      color: var(--color-light);
+    }
+
+    .rt-highlight {
+      padding: 0 0.25em;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--color-cobalt) 30%, transparent);
+      color: var(--color-light);
+    }
+
+    /* Behavioral marks (href /widgets/*) */
+    a[data-behavior] {
+      color: var(--color-light);
+      text-decoration: underline dotted;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    /* Centered section-intro variant: `Rich Text (center)` */
+    &.center {
+      text-align: center;
+
+      .rich-text-content {
+        max-width: 760px;
+        margin-inline: auto;
+      }
+
+      .rich-text-content .rt-cta,
+      .rich-text-content p:has(a) {
+        justify-content: center;
+      }
     }
   }
 }

@@ -1,275 +1,277 @@
-.bentos {
-  max-width: var(--grid-container-width);
-  margin: 0 auto;
-  padding: 0;
+@layer blocks {
+  .bentos {
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+    padding: 0;
 
-  --bento-card-radius: 12px;
-  --bento-scrim: linear-gradient(180deg, transparent 25%, color-mix(in srgb, var(--color-dark) 88%, transparent));
+    --bento-card-radius: 12px;
+    --bento-scrim: linear-gradient(180deg, transparent 25%, color-mix(in srgb, var(--color-dark) 88%, transparent));
 
-  .bento-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-m);
-  }
+    .bento-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-m);
+    }
 
-  .bento-card {
-    position: relative;
-    display: flex;
-    overflow: hidden;
-    flex-direction: column;
-    gap: var(--spacing-m);
-    border-radius: var(--bento-card-radius);
-    background: var(--color-alpha-dark-50);
-    backdrop-filter: blur(var(--card-background-blur));
+    .bento-card {
+      position: relative;
+      display: flex;
+      overflow: hidden;
+      flex-direction: column;
+      gap: var(--spacing-m);
+      border-radius: var(--bento-card-radius);
+      background: var(--color-alpha-dark-50);
+      backdrop-filter: blur(var(--card-background-blur));
 
-    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
-    -webkit-backdrop-filter: blur(var(--card-background-blur));
-    border: 1px solid var(--color-alpha-light-5);
+      /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+      -webkit-backdrop-filter: blur(var(--card-background-blur));
+      border: 1px solid var(--color-alpha-light-5);
 
-    --bento-pad: var(--card-padding);
+      --bento-pad: var(--card-padding);
 
-    padding: var(--bento-pad);
+      padding: var(--bento-pad);
 
-    /* subtle top-corner glow, matching Frame.io's buttonCards */
-    &::before {
-      content: '';
+      /* subtle top-corner glow, matching Frame.io's buttonCards */
+      &::before {
+        content: '';
+        position: absolute;
+        z-index: 0;
+        inset: 0;
+        background: radial-gradient(60% 60% at 0% 0%, color-mix(in srgb, var(--color-iris) 8%, transparent), transparent 70%);
+        pointer-events: none;
+      }
+
+      > * {
+        position: relative;
+        z-index: 1;
+      }
+    }
+
+    /* text placement: bottom (default) pushes lockup to the card floor; top pins it up */
+    .bento-card.text-bottom {
+      justify-content: flex-end;
+    }
+
+    .bento-card.text-top {
+      justify-content: flex-start;
+    }
+
+    /* text alignment — Falkor's bento cards are centred by default; left/right override */
+    .bento-card.align-center {
+      align-items: center;
+      text-align: center;
+
+      .bento-card-cta {
+        justify-content: center;
+      }
+    }
+
+    .bento-card.align-left {
+      align-items: flex-start;
+      text-align: left;
+
+      .bento-card-media.fg img {
+        object-position: left center;
+      }
+    }
+
+    .bento-card.align-right {
+      align-items: flex-end;
+      text-align: right;
+
+      .bento-card-cta {
+        justify-content: flex-end;
+      }
+    }
+
+    /* FOREGROUND media: graphic / logo / UI preview above the title
+       (foregroundOnly). Sized by WIDTH like Falkor (foregroundContainer ~336px),
+       so the graphic fills the card width instead of a small height-capped icon. */
+    .bento-card-media.fg {
+      width: 100%;
+      max-width: 336px;
+      margin: 0 auto var(--spacing-l);
+
+      /* keep padding/border inside the width so width:100% + margin:auto stays
+         centred — content-box lets the glassborder padding overflow and shift it */
+      box-sizing: border-box;
+
+      img,
+      picture {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 240px;
+        object-fit: contain;
+        object-position: center;
+      }
+    }
+
+    /* media size: small graphic */
+    .bento-card.media-small .bento-card-media.fg {
+      max-width: 248px;
+    }
+
+    /* decoration: frosted inset glassborder around the foreground graphic */
+    .bento-card.glassborder .bento-card-media.fg {
+      max-width: 280px;
+      padding: var(--spacing-s);
+      border-radius: var(--bento-card-radius);
+      background: color-mix(in srgb, rgb(var(--color-light-base)) 6%, transparent);
+      border: 1px solid var(--color-alpha-light-15);
+      backdrop-filter: blur(8px);
+
+      /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* BACKGROUND media: full-bleed image behind text on a scrim (backgroundOnly) */
+    .bento-card[data-media-layout="background"],
+    .bento-card[data-media-layout="backgroundAndForeground"] {
+      min-height: 340px;
+    }
+
+    .bento-card-media.bg {
       position: absolute;
       z-index: 0;
       inset: 0;
-      background: radial-gradient(60% 60% at 0% 0%, color-mix(in srgb, var(--color-iris) 8%, transparent), transparent 70%);
-      pointer-events: none;
+      overflow: hidden;
+      border-radius: inherit;
+
+      img,
+      picture {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--bento-scrim);
+      }
     }
 
-    > * {
+    /* bg display mode: short = capped height */
+    .bento-card[data-bg-mode="short"] {
+      min-height: 220px;
+    }
+
+    /* fullWidthWithShadows (Falkor backgroundOnly + fullWidthWithShadows): a wide
+       2.33:1 screenshot in a fixed-HEIGHT band at the card top, spanning the full
+       card width. The image is scaled to 155% of the band and cover-cropped, so the
+       UI fills the band's height and its left/right edges run past the card and clip
+       — the screenshot reads big, not shrunk to fit. Band height (set per
+       breakpoint below) is the only knob for how large it reads. */
+    .bento-card[data-bg-mode="fullWidthWithShadows"] {
+      justify-content: flex-start;
+      padding-top: 0;
+    }
+
+    .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
       position: relative;
-      z-index: 1;
+      inset: auto;
+      width: calc(100% + var(--bento-pad) * 2);
+      height: 218px;
+      margin: 0 calc(var(--bento-pad) * -1) var(--spacing-l);
+      overflow: hidden;
+
+      picture {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        height: 155%;
+        transform: translateX(-50%);
+      }
+
+      &::after {
+        display: none;
+      }
     }
-  }
 
-  /* text placement: bottom (default) pushes lockup to the card floor; top pins it up */
-  .bento-card.text-bottom {
-    justify-content: flex-end;
-  }
+    .bento-card-title {
+      margin: 0;
+      color: var(--color-light);
 
-  .bento-card.text-top {
-    justify-content: flex-start;
-  }
+      /* Falkor's title6 lockup: compact, medium weight, no negative tracking */
+      font-size: var(--body-font-size-m);
+      font-weight: 500;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
 
-  /* text alignment — Falkor's bento cards are centred by default; left/right override */
-  .bento-card.align-center {
-    align-items: center;
-    text-align: center;
+    .bento-card-body {
+      margin: 0;
+      color: var(--color-alpha-light-50);
+      font-size: var(--body-font-size-s);
+      line-height: var(--body-line-height);
+    }
 
     .bento-card-cta {
-      justify-content: center;
+      /* a touch more breathing room above the buttons, on top of the card gap */
+      display: flex;
+      flex-flow: row wrap;
+      align-items: center;
+      margin-top: var(--spacing-s);
+      gap: var(--spacing-m);
     }
   }
 
-  .bento-card.align-left {
-    align-items: flex-start;
-    text-align: left;
+  @media (width >= 768px) {
+    .bentos .bento-grid {
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--spacing-l);
+    }
 
-    .bento-card-media.fg img {
-      object-position: left center;
+    /* default (no variant): asymmetric mosaic — half-width cards, trailing 3rd
+       spans the full row (Frame.io's bento layout feel) */
+    .bentos:not(.variant-m, .variant-e) .bento-card {
+      grid-column: span 6;
+    }
+
+    .bentos:not(.variant-m, .variant-e) .bento-grid:has(> :nth-child(3):last-child) > :nth-child(3) {
+      grid-column: span 12;
+    }
+
+    /* variant-m (Falkor variantM): 4 / 8-wide-and-tall / 4 — one large card
+       spanning two rows on the right, two stacked cards on the left */
+    .bentos.variant-m .bento-card:nth-child(1) {
+      grid-row: 1;
+      grid-column: 1 / 5;
+    }
+
+    .bentos.variant-m .bento-card:nth-child(2) {
+      grid-row: 1 / 3;
+      grid-column: 5 / 13;
+    }
+
+    .bentos.variant-m .bento-card:nth-child(3) {
+      grid-row: 2;
+      grid-column: 1 / 5;
+    }
+
+    /* variant-e (Falkor variantE): three equal columns */
+    .bentos.variant-e .bento-card {
+      grid-column: span 4;
+    }
+
+    /* multi-column: cards are narrower, so the fwws band is shorter (Falkor's
+       backgroundSizeDefault @ md = 16.1rem) */
+    .bentos .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
+      height: 161px;
     }
   }
 
-  .bento-card.align-right {
-    align-items: flex-end;
-    text-align: right;
-
-    .bento-card-cta {
-      justify-content: flex-end;
-    }
-  }
-
-  /* FOREGROUND media: graphic / logo / UI preview above the title
-     (foregroundOnly). Sized by WIDTH like Falkor (foregroundContainer ~336px),
-     so the graphic fills the card width instead of a small height-capped icon. */
-  .bento-card-media.fg {
-    width: 100%;
-    max-width: 336px;
-    margin: 0 auto var(--spacing-l);
-
-    /* keep padding/border inside the width so width:100% + margin:auto stays
-       centred — content-box lets the glassborder padding overflow and shift it */
-    box-sizing: border-box;
-
-    img,
-    picture {
-      display: block;
-      width: 100%;
-      height: auto;
-      max-height: 240px;
-      object-fit: contain;
-      object-position: center;
-    }
-  }
-
-  /* media size: small graphic */
-  .bento-card.media-small .bento-card-media.fg {
-    max-width: 248px;
-  }
-
-  /* decoration: frosted inset glassborder around the foreground graphic */
-  .bento-card.glassborder .bento-card-media.fg {
-    max-width: 280px;
-    padding: var(--spacing-s);
-    border-radius: var(--bento-card-radius);
-    background: color-mix(in srgb, rgb(var(--color-light-base)) 6%, transparent);
-    border: 1px solid var(--color-alpha-light-15);
-    backdrop-filter: blur(8px);
-
-    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
-    -webkit-backdrop-filter: blur(8px);
-  }
-
-  /* BACKGROUND media: full-bleed image behind text on a scrim (backgroundOnly) */
-  .bento-card[data-media-layout="background"],
-  .bento-card[data-media-layout="backgroundAndForeground"] {
-    min-height: 340px;
-  }
-
-  .bento-card-media.bg {
-    position: absolute;
-    z-index: 0;
-    inset: 0;
-    overflow: hidden;
-    border-radius: inherit;
-
-    img,
-    picture {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+  @media (width >= 1240px) {
+    .bentos .bento-card {
+      --bento-pad: var(--card-padding-desktop);
     }
 
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: var(--bento-scrim);
+    /* Falkor's backgroundSizeDefault @ lg = 22.6rem */
+    .bentos .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
+      height: 226px;
     }
-  }
-
-  /* bg display mode: short = capped height */
-  .bento-card[data-bg-mode="short"] {
-    min-height: 220px;
-  }
-
-  /* fullWidthWithShadows (Falkor backgroundOnly + fullWidthWithShadows): a wide
-     2.33:1 screenshot in a fixed-HEIGHT band at the card top, spanning the full
-     card width. The image is scaled to 155% of the band and cover-cropped, so the
-     UI fills the band's height and its left/right edges run past the card and clip
-     — the screenshot reads big, not shrunk to fit. Band height (set per
-     breakpoint below) is the only knob for how large it reads. */
-  .bento-card[data-bg-mode="fullWidthWithShadows"] {
-    justify-content: flex-start;
-    padding-top: 0;
-  }
-
-  .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
-    position: relative;
-    inset: auto;
-    width: calc(100% + var(--bento-pad) * 2);
-    height: 218px;
-    margin: 0 calc(var(--bento-pad) * -1) var(--spacing-l);
-    overflow: hidden;
-
-    picture {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      height: 155%;
-      transform: translateX(-50%);
-    }
-
-    &::after {
-      display: none;
-    }
-  }
-
-  .bento-card-title {
-    margin: 0;
-    color: var(--color-light);
-
-    /* Falkor's title6 lockup: compact, medium weight, no negative tracking */
-    font-size: var(--body-font-size-m);
-    font-weight: 500;
-    line-height: 1.3;
-    letter-spacing: 0;
-  }
-
-  .bento-card-body {
-    margin: 0;
-    color: var(--color-alpha-light-50);
-    font-size: var(--body-font-size-s);
-    line-height: var(--body-line-height);
-  }
-
-  .bento-card-cta {
-    /* a touch more breathing room above the buttons, on top of the card gap */
-    display: flex;
-    flex-flow: row wrap;
-    align-items: center;
-    margin-top: var(--spacing-s);
-    gap: var(--spacing-m);
-  }
-}
-
-@media (width >= 768px) {
-  .bentos .bento-grid {
-    grid-template-columns: repeat(12, 1fr);
-    gap: var(--spacing-l);
-  }
-
-  /* default (no variant): asymmetric mosaic — half-width cards, trailing 3rd
-     spans the full row (Frame.io's bento layout feel) */
-  .bentos:not(.variant-m, .variant-e) .bento-card {
-    grid-column: span 6;
-  }
-
-  .bentos:not(.variant-m, .variant-e) .bento-grid:has(> :nth-child(3):last-child) > :nth-child(3) {
-    grid-column: span 12;
-  }
-
-  /* variant-m (Falkor variantM): 4 / 8-wide-and-tall / 4 — one large card
-     spanning two rows on the right, two stacked cards on the left */
-  .bentos.variant-m .bento-card:nth-child(1) {
-    grid-row: 1;
-    grid-column: 1 / 5;
-  }
-
-  .bentos.variant-m .bento-card:nth-child(2) {
-    grid-row: 1 / 3;
-    grid-column: 5 / 13;
-  }
-
-  .bentos.variant-m .bento-card:nth-child(3) {
-    grid-row: 2;
-    grid-column: 1 / 5;
-  }
-
-  /* variant-e (Falkor variantE): three equal columns */
-  .bentos.variant-e .bento-card {
-    grid-column: span 4;
-  }
-
-  /* multi-column: cards are narrower, so the fwws band is shorter (Falkor's
-     backgroundSizeDefault @ md = 16.1rem) */
-  .bentos .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
-    height: 161px;
-  }
-}
-
-@media (width >= 1240px) {
-  .bentos .bento-card {
-    --bento-pad: var(--card-padding-desktop);
-  }
-
-  /* Falkor's backgroundSizeDefault @ lg = 22.6rem */
-  .bentos .bento-card[data-bg-mode="fullWidthWithShadows"] .bento-card-media.bg {
-    height: 226px;
   }
 }
