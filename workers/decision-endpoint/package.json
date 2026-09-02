@@ -5,7 +5,8 @@
   "description": "Thin personalization decision endpoint (P0-44). Pending, not yet deployed - blocked on Cloudflare account + Clearbit key provisioning.",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev"
+    "dev": "wrangler dev",
+    "test": "node --test test/*.test.js"
   },
   "devDependencies": {
     "wrangler": "^4.40.0"

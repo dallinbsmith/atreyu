@@ -55,3 +55,9 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+      - name: Run Worker tests (website)
+        run: node --test workers/website/test/*.test.js
+
+      - name: Run Worker tests (decision-endpoint)
+        run: node --test workers/decision-endpoint/test/*.test.js
