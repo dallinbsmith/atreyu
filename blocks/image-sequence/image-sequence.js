@@ -5,8 +5,8 @@
 // lives in CSS off a single `--progress` custom property; JS only emits the
 // number and nudges `video.currentTime`. Reduced motion / save-data falls back
 // to fully-lit static text (the resting state) via the shared engine's no-op.
-import { shouldAnimate } from '../../scripts/utils/motion.js';
-import { trackScrollProgress } from '../../scripts/utils/scroll.js';
+import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
+import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 
 // Scrub an authored video to scroll progress. Browsers can't seek a not-yet-
 // buffered frame, so we guard on readiness and only seek on meaningful deltas

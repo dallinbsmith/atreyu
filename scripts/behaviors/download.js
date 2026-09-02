@@ -1,4 +1,4 @@
-import { track, EVENTS } from '../utils/analytics.js';
+import { track, EVENTS } from '../utils/analytics/analytics.js';
 
 // Download widget: resolve the correct asset for the visitor's platform/architecture.
 // Link carries candidate URLs as query params, e.g. ?mac=…&win=…&mac-arm=…

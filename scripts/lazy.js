@@ -16,9 +16,9 @@ const loadSidekick = async () => {
   import('./utils/lazyhash.js');
   import('./utils/favicon.js');
   import('./utils/footer.js').then(({ default: footer }) => footer());
-  import('./utils/jsonld.js').then(({ default: jsonld }) => jsonld());
-  import('./utils/hreflang.js').then(({ default: hreflang }) => hreflang());
-  import('./utils/canonical.js').then(({ default: canonical }) => canonical());
+  import('./utils/seo/jsonld.js').then(({ default: jsonld }) => jsonld());
+  import('./utils/seo/hreflang.js').then(({ default: hreflang }) => hreflang());
+  import('./utils/seo/canonical.js').then(({ default: canonical }) => canonical());
 
   setTimeout(() => import('./delayed.js'), 3000);
 
@@ -34,7 +34,7 @@ const loadSidekick = async () => {
     // This fires here (not postlcp.js) because loadArea() only imports this
     // file after every section has decorated and revealed, not just the
     // first — confirmed directly against ak.js, see the comment on
-    // decoratePznSlots in scripts/utils/pzn.js.
-    import('./utils/pzn.js').then(({ decoratePznSlots }) => decoratePznSlots());
+    // decoratePznSlots in scripts/utils/analytics/pzn.js.
+    import('./utils/analytics/pzn.js').then(({ decoratePznSlots }) => decoratePznSlots());
   }
 })();

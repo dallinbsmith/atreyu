@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import injectCanonical from '../../scripts/utils/canonical.js';
+import injectCanonical from '../../../scripts/utils/seo/canonical.js';
 
 describe('canonical', () => {
   afterEach(() => {

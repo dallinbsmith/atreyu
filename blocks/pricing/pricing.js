@@ -1,4 +1,4 @@
-import { inject } from '../../scripts/utils/jsonld.js';
+import { inject } from '../../scripts/utils/seo/jsonld.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 
 const buildCard = (row, badgeText) => {

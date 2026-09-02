@@ -522,7 +522,7 @@ Options: `{ sheet: 'name' }` selects a sheet, `{ sheet: ['a', 'b'] }` selects mu
 Blocks that produce structured data (FAQ, pricing, video) should inject JSON-LD:
 
 ```javascript
-import { inject } from '../../scripts/utils/jsonld.js';
+import { inject } from '../../scripts/utils/seo/jsonld.js';
 
 export default (el) => {
   const items = buildFaqItems(el);
@@ -578,7 +578,7 @@ The placeholder map is fetched once per locale and cached. Always provide a fall
 Track user interactions from any block. Events queue during Eager/Lazy and flush when the analytics provider initializes in Delayed:
 
 ```javascript
-import { track } from '../../scripts/utils/analytics.js';
+import { track } from '../../scripts/utils/analytics/analytics.js';
 
 el.querySelector('.cta').addEventListener('click', () => {
   track('cta_click', { block: 'hero', label: 'Sign Up' });
@@ -592,7 +592,7 @@ Each event is auto-enriched with `timestamp`, `url`, and `locale`.
 All animations must check whether the user can tolerate motion:
 
 ```javascript
-import { shouldAnimate, onReveal } from '../../scripts/utils/motion.js';
+import { shouldAnimate, onReveal } from '../../scripts/utils/motion/motion.js';
 
 export default (el) => {
   if (shouldAnimate()) {

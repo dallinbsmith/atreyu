@@ -1,7 +1,7 @@
-import { getMetadata } from '../ak.js';
-import { emit } from './event-bus.js';
+import { getMetadata } from '../../ak.js';
+import { emit } from '../event-bus.js';
 import { track, EVENTS } from './analytics.js';
-import { sanitizeMarkup } from './sanitize.js';
+import { sanitizeMarkup } from '../security/sanitize.js';
 import { hasConsent } from './consent.js';
 
 const VISITOR_KEY = 'atreyu-visitor-id';
@@ -29,7 +29,7 @@ const getBucket = (experiment, visitorId, count) => hash(`${experiment}:${visito
 // Only same-origin relative paths are allowed — authors set this via page
 // metadata, but the fetch target must never be able to resolve to a
 // third-party origin (e.g. "//evil.example" or "https://evil.example").
-// Exported (bug-squash fix, 2026-08-28): scripts/utils/pzn.js builds URLs from
+// Exported (bug-squash fix, 2026-08-28): scripts/utils/analytics/pzn.js builds URLs from
 // user-controlled query params with no equivalent guard — reuse this rather
 // than letting a second, possibly-inconsistent copy exist.
 export const isSameOriginPath = (path) => path.startsWith('/') && !path.startsWith('//');
@@ -41,7 +41,7 @@ export const isSameOriginPath = (path) => path.startsWith('/') && !path.startsWi
 // with no re-decoration pass) — but that means an unbounded fetch was an
 // unbounded reveal-gate: a hung network request blocked page reveal
 // indefinitely. A tight timeout, matching the same AbortSignal.timeout()
-// pattern scripts/utils/pzn.js already uses for its own decision fetch,
+// pattern scripts/utils/analytics/pzn.js already uses for its own decision fetch,
 // bounds the worst case to a small, known delay and fails open to the
 // baseline/control content already in the DOM, rather than leaving this
 // open-ended.

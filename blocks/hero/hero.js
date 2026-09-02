@@ -1,6 +1,6 @@
-import { shouldAnimate } from '../../scripts/utils/motion.js';
+import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { decorateRichText } from '../../scripts/utils/richtext.js';
-import { openVideoModal, WISTIA_RE } from '../../scripts/utils/video-modal.js';
+import { openVideoModal, WISTIA_RE } from '../../scripts/utils/modal/video-modal.js';
 
 const setBackgroundFocus = (img) => {
   const { title } = img.dataset;

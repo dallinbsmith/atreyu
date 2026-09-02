@@ -1,4 +1,4 @@
-import { getConfig, getMetadata } from '../ak.js';
+import { getConfig, getMetadata } from '../../ak.js';
 
 // STOPGAP, not the long-term mechanism — fine at today's scale (a handful of
 // translated pages) but grows at O(pages x locales), not O(locales). Real

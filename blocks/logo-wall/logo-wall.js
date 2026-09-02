@@ -1,4 +1,4 @@
-import { shouldAnimate, addPauseToggle } from '../../scripts/utils/motion.js';
+import { shouldAnimate, addPauseToggle } from '../../scripts/utils/motion/motion.js';
 import { buildAccessibleLogo } from '../../scripts/utils/partner-logo.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 

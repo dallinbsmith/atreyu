@@ -1,4 +1,4 @@
-import { inject } from '../../scripts/utils/jsonld.js';
+import { inject } from '../../scripts/utils/seo/jsonld.js';
 
 const buildSchema = (items) => {
   const mainEntity = items.map(({ question, answer }) => ({

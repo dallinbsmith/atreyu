@@ -1,4 +1,4 @@
-import { inject } from '../../scripts/utils/jsonld.js';
+import { inject } from '../../scripts/utils/seo/jsonld.js';
 
 const THUMB_BASE = 'https://i.ytimg.com/vi';
 const EMBED_BASE = 'https://www.youtube-nocookie.com/embed';

@@ -86,7 +86,7 @@ const enrich = (properties) => ({
 // actually true, and revocation takes effect on the very next call.
 export const track = (event, properties = {}) => {
   if (!Object.values(EVENTS).includes(event)) {
-    import('./error.js').then(({ default: log }) => log(new Error(`Unregistered analytics event: "${event}" — add it to EVENTS in analytics.js first.`)));
+    import('../error.js').then(({ default: log }) => log(new Error(`Unregistered analytics event: "${event}" — add it to EVENTS in analytics.js first.`)));
   }
   if (!hasConsent('analytics')) return;
   const enriched = enrich(properties);

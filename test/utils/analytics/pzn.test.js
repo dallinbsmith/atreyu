@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { setConsent, resetConsent } from '../../scripts/utils/consent.js';
+import { setConsent, resetConsent } from '../../../scripts/utils/analytics/consent.js';
 
 // pzn.js reads window.location.search and caches its own config, decision
 // promise, and variants promise at module scope — a real design constraint,
@@ -12,7 +12,7 @@ let importCounter = 0;
 const freshPzn = async (search = '') => {
   history.replaceState(null, '', `${window.location.pathname}${search}`);
   importCounter += 1;
-  return import(`../../scripts/utils/pzn.js?t=${importCounter}`);
+  return import(`../../../scripts/utils/analytics/pzn.js?t=${importCounter}`);
 };
 
 const FIXTURE_URL = '/system/personalization/variants.json';
@@ -56,7 +56,7 @@ const variantsResponse = (rows) => ({
   json: async () => ({ total: rows.length, offset: 0, limit: rows.length, data: rows }),
 });
 
-describe('scripts/utils/pzn.js', () => {
+describe('scripts/utils/analytics/pzn.js', () => {
   let originalFetch;
 
   beforeEach(() => {

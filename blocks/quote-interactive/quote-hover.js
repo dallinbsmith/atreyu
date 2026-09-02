@@ -1,5 +1,5 @@
-import { withGsap } from '../../scripts/utils/gsap-loader.js';
-import { shouldAnimate } from '../../scripts/utils/motion.js';
+import { withGsap } from '../../scripts/utils/motion/gsap-loader.js';
+import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 
 const buildCard = () => {
   const card = document.createElement('div');

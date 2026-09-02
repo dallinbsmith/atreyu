@@ -32,7 +32,7 @@ Reference for all blocks available in the Atreyu EDS project. Each block is auto
 
 If only one row is present, it is treated as the foreground (no background).
 
-**Dependencies**: `scripts/utils/motion.js` (`shouldAnimate`) -- video autoplay is gated on reduced-motion and connection quality checks.
+**Dependencies**: `scripts/utils/motion/motion.js` (`shouldAnimate`) -- video autoplay is gated on reduced-motion and connection quality checks.
 
 **Example**:
 
@@ -205,7 +205,7 @@ Authors do not create the footer in page content. It is loaded automatically as 
 
 Each row becomes one FAQ item. The original rows are removed and replaced with `<details>` elements.
 
-**Dependencies**: `scripts/utils/jsonld.js` (`inject`) -- injects `FAQPage` schema.org structured data.
+**Dependencies**: `scripts/utils/seo/jsonld.js` (`inject`) -- injects `FAQPage` schema.org structured data.
 
 **Example**:
 

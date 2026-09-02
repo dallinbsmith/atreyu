@@ -3,8 +3,8 @@
 // lockup. Cards stagger in via clip-path reveal then parallax on scroll; CSS
 // `--progress` + typed `--card-entry-progress` drive everything. RM → static.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
-import { shouldAnimate, onReveal } from '../../scripts/utils/motion.js';
-import { trackScrollProgress } from '../../scripts/utils/scroll.js';
+import { shouldAnimate, onReveal } from '../../scripts/utils/motion/motion.js';
+import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 
 const MAX_CARDS = 12;
 const CENTER = (MAX_CARDS - 1) / 2;

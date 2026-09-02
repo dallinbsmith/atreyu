@@ -1,4 +1,4 @@
-import ENV from './env.js';
+import ENV from '../env.js';
 
 // Segment's own standard public browser snippet — no npm package, no bundler,
 // matching this project's no-build-step architecture (Falkor's `@frameio/

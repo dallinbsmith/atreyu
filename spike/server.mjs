@@ -2,11 +2,11 @@
 // (that's a thin Cloudflare Worker per master §11.6/§7.8, holding the real Clearbit
 // key) — this is a static-file server plus a mock `/spike/api/decision` route with
 // a deliberately injectable, configurable artificial latency, so the real P0-44
-// client mechanism (scripts/utils/pzn.js) can be measured across a round-trip sweep
+// client mechanism (scripts/utils/analytics/pzn.js) can be measured across a round-trip sweep
 // (50/150/300/600/1200ms) without any real Clearbit key or Worker existing yet.
 //
 // Serves the whole repo root statically (not just spike/) so the test page can use
-// the project's real relative ESM imports (e.g. `../scripts/utils/consent.js`)
+// the project's real relative ESM imports (e.g. `../scripts/utils/analytics/consent.js`)
 // unmodified — no bundler, matching the project's "no build step" rule.
 //
 // Run: node spike/server.mjs

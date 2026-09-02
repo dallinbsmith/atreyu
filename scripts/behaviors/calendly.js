@@ -1,6 +1,6 @@
 // TODO: SDK popup requires adding *.calendly.com to worker CSP
 // (media/script/frame-src) — deferred. See Calendly note.
-import { track, EVENTS } from '../utils/analytics.js';
+import { track, EVENTS } from '../utils/analytics/analytics.js';
 
 // DELAYED behavior. Documented fallback only: open the Calendly URL in a new tab.
 // The real popup widget needs the Calendly SDK, which is blocked by the current CSP.

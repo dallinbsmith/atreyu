@@ -13,7 +13,7 @@ Only a handful of pages are fully built and content-complete:
 
 `/blog`, `/glossary`, `/integrations`, and `/customers` exist as landing-page placeholders, not full sections yet. Don't assume a page exists just because its route is wired in the Worker — check `artifacts/master-plan/DA-CONTENT-STRUCTURE.md` for the current real content map before building against a page.
 
-`scripts/utils/segment.js` ships with a placeholder write key (`REPLACE_WITH_REAL_SEGMENT_WRITE_KEY`) — analytics events fire but silently no-op until a real key is dropped in.
+`scripts/utils/analytics/segment.js` ships with a placeholder write key (`REPLACE_WITH_REAL_SEGMENT_WRITE_KEY`) — analytics events fire but silently no-op until a real key is dropped in.
 
 ## Localization
 

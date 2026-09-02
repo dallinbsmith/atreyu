@@ -1,4 +1,4 @@
-import { trapFocus } from './a11y.js';
+import { trapFocus } from '../a11y.js';
 
 // Backdrop-click and Escape-key dismissal — wired independently by
 // video-modal.js, tile-modal.js, and quote-modal.js before this extraction,

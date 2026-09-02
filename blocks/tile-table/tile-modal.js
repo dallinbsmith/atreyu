@@ -1,5 +1,5 @@
 import { announce } from '../../scripts/utils/a11y.js';
-import { wireModalClose, openModal, closeModal } from '../../scripts/utils/modal.js';
+import { wireModalClose, openModal, closeModal } from '../../scripts/utils/modal/modal.js';
 
 const CLOSE_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 const ARROW_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M4.5 2L8.5 6L4.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';

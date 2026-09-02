@@ -40,11 +40,11 @@
 // back into P0-44's docs, not something to paper over.
 
 import { hasConsent, onConsentChange } from './consent.js';
-import { shouldAnimate } from './motion.js';
+import { shouldAnimate } from '../motion/motion.js';
 import { getVisitorId, isSameOriginPath } from './experimentation.js';
-import { sanitizeMarkup } from './sanitize.js';
+import { sanitizeMarkup } from '../security/sanitize.js';
 import { track, EVENTS } from './analytics.js';
-import ENV from './env.js';
+import ENV from '../env.js';
 
 // Bug-squash fix, 2026-08-28: was 'pzn-spike-segment', independently named
 // from spike/decision-endpoint/handlers/cookie.js's 'frameio-pzn-segment' —
@@ -202,7 +202,7 @@ const loadVariants = () => {
   return variantsPromise;
 };
 
-// Deterministic djb2-style hash, same approach scripts/utils/experimentation.js
+// Deterministic djb2-style hash, same approach scripts/utils/analytics/experimentation.js
 // uses for its own sticky bucketing (that file doesn't export its private
 // `hash`/`getBucket`, so this is a same-shape reuse, not a shared import).
 const hash = (str) => {

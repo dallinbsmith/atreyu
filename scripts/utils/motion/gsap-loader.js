@@ -1,5 +1,5 @@
 import { shouldAnimate } from './motion.js';
-import loadScript from './script.js';
+import loadScript from '../script.js';
 
 const CDN = 'https://cdn.jsdelivr.net/npm/gsap@3/dist';
 const plugins = new Map();

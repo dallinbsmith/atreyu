@@ -1,5 +1,5 @@
 import { loadArea, loadStyle, setConfig } from './ak.js';
-import { runExperiment } from './utils/experimentation.js';
+import { runExperiment } from './utils/analytics/experimentation.js';
 
 // frame.io is the canonical production host (ARCHITECTURE-DECISIONS.md); www.frame.io
 // permanently redirects to it. Deliberately excludes blog/app/accounts.frame.io and

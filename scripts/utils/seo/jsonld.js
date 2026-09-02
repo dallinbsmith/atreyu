@@ -1,5 +1,5 @@
-import { getMetadata } from '../ak.js';
-import { getPlaceholder } from './placeholders.js';
+import { getMetadata } from '../../ak.js';
+import { getPlaceholder } from '../placeholders.js';
 
 const SITE = {
   name: 'Frame.io',

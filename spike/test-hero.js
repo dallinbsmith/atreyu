@@ -7,7 +7,7 @@
 // (ak.js's decorateSections()/loadArea() `await Promise.all(section.blocks.map(
 // loadBlock))` before `delete section.dataset.status`). decoratePznSlots() must
 // run AFTER that reveal, and must not be folded into the awaited block-loading
-// step — see the comment on decoratePznSlots in scripts/utils/pzn.js for why.
+// step — see the comment on decoratePznSlots in scripts/utils/analytics/pzn.js for why.
 //
 // Everything upstream of "section already has a .block-content > .hero shape"
 // (raw table parsing, groupChildren(), etc.) is skipped — this spike starts one
@@ -17,8 +17,8 @@ import decorateHero from '../blocks/hero/hero.js';
 // pzn.js graduated out of spike/ into scripts/utils/ on 2026-08-28 — this
 // test harness stays here (it's dev-only tooling, not something the CDN
 // needs to serve), but now imports the real, shipped module.
-import { decoratePznSlots, readCookie } from '../scripts/utils/pzn.js';
-import { hasConsent, setConsent, onConsentChange } from '../scripts/utils/consent.js';
+import { decoratePznSlots, readCookie } from '../scripts/utils/analytics/pzn.js';
+import { hasConsent, setConsent, onConsentChange } from '../scripts/utils/analytics/consent.js';
 
 // Bug-squash fix, 2026-08-28: must match pzn.js's COOKIE_NAME exactly — this
 // test harness has its own copy purely to simulate a warm visit by writing

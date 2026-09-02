@@ -1,4 +1,4 @@
-import { onReveal } from '../../scripts/utils/motion.js';
+import { onReveal } from '../../scripts/utils/motion/motion.js';
 
 const asset = (file) => new URL(file, import.meta.url).href;
 

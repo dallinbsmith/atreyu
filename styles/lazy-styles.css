@@ -101,7 +101,7 @@ aem-sidekick {
   background: linear-gradient(172deg, rgb(13 13 20) 5%, var(--color-dark) 56%);
 }
 
-/* Video modal (scripts/utils/video-modal.js) */
+/* Video modal (scripts/utils/modal/video-modal.js) */
 @layer utilities {
   .video-modal {
     position: fixed;

@@ -14,7 +14,7 @@
 //
 // Bug-squash fix, 2026-08-28: the two forks HAD landed on different cookie
 // names AND lifetimes — this file was a session cookie (no Max-Age, "not
-// battle-tested," see the older comment above), scripts/utils/pzn.js separately used
+// battle-tested," see the older comment above), scripts/utils/analytics/pzn.js separately used
 // 'pzn-spike-segment' with a 30-min max-age. Neither matched P0-44's actual
 // documented decision (24 hours). Both files now use this file's name and a
 // 24-hour Max-Age as the canonical values. Can't share via a real import

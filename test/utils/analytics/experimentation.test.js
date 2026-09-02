@@ -1,7 +1,7 @@
 import { expect } from '@esm-bundle/chai';
-import { runExperiment, isSameOriginPath } from '../../scripts/utils/experimentation.js';
-import { setConsent, resetConsent } from '../../scripts/utils/consent.js';
-import { setAnalyticsProvider } from '../../scripts/utils/analytics.js';
+import { runExperiment, isSameOriginPath } from '../../../scripts/utils/analytics/experimentation.js';
+import { setConsent, resetConsent } from '../../../scripts/utils/analytics/consent.js';
+import { setAnalyticsProvider } from '../../../scripts/utils/analytics/analytics.js';
 
 const VISITOR_KEY = 'atreyu-visitor-id';
 
@@ -18,7 +18,7 @@ const setMeta = (name, content) => {
 
 const clearMeta = (name) => document.head.querySelector(`meta[name="${name}"]`)?.remove();
 
-describe('scripts/utils/experimentation.js', () => {
+describe('scripts/utils/analytics/experimentation.js', () => {
   let originalFetch;
   let tracked;
 

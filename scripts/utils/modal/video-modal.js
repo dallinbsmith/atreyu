@@ -1,4 +1,4 @@
-import { announce } from './a11y.js';
+import { announce } from '../a11y.js';
 import { wireModalClose, openModal, closeModal } from './modal.js';
 
 // Matches https://{account}.wistia.com/medias/{id} or fast.wistia.net/embed/iframe/{id}

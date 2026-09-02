@@ -1,4 +1,4 @@
-import { track, EVENTS } from '../utils/analytics.js';
+import { track, EVENTS } from '../utils/analytics/analytics.js';
 
 // Outlook widget: choose desktop deeplink vs mailto at click time.
 // Link carries ?to=…&subject=…&body=… ; desktop deeplink used on wide viewports.

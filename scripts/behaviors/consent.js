@@ -1,5 +1,5 @@
 import { emit } from '../utils/event-bus.js';
-import { track, EVENTS } from '../utils/analytics.js';
+import { track, EVENTS } from '../utils/analytics/analytics.js';
 
 // Consent widget: link href /widgets/consent opens the consent UI.
 // Progressive enhancement — on click, prevent navigation and emit a consent event.
