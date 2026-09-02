@@ -5,7 +5,12 @@ const cache = new Map();
 
 const fetchIcon = (name) => {
   if (!cache.has(name)) {
-    cache.set(name, fetch(`${codeBase}/icons/${name}.svg`).then((r) => (r.ok ? r.text() : '')));
+    const entry = fetch(`${codeBase}/icons/${name}.svg`).then((r) => (r.ok ? r.text() : ''));
+    // Only keep a failed/empty result cached long enough for concurrent callers to
+    // share it — delete it once settled so a later use of the same icon retries
+    // instead of staying permanently unupgraded for the rest of the session.
+    entry.then((text) => { if (!text) cache.delete(name); });
+    cache.set(name, entry);
   }
   return cache.get(name);
 };

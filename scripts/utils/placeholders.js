@@ -11,7 +11,10 @@ export const getPlaceholders = async () => {
   const map = new Map(
     (json?.data ?? []).map(({ Key, Text }) => [Key.toLowerCase(), Text]),
   );
-  cache.set(prefix, map);
+  // Only cache on an actual successful fetch — caching the empty map produced by
+  // a failed/transient fetchData() call would permanently mask every placeholder
+  // lookup for this locale, even though fetchData()'s own cache allows a retry.
+  if (json) cache.set(prefix, map);
   return map;
 };
 

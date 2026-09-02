@@ -114,6 +114,9 @@ export default (el) => {
 
   if (!shouldAnimate()) return;
   el.classList.add('hc-scrub');
+  // Cleanup handle intentionally discarded: `el` lives for the page's full
+  // lifetime (EDS is full-page-load, no client routing) — there's no removal
+  // hook to call it from today.
   trackScrollProgress(el);
   onReveal(el, () => el.classList.add('hc-in'), { threshold: 0 });
 };
