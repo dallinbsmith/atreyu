@@ -19,13 +19,18 @@ const compute = (el) => {
   return Math.min(1, Math.max(0, -r.top / den));
 };
 
+// Read every tracked element's rect before writing any --progress property —
+// interleaving read-then-write per entry (as this used to) forces a
+// synchronous layout recompute on the second entry's read whenever 2+
+// elements are simultaneously near-viewport (rootMargin below makes that a
+// real, not just theoretical, case for two nearby scroll-scrubbed sections).
 const update = () => {
   raf = 0;
-  active.forEach((entry) => {
-    const p = compute(entry.el);
+  const results = [...active].map((entry) => [entry, compute(entry.el)]);
+  for (const [entry, p] of results) {
     entry.el.style.setProperty('--progress', p.toFixed(4));
     entry.cb?.(p);
-  });
+  }
 };
 
 const schedule = () => { raf ||= requestAnimationFrame(update); };

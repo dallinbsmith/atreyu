@@ -29,9 +29,18 @@ export const initHover = (blockEl, tabs, slides, mql) => {
 
   const tabsEl = blockEl.querySelector('.qi-tabs');
 
+  // Coalesce to one style write per frame instead of one per mousemove event —
+  // matches the rAF-throttled pattern scripts/utils/motion/scroll.js already
+  // uses for its own shared scroll listener, rather than a second ad-hoc one.
+  let raf = 0;
+  let pointer = null;
   tabsEl.addEventListener('mousemove', (e) => {
-    card.style.setProperty('--hover-x', `${e.clientX}px`);
-    card.style.setProperty('--hover-y', `${e.clientY}px`);
+    pointer = e;
+    raf ||= requestAnimationFrame(() => {
+      raf = 0;
+      card.style.setProperty('--hover-x', `${pointer.clientX}px`);
+      card.style.setProperty('--hover-y', `${pointer.clientY}px`);
+    });
   });
 
   tabs.forEach((tab, i) => {
