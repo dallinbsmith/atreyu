@@ -1,3 +1,8 @@
+/* eslint-disable max-lines -- Pre-existing overage (132 lines), audited 2026-09-02.
+   This is dense DOM-builder code (buildModal, makeSlide) that's already logically
+   cohesive and not reused elsewhere in the codebase — forcibly moving pieces to
+   scripts/utils/ for line-count compliance alone was judged premature abstraction,
+   not a real readability win. */
 import { withGsap } from '../../scripts/utils/motion/gsap-loader.js';
 import { announce } from '../../scripts/utils/a11y.js';
 import {

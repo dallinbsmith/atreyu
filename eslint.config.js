@@ -44,6 +44,20 @@ export default defineConfig([
         ignore: ['^https?://'],
       }],
 
+      // scripts.md: "Utilities should not import from blocks — dependency
+      // flows one direction: blocks -> utils." True by convention only until
+      // now (an architect-agent audit found zero violations today, but
+      // nothing would have caught one) — same rationale as the config-drift
+      // rules below: this project already writes enforcement for invariants
+      // it cares about rather than leaving them as prose alone.
+      'import/no-restricted-paths': ['error', {
+        zones: [{
+          target: './scripts/utils',
+          from: './blocks',
+          message: 'scripts/utils/ must not import from blocks/ — dependency flows one direction: blocks -> utils (see .claude/rules/scripts.md).',
+        }],
+      }],
+
       indent: ['error', 2, {
         ignoredNodes: ['TemplateLiteral *'],
         SwitchCase: 1,
@@ -97,6 +111,20 @@ export default defineConfig([
       'no-console': 'off',
       'no-underscore-dangle': 0,
       'no-unused-expressions': 0,
+    },
+  },
+  {
+    // blocks.md: "Keep block JS under 100 lines; extract helpers to
+    // scripts/utils/ if larger" — documented since the beginning but never
+    // actually enforced, which let 5 files exceed it silently before this
+    // was noticed in an audit. Five pre-existing overages are grandfathered
+    // via a file-level eslint-disable comment (each explaining why forcing
+    // a split was judged premature-abstraction risk rather than fixed) —
+    // this rule exists to stop a sixth from landing unnoticed, not to force
+    // those five under the limit retroactively.
+    files: ['blocks/**/*.js'],
+    rules: {
+      'max-lines': ['error', { max: 100, skipBlankLines: true, skipComments: true }],
     },
   },
 ]);

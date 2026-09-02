@@ -1,3 +1,8 @@
+/* eslint-disable max-lines -- Pre-existing overage (104 lines), audited 2026-09-02.
+   Already split three ways (quote-hover.js, quote-interactive.js, quote-modal.js);
+   this file's own remaining content is cohesive slide/tab-building logic with no
+   further piece that's reused elsewhere — forcing another split was judged a real
+   premature-abstraction risk, not a compliance gap to close reflexively. */
 import { generateId, rovingTabindex } from '../../scripts/utils/a11y.js';
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { initHover } from './quote-hover.js';
