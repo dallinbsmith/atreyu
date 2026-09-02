@@ -1,6 +1,7 @@
 import { inject } from '../../scripts/utils/jsonld.js';
+import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 
-const buildCard = (row) => {
+const buildCard = (row, badgeText) => {
   const cols = [...row.children];
   const [nameCol, priceCol, descCol, featuresCol, ctaCol] = cols;
   if (!nameCol) return null;
@@ -16,7 +17,7 @@ const buildCard = (row) => {
   if (isHighlighted) {
     const badge = document.createElement('span');
     badge.className = 'pricing-badge';
-    badge.textContent = 'Most Popular';
+    badge.textContent = badgeText;
     card.append(badge);
   }
 
@@ -78,12 +79,13 @@ const injectSchema = (plans) => {
   });
 };
 
-export default (el) => {
+export default async (el) => {
   const rows = [...el.querySelectorAll(':scope > div')];
   const plans = [];
+  const badgeText = await getPlaceholder('pricingMostPopular', 'Most Popular');
 
   for (const row of rows) {
-    const result = buildCard(row);
+    const result = buildCard(row, badgeText);
     if (result) {
       el.append(result.card);
       plans.push(result);

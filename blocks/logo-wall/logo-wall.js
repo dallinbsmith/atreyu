@@ -1,5 +1,6 @@
 import { shouldAnimate, addPauseToggle } from '../../scripts/utils/motion.js';
 import { buildAccessibleLogo } from '../../scripts/utils/partner-logo.js';
+import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 
 // Authoring: one partner/brand per row — either plain text, or a link (href
 // = partner site, text = name). Matches Falkor's real LogoWall module (an
@@ -55,11 +56,15 @@ export default async (el) => {
     // Wait for real icon content before cloning — cloning first would just
     // duplicate empty (still-loading) icon spans, since loadPartnerLogo's
     // fetch hasn't resolved yet at this point in the synchronous build.
-    await Promise.all(loads);
+    const [, pause, play] = await Promise.all([
+      Promise.all(loads),
+      getPlaceholder('logoWallPause', 'Pause'),
+      getPlaceholder('logoWallPlay', 'Play'),
+    ]);
     const clone = track.cloneNode(true);
     clone.setAttribute('aria-hidden', 'true');
     viewport.append(clone);
     viewport.classList.add('is-animating');
-    addPauseToggle(el, viewport, { className: 'logo-wall-toggle' });
+    addPauseToggle(el, viewport, { className: 'logo-wall-toggle', labels: { pause, play } });
   }
 };
