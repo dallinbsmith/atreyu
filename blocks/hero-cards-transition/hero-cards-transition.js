@@ -24,7 +24,7 @@ const POSTERS = [
   { slug: 'shadowy-figure', title: 'Shadowy Figure', author: 'Eva Lin', date: '2024-05-19' },
   { slug: 'delivery', title: 'Delivery', author: 'Owen Hart', date: '2024-02-07' },
 ];
-const posterUrl = (slug) => new URL(`./img/${slug}.webp`, import.meta.url).href;
+const posterUrl = (slug) => new URL(`./${slug}.webp`, import.meta.url).href;
 const fmtDate = (s) => {
   const d = s && new Date(s);
   return !d || Number.isNaN(d.getTime()) ? (s ?? '')

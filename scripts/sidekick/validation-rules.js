@@ -59,7 +59,7 @@ const checkPartnerLogos = () => {
   const name = missing[0].querySelector('.logo-wall-label, .tt-label')?.textContent.trim();
   return {
     status: 'fail',
-    message: `${missing.length} partner logo(s) failed to load${name ? ` (e.g. "${name}")` : ''} — check the name matches a file in /icons/partners/`,
+    message: `${missing.length} partner logo(s) failed to load${name ? ` (e.g. "${name}")` : ''} — check the name matches a file in /img/partners/`,
     el: missing[0],
   };
 };

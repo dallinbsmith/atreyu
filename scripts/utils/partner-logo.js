@@ -2,14 +2,17 @@ import { sanitizeMarkup } from './security/sanitize.js';
 
 const slugify = (name) => name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
 
-// Fetches a partner/brand SVG by name from /icons/partners/, inlines it
+// Fetches a partner/brand SVG by name from /img/partners/, inlines it
 // (sanitized) into `target` rather than using <img>, so it can inherit
-// currentColor and be sized via its own viewBox. Fails silently — a missing
-// partner icon should never block the rest of the block from rendering.
-// Returns the promise so a caller that needs to wait for real content (e.g.
-// before cloneNode-ing a fully-populated node) can — existing fire-and-forget
-// callers are unaffected either way.
-export const loadPartnerLogo = (target, name, maxHeight = 24) => fetch(`/icons/partners/${slugify(name)}.svg`)
+// currentColor and be sized via its own viewBox. Lives under img/, not
+// icons/ — this is a name-keyed brand-logo lookup for two specific blocks
+// (logo-wall, tile-table), not an author-typed `:iconname:` icon, so it
+// doesn't belong in the icons/ convention that's reserved for that.
+// Fails silently — a missing partner icon should never block the rest of
+// the block from rendering. Returns the promise so a caller that needs to
+// wait for real content (e.g. before cloneNode-ing a fully-populated node)
+// can — existing fire-and-forget callers are unaffected either way.
+export const loadPartnerLogo = (target, name, maxHeight = 24) => fetch(`/img/partners/${slugify(name)}.svg`)
   .then((r) => (r.ok ? r.text() : ''))
   .then((svg) => {
     if (!svg) return;
