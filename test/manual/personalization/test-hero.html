@@ -3,28 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>P0-44 personalization spike — hero CTA</title>
+  <title>P0-44 personalization manual test — hero CTA</title>
   <!--
-    P0-44 MEASUREMENT SPIKE — not a production EDS page. Real project CSS/JS,
+    Manual test harness — not a production EDS page. Real project CSS/JS,
     loaded unmodified, so LCP/CLS numbers reflect the real mechanism:
       - styles/styles.css:   tokens, .btn, and the real section reveal-gate CSS
                               (`.section { display: block }` vs
                               `div[data-status] { display: none }`)
       - blocks/hero/hero.css + hero.js: the real, unmodified hero block
-      - spike/test-hero.css: reserved-space + cross-fade CSS for this spike only
-    See spike/test-hero.js for how the markup below is decorated, and
+      - test-hero.css: reserved-space + cross-fade CSS for this harness only
+    See test-hero.js for how the markup below is decorated, and
     scripts/utils/analytics/pzn.js for the personalization runtime under test.
   -->
   <link rel="stylesheet" href="/styles/styles.css">
   <link rel="stylesheet" href="/blocks/hero/hero.css">
-  <link rel="stylesheet" href="/spike/test-hero.css">
+  <link rel="stylesheet" href="/test/manual/personalization/test-hero.css">
 </head>
 <body>
   <main>
     <!--
       Hand-authored to match the shape ak.js's decorateSection()/groupChildren()
       produce (section > .block-content > .hero), not the raw authored-table
-      shape — this spike starts one step downstream of document authoring and
+      shape — this harness starts one step downstream of document authoring and
       exercises block decoration + the reveal gate + personalization, which is
       the part P0-44 is actually about. `data-pzn="hero-cta"` simulates a
       `pzn: hero-cta` Section Metadata row (real conversion path verified in
@@ -58,6 +58,6 @@
     <button type="button" id="clear-cookie">Clear segment cookie + reload</button>
   </div>
 
-  <script type="module" src="/spike/test-hero.js"></script>
+  <script type="module" src="/test/manual/personalization/test-hero.js"></script>
 </body>
 </html>

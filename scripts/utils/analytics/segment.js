@@ -7,9 +7,9 @@ import ENV from '../env.js';
 // secret — safe to embed directly, unlike the Clearbit key (a real secret,
 // held server-side in the decision-endpoint Worker).
 //
-// REPLACE with the real frame.io marketing-site Segment write key before this
-// leaves the spike — this placeholder will queue events into a stub that
-// never actually reaches Segment's servers.
+// REPLACE with the real frame.io marketing-site Segment write key before
+// removing the ENV !== 'prod' gate below — this placeholder will queue
+// events into a stub that never actually reaches Segment's servers.
 const SEGMENT_WRITE_KEY = 'REPLACE_WITH_REAL_SEGMENT_WRITE_KEY';
 
 const METHODS = [

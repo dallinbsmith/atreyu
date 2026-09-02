@@ -16,7 +16,7 @@ const freshPzn = async (search = '') => {
 };
 
 const FIXTURE_URL = '/system/personalization/variants.json';
-const DECISION_URL = '/spike/api/decision';
+const DECISION_URL = '/api/decision';
 const COOKIE_NAME = 'frameio-pzn-segment';
 
 const setupSection = () => {

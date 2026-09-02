@@ -1,0 +1,13 @@
+{
+  "name": "decision-endpoint",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Thin personalization decision endpoint (P0-44). Pending, not yet deployed - blocked on Cloudflare account + Clearbit key provisioning.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}

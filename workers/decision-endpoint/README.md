@@ -1,19 +1,20 @@
-# decision-endpoint spike (P0-44)
+# decision-endpoint (P0-44)
 
 Thin personalization decision endpoint: reverse-IP firmographic lookup via
 Clearbit Reveal -> coarse segment (`enterprise` / `default`) -> `{ segment }`
 JSON + a segment cookie. Fails open on any Clearbit failure/timeout. See the
 spec comment at the top of `index.js` for lifecycle/error-semantics/rationale.
 
-**Status:** spike, not deployed. This project has no Cloudflare account and
-no real Clearbit key provisioned yet (implementation-plan.md P0-0). This
-package is structurally ready to deploy once both exist, and is fully
-exercisable locally today via a mock mode — no real credentials needed.
+**Status:** pending, not deployed. This project has no Cloudflare account and
+no real Clearbit key provisioned yet (implementation-plan.md P0-0) - blocked
+on that external dependency, not on anything technical. This package is
+structurally ready to deploy once both exist, and is fully exercisable
+locally today via a mock mode — no real credentials needed.
 
 ## Run it locally
 
 ```sh
-cd site/spike/decision-endpoint
+cd site/workers/decision-endpoint
 npm install
 npm run dev          # wrangler dev, listens on http://localhost:8787
 ```

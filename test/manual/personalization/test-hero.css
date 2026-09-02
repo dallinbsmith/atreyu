@@ -1,4 +1,4 @@
-/* P0-44 MEASUREMENT SPIKE — not production CSS.
+/* Manual personalization test harness — not production CSS.
  *
  * Three reserved-space strategies for the personalized CTA slot, toggled via
  * `?reserve=none|height|box` (see test-hero.js), so the CLS question this task
@@ -6,8 +6,8 @@
  * shift when the two variant lengths differ, or doesn't it? — can be measured
  * per-strategy instead of assumed. `box`'s min-width below was sized by eyeballing
  * the longer label at 14px in the real `.btn` styles (styles/styles.css), not by
- * pixel-measuring it — exactly the kind of number this spike's own CLS pass should
- * confirm or falsify, not something to trust because it's in a comment.
+ * pixel-measuring it — exactly the kind of number this harness's own CLS pass
+ * should confirm or falsify, not something to trust because it's in a comment.
  */
 
 [data-pzn-reserve="height"] .pzn-slot {

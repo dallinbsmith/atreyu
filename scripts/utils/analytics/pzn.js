@@ -1,7 +1,7 @@
 // P0-44 personalization runtime. Real mechanism, verified end-to-end
 // (headless-browser checks across cold/warm/preview paths, weighted splits,
-// fail-open cases) — graduated out of site/spike/ on 2026-08-28. The
-// decision endpoint it calls is still mocked/undeployed (spike/decision-endpoint/,
+// fail-open cases) — graduated out of a spike on 2026-08-28. The decision
+// endpoint it calls is still pending/undeployed (workers/decision-endpoint/,
 // blocked on Cloudflare account provisioning); wiring below is gated to
 // non-production environments until that's real. See implementation-plan.md
 // P0-44 and master-migration-plan.md §11.6/11.7 for the full decision record.
@@ -47,7 +47,7 @@ import { track, EVENTS } from './analytics.js';
 import ENV from '../env.js';
 
 // Bug-squash fix, 2026-08-28: was 'pzn-spike-segment', independently named
-// from spike/decision-endpoint/handlers/cookie.js's 'frameio-pzn-segment' —
+// from workers/decision-endpoint/handlers/cookie.js's 'frameio-pzn-segment' —
 // two forks landed on different names for what's supposed to be one shared
 // cookie. Can't share this via import (this file ships as static client JS;
 // the decision endpoint is a separately-deployed Cloudflare Worker, not part
@@ -61,7 +61,7 @@ const COOKIE_MAX_AGE_S = 24 * 60 * 60;
 const DEFAULT_TIMEOUT_MS = 1500;
 const FADE_MS = 200;
 const VARIANTS_CACHE_KEY = 'pzn-variants-cache-v1';
-const DEFAULT_ENDPOINT = '/spike/api/decision';
+const DEFAULT_ENDPOINT = '/api/decision';
 const DEFAULT_VARIANTS_ENDPOINT = '/system/personalization/variants.json';
 
 const params = new URLSearchParams(window.location.search);
@@ -81,8 +81,8 @@ const sameOriginOverride = (value, fallback) => (
 // Bug-squash fix, 2026-08-28 (graduation checklist item): every override
 // below except `segment` is a measurement/QA affordance (latency injection,
 // forced failure, malformed-row injection, redirecting which endpoint gets
-// called) — real, legitimate needs for the P0-44 spike's own round-trip
-// testing, but none of them belong reachable by a real visitor on
+// called) — real, legitimate needs for the P0-44 manual test harness's own
+// round-trip testing, but none of them belong reachable by a real visitor on
 // production. `segment` is different: it's P0-45's own documented preview
 // feature for authors ("`?segment=enterprise` previews it" — implementation-
 // plan.md's acceptance criteria), not a debug affordance, so it stays live

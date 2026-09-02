@@ -1,25 +1,29 @@
-// P0-44 MEASUREMENT SPIKE — local dev server only. Not the real decision endpoint
-// (that's a thin Cloudflare Worker per master §11.6/§7.8, holding the real Clearbit
-// key) — this is a static-file server plus a mock `/spike/api/decision` route with
-// a deliberately injectable, configurable artificial latency, so the real P0-44
-// client mechanism (scripts/utils/analytics/pzn.js) can be measured across a round-trip sweep
-// (50/150/300/600/1200ms) without any real Clearbit key or Worker existing yet.
+// Manual personalization test harness — local dev server only. Not the real
+// decision endpoint (that's workers/decision-endpoint/, a thin Cloudflare
+// Worker per master §11.6/§7.8, holding the real Clearbit key) — this is a
+// static-file server plus a mock /api/decision route with a deliberately
+// injectable, configurable artificial latency, so the real P0-44 client
+// mechanism (scripts/utils/analytics/pzn.js) can be measured across a
+// round-trip sweep (50/150/300/600/1200ms) without any real Clearbit key or
+// Worker existing yet.
 //
-// Serves the whole repo root statically (not just spike/) so the test page can use
-// the project's real relative ESM imports (e.g. `../scripts/utils/analytics/consent.js`)
-// unmodified — no bundler, matching the project's "no build step" rule.
+// Serves the whole repo root statically (not just this folder) so the test
+// page can use the project's real relative ESM imports (e.g.
+// '../../../scripts/utils/analytics/consent.js') unmodified — no bundler,
+// matching the project's "no build step" rule.
 //
-// Run: node spike/server.mjs
-// Then open: http://localhost:8892/spike/test-hero.html
+// Run: node test/manual/personalization/server.mjs
+// Then open: http://localhost:8892/test/manual/personalization/test-hero.html
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = fileURLToPath(new URL('..', import.meta.url)); // repo root (site/)
-const SPIKE_DIR = fileURLToPath(new URL('.', import.meta.url));
-const PORT = Number(process.env.PZN_SPIKE_PORT ?? 8892);
+const ROOT = fileURLToPath(new URL('../../..', import.meta.url)); // repo root (site/)
+const HARNESS_DIR = fileURLToPath(new URL('.', import.meta.url));
+const HARNESS_URL_PATH = '/test/manual/personalization';
+const PORT = Number(process.env.PZN_HARNESS_PORT ?? 8892);
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -49,7 +53,7 @@ const handleDecision = async (url, res) => {
   if (latencyMs > 0) await delay(latencyMs);
 
   if (url.searchParams.get('fail') === 'true') {
-    sendJson(res, 500, { error: 'spike: forced decision failure' });
+    sendJson(res, 500, { error: 'mock: forced decision failure' });
     return;
   }
 
@@ -58,12 +62,12 @@ const handleDecision = async (url, res) => {
 
 // Mocks the real published P0-45 sheet (created for real in DA at
 // /system/personalization/variants.json, per the system/ content convention
-// — see the spike report for the live editUrl/previewUrl). DA's preview
-// pipeline needs a manual Send → Preview
-// step before that URL is fetchable (a known platform gotcha, not specific to
-// this spike — see ref_deploy_mechanics), so this route serves a fixture with
-// the identical `{ total, offset, limit, data }` published shape, keeping the
-// Playwright loop fast and independent of network/publish state. Query params:
+// — see the original spike report for the live editUrl/previewUrl). DA's
+// preview pipeline needs a manual Send → Preview step before that URL is
+// fetchable (a known platform gotcha, not specific to this harness — see
+// ref_deploy_mechanics), so this route serves a fixture with the identical
+// `{ total, offset, limit, data }` published shape, keeping the Playwright
+// loop fast and independent of network/publish state. Query params:
 //   variantsLatency — artificial delay, same purpose as the decision route's
 //   variantsFail     — respond 500, to exercise the sheet-fetch fail-open path
 //   variantsMalformed — append one deliberately broken row (non-numeric
@@ -74,11 +78,11 @@ const handleVariants = async (url, res) => {
   if (latencyMs > 0) await delay(latencyMs);
 
   if (url.searchParams.get('variantsFail') === 'true') {
-    sendJson(res, 500, { error: 'spike: forced variants-sheet failure' });
+    sendJson(res, 500, { error: 'mock: forced variants-sheet failure' });
     return;
   }
 
-  const fixture = JSON.parse(await readFile(join(SPIKE_DIR, 'variants.fixture.json'), 'utf8'));
+  const fixture = JSON.parse(await readFile(join(HARNESS_DIR, 'variants.fixture.json'), 'utf8'));
   if (url.searchParams.get('variantsMalformed') === 'true') {
     fixture.data.push({
       placement: 'hero-cta', segment: 'enterprise', type: 'cta', selector: '', fragment: '', label: 'Broken Row', href: '/broken', weight: 'not-a-number',
@@ -89,8 +93,8 @@ const handleVariants = async (url, res) => {
 };
 
 const serveStatic = async (pathname, res) => {
-  const routed = pathname === '/' || pathname === '/spike' || pathname === '/spike/'
-    ? '/spike/test-hero.html'
+  const routed = pathname === '/' || pathname === HARNESS_URL_PATH || pathname === `${HARNESS_URL_PATH}/`
+    ? `${HARNESS_URL_PATH}/test-hero.html`
     : pathname;
   const safePath = normalize(routed).replace(/^(\.\.[/\\])+/, '');
   const filePath = join(ROOT, safePath);
@@ -102,13 +106,13 @@ const serveStatic = async (pathname, res) => {
     res.end(body);
   } catch {
     res.writeHead(404, { 'content-type': 'text/plain' });
-    res.end(`spike server: not found: ${pathname}`);
+    res.end(`personalization harness server: not found: ${pathname}`);
   }
 };
 
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
-  if (url.pathname === '/spike/api/decision') {
+  if (url.pathname === '/api/decision') {
     await handleDecision(url, res);
     return;
   }
@@ -119,5 +123,5 @@ createServer(async (req, res) => {
   await serveStatic(url.pathname, res);
 }).listen(PORT, () => {
   // eslint-disable-next-line no-console -- dev-server startup message
-  console.log(`pzn spike server: http://localhost:${PORT}/spike/test-hero.html`);
+  console.log(`personalization harness server: http://localhost:${PORT}${HARNESS_URL_PATH}/test-hero.html`);
 });

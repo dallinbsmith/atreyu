@@ -9,4 +9,3 @@ tools/
 deps/
 node_modules/
 workers/
-spike/

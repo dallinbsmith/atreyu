@@ -53,7 +53,7 @@ export const fetchFromAem = async ({ request, cache, savedSearch }) => {
   // Bug-squash fix, 2026-08-28: no try/catch existed around this fetch — an
   // origin DNS/network failure propagated as an unhandled exception through
   // the ROUTES loop instead of a controlled response, unlike the newer
-  // spike/decision-endpoint Worker's own fail-open pattern. A 502 here is a
+  // workers/decision-endpoint Worker's own fail-open pattern. A 502 here is a
   // real, correct signal (upstream fetch failed) rather than Cloudflare's
   // generic default error page for an uncaught exception.
   const controller = new AbortController();

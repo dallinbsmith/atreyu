@@ -10,7 +10,7 @@
 // Query params (see README.md):
 //   mockSegment=enterprise|default  (default: 'default')
 //   mockLatency=<ms>                (default: 0) — for the 50/150/300/600/
-//                                    1200ms client-runtime sweep this spike
+//                                    1200ms client-runtime sweep this mock
 //                                    exists to support
 //   mockError=true                  — reject instead of resolving, to test
 //                                    the fail-open path independent of timeout

@@ -1,6 +1,10 @@
 /*
- * spike/decision-endpoint — thin personalization decision endpoint (P0-44).
- * Spike only: not wired into workers/website/ and not deployed anywhere.
+ * workers/decision-endpoint — thin personalization decision endpoint (P0-44).
+ * Pending, not yet deployed: blocked on Cloudflare account + Clearbit key
+ * provisioning (implementation-plan.md P0-0), not on anything technical.
+ * Structurally ready to deploy once both exist; not wired into
+ * workers/website/ in the meantime. Fully exercisable locally today via mock
+ * mode — see README.md.
  *
  * Spec (kept next to the code it governs, per this project's spec-first rule):
  * - Lifecycle: one-shot per request, no session/decision state carried
@@ -20,8 +24,8 @@
  *   cookie.js) so a single bad Clearbit round-trip doesn't retry on every
  *   page load for the rest of the session — a deliberate choice, not a given.
  * - Consent is explicitly NOT this endpoint's job: the client-side runtime
- *   (the sibling fork's work, spike/decision-endpoint/../<client-runtime>)
- *   must not call this endpoint at all when analytics/personalization
+ *   (scripts/utils/analytics/pzn.js) must not call this endpoint at all when
+ *   analytics/personalization
  *   consent is denied. This file has no visibility into consent state and
  *   must never be treated as a consent backstop.
  */
@@ -40,7 +44,7 @@ const getClientIp = (request) => request.headers.get('cf-connecting-ip')
   ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
   ?? '';
 
-// env.MOCK_CLEARBIT must be explicitly 'true' (set only in this spike's own
+// env.MOCK_CLEARBIT must be explicitly 'true' (set only in this Worker's own
 // wrangler.toml [vars], never inherited from workers/website/) for mock query
 // params to have any effect — otherwise a stray `?mockSegment=enterprise` on
 // a real deployment could spoof the decision for anyone who appends it.
@@ -111,8 +115,8 @@ export default {
       ...corsHeaders(env, request),
     });
     // Debug-only signal for local verification of the fail-open path. Never
-    // carries any Clearbit data, but drop it before treating this as
-    // production-hardened rather than a spike.
+    // carries any Clearbit data, but drop it once this is actually deployed
+    // rather than still pending.
     if (failedOpen) headers.set('x-pzn-failed-open', 'true');
 
     return new Response(JSON.stringify({ segment }), { status: 200, headers });
