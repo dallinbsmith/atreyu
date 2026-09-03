@@ -177,4 +177,21 @@ describe('utils/touts decorateTout', () => {
     expect(links[1].classList.contains('btn-link')).to.be.true;
     expect(links[1].classList.contains('btn-secondary')).to.be.false;
   });
+
+  it('assigns a prefix-scoped data-testid reflecting each CTA\'s role', () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<h3>Head</h3><p><a href="/a">A</a></p><p><a href="/b">More <span class="icon icon-arrow"></span></a></p>';
+    decorateTout(el, 'side-by-side-tout');
+    const links = el.querySelectorAll('.side-by-side-tout-cta a');
+    expect(links[0].dataset.testid).to.equal('side-by-side-tout-cta-primary');
+    expect(links[1].dataset.testid).to.equal('side-by-side-tout-cta-link');
+  });
+
+  it('does not overwrite data-testid on a link already classed .btn', () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<p>copy</p><p><a class="btn btn-accent" data-testid="custom" href="/a">A</a></p>';
+    decorateTout(el, 'tout');
+    const a = el.querySelector('.tout-cta a');
+    expect(a.dataset.testid).to.equal('custom');
+  });
 });

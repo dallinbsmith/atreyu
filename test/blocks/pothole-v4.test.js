@@ -91,6 +91,14 @@ describe('pothole-v4', () => {
     expect(el.style.getPropertyValue('--media-scale')).to.equal('1.2');
   });
 
+  it('assigns pothole-v4-cta-primary/secondary data-testid values', () => {
+    const el = block('', [img, '<p><a href="/a">A</a></p><p><a href="/b">B</a></p>']);
+    decorate(el);
+    const links = el.querySelectorAll('.pothole-content a');
+    expect(links[0].dataset.testid).to.equal('pothole-v4-cta-primary');
+    expect(links[1].dataset.testid).to.equal('pothole-v4-cta-secondary');
+  });
+
   it('an empty block does not throw', () => {
     const el = document.createElement('div');
     el.className = 'pothole-v4';

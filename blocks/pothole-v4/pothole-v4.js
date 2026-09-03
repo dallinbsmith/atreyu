@@ -55,6 +55,7 @@ export default (el) => {
   // Defer to an author-set variant (e.g. from decorateButton's **bold**/*italic*
   // convention) instead of overriding it with a positional class.
   [...content.querySelectorAll('a')].forEach((a, i) => {
+    a.dataset.testid ||= `pothole-v4-cta-${i === 0 ? 'primary' : 'secondary'}`;
     if (a.classList.contains('btn')) return;
     a.classList.add('btn', i === 0 ? 'btn-primary' : 'btn-secondary');
   });

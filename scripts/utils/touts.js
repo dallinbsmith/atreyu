@@ -36,12 +36,16 @@ export const decorateTout = (el, prefix = 'tout') => {
   });
 
   // Defer to the framework: links already buttonized by decorateButton (from
-  // authored em/strong/underline) keep that author-intended variant. A link that
+  // authored em/strong/underline) keep that author-intended variant — and
+  // already have a data-testid from decorateButton itself. A link that
   // carries an arrow icon (`:arrow:`) becomes a borderless text-link. Otherwise
   // assign positional primary/secondary to plain links.
   [...ctaWrapper.querySelectorAll('a')].forEach((a, idx) => {
     if (a.classList.contains('btn')) return;
-    if (a.querySelector('.icon-arrow')) a.classList.add('btn', 'btn-link');
-    else a.classList.add('btn', idx === 0 ? 'btn-primary' : 'btn-secondary');
+    const isArrowLink = a.querySelector('.icon-arrow');
+    let role = idx === 0 ? 'primary' : 'secondary';
+    if (isArrowLink) role = 'link';
+    a.dataset.testid ||= `${prefix}-cta-${role}`;
+    a.classList.add('btn', `btn-${role}`);
   });
 };

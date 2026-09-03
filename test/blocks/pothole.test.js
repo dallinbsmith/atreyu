@@ -67,6 +67,14 @@ describe('pothole', () => {
     expect(a.classList.contains('btn-primary')).to.be.false;
   });
 
+  it('assigns pothole-cta-primary/secondary data-testid values', () => {
+    const el = block([img, '<p><a href="/a">A</a></p><p><a href="/b">B</a></p>']);
+    decorate(el);
+    const links = el.querySelectorAll('.pothole-content a');
+    expect(links[0].dataset.testid).to.equal('pothole-cta-primary');
+    expect(links[1].dataset.testid).to.equal('pothole-cta-secondary');
+  });
+
   it('an empty block does not throw', () => {
     const el = document.createElement('div');
     el.className = 'pothole';
