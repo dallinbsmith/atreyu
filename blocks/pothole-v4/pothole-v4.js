@@ -6,27 +6,30 @@ import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 
 const GLOW_COLORS = ['purple', 'blue', 'pink', 'green'];
-const SCALE_RE = /^\d+(\.\d+)?$/;
+const META_RE = /^(scale|glow)\s*:\s*(.+)$/i;
 
-// A trailing single-cell row is metadata, not content: a bare number sets the
-// background media's zoom, a bare glow-color name sets the glow tint.
+// A trailing single-cell "key: value" row is metadata, not content — explicit
+// key prefixes (rather than sniffing bare text against a number/color-name
+// pattern) so real heading/body copy is never misread as a scale or glow row.
+// Requires a background + content row to remain even after removal, so a
+// 1- or 2-row block is never mistaken for having a metadata row at all.
 const extractMetaRow = (rows) => {
+  if (rows.length < 3) return null;
   const last = rows.at(-1);
-  const cells = last ? [...last.children] : [];
+  const cells = [...last.children];
   if (cells.length !== 1) return null;
-  const text = cells[0].textContent.trim().toLowerCase();
-  if (SCALE_RE.test(text) || GLOW_COLORS.includes(text)) {
-    rows.pop().remove();
-    return text;
-  }
-  return null;
+  const match = cells[0].textContent.trim().match(META_RE);
+  if (!match) return null;
+  rows.pop().remove();
+  const [, key, value] = match;
+  return { key: key.toLowerCase(), value: value.trim().toLowerCase() };
 };
 
 export default (el) => {
   const rows = [...el.querySelectorAll(':scope > div')];
   const meta = extractMetaRow(rows);
-  if (meta && SCALE_RE.test(meta)) el.style.setProperty('--media-scale', meta);
-  else if (meta) el.classList.add(`glow-${meta}`);
+  if (meta?.key === 'scale') el.style.setProperty('--media-scale', meta.value);
+  else if (meta?.key === 'glow' && GLOW_COLORS.includes(meta.value)) el.classList.add(`glow-${meta.value}`);
 
   const content = rows.pop();
   content.classList.add('pothole-content');

@@ -54,6 +54,13 @@
       inset: 0 0 0 40%;
     }
 
+    /* Higher specificity than either single-variant rule above (four classes
+       vs. three) so the two compose instead of right-aligned silently
+       overriding overflow's inset via source order. */
+    &.right-aligned.overflow .pothole-background {
+      inset: -20% -20% -20% 20%;
+    }
+
     &::before {
       content: '';
       position: absolute;

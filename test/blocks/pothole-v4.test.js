@@ -24,18 +24,33 @@ describe('pothole-v4', () => {
     expect(el.querySelector('.pothole-background picture')).to.exist;
   });
 
-  it('a bare numeric trailing row sets --media-scale and is removed from content', () => {
-    const el = block('', [img, '<h2>Title</h2>', '1.2']);
+  it('a "scale: n" trailing row sets --media-scale and is removed from content', () => {
+    const el = block('', [img, '<h2>Title</h2>', 'scale: 1.2']);
     decorate(el);
     expect(el.style.getPropertyValue('--media-scale')).to.equal('1.2');
     expect(el.querySelectorAll(':scope > div')).to.have.length(2);
   });
 
-  it('a bare glow-color trailing row adds a glow-{color} class', () => {
-    const el = block('', [img, '<h2>Title</h2>', 'purple']);
+  it('a "glow: {color}" trailing row adds a glow-{color} class', () => {
+    const el = block('', [img, '<h2>Title</h2>', 'glow: purple']);
     decorate(el);
     expect(el.classList.contains('glow-purple')).to.be.true;
     expect(el.querySelector('.pothole-content')?.textContent).to.not.include('purple');
+  });
+
+  it('a content row whose sole text happens to be a color/number name is NOT misread as metadata', () => {
+    const el = block('', [img, '<h2>Blue</h2>']);
+    decorate(el);
+    expect(el.classList.contains('glow-blue')).to.be.false;
+    expect(el.querySelector('.pothole-background')).to.exist;
+    expect(el.querySelector('.pothole-content h2').textContent).to.equal('Blue');
+  });
+
+  it('a single-row block (sole text matching the meta pattern) does not throw and is treated as content', () => {
+    const el = block('', ['<h2>glow: purple</h2>']);
+    expect(() => decorate(el)).to.not.throw();
+    expect(el.classList.contains('glow-purple')).to.be.false;
+    expect(el.querySelector('.pothole-content')).to.exist;
   });
 
   it('an unrecognized trailing row is left as ordinary content, not consumed as metadata', () => {
