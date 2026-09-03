@@ -50,4 +50,27 @@ describe('pothole', () => {
     decorate(el);
     expect(el.querySelector('.pothole-content .rt-eyebrow')).to.exist;
   });
+
+  it('an author-provided second content row is merged in, not dropped', () => {
+    const el = block([img, '<h2>Real content</h2>', '<p>Second row</p>']);
+    decorate(el);
+    const text = el.querySelector('.pothole-content').textContent;
+    expect(text).to.include('Real content');
+    expect(text).to.include('Second row');
+  });
+
+  it('a link already classed .btn (e.g. by decorateButton) is not re-classed positionally', () => {
+    const el = block([img, '<p><a class="btn btn-accent" href="/a">A</a></p>']);
+    decorate(el);
+    const a = el.querySelector('.pothole-content a');
+    expect(a.classList.contains('btn-accent')).to.be.true;
+    expect(a.classList.contains('btn-primary')).to.be.false;
+  });
+
+  it('an empty block does not throw', () => {
+    const el = document.createElement('div');
+    el.className = 'pothole';
+    document.body.append(el);
+    expect(() => decorate(el)).to.not.throw();
+  });
 });
