@@ -4,6 +4,7 @@
 // alignment variants (see blocks.md variant convention).
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
+import { createElement } from '../../scripts/utils/dom.js';
 
 const GLOW_COLORS = ['purple', 'blue', 'pink', 'green'];
 const META_RE = /^(scale|glow)\s*:\s*(.+)$/i;
@@ -31,25 +32,22 @@ export default (el) => {
   if (meta?.key === 'scale') el.style.setProperty('--media-scale', meta.value);
   else if (meta?.key === 'glow' && GLOW_COLORS.includes(meta.value)) el.classList.add(`glow-${meta.value}`);
 
-  const bgRow = rows[0]?.querySelector('picture') ? rows.shift() : null;
+  // Row meaning is classified by content shape, never by position — the
+  // background row is whichever row (if any) holds a picture, and every
+  // other row is content, merged in rather than assumed-single.
+  const bgRow = rows.find((r) => r.querySelector('picture'));
   const pic = bgRow?.querySelector('picture');
   if (pic) {
     const img = pic.querySelector('img');
     if (img) img.alt = '';
   }
 
-  // Merge every remaining row's cells into one content container — a
-  // second authored row is still content, not something to discard, so
-  // this never silently drops text the way assuming exactly one row would.
-  const content = document.createElement('div');
-  content.className = 'pothole-content';
-  rows.forEach((row) => content.append(...row.children));
+  const content = createElement('div', { className: 'pothole-content' });
+  rows.filter((r) => r !== bgRow).forEach((row) => content.append(...row.children));
   el.replaceChildren(content);
 
   if (pic) {
-    const bg = document.createElement('div');
-    bg.className = 'pothole-background';
-    bg.setAttribute('aria-hidden', 'true');
+    const bg = createElement('div', { className: 'pothole-background', 'aria-hidden': 'true' });
     bg.append(pic);
     el.prepend(bg);
   }
