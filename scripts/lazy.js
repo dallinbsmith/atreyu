@@ -19,12 +19,14 @@ const loadSidekick = async () => {
   import('./utils/seo/jsonld.js').then(({ default: jsonld }) => jsonld());
   import('./utils/seo/hreflang.js').then(({ default: hreflang }) => hreflang());
   import('./utils/seo/canonical.js').then(({ default: canonical }) => canonical());
+  import('./utils/analytics/delegated-click.js');
 
   setTimeout(() => import('./delayed.js'), 3000);
 
   if (ENV !== 'prod') {
     import('./scheduler/scheduler.js');
     loadSidekick();
+    import('./utils/analytics/testid-audit.js').then(({ default: auditTestids }) => auditTestids());
 
     // P0-44 personalization, graduated out of site/spike/ on 2026-08-28.
     // Gated to non-production environments deliberately, not as a placeholder:

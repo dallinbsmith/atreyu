@@ -8,6 +8,18 @@ export const generateId = (prefix = 'a11y') => {
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+// Shared ARIA-tablist activation: mark `idx` selected/focusable and hide every
+// other panel. `tabs`/`panels` are index-aligned, same order — used by any
+// block building a `role="tablist"` (advanced-tabs, quote-interactive).
+export const activateTab = (tabs, panels, idx) => {
+  [...tabs].forEach((tab, i) => {
+    const active = i === idx;
+    tab.setAttribute('aria-selected', String(active));
+    tab.setAttribute('tabindex', active ? '0' : '-1');
+  });
+  [...panels].forEach((panel, i) => panel.toggleAttribute('hidden', i !== idx));
+};
+
 export const rovingTabindex = (container, items, options = {}) => {
   const { orientation = 'horizontal', wrap = true } = options;
   const elements = [...items];

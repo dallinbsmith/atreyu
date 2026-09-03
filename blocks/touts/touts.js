@@ -8,6 +8,6 @@ export default (el) => {
     row.classList.add('touts-row');
     const items = [...row.children];
     row.style = `--tout-count: ${items.length}`;
-    items.forEach((item) => decorateTout(item, 'tout'));
+    items.forEach((item, idx) => decorateTout(item, 'tout', `tout-${idx}`));
   });
 };

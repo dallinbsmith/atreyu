@@ -1,11 +1,17 @@
 import { makeField, validate } from './form-fields.js';
 
+// An explicit "submit: Send it" key prefix — not a bare "Submit" value match,
+// which could misread a real field literally labeled "Submit" as this
+// override instead of a field to render.
+const SUBMIT_RE = /^submit\s*:\s*(.+)$/i;
+
 export default (el) => {
   const rows = [...el.querySelectorAll(':scope > div')];
   const endpoint = rows[0]?.children[0]?.textContent.trim();
   const fieldRows = rows.slice(1);
-  const submitText = fieldRows.at(-1)?.children[0]?.textContent.trim().toLowerCase() === 'submit'
-    ? fieldRows.pop().children[0].textContent.trim() : 'Submit';
+  const submitMatch = fieldRows.at(-1)?.children[0]?.textContent.trim().match(SUBMIT_RE);
+  if (submitMatch) fieldRows.pop();
+  const submitText = submitMatch ? submitMatch[1].trim() : 'Submit';
   const fields = fieldRows.map((r) => {
     const c = [...r.children].map((col) => col.textContent.trim());
     return { label: c[0], type: c[1] || 'text', required: c[2]?.toLowerCase() === 'required', extra: c[3] };

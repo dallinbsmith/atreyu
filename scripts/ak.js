@@ -77,6 +77,10 @@ export const loadBlock = async (block) => {
   const { classList } = block;
   const name = classList[0];
   block.dataset.blockName = name;
+  // Author-typed variant tokens (`Block (large, dark)` → class="block large dark"),
+  // mirrored into a stable attribute so a future styling-driven class rename
+  // never silently breaks a test/analytics selector keyed on the variant.
+  if (classList.length > 1) block.dataset.variant = [...classList].slice(1).join(' ');
   const opts = {
     decorate: true,
     style: !components.some((cmp) => name === cmp),
@@ -134,15 +138,19 @@ const decorateButton = (link) => {
 
   link.classList.add('btn');
   // Frame.io's three button color schemes, reachable via emphasis marks:
-  // **bold** = white, *italic* = ghost, ***bold italic*** = glass.
-  const variants = [
-    [isStrike, 'btn-negative'],
-    [isEm && isStrong, 'btn-glass'],
-    [isStrong, 'btn-primary'],
-    [isEm, 'btn-secondary'],
+  // **bold** = white, *italic* = ghost, ***bold italic*** = glass. Role
+  // names (not class names) are the source of truth here — the testid
+  // below is built from these same roles, never reverse-engineered from
+  // the CSS class list, so renaming a class for styling reasons can never
+  // silently change a stable testid/analytics identifier.
+  const roles = [
+    [isStrike, 'negative'],
+    [isEm && isStrong, 'glass'],
+    [isStrong, 'primary'],
+    [isEm, 'secondary'],
   ];
-  const variant = variants.find(([cond]) => cond)?.[1];
-  if (variant) link.classList.add(variant);
+  const variantRole = roles.find(([cond]) => cond)?.[1];
+  if (variantRole) link.classList.add(`btn-${variantRole}`);
   if (isUnder) {
     link.classList.add('btn-outline');
     link.append(...isUnder.childNodes);
@@ -150,6 +158,16 @@ const decorateButton = (link) => {
   }
   const toReplace = [isEm, isStrong, isStrike].find((el) => el?.parentNode === trueParent);
   if (toReplace) trueParent.replaceChild(link, toReplace);
+
+  // Primary test/analytics selector (see scripts.md's Selectors & Data
+  // Attributes) — derived from the nearest real block, not author-typed.
+  // Only instrumented when a block ancestor exists; a plain-content button
+  // (outside any named block) has no stable block prefix to key off.
+  const block = link.closest('.block-content > div[class]');
+  if (block) {
+    const testidRole = [variantRole, isUnder && 'outline'].filter(Boolean).join('-') || 'default';
+    link.dataset.testid ||= `${block.classList[0]}-cta-${testidRole}`;
+  }
 };
 
 export const localizeUrl = ({ config, url }) => {

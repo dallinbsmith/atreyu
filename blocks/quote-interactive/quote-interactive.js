@@ -1,9 +1,4 @@
-/* eslint-disable max-lines -- Pre-existing overage (104 lines), audited 2026-09-02.
-   Already split three ways (quote-hover.js, quote-interactive.js, quote-modal.js);
-   this file's own remaining content is cohesive slide/tab-building logic with no
-   further piece that's reused elsewhere — forcing another split was judged a real
-   premature-abstraction risk, not a compliance gap to close reflexively. */
-import { generateId, rovingTabindex } from '../../scripts/utils/a11y.js';
+import { generateId, rovingTabindex, activateTab } from '../../scripts/utils/a11y.js';
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { initHover } from './quote-hover.js';
 import { initModal } from './quote-modal.js';
@@ -80,24 +75,14 @@ export default (el) => {
       panel.append(logo);
     }
 
-    tab.addEventListener('click', () => {
-      tabs.forEach((t, j) => {
-        t.setAttribute('aria-selected', String(j === i));
-        t.setAttribute('tabindex', j === i ? '0' : '-1');
-      });
-      [...stage.children].forEach((p, j) => p.toggleAttribute('hidden', j !== i));
-    });
+    tab.addEventListener('click', () => activateTab(tabs, stage.children, i));
 
     tablist.append(tab);
     stage.append(panel);
     return tab;
   });
 
-  tabs.forEach((t, j) => {
-    t.setAttribute('aria-selected', String(j === 0));
-    t.setAttribute('tabindex', j === 0 ? '0' : '-1');
-  });
-  [...stage.children].forEach((p, j) => p.toggleAttribute('hidden', j !== 0));
+  activateTab(tabs, stage.children, 0);
 
   const gradient = document.createElement('div');
   gradient.className = 'qi-gradient';

@@ -177,4 +177,38 @@ describe('utils/touts decorateTout', () => {
     expect(links[1].classList.contains('btn-link')).to.be.true;
     expect(links[1].classList.contains('btn-secondary')).to.be.false;
   });
+
+  it('assigns a prefix-scoped data-testid reflecting each CTA\'s role', () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<h3>Head</h3><p><a href="/a">A</a></p><p><a href="/b">More <span class="icon icon-arrow"></span></a></p>';
+    decorateTout(el, 'side-by-side-tout');
+    const links = el.querySelectorAll('.side-by-side-tout-cta a');
+    expect(links[0].dataset.testid).to.equal('side-by-side-tout-cta-primary');
+    expect(links[1].dataset.testid).to.equal('side-by-side-tout-cta-link');
+  });
+
+  it('does not overwrite data-testid on a link already classed .btn', () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<p>copy</p><p><a class="btn btn-accent" data-testid="custom" href="/a">A</a></p>';
+    decorateTout(el, 'tout');
+    const a = el.querySelector('.tout-cta a');
+    expect(a.dataset.testid).to.equal('custom');
+  });
+
+  it('a caller rendering a repeated list (touts/bentos/side-by-side) can pass a per-item testidId so items do not collide', () => {
+    const makeItem = () => {
+      const el = document.createElement('div');
+      el.innerHTML = '<p>copy</p><p><a href="/a">A</a></p>';
+      return el;
+    };
+    const first = makeItem();
+    const second = makeItem();
+    decorateTout(first, 'tout', 'tout-0');
+    decorateTout(second, 'tout', 'tout-1');
+    expect(first.querySelector('.tout-cta a').dataset.testid).to.equal('tout-0-cta-primary');
+    expect(second.querySelector('.tout-cta a').dataset.testid).to.equal('tout-1-cta-primary');
+    // both still share the unindexed CSS class prefix — styling is unaffected
+    expect(first.classList.contains('tout')).to.be.true;
+    expect(second.classList.contains('tout')).to.be.true;
+  });
 });

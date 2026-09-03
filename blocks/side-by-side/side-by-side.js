@@ -34,10 +34,10 @@ const buildTouts = (cell) => {
   const touts = document.createElement('div');
   touts.className = 'side-by-side-touts';
   touts.style = `--tout-count: ${items.length}`;
-  items.forEach((li) => {
+  items.forEach((li, idx) => {
     const tout = document.createElement('div');
     tout.append(...li.childNodes);
-    decorateTout(tout, 'side-by-side-tout');
+    decorateTout(tout, 'side-by-side-tout', `side-by-side-tout-${idx}`);
     touts.append(tout);
   });
   return touts;

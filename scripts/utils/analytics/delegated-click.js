@@ -1,0 +1,30 @@
+import { track } from './analytics.js';
+
+// Declarative click-to-Segment bridge for CTAs with no bespoke behavior
+// module (see scripts/behaviors.js for those). An element carries
+// `data-track-event` — a value that must already exist in analytics.js's
+// EVENTS registry, the same governance required of any other track() call
+// site — and an optional `data-track-props` JSON object literal. One
+// delegated listener avoids wiring bespoke tracking code per block for
+// plain marketing CTAs. track() itself validates the event name; this file
+// does not duplicate that check.
+//
+// No element in this codebase sets data-track-event today (behaviors.js's
+// own modules track() directly, with dynamic properties this attribute
+// scheme can't express — see scripts.md). If a future element ever carries
+// both a behaviors.js entry AND data-track-event, this would double-fire —
+// worth a guard (or a dev-mode assertion) before that first real pairing lands.
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-track-event]');
+  if (!el) return;
+
+  let props = {};
+  if (el.dataset.trackProps) {
+    try {
+      props = JSON.parse(el.dataset.trackProps);
+    } catch { /* malformed JSON — skip props, still fire the event */ }
+  }
+
+  const testid = el.closest('[data-testid]')?.dataset.testid;
+  track(el.dataset.trackEvent, { ...props, ...(testid && { testid }) });
+});

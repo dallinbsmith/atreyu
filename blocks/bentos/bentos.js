@@ -72,11 +72,11 @@ export default (el) => {
     row.classList.add('bento-grid');
     const cards = [...row.children];
     row.style = `--card-count: ${cards.length}`;
-    cards.forEach((card) => {
+    cards.forEach((card, idx) => {
       parseConfig(card);
       const media = placeMedia(card);
       applyOptions(card);
-      decorateTout(card, 'bento-card');
+      decorateTout(card, 'bento-card', `bento-card-${idx}`);
       if (media) card.prepend(media);
     });
   });

@@ -1,6 +1,7 @@
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { openVideoModal, WISTIA_RE } from '../../scripts/utils/modal/video-modal.js';
+import { createElement } from '../../scripts/utils/dom.js';
 
 const setBackgroundFocus = (img) => {
   const { title } = img.dataset;
@@ -65,15 +66,25 @@ const decorateForeground = (fg) => {
 };
 
 export default async (el) => {
+  // Row meaning is classified by content shape, never by position/count: the
+  // background row is whichever row (if any) holds a picture — not "whatever
+  // is left after popping the last row" — so an unexpected extra row is
+  // never silently misattributed as background or dropped as content.
   const rows = [...el.querySelectorAll(':scope > div')];
-  const fg = rows.pop();
-  fg.classList.add('hero-foreground');
+  const bgRow = rows.find((r) => r.querySelector('picture'));
+  const contentRows = rows.filter((r) => r !== bgRow);
+
+  const fg = createElement('div', { className: 'hero-foreground' });
+  contentRows.forEach((row) => fg.append(...row.children));
+  el.replaceChildren(fg);
   decorateForeground(fg);
   decorateVideoModalCta(fg);
-  if (rows.length) {
-    const bg = rows.pop();
-    bg.classList.add('hero-background');
+
+  if (bgRow) {
+    const bg = createElement('div', { className: 'hero-background' });
+    bg.append(...bgRow.children);
     decorateBackground(bg);
+    el.prepend(bg);
   }
   decorateRichText(el);
 };
