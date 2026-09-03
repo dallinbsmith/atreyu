@@ -138,15 +138,19 @@ const decorateButton = (link) => {
 
   link.classList.add('btn');
   // Frame.io's three button color schemes, reachable via emphasis marks:
-  // **bold** = white, *italic* = ghost, ***bold italic*** = glass.
-  const variants = [
-    [isStrike, 'btn-negative'],
-    [isEm && isStrong, 'btn-glass'],
-    [isStrong, 'btn-primary'],
-    [isEm, 'btn-secondary'],
+  // **bold** = white, *italic* = ghost, ***bold italic*** = glass. Role
+  // names (not class names) are the source of truth here — the testid
+  // below is built from these same roles, never reverse-engineered from
+  // the CSS class list, so renaming a class for styling reasons can never
+  // silently change a stable testid/analytics identifier.
+  const roles = [
+    [isStrike, 'negative'],
+    [isEm && isStrong, 'glass'],
+    [isStrong, 'primary'],
+    [isEm, 'secondary'],
   ];
-  const variant = variants.find(([cond]) => cond)?.[1];
-  if (variant) link.classList.add(variant);
+  const variantRole = roles.find(([cond]) => cond)?.[1];
+  if (variantRole) link.classList.add(`btn-${variantRole}`);
   if (isUnder) {
     link.classList.add('btn-outline');
     link.append(...isUnder.childNodes);
@@ -161,11 +165,8 @@ const decorateButton = (link) => {
   // (outside any named block) has no stable block prefix to key off.
   const block = link.closest('.block-content > div[class]');
   if (block) {
-    // Every modifier class, not just the first — a combined variant (e.g.
-    // ***<u>text</u>*** → btn-glass + btn-outline) must stay distinguishable
-    // from a plain glass button, not collapse to one shared testid.
-    const role = [...link.classList].filter((c) => c !== 'btn').map((c) => c.replace('btn-', '')).join('-') || 'default';
-    link.dataset.testid ||= `${block.classList[0]}-cta-${role}`;
+    const testidRole = [variantRole, isUnder && 'outline'].filter(Boolean).join('-') || 'default';
+    link.dataset.testid ||= `${block.classList[0]}-cta-${testidRole}`;
   }
 };
 
