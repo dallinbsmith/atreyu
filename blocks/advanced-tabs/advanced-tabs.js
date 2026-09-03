@@ -1,19 +1,7 @@
 import { getConfig } from '../../scripts/ak.js';
-import { generateId, rovingTabindex } from '../../scripts/utils/a11y.js';
+import { generateId, rovingTabindex, activateTab } from '../../scripts/utils/a11y.js';
 
 const { log } = getConfig();
-
-const activateTab = (tabList, panels, idx) => {
-  const tabs = [...tabList.querySelectorAll('[role="tab"]')];
-  tabs.forEach((tab, i) => {
-    const active = i === idx;
-    tab.setAttribute('aria-selected', String(active));
-    tab.setAttribute('tabindex', active ? '0' : '-1');
-  });
-  panels.forEach((panel, i) => {
-    panel.toggleAttribute('hidden', i !== idx);
-  });
-};
 
 const buildTabList = (tabItems, panels) => {
   const tabList = document.createElement('div');
@@ -34,12 +22,12 @@ const buildTabList = (tabItems, panels) => {
     panels[idx].setAttribute('aria-labelledby', tabId);
     panels[idx].setAttribute('tabindex', '0');
 
-    btn.addEventListener('click', () => activateTab(tabList, panels, idx));
+    btn.addEventListener('click', () => activateTab(tabs, panels, idx));
     tabList.append(btn);
     return btn;
   });
 
-  activateTab(tabList, panels, 0);
+  activateTab(tabs, panels, 0);
   rovingTabindex(tabList, tabs, { orientation: 'horizontal' });
 
   return tabList;

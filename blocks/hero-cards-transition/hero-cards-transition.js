@@ -89,7 +89,7 @@ export default (el) => {
   if (cta) {
     cta.classList.add('hc-cta');
     [...cta.querySelectorAll('a')].forEach((a, i) => {
-      a.classList.add('btn', i === 0 ? 'btn-primary' : 'btn-secondary');
+      if (!a.classList.contains('btn')) a.classList.add('btn', i === 0 ? 'btn-primary' : 'btn-secondary');
     });
   }
 

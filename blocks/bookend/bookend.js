@@ -20,8 +20,7 @@ export default (el) => {
     ctaPara.classList.add('bookend-cta');
     const links = ctaPara.querySelectorAll('a');
     for (const [idx, a] of [...links].entries()) {
-      a.classList.add('btn');
-      a.classList.add(idx === 0 ? 'btn-primary' : 'btn-secondary');
+      if (!a.classList.contains('btn')) a.classList.add('btn', idx === 0 ? 'btn-primary' : 'btn-secondary');
     }
   }
 };

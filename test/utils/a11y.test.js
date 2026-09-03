@@ -1,7 +1,40 @@
 import { expect } from '@esm-bundle/chai';
-import { generateId, rovingTabindex, trapFocus, announce } from '../../scripts/utils/a11y.js';
+import {
+  generateId, rovingTabindex, activateTab, trapFocus, announce,
+} from '../../scripts/utils/a11y.js';
 
 describe('a11y utilities', () => {
+  describe('activateTab', () => {
+    const build = (n) => Array.from({ length: n }, () => document.createElement('button'));
+
+    it('marks only the active tab selected and focusable', () => {
+      const tabs = build(3);
+      const panels = build(3);
+      activateTab(tabs, panels, 1);
+      expect(tabs[0].getAttribute('aria-selected')).to.equal('false');
+      expect(tabs[1].getAttribute('aria-selected')).to.equal('true');
+      expect(tabs[1].getAttribute('tabindex')).to.equal('0');
+      expect(tabs[0].getAttribute('tabindex')).to.equal('-1');
+      expect(tabs[2].getAttribute('tabindex')).to.equal('-1');
+    });
+
+    it('hides every panel except the active index', () => {
+      const tabs = build(2);
+      const panels = build(2);
+      activateTab(tabs, panels, 0);
+      expect(panels[0].hasAttribute('hidden')).to.be.false;
+      expect(panels[1].hasAttribute('hidden')).to.be.true;
+    });
+
+    it('accepts an array-like (HTMLCollection) for panels, not just arrays', () => {
+      const tabs = build(2);
+      const parent = document.createElement('div');
+      parent.append(...build(2));
+      activateTab(tabs, parent.children, 1);
+      expect(parent.children[0].hasAttribute('hidden')).to.be.true;
+      expect(parent.children[1].hasAttribute('hidden')).to.be.false;
+    });
+  });
   describe('generateId', () => {
     it('returns an ID with the correct prefix format', () => {
       const id = generateId('test');
