@@ -2,7 +2,12 @@
 // CTA links lifted into a single cta wrapper (first = primary, rest = secondary).
 // Reused by the bentos and side-by-side blocks. Class prefix is configurable so
 // each block keeps its own BEM-ish namespace while sharing the logic.
-export const decorateTout = (el, prefix = 'tout') => {
+// `testidId` is a separate, optional per-instance identifier (e.g. an index)
+// for callers that render a repeated list — it must not feed into `prefix`,
+// which drives CSS class names that CSS/tests already key off unindexed
+// (`.tout-title`, `.bento-card-title`), or every repeated item would get a
+// distinct, unstyled class name instead of a shared one.
+export const decorateTout = (el, prefix = 'tout', testidId = prefix) => {
   el.classList.add(prefix);
 
   // Author-driven icon: a STANDALONE `:icon:` (not one inside a link/button) is
@@ -45,7 +50,7 @@ export const decorateTout = (el, prefix = 'tout') => {
     const isArrowLink = a.querySelector('.icon-arrow');
     let role = idx === 0 ? 'primary' : 'secondary';
     if (isArrowLink) role = 'link';
-    a.dataset.testid ||= `${prefix}-cta-${role}`;
+    a.dataset.testid ||= `${testidId}-cta-${role}`;
     a.classList.add('btn', `btn-${role}`);
   });
 };

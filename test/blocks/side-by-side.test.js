@@ -194,4 +194,21 @@ describe('utils/touts decorateTout', () => {
     const a = el.querySelector('.tout-cta a');
     expect(a.dataset.testid).to.equal('custom');
   });
+
+  it('a caller rendering a repeated list (touts/bentos/side-by-side) can pass a per-item testidId so items do not collide', () => {
+    const makeItem = () => {
+      const el = document.createElement('div');
+      el.innerHTML = '<p>copy</p><p><a href="/a">A</a></p>';
+      return el;
+    };
+    const first = makeItem();
+    const second = makeItem();
+    decorateTout(first, 'tout', 'tout-0');
+    decorateTout(second, 'tout', 'tout-1');
+    expect(first.querySelector('.tout-cta a').dataset.testid).to.equal('tout-0-cta-primary');
+    expect(second.querySelector('.tout-cta a').dataset.testid).to.equal('tout-1-cta-primary');
+    // both still share the unindexed CSS class prefix — styling is unaffected
+    expect(first.classList.contains('tout')).to.be.true;
+    expect(second.classList.contains('tout')).to.be.true;
+  });
 });

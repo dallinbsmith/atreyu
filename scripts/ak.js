@@ -161,8 +161,11 @@ const decorateButton = (link) => {
   // (outside any named block) has no stable block prefix to key off.
   const block = link.closest('.block-content > div[class]');
   if (block) {
-    const role = [...link.classList].find((c) => c !== 'btn') ?? 'default';
-    link.dataset.testid ||= `${block.classList[0]}-cta-${role.replace('btn-', '')}`;
+    // Every modifier class, not just the first — a combined variant (e.g.
+    // ***<u>text</u>*** → btn-glass + btn-outline) must stay distinguishable
+    // from a plain glass button, not collapse to one shared testid.
+    const role = [...link.classList].filter((c) => c !== 'btn').map((c) => c.replace('btn-', '')).join('-') || 'default';
+    link.dataset.testid ||= `${block.classList[0]}-cta-${role}`;
   }
 };
 
