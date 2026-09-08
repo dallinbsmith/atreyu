@@ -10,6 +10,7 @@
     "lint:css-layers": "node tools/lint-css-layers.mjs",
     "lint": "npm run lint:js && npm run lint:css && npm run lint:css-layers",
     "test:eslint-rules": "node tools/eslint-rules/config-drift.test.js",
+    "test:stylelint-rules": "node tools/stylelint-rules/z-index-requires-token.test.js",
     "test": "wtr \"./test/**/*.test.(js|html)\" --node-resolve --port=2000 --coverage --concurrent-browsers 4",
     "test:watch": "npm test -- --watch",
     "test:file": "wtr --node-resolve --port=2000 --coverage",

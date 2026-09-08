@@ -21,7 +21,12 @@ export default defineConfig([
       },
     },
     settings: {
-      'import/core-modules': ['eslint/config'],
+      // 'stylelint': this project's import/resolver (eslint-import-resolver-node)
+      // doesn't understand exports-only package.json fields (no `main`), which is
+      // all stylelint declares — a real resolver limitation, not an unresolved
+      // import. It genuinely resolves and runs fine at runtime (used by
+      // tools/stylelint-rules/z-index-requires-token.js and its test).
+      'import/core-modules': ['eslint/config', 'stylelint'],
     },
     rules: {
       'no-await-in-loop': 0,

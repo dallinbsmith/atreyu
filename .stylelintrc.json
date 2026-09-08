@@ -1,7 +1,9 @@
 {
   "extends": ["stylelint-config-standard"],
+  "plugins": ["./tools/stylelint-rules/z-index-requires-token.js"],
   "rules": {
     "no-descending-specificity": null,
-    "color-no-hex": true
+    "color-no-hex": true,
+    "atreyu/z-index-requires-token": true
   }
 }
