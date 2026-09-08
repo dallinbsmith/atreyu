@@ -51,9 +51,8 @@
     /* Pulled up to overlap hero-cards-transition (Falkor's `--sequence-top-offset`),
        so the scrub range begins at the page top — the video is already running
        behind the hero (which is z-index:1) and is revealed in motion as the hero
-       scrolls away. Uses the same shared --hero-scrub-stage-height token
-       hero-cards-transition.css sizes its own scrub stage with (styles.css) —
-       do not hardcode 150vh here again; this and that file must always agree. */
+       scrolls away. Shares --hero-scrub-stage-height with that block's own
+       min-height (see styles.css) — never hardcode this value here. */
     margin-top: calc(var(--hero-scrub-stage-height) * -1);
 
     /* scrubbed video sits behind the text, pinned for the whole scroll */

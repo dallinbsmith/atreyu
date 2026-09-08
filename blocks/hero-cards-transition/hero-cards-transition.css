@@ -23,7 +23,8 @@
        needs to sit above whatever content is pulled up to overlap this hero.
        Falkor's original "manifesto" module did this; no manifesto block has
        been built here yet, but image-sequence.css does the identical thing
-       today via the shared --hero-scrub-stage-height token below. */
+       today (see --hero-scrub-stage-height's comment in styles.css for the
+       full cross-block coupling this token exists to prevent drifting). */
     z-index: 1;
 
     /* Full-bleed to the top: cancel the page's header clearance (body padding =
@@ -315,11 +316,9 @@
   }
 
   /* =====================================================================
-     SCRUB MODE — pinned stage scrubbed by --progress, height set by the
-     shared --hero-scrub-stage-height token (styles.css) — image-sequence.css
-     negative-margins itself up by the same token to start its own scrub
-     range exactly where this one ends. Don't hardcode this height again;
-     change the shared token if it ever needs to.
+     SCRUB MODE — pinned stage scrubbed by --progress, height set by
+     --hero-scrub-stage-height (see styles.css for why this is a shared
+     token, not a literal — image-sequence.css depends on this exact value).
      Cards are absolutely positioned in 5 staggered columns (3 on mobile),
      with per-column parallax ratios and max opacities matching Falkor.
      ===================================================================== */
