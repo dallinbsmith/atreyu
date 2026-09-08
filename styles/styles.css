@@ -172,10 +172,27 @@
        `isolation: isolate`/`overflow: hidden`. Reach for a token below only
        when an element uses `position: fixed` or is appended outside its own
        block's DOM subtree (e.g. document.body) — see .claude/rules/css.md's
-       "Z-Index and Stacking Contexts" section. */
-    --z-index-body-overlay: 20; /* non-modal fixed/body-appended UI (e.g. a hover-preview card) */
-    --z-index-nav: 100; /* the fixed header */
-    --z-index-modal: 110; /* anything that must sit above page chrome: real modals, and the skip-to-content link on focus */
+       "Z-Index and Stacking Contexts" section. Stylelint enforces this: any
+       raw z-index on a position: fixed element (tools/stylelint-rules/
+       z-index-requires-token.js) is a lint error, not just a documented
+       convention.
+
+       Pre-allocated with real gaps (matching the industry-standard pattern —
+       Bootstrap/Microsoft's Atlas Design system both use the same shape) so a
+       genuinely new tier has an obvious slot instead of requiring a fresh
+       judgment call each time. Every tier below is labeled with its real
+       current consumer, or "reserved" if none exists yet — pre-allocating the
+       SLOT is not the same as pretending something is built that isn't. */
+    --z-index-body-overlay: 20; /* non-modal fixed/body-appended UI. Real consumer: quote-interactive's .qi-hover. */
+    --z-index-toast: 40; /* reserved — a future toast/notification/consent-banner system. No consumer yet. */
+    --z-index-nav: 100; /* the fixed header. Real consumer: header.css. */
+
+    /* Derived from --z-index-nav, not a second independent number — this is
+       the one relationship with real bug history (header.css used to ignore
+       the scale entirely and render above every modal in the app). Deriving
+       it means a future change to --z-index-nav can't silently put modal
+       below nav again; the +10 gap is preserved automatically. */
+    --z-index-modal: calc(var(--z-index-nav) + 10); /* anything that must sit above page chrome: real modals, and the skip-to-content link on focus */
 
     /* easing tokens — from Frame.io variables.css */
     --ease-in: cubic-bezier(0.49, 0.025, 0.65, 0.65);

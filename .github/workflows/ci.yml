@@ -53,6 +53,9 @@ jobs:
       - name: Run ESLint rule tests
         run: npm run test:eslint-rules
 
+      - name: Run Stylelint rule tests
+        run: npm run test:stylelint-rules
+
       - name: Run tests
         run: npm test
 
