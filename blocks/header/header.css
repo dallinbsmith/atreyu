@@ -9,7 +9,7 @@
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1000;
+    z-index: var(--z-index-nav);
     overflow: hidden;
     max-height: var(--header-height);
     background-color: var(--color-alpha-dark-30);
@@ -322,7 +322,12 @@
           position: absolute;
           left: auto;
           right: 0;
-          z-index: 1001;
+
+          /* Local, not global — already contained by header's own stacking
+             context (position: fixed + z-index: var(--z-index-nav) above);
+             this only needs to out-rank the sibling .menu/.mega-menu panel
+             it overlaps, not anything outside header. */
+          z-index: 1;
         }
       }
 
