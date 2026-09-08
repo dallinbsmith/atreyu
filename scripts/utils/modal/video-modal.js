@@ -54,3 +54,16 @@ export const openVideoModal = (wistiaId, title, triggerEl) => {
   releaseTrap = openModal(modal, '.video-modal-close');
   announce(`${title || 'Video'} opened`);
 };
+
+// Finds a Wistia link inside `container` and wires it to open the modal
+// instead of navigating — shared by any block with a "Watch the Video" CTA
+// (hero.js, hero-screen.js) rather than each reimplementing the same find/wire.
+export const wireVideoModalLinks = (container) => {
+  const link = [...container.querySelectorAll('a')].find((a) => WISTIA_RE.test(a.href));
+  if (!link) return;
+  const [, id] = link.href.match(WISTIA_RE);
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    openVideoModal(id, link.textContent.trim(), link);
+  });
+};

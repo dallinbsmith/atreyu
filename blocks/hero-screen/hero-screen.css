@@ -1,0 +1,94 @@
+@layer blocks {
+  .hero-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-xxl) var(--spacing-m) var(--spacing-xl);
+    text-align: center;
+    overflow: hidden;
+    isolation: isolate;
+
+    .hero-screen-content {
+      max-width: 44ch;
+
+      .rt-eyebrow {
+        display: inline-block;
+        margin-bottom: var(--spacing-m);
+        text-transform: uppercase;
+        letter-spacing: var(--eyebrow-letter-spacing);
+        font-size: var(--eyebrow-font-size);
+        font-weight: 400;
+        color: var(--color-alpha-light-70);
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 var(--spacing-m);
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+      }
+
+      p {
+        margin: 0 0 var(--spacing-l);
+        color: var(--color-alpha-light-70);
+      }
+
+      p:has(a) {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--spacing-m);
+      }
+    }
+
+    .hero-screen-media {
+      position: relative;
+      width: min(100%, var(--grid-container-width));
+      margin-top: var(--spacing-xl);
+
+      /* Grid stacking (not the block's default flow) so the video and its
+         poster picture occupy the same cell and genuinely overlap during the
+         canplay hand-off in decorateVideoMedia() — plain flow would stack
+         them vertically instead, since neither has an a-priori aspect ratio
+         to size an absolutely-positioned overlay against. */
+      display: grid;
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: -20% -15%;
+        z-index: -1;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse 55% 55% at 50% 50%,
+          color-mix(in srgb, var(--color-cobalt) 30%, transparent),
+          color-mix(in srgb, var(--color-iris) 16%, transparent) 45%,
+          transparent 75%
+        );
+      }
+
+      picture,
+      video,
+      img {
+        grid-area: 1 / 1;
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+    }
+
+    &.no-glow .hero-screen-media::before {
+      content: none;
+    }
+  }
+
+  @media (width >= 768px) {
+    .hero-screen {
+      padding: calc(var(--spacing-xxl) * 2) var(--spacing-l) var(--spacing-xxl);
+
+      .hero-screen-content {
+        max-width: 60ch;
+      }
+    }
+  }
+}
