@@ -1,54 +1,7 @@
-import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { decorateRichText } from '../../scripts/utils/richtext.js';
-import { openVideoModal, WISTIA_RE } from '../../scripts/utils/modal/video-modal.js';
+import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
 import { createElement } from '../../scripts/utils/dom.js';
-
-const setBackgroundFocus = (img) => {
-  const { title } = img.dataset;
-  if (!title?.includes('data-focal')) return;
-  delete img.dataset.title;
-  const [x, y] = title.split(':')[1].split(',');
-  img.style.objectPosition = `${x}% ${y}%`;
-};
-
-const decorateBackground = (bg) => {
-  const bgPic = bg.querySelector('picture');
-  if (!bgPic) return;
-
-  const img = bgPic.querySelector('img');
-  setBackgroundFocus(img);
-
-  const vidLink = bgPic.closest('a[href*=".mp4"]');
-  if (!vidLink) return;
-  if (!shouldAnimate()) {
-    vidLink.remove();
-    return;
-  }
-  const video = document.createElement('video');
-  video.src = vidLink.href;
-  video.loop = true;
-  video.muted = true;
-  video.inert = true;
-  video.setAttribute('playsinline', '');
-  video.setAttribute('preload', 'none');
-  video.load();
-  video.addEventListener('canplay', () => {
-    video.play();
-    bgPic.remove();
-  });
-  vidLink.parentElement.append(video, bgPic);
-  vidLink.remove();
-};
-
-const decorateVideoModalCta = (fg) => {
-  const link = [...fg.querySelectorAll('a')].find((a) => WISTIA_RE.test(a.href));
-  if (!link) return;
-  const [, id] = link.href.match(WISTIA_RE);
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-    openVideoModal(id, link.textContent.trim(), link);
-  });
-};
+import { decorateVideoMedia } from '../../scripts/utils/media.js';
 
 const decorateForeground = (fg) => {
   [...fg.children].forEach((child, idx) => {
@@ -78,12 +31,12 @@ export default async (el) => {
   contentRows.forEach((row) => fg.append(...row.children));
   el.replaceChildren(fg);
   decorateForeground(fg);
-  decorateVideoModalCta(fg);
+  wireVideoModalLinks(fg);
 
   if (bgRow) {
     const bg = createElement('div', { className: 'hero-background' });
     bg.append(...bgRow.children);
-    decorateBackground(bg);
+    decorateVideoMedia(bg);
     el.prepend(bg);
   }
   decorateRichText(el);
