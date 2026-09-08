@@ -371,7 +371,7 @@
     padding: var(--spacing-s) var(--spacing-m);
     font-size: var(--body-font-size-s);
     text-decoration: none;
-    border-radius: var(--radius-4);
+    border-radius: var(--radius-2);
 
     &:focus {
       position: fixed;

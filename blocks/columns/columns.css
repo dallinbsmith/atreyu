@@ -1,4 +1,14 @@
 @layer blocks {
+  /* Set by columns.js via inline style (`row.style = '--child-count: N'`),
+     never a fixed value here — @property registers its type so it's a real,
+     typed custom property (not a magic undeclared string) and so this file's
+     own var(--child-count) usage resolves as known to CSS tooling. */
+  @property --child-count {
+    syntax: '<integer>';
+    inherits: true;
+    initial-value: 1;
+  }
+
   .columns {
     --columns-gap: 0;
 

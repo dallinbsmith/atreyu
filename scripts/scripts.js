@@ -1,4 +1,6 @@
-import { loadArea, loadStyle, setConfig } from './ak.js';
+import {
+  getConfig, loadArea, loadStyle, setConfig,
+} from './ak.js';
 import { runExperiment } from './utils/analytics/experimentation.js';
 
 // frame.io is the canonical production host (ARCHITECTURE-DECISIONS.md); www.frame.io
@@ -53,9 +55,9 @@ const loadFonts = () => {
     loadStyle('/styles/fonts.css');
     return;
   }
-  loadStyle('/styles/fonts.css').then(() => {
-    sessionStorage.setItem('fonts-loaded', 'true');
-  });
+  loadStyle('/styles/fonts.css')
+    .then(() => sessionStorage.setItem('fonts-loaded', 'true'))
+    .catch((ex) => getConfig().log(ex));
 };
 
 export const loadPage = async () => {
@@ -69,7 +71,15 @@ await loadPage();
 (() => {
   const { searchParams } = new URL(window.location.href);
   const hasPreview = searchParams.has('dapreview');
-  if (hasPreview) import('./da/da.js').then((mod) => mod.default(loadPage));
+  if (hasPreview) {
+    import('./da/da.js')
+      .then((mod) => mod.default(loadPage))
+      .catch((ex) => getConfig().log(ex));
+  }
   const hasQE = searchParams.has('quick-edit');
-  if (hasQE) import('./quick-edit/quick-edit.js').then((mod) => mod.default());
+  if (hasQE) {
+    import('./quick-edit/quick-edit.js')
+      .then((mod) => mod.default())
+      .catch((ex) => getConfig().log(ex));
+  }
 })();

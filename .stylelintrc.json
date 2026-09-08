@@ -1,9 +1,19 @@
 {
   "extends": ["stylelint-config-standard"],
-  "plugins": ["./tools/stylelint-rules/z-index-requires-token.js"],
+  "plugins": [
+    "./tools/stylelint-rules/z-index-requires-token.js",
+    "stylelint-declaration-strict-value",
+    "stylelint-value-no-unknown-custom-properties"
+  ],
   "rules": {
     "no-descending-specificity": null,
     "color-no-hex": true,
-    "atreyu/z-index-requires-token": true
+    "atreyu/z-index-requires-token": true,
+    "scale-unlimited/declaration-strict-value": ["/color$/", {
+      "ignoreValues": ["currentColor", "inherit", "transparent", "unset", "initial", "none"]
+    }],
+    "csstools/value-no-unknown-custom-properties": [true, {
+      "importFrom": ["styles/styles.css"]
+    }]
   }
 }

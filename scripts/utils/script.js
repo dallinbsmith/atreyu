@@ -3,8 +3,8 @@ export default async (src) => {
   const { promise, resolve, reject } = Promise.withResolvers();
   const script = document.createElement('script');
   script.src = src;
-  script.onload = resolve;
-  script.onerror = reject;
+  script.addEventListener('load', resolve);
+  script.addEventListener('error', reject);
   document.head.append(script);
   return promise;
 };

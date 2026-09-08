@@ -40,19 +40,19 @@ export const rovingTabindex = (container, items, options = {}) => {
 
   const onKeydown = (e) => {
     const current = elements.findIndex((el) => el.getAttribute('tabindex') === '0');
-    let next;
+    // In-bounds, moves by `delta`. Out-of-bounds: wraps around if `wrap`,
+    // otherwise stays at `current` (a no-op once compared below).
+    const advance = (delta) => {
+      const proposed = current + delta;
+      if (proposed >= 0 && proposed < elements.length) return proposed;
+      return wrap ? (proposed + elements.length) % elements.length : current;
+    };
 
-    if (nextKeys.includes(e.key)) {
-      next = current + 1;
-      if (next >= elements.length) next = wrap ? 0 : current;
-    } else if (prevKeys.includes(e.key)) {
-      next = current - 1;
-      if (next < 0) next = wrap ? elements.length - 1 : current;
-    } else if (e.key === 'Home') {
-      next = 0;
-    } else if (e.key === 'End') {
-      next = elements.length - 1;
-    }
+    let next;
+    if (nextKeys.includes(e.key)) next = advance(1);
+    else if (prevKeys.includes(e.key)) next = advance(-1);
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = elements.length - 1;
 
     if (next != null && next !== current) {
       e.preventDefault();

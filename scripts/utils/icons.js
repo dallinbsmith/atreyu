@@ -9,7 +9,7 @@ const fetchIcon = (name) => {
     // Only keep a failed/empty result cached long enough for concurrent callers to
     // share it — delete it once settled so a later use of the same icon retries
     // instead of staying permanently unupgraded for the rest of the session.
-    entry.then((text) => { if (!text) cache.delete(name); });
+    entry.then((text) => !text && cache.delete(name)).catch(() => {});
     cache.set(name, entry);
   }
   return cache.get(name);

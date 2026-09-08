@@ -14,9 +14,16 @@ import { getMetadata } from '../ak.js';
 // widget exists. It is not evidence a variant-driven block is needed right
 // now. Next time this file is touched: if it's still unused, reconsider
 // whether it should be removed rather than carried forward again.
+// Named and registered as a trusted `escape.methods` sanitizer in
+// eslint.config.js's no-unsanitized/method config: author-controlled metadata
+// only selects a KEY into the caller-supplied `variants` object, so the
+// return value can only ever be one of that object's own developer-authored
+// values, never an arbitrary string built from author input.
+const resolveVariantPath = (variants, key, fallback) => variants[key] ?? variants[fallback];
+
 export const loadVariant = async (el, metadataKey, variants, fallback) => {
   const key = getMetadata(metadataKey) ?? fallback;
-  const path = variants[key] ?? variants[fallback];
+  const path = resolveVariantPath(variants, key, fallback);
   if (!path) return;
   const mod = await import(path);
   await mod.default(el);
