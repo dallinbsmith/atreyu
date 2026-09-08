@@ -17,7 +17,14 @@
 
   .hero-cards-transition {
     position: relative;
-    z-index: 1; /* sit above the manifesto, which is pulled up -150vh to overlap this hero */
+
+    /* Local z-index, contained by this block's own stacking context (see
+       .claude/rules/css.md's "Z-Index and Stacking Contexts" section) — only
+       needs to sit above whatever content is pulled up to overlap this hero.
+       Falkor's original "manifesto" module did this; no manifesto block has
+       been built here yet, but image-sequence.css does the identical thing
+       today via the shared --hero-scrub-stage-height token below. */
+    z-index: 1;
 
     /* Full-bleed to the top: cancel the page's header clearance (body padding =
        --header-height) + the first section's top padding (2rem) so the sticky
@@ -308,12 +315,16 @@
   }
 
   /* =====================================================================
-     SCRUB MODE — pinned 150vh stage scrubbed by --progress.
+     SCRUB MODE — pinned stage scrubbed by --progress, height set by the
+     shared --hero-scrub-stage-height token (styles.css) — image-sequence.css
+     negative-margins itself up by the same token to start its own scrub
+     range exactly where this one ends. Don't hardcode this height again;
+     change the shared token if it ever needs to.
      Cards are absolutely positioned in 5 staggered columns (3 on mobile),
      with per-column parallax ratios and max opacities matching Falkor.
      ===================================================================== */
   .hero-cards-transition.hc-scrub {
-    min-height: 150vh;
+    min-height: var(--hero-scrub-stage-height);
 
     .hc-stage {
       position: sticky;

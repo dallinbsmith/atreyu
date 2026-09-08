@@ -15,6 +15,7 @@
 
     .bento-card {
       position: relative;
+      isolation: isolate;
       display: flex;
       overflow: hidden;
       flex-direction: column;
