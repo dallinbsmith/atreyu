@@ -255,13 +255,16 @@
     }
   }
 
-  /* Hover card — appended to document.body so must be outside .quote-interactive scope */
+  /* Hover card — appended to document.body so must be outside .quote-interactive scope.
+     Escapes this block's own stacking context (position: fixed + body-appended), so it
+     needs the shared global token, not a block-local-looking raw number — see
+     .claude/rules/css.md's "Z-Index and Stacking Contexts" section. */
   @media (width >= 768px) {
     .qi-hover {
       position: fixed;
       top: 0;
       left: 0;
-      z-index: 3;
+      z-index: var(--z-index-body-overlay);
       pointer-events: none;
       transform: translate3d(var(--hover-x, 0), var(--hover-y, 0), 0);
       transition: transform var(--duration-300) var(--ease-out);

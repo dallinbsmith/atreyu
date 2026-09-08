@@ -166,16 +166,16 @@
     /* font secondary */
     --font-secondary: montserrat, "Montserrat-fallback", "Courier New", monospace;
 
-    /* z-index scale */
-    --z-index-neg: -1;
-    --z-index-0: 0;
-    --z-index-1: 1;
-    --z-index-2: 2;
-    --z-index-3: 3;
-    --z-index-5: 5;
-    --z-index-10: 10;
-    --z-index-nav: 100;
-    --z-index-modal: 110;
+    /* z-index scale — GLOBAL tier only. A block's own internal layering
+       (background-behind-text, decorative pseudo-elements) never belongs
+       here — use raw -1/0/1/2/3 directly, contained by that block's own
+       `isolation: isolate`/`overflow: hidden`. Reach for a token below only
+       when an element uses `position: fixed` or is appended outside its own
+       block's DOM subtree (e.g. document.body) — see .claude/rules/css.md's
+       "Z-Index and Stacking Contexts" section. */
+    --z-index-body-overlay: 20; /* non-modal fixed/body-appended UI (e.g. a hover-preview card) */
+    --z-index-nav: 100; /* the fixed header */
+    --z-index-modal: 110; /* anything that must sit above page chrome: real modals, and the skip-to-content link on focus */
 
     /* easing tokens — from Frame.io variables.css */
     --ease-in: cubic-bezier(0.49, 0.025, 0.65, 0.65);
