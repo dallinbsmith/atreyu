@@ -75,6 +75,15 @@
         width: 100%;
         height: auto;
       }
+
+      /* Base chrome lives in styles.css's shared .video-pause-toggle utility;
+         only position is block-specific. Absolute positioning takes it out
+         of the grid's auto-placement, so it doesn't need its own grid-area
+         alongside the picture/video/img stack above. */
+      .video-pause-toggle {
+        top: var(--spacing-s);
+        right: var(--spacing-s);
+      }
     }
 
     &.no-glow .hero-screen-media::before {

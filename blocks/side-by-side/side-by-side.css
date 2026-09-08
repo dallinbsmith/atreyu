@@ -56,7 +56,7 @@
     }
 
     .side-by-side-media {
-      aspect-ratio: var(--side-by-side-media-ratio, 0.888);
+      aspect-ratio: var(--side-by-side-media-ratio, var(--media-aspect-ratio-default));
       border-radius: var(--radius-16);
       overflow: hidden;
 
