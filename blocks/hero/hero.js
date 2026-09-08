@@ -18,7 +18,7 @@ const decorateForeground = (fg) => {
   });
 };
 
-export default async (el) => {
+export default (el) => {
   // Row meaning is classified by content shape, never by position/count: the
   // background row is whichever row (if any) holds a picture — not "whatever
   // is left after popping the last row" — so an unexpected extra row is

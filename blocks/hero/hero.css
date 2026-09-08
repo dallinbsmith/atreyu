@@ -80,6 +80,15 @@
       }
     }
 
+    /* Base chrome lives in styles.css's shared .video-pause-toggle utility;
+       only position is block-specific. Anchors to .hero (the nearest
+       positioned ancestor) — .hero-background itself is intentionally
+       static, same as its picture/video children. */
+    .video-pause-toggle {
+      top: 0;
+      right: 0;
+    }
+
     .hero-foreground {
       min-height: var(--min-height);
       padding: 120px 0 80px;

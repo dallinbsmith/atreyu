@@ -1,0 +1,108 @@
+@layer blocks {
+  .hero-side-by-side {
+    display: grid;
+    grid-template-columns: 1fr; /* mobile: single column, DOM order text→media */
+    gap: var(--spacing-xl);
+    align-items: center;
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+    padding: var(--spacing-xxl) var(--spacing-m);
+
+    em {
+      font-style: normal;
+      color: var(--em-color, var(--color-alpha-light-50));
+    }
+
+    .hero-side-by-side-content {
+      .rt-eyebrow {
+        display: inline-block;
+        margin-bottom: var(--spacing-m);
+        text-transform: uppercase;
+        letter-spacing: var(--eyebrow-letter-spacing);
+        font-size: var(--eyebrow-font-size);
+        font-weight: 400;
+        color: var(--color-alpha-light-70);
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 var(--spacing-m);
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+      }
+
+      p {
+        margin: 0 0 var(--spacing-l);
+        color: var(--color-alpha-light-70);
+      }
+
+      p:has(a) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-m);
+      }
+    }
+
+    .hero-side-by-side-media {
+      position: relative;
+      aspect-ratio: var(--hero-side-by-side-media-ratio, var(--media-aspect-ratio-default));
+      border-radius: var(--radius-16);
+      overflow: hidden;
+
+      picture,
+      video {
+        position: absolute;
+        inset: 0;
+      }
+
+      picture img,
+      video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Base chrome lives in styles.css's shared .video-pause-toggle utility;
+         only position is block-specific. */
+      .video-pause-toggle {
+        top: var(--spacing-s);
+        right: var(--spacing-s);
+      }
+    }
+
+    &.no-media,
+    &.no-text {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (width >= 768px) {
+    .hero-side-by-side {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--grid-gutter-width);
+      padding: calc(var(--spacing-xxl) * 2) var(--spacing-l);
+
+      /* DOM is text→media; media visually leads by default (order:-1),
+         matching the body-content side-by-side block's own convention. */
+      .hero-side-by-side-media {
+        order: -1;
+      }
+
+      &.media-right .hero-side-by-side-media {
+        order: 0;
+      }
+
+      &.no-media,
+      &.no-text {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+
+  @media (width >= 1240px) {
+    .hero-side-by-side {
+      grid-template-columns: 6fr 5fr;
+    }
+  }
+}

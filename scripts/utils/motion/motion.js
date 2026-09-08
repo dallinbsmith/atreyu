@@ -17,8 +17,13 @@ export const getTransitionDuration = (ms) => (shouldAnimate() ? ms : 0);
 // blocks or reach into config/content), not a page. A caller that already
 // has locale-aware content (e.g. via scripts/utils/placeholders.js) passes
 // its own strings through; callers that don't just get the default.
+// onToggle(paused), if given, fires synchronously from the same click handler
+// that flips the class/label/aria state — a caller needing a side effect tied
+// to the toggle (e.g. actually pausing a <video>, not just a CSS animation)
+// should use this rather than adding a second listener on the returned button
+// and re-reading its class, which only works by accident of registration order.
 export const addPauseToggle = (container, animatedEl, {
-  className = 'motion-pause-toggle', pauseClass = 'is-paused', labels = { pause: 'Pause', play: 'Play' },
+  className = 'motion-pause-toggle', pauseClass = 'is-paused', labels = { pause: 'Pause', play: 'Play' }, onToggle,
 } = {}) => {
   const button = document.createElement('button');
   button.type = 'button';
@@ -29,6 +34,7 @@ export const addPauseToggle = (container, animatedEl, {
     const paused = animatedEl.classList.toggle(pauseClass);
     button.setAttribute('aria-pressed', String(paused));
     button.textContent = paused ? labels.play : labels.pause;
+    onToggle?.(paused);
   });
   container.append(button);
   return button;
