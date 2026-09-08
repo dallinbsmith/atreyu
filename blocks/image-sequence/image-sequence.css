@@ -48,11 +48,13 @@
        or, while invisible, intercepts clicks on — the hero buttons. */
     z-index: 0;
 
-    /* Pulled up to overlap the full-height hero that precedes it (Falkor's
-       `--sequence-top-offset: -150vh`), so the scrub range begins at the page top
-       — the video is already running behind the hero (which is z-index:1) and is
-       revealed in motion as the hero scrolls away. Couples to the hero's 150vh. */
-    margin-top: -150vh;
+    /* Pulled up to overlap hero-cards-transition (Falkor's `--sequence-top-offset`),
+       so the scrub range begins at the page top — the video is already running
+       behind the hero (which is z-index:1) and is revealed in motion as the hero
+       scrolls away. Uses the same shared --hero-scrub-stage-height token
+       hero-cards-transition.css sizes its own scrub stage with (styles.css) —
+       do not hardcode 150vh here again; this and that file must always agree. */
+    margin-top: calc(var(--hero-scrub-stage-height) * -1);
 
     /* scrubbed video sits behind the text, pinned for the whole scroll */
     .prompter-media {

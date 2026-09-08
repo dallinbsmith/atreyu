@@ -275,6 +275,13 @@
     /* misc */
     --header-height: 72px;
     --breadcrumb-height: 24px;
+
+    /* hero-cards-transition's pinned scrub stage height. image-sequence.css
+       negative-margins itself up by this same amount to start its own scrub
+       range where hero-cards-transition's ends — a real cross-block coupling
+       that used to be two independently hardcoded 150vh literals with only a
+       prose comment in each file hoping the other stayed in sync. */
+    --hero-scrub-stage-height: 150vh;
   }
   /* stylelint-enable color-no-hex */
 
