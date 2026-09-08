@@ -13,9 +13,7 @@ export default (el) => {
     }
   }
 
-  const ctaPara = [...inner.querySelectorAll('p')]
-    .reverse()
-    .find((p) => p.querySelector('a'));
+  const ctaPara = [...inner.querySelectorAll('p')].findLast((p) => p.querySelector('a'));
   if (ctaPara) {
     ctaPara.classList.add('bookend-cta');
     const links = ctaPara.querySelectorAll('a');

@@ -1,4 +1,5 @@
 import { loadPage } from '../scripts.js';
+import { resolvePreviewOrigin } from '../utils/preview-origin.js';
 
 const importMap = {
   imports: {
@@ -12,11 +13,6 @@ const addImportmap = () => {
   importmapEl.type = 'importmap';
   importmapEl.textContent = JSON.stringify(importMap);
   document.head.appendChild(importmapEl);
-};
-
-const loadMoudle = async (origin, payload) => {
-  const { default: loadQuickEdit } = await import(`${origin}/nx/public/plugins/quick-edit/quick-edit.js`);
-  loadQuickEdit(payload, loadPage);
 };
 
 // creates sidekick payload when loading QE from query param
@@ -36,15 +32,19 @@ const generateSidekickPayload = () => {
   };
 };
 
-const init = (payload) => {
+const init = async (payload) => {
   const { search } = window.location;
   const ref = new URLSearchParams(search).get('quick-edit');
-  let origin;
-  if (ref === 'on' || !ref) origin = 'https://da.live';
-  if (ref === 'local') origin = 'http://localhost:6456';
-  if (!origin) origin = `https://${ref}--da-nx--adobe.aem.live`;
+  const origin = resolvePreviewOrigin(ref, {
+    onOrigin: 'https://da.live',
+    localOrigin: 'http://localhost:6456',
+    branchHost: 'da-nx--adobe.aem.live',
+    treatEmptyAsOn: true,
+  });
+  if (!origin) return;
   addImportmap();
-  loadMoudle(origin, payload || generateSidekickPayload());
+  const { default: loadQuickEdit } = await import(`${origin}/nx/public/plugins/quick-edit/quick-edit.js`);
+  loadQuickEdit(payload || generateSidekickPayload(), loadPage);
 };
 
 export default init;

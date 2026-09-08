@@ -14,7 +14,7 @@ export default async (ex, el) => {
     const title = document.createElement('p');
     title.className = 'title';
     title.textContent = 'Error';
-    el.insertAdjacentElement('afterend', wrapper);
+    el.after(wrapper);
     wrapper.append(title, el);
   }
 };

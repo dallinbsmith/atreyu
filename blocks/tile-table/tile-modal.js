@@ -1,4 +1,5 @@
 import { announce } from '../../scripts/utils/a11y.js';
+import { parseSvg } from '../../scripts/utils/dom.js';
 import {
   wireModalClose, openModal, closeModal, clampIndex,
 } from '../../scripts/utils/modal/modal.js';
@@ -48,17 +49,17 @@ export const initTileModal = (items) => {
     const backdrop = makeEl('div', 'tt-modal-backdrop');
     const card = makeEl('div', 'tt-modal-card');
     const closeBtn = makeEl('button', 'tt-modal-close', { 'aria-label': 'Close' });
-    closeBtn.innerHTML = CLOSE_SVG;
+    closeBtn.append(parseSvg(CLOSE_SVG));
     const body = makeEl('div', 'tt-modal-body');
     nameEl = makeEl('h3', 'tt-modal-name');
     detailEl = makeEl('p', 'tt-modal-detail');
     linkEl = makeEl('a', 'btn btn-secondary', { target: '_blank', rel: 'noopener noreferrer' });
     const nav = makeEl('div', 'tt-modal-nav');
     prevBtn = makeEl('button', 'tt-modal-prev', { 'aria-label': 'Previous' });
-    prevBtn.innerHTML = ARROW_SVG;
+    prevBtn.append(parseSvg(ARROW_SVG));
     counterEl = makeEl('span', 'tt-modal-counter');
     nextBtn = makeEl('button', 'tt-modal-next', { 'aria-label': 'Next' });
-    nextBtn.innerHTML = ARROW_SVG;
+    nextBtn.append(parseSvg(ARROW_SVG));
 
     body.append(nameEl, detailEl, linkEl);
     nav.append(prevBtn, counterEl, nextBtn);

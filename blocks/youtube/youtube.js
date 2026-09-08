@@ -1,4 +1,5 @@
 import { inject } from '../../scripts/utils/seo/jsonld.js';
+import { parseSvg } from '../../scripts/utils/dom.js';
 
 const THUMB_BASE = 'https://i.ytimg.com/vi';
 const EMBED_BASE = 'https://www.youtube-nocookie.com/embed';
@@ -47,12 +48,12 @@ export default (a) => {
   img.loading = 'lazy';
   img.width = 1280;
   img.height = 720;
-  img.onerror = () => { img.src = `${THUMB_BASE}/${encodeURIComponent(id)}/hqdefault.jpg`; };
+  img.addEventListener('error', () => { img.src = `${THUMB_BASE}/${encodeURIComponent(id)}/hqdefault.jpg`; });
 
   const btn = document.createElement('button');
   btn.className = 'youtube-play';
   btn.setAttribute('aria-label', `Play ${title}`);
-  btn.innerHTML = playSvg();
+  btn.append(parseSvg(playSvg()));
 
   container.append(img, btn);
   container.addEventListener('click', () => loadIframe(container, id, params, title), { once: true });

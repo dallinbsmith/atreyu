@@ -16,3 +16,10 @@ export const createElement = (tag, attrs, ...children) => {
   el.append(...children.flat(Infinity).filter((c) => c != null && c !== false));
   return el;
 };
+
+// Parses an SVG markup string into a real element — same DOMParser approach
+// already used for author-supplied SVGs in icons.js/partner-logo.js. Lets a
+// caller avoid `el.innerHTML = markup` entirely (no-unsanitized/property
+// flags that regardless of whether `markup` is a fixed constant or not) by
+// building real nodes and appending them instead.
+export const parseSvg = (markup) => new DOMParser().parseFromString(markup, 'image/svg+xml').querySelector('svg');

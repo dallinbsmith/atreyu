@@ -14,7 +14,7 @@ import { slugify } from './slugify.js';
 export const loadPartnerLogo = (target, name, maxHeight = 24) => fetch(`/img/partners/${slugify(name)}.svg`)
   .then((r) => (r.ok ? r.text() : ''))
   .then((svg) => {
-    if (!svg) return;
+    if (!svg) return undefined;
     target.replaceChildren(...sanitizeMarkup(svg).childNodes);
     const svgEl = target.querySelector('svg');
     const vb = svgEl?.getAttribute('viewBox')?.split(/\s+/).map(Number);
@@ -24,6 +24,7 @@ export const loadPartnerLogo = (target, name, maxHeight = 24) => fetch(`/img/par
       svgEl.style.width = `${Math.round(w)}px`;
       svgEl.style.height = `${Math.round(h)}px`;
     }
+    return svgEl;
   })
   .catch(() => {});
 

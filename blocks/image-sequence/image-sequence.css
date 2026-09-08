@@ -8,6 +8,21 @@
     inherits: true;
   }
 
+  /* Set by image-sequence.js via inline style, one per word (--count: total
+     words, --i: this word's index) — typed here so they're real, typed
+     custom properties rather than magic undeclared strings. */
+  @property --count {
+    syntax: '<number>';
+    initial-value: 0;
+    inherits: false;
+  }
+
+  @property --i {
+    syntax: '<number>';
+    initial-value: 0;
+    inherits: false;
+  }
+
   .image-sequence.prompter {
     max-width: 1100px;
     margin: 0 auto;

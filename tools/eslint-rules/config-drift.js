@@ -302,6 +302,39 @@ const noInlineEnvCheck = {
       + `designated environment classifier. This project already has one at ${ENV_SOURCE_FILES.join(', ')} — `
       + 'import its export instead of re-deriving the environment from a hostname/URL string here.';
 
+    // `envHost.includes('stage')` / `.startsWith(...)` / `.endsWith(...)`.
+    const checkSubstringMethod = (node, callee) => {
+      if (isExemptIdentifier(callee.object)) return;
+      const [arg] = node.arguments;
+      if (isEnvLiteral(arg)) {
+        context.report({ node, message: message(literalStringValue(arg)) });
+      }
+    };
+
+    // `/stage|staging/.test(envHost)`.
+    const checkRegexTest = (node, callee) => {
+      const [arg] = node.arguments;
+      if (isExemptIdentifier(arg)) return;
+      if (ENV_WORD_IN_PATTERN_RE.test(callee.object.regex.pattern)) {
+        context.report({ node, message: message(callee.object.regex.pattern) });
+      }
+    };
+
+    // `[...envWords].some/every/find((param) => obj.includes(param))` — see
+    // the comment on callbackChecksParam above.
+    const checkIterationMethod = (node, callee) => {
+      const envLiterals = callee.object.elements.filter(isEnvLiteral);
+      if (envLiterals.length === 0) return;
+      const [callback] = node.arguments;
+      if (!callback || !['ArrowFunctionExpression', 'FunctionExpression'].includes(callback.type)) return;
+      const [param] = callback.params;
+      if (!param || param.type !== 'Identifier') return;
+      if (callbackChecksParam(callback, param.name, isExemptIdentifier)) {
+        const words = envLiterals.map(literalStringValue).join('/');
+        context.report({ node, message: message(words) });
+      }
+    };
+
     return {
       ImportDeclaration: (node) => {
         const source = node.source.value;
@@ -319,36 +352,11 @@ const noInlineEnvCheck = {
         const methodName = callee.property.name;
 
         if (SUBSTRING_METHODS.includes(methodName)) {
-          if (isExemptIdentifier(callee.object)) return;
-          const [arg] = node.arguments;
-          if (isEnvLiteral(arg)) {
-            context.report({ node, message: message(literalStringValue(arg)) });
-          }
-          return;
-        }
-
-        if (methodName === 'test' && callee.object.type === 'Literal' && callee.object.regex) {
-          const [arg] = node.arguments;
-          if (isExemptIdentifier(arg)) return;
-          if (ENV_WORD_IN_PATTERN_RE.test(callee.object.regex.pattern)) {
-            context.report({ node, message: message(callee.object.regex.pattern) });
-          }
-          return;
-        }
-
-        // `[...envWords].some/every/find((param) => obj.includes(param))` —
-        // see the comment on callbackChecksParam above.
-        if (ITERATION_METHODS_WITH_CALLBACK.includes(methodName) && callee.object.type === 'ArrayExpression') {
-          const envLiterals = callee.object.elements.filter(isEnvLiteral);
-          if (envLiterals.length === 0) return;
-          const [callback] = node.arguments;
-          if (!callback || !['ArrowFunctionExpression', 'FunctionExpression'].includes(callback.type)) return;
-          const [param] = callback.params;
-          if (!param || param.type !== 'Identifier') return;
-          if (callbackChecksParam(callback, param.name, isExemptIdentifier)) {
-            const words = envLiterals.map(literalStringValue).join('/');
-            context.report({ node, message: message(words) });
-          }
+          checkSubstringMethod(node, callee);
+        } else if (methodName === 'test' && callee.object.type === 'Literal' && callee.object.regex) {
+          checkRegexTest(node, callee);
+        } else if (ITERATION_METHODS_WITH_CALLBACK.includes(methodName) && callee.object.type === 'ArrayExpression') {
+          checkIterationMethod(node, callee);
         }
       },
 

@@ -12,16 +12,26 @@ const createRow = ({ label, status, message, el }) => {
   const row = document.createElement('button');
   row.className = `validation-row validation-${status}`;
   row.type = 'button';
-  row.innerHTML = `<span class="validation-icon">${STATUS_ICONS[status]}</span>
-    <span class="validation-label">${label}</span>
-    <span class="validation-msg">${message}</span>`;
+  // Built via textContent, not innerHTML — `message` can embed real authored
+  // content (e.g. checkPartnerLogos()'s partner/logo name), so it must never
+  // be interpolated into markup unescaped.
+  const icon = document.createElement('span');
+  icon.className = 'validation-icon';
+  icon.textContent = STATUS_ICONS[status];
+  const labelEl = document.createElement('span');
+  labelEl.className = 'validation-label';
+  labelEl.textContent = label;
+  const msgEl = document.createElement('span');
+  msgEl.className = 'validation-msg';
+  msgEl.textContent = message;
+  row.append(icon, labelEl, msgEl);
   if (el) row.addEventListener('click', () => highlightEl(el));
   else row.disabled = true;
   return row;
 };
 
 export const removePanel = () => {
-  document.getElementById(PANEL_ID)?.remove();
+  document.querySelector(`#${PANEL_ID}`)?.remove();
   document.querySelectorAll('.validation-highlight').forEach((h) => h.classList.remove('validation-highlight'));
 };
 
@@ -57,8 +67,8 @@ export const updateRow = (panel, label, data) => {
   row.querySelector('.validation-msg').textContent = data.message;
   if (data.el) {
     row.disabled = false;
-    row.onclick = () => highlightEl(data.el);
+    row.addEventListener('click', () => highlightEl(data.el));
   }
 };
 
-export const isPanelOpen = () => !!document.getElementById(PANEL_ID);
+export const isPanelOpen = () => !!document.querySelector(`#${PANEL_ID}`);

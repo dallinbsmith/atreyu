@@ -28,7 +28,7 @@ export default async (a) => {
       : [fragment];
     for (const [idx, child] of children.entries()) {
       if (path.startsWith('/')) child.id = btoa(encodeURIComponent(`${path}/${idx + 1}`));
-      elToReplace.insertAdjacentElement('afterend', child);
+      elToReplace.after(child);
     }
     elToReplace.remove();
   }

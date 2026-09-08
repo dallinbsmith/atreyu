@@ -45,7 +45,7 @@ const loadEvent = async (a, event, defEvent) => {
     ? fragment.querySelectorAll(':scope > *')
     : [fragment];
   for (const child of children) {
-    elToReplace.insertAdjacentElement('afterend', child);
+    elToReplace.after(child);
   }
   elToReplace.remove();
 };

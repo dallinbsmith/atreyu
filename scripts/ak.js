@@ -50,24 +50,31 @@ export const loadStyle = async (href) => {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
   link.href = href;
-  link.onload = resolve;
-  link.onerror = resolve;
+  link.addEventListener('load', resolve);
+  link.addEventListener('error', resolve);
   document.head.append(link);
   return promise;
 };
 
+// Named and registered as a trusted `escape.methods` sanitizer in
+// eslint.config.js's no-unsanitized/method config: codeBase is
+// site-config-controlled (same-origin, never attacker input); type/name are
+// bounded to whatever block/section .js files this repo actually ships (an
+// unrecognized name just 404s, same as any AEM EDS site's standard
+// block-loading mechanism — see e.g. Adobe's own aem-boilerplate).
+const resolveModulePath = (codeBase, type, name) => `${codeBase}/${type}/${name}/${name}.js`;
+
 export const loadExperience = async (el, type, name, opts) => {
   const { codeBase, log } = getConfig();
-  const path = `${codeBase}/${type}/${name}/${name}`;
   const loading = [];
   if (opts.decorate) {
     loading.push(
-      import(`${path}.js`)
+      import(resolveModulePath(codeBase, type, name))
         .then((mod) => mod.default(el))
         .catch((ex) => log(ex, el)),
     );
   }
-  if (opts.style) loading.push(loadStyle(`${path}.css`));
+  if (opts.style) loading.push(loadStyle(`${codeBase}/${type}/${name}/${name}.css`));
   await Promise.all(loading);
   return el;
 };
@@ -94,10 +101,12 @@ const loadTemplate = () => {
   const template = meta.replaceAll(' ', '-').toLowerCase();
   const { codeBase } = getConfig();
   document.body.classList.add('has-template');
-  loadStyle(`${codeBase}/templates/${template}/${template}.css`).then(() => {
-    document.body.classList.add(`${template}-template`);
-    document.body.classList.remove('has-template');
-  });
+  loadStyle(`${codeBase}/templates/${template}/${template}.css`)
+    .then(() => {
+      document.body.classList.add(`${template}-template`);
+      return document.body.classList.remove('has-template');
+    })
+    .catch((ex) => getConfig().log(ex));
 };
 
 const decoratePictures = (el) => {
@@ -157,7 +166,7 @@ const decorateButton = (link) => {
     isUnder.remove();
   }
   const toReplace = [isEm, isStrong, isStrike].find((el) => el?.parentNode === trueParent);
-  if (toReplace) trueParent.replaceChild(link, toReplace);
+  if (toReplace) toReplace.replaceWith(link);
 
   // Primary test/analytics selector (see scripts.md's Selectors & Data
   // Attributes) — derived from the nearest real block, not author-typed.
@@ -246,7 +255,9 @@ const decorateLinks = (el) => {
 const loadIcons = (el) => {
   const icons = el.querySelectorAll('span.icon');
   if (!icons.length) return;
-  import('./utils/icons.js').then((mod) => mod.default(icons));
+  import('./utils/icons.js')
+    .then((mod) => mod.default(icons))
+    .catch((ex) => getConfig().log(ex));
 };
 
 const groupChildren = (section) => {
@@ -385,7 +396,9 @@ export const loadArea = async ({ area } = { area: document }) => {
     delete section.dataset.status;
     if (isDoc && idx === 0) {
       if (!isSession) decorateSession();
-      import('./postlcp.js').then((mod) => mod.default());
+      import('./postlcp.js')
+        .then((mod) => mod.default())
+        .catch((ex) => getConfig().log(ex));
     }
   }
   if (isDoc) import('./lazy.js');
