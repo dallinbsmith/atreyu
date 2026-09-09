@@ -1,7 +1,8 @@
-import { loadFragment, getReplaceEl } from '../../scripts/utils/fragment.js';
+import {
+  loadFragmentWithFallback, getReplaceEl, replaceElWithFragment,
+} from '../../scripts/utils/fragment.js';
 import { isPlatformHost } from '../../scripts/utils/platform-host.js';
-
-export { loadFragment };
+import { getConfig } from '../../scripts/ak.js';
 
 const getRequestPath = (a) => {
   const { hostname, pathname } = a;
@@ -17,19 +18,18 @@ const getRequestPath = (a) => {
 };
 
 export default async (a) => {
-  const path = getRequestPath(a);
+  if (a.dataset.fragmentDecorated) return;
+  a.dataset.fragmentDecorated = 'true';
 
-  const fragment = await loadFragment(path);
-  if (fragment) {
+  const path = getRequestPath(a);
+  const { locale, log } = getConfig();
+
+  try {
+    const fragment = await loadFragmentWithFallback([`${locale.prefix}${path}`, path]);
     const elToReplace = getReplaceEl(a);
-    const sections = fragment.querySelectorAll(':scope > .section');
-    const children = sections.length === 1
-      ? fragment.querySelectorAll(':scope > *')
-      : [fragment];
-    for (const [idx, child] of children.entries()) {
-      if (path.startsWith('/')) child.id = btoa(encodeURIComponent(`${path}/${idx + 1}`));
-      elToReplace.after(child);
-    }
-    elToReplace.remove();
+    replaceElWithFragment(elToReplace, fragment, path);
+  } catch (ex) {
+    log(ex, a);
+    a.remove();
   }
 };
