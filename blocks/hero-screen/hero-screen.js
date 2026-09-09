@@ -11,6 +11,13 @@ import { createElement } from '../../scripts/utils/dom.js';
 import { decorateVideoMedia } from '../../scripts/utils/media.js';
 
 export default (el) => {
+  // Idempotency guard — checked before any DOM restructuring below. A second
+  // decorate() call would otherwise re-find the same cells (rows sit at the
+  // same `:scope > div` depth as originally authored) and re-wire a second
+  // click listener onto the same still-present video link.
+  if (el.dataset.heroScreenDecorated) return;
+  el.dataset.heroScreenDecorated = 'true';
+
   // Row meaning is classified by content shape, never by position: the
   // media row is whichever row (if any) holds a picture; every other row's
   // content is merged into the centered text block rather than dropped.
