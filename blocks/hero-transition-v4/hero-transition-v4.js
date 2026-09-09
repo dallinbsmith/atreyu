@@ -12,13 +12,21 @@ import { onReveal } from '../../scripts/utils/motion/motion.js';
 import { createElement } from '../../scripts/utils/dom.js';
 
 export default (el) => {
-  // Row meaning is classified by content shape, never by position: the
-  // picture row is whichever row (if any) holds one; any other row's
-  // content is merged in rather than silently dropped, in case an author
-  // ever adds a stray extra row.
-  const rows = [...el.querySelectorAll(':scope > div')];
-  const picRow = rows.find((r) => r.querySelector('picture'));
-  const pic = picRow?.querySelector('picture');
+  // Idempotency guard — a second decorate() call (e.g. DA's live-preview
+  // reload path re-running loadBlock unconditionally) must not re-classify
+  // already-restructured DOM: doing so would strip a level of wrapping off
+  // any merged extra content on every subsequent call.
+  if (el.dataset.heroTransitionV4Decorated) return;
+  el.dataset.heroTransitionV4Decorated = 'true';
+
+  // Row meaning is classified by CELL, not by whole row: a row can hold more
+  // than one column (children of rows are cells), so a row that pairs the
+  // picture cell with a sibling text cell must not sweep that sibling cell
+  // away along with the picture. Mirrors hero.js's cells/bgCell/contentCells
+  // pattern (see F-66 in eds-poc-findings.md).
+  const cells = [...el.querySelectorAll(':scope > div > div')];
+  const picCell = cells.find((c) => c.querySelector('picture'));
+  const pic = picCell?.querySelector('picture');
   if (!pic) return;
 
   const img = pic.querySelector('img');
@@ -28,8 +36,8 @@ export default (el) => {
   }
 
   const media = createElement('div', { className: 'hero-transition-v4-media' }, pic);
-  const extra = rows.filter((r) => r !== picRow).flatMap((r) => [...r.children]);
+  const extra = cells.filter((c) => c !== picCell);
   el.replaceChildren(media, ...extra);
 
-  onReveal(el, () => el.classList.add('is-in'), { threshold: 0 });
+  onReveal(el, () => el.classList.add('is-in'));
 };
