@@ -2,7 +2,9 @@ import { slugify } from '../../scripts/utils/slugify.js';
 
 const fid = (label) => `form-${slugify(label)}`;
 
-export const makeField = ({ label, type, required, extra }) => {
+export const makeField = ({
+  label, type, required, extra,
+}, messages) => {
   const wrap = document.createElement('div');
   wrap.className = 'form-field';
   const fieldId = fid(label);
@@ -13,7 +15,14 @@ export const makeField = ({ label, type, required, extra }) => {
   const setAttrs = (node) => {
     node.id = fieldId;
     node.name = fieldId;
+    node.dataset.testid = `form-field-${fieldId}`;
     if (required) node.required = true;
+  };
+  const makeErr = () => {
+    const err = document.createElement('span');
+    err.className = 'form-error';
+    err.setAttribute('aria-live', 'polite');
+    return err;
   };
   let input;
   if (type === 'textarea') {
@@ -24,7 +33,7 @@ export const makeField = ({ label, type, required, extra }) => {
     input = document.createElement('select');
     const blank = document.createElement('option');
     blank.value = '';
-    blank.textContent = `Select ${label}`;
+    blank.textContent = messages.selectPlaceholder(label);
     input.append(blank, ...(extra ?? '').split(',').map((v) => {
       const opt = document.createElement('option');
       opt.value = v.trim();
@@ -36,7 +45,7 @@ export const makeField = ({ label, type, required, extra }) => {
     input.type = 'checkbox';
     lbl.prepend(input, ' ');
     setAttrs(input);
-    wrap.append(lbl);
+    wrap.append(lbl, makeErr());
     return wrap;
   } else {
     input = document.createElement('input');
@@ -45,13 +54,10 @@ export const makeField = ({ label, type, required, extra }) => {
     else if (extra) input.placeholder = extra;
   }
   setAttrs(input);
-  const err = document.createElement('span');
-  err.className = 'form-error';
-  err.setAttribute('aria-live', 'polite');
   if (type === 'hidden') {
     wrap.append(lbl, input);
     wrap.hidden = true;
-  } else wrap.append(lbl, input, err);
+  } else wrap.append(lbl, input, makeErr());
   return wrap;
 };
 
@@ -62,19 +68,19 @@ export const makeField = ({ label, type, required, extra }) => {
 // other type= an author could put in the table (url, tel, pattern, minlength
 // via `extra`). form.noValidate stays true so the browser's native bubble
 // UI never shows — only the custom inline .form-error messaging below does.
-const messageFor = (field) => {
+const messageFor = (field, messages) => {
   const { validity, type, minLength } = field;
-  if (validity.valueMissing) return type === 'checkbox' ? 'This field must be checked' : 'This field is required';
-  if (validity.typeMismatch) return type === 'email' ? 'Enter a valid email' : 'Enter a valid value';
-  if (validity.patternMismatch) return 'Please match the requested format';
-  if (validity.tooShort) return `Enter at least ${minLength} characters`;
+  if (validity.valueMissing) return type === 'checkbox' ? messages.requiredCheckbox : messages.required;
+  if (validity.typeMismatch) return type === 'email' ? messages.invalidEmail : messages.invalidValue;
+  if (validity.patternMismatch) return messages.patternMismatch;
+  if (validity.tooShort) return messages.tooShort(minLength);
   return '';
 };
 
-export const validate = (form) => {
+export const validate = (form, messages) => {
   let first = null;
   for (const f of form.querySelectorAll('.form-field input, .form-field select, .form-field textarea')) {
-    const msg = f.checkValidity() ? '' : messageFor(f);
+    const msg = f.checkValidity() ? '' : messageFor(f, messages);
     const err = f.closest('.form-field')?.querySelector('.form-error');
     if (err) err.textContent = msg;
     f.classList.toggle('form-invalid', !!msg);
