@@ -9,7 +9,7 @@
 // element. Matches hero-cards-transition.js's own onReveal()-for-entrance
 // pattern instead.
 import { onReveal } from '../../scripts/utils/motion/motion.js';
-import { createElement } from '../../scripts/utils/dom.js';
+import { createElement, getCells } from '../../scripts/utils/dom.js';
 
 export default (el) => {
   // Idempotency guard — a second decorate() call (e.g. DA's live-preview
@@ -24,7 +24,7 @@ export default (el) => {
   // picture cell with a sibling text cell must not sweep that sibling cell
   // away along with the picture. Mirrors hero.js's cells/bgCell/contentCells
   // pattern (see F-66 in eds-poc-findings.md).
-  const cells = [...el.querySelectorAll(':scope > div > div')];
+  const cells = getCells(el);
   const picCell = cells.find((c) => c.querySelector('picture'));
   const pic = picCell?.querySelector('picture');
   if (!pic) return;

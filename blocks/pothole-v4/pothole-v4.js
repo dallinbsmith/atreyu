@@ -4,7 +4,7 @@
 // alignment variants (see blocks.md variant convention).
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
-import { createElement } from '../../scripts/utils/dom.js';
+import { createElement, getCells } from '../../scripts/utils/dom.js';
 
 const GLOW_COLORS = ['purple', 'blue', 'pink', 'green'];
 const META_RE = /^(scale|glow)\s*:\s*(.+)$/i;
@@ -47,7 +47,7 @@ export default (el) => {
   // the picture (see hero.js's identical cells/bgCell/contentCells pattern).
   // The metadata row (if any) was already removed from the DOM above, so it
   // naturally never appears in this cell query.
-  const cells = [...el.querySelectorAll(':scope > div > div')];
+  const cells = getCells(el);
   const bgCell = cells.find((c) => c.querySelector('picture'));
   const pic = bgCell?.querySelector('picture');
   if (pic) {
