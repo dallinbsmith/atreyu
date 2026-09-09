@@ -1,5 +1,19 @@
 import { expect } from '@esm-bundle/chai';
+import sinon from 'sinon';
 import decorate from '../../blocks/hero-side-by-side/hero-side-by-side.js';
+
+// decorateVideoMedia's pause toggle is fire-and-forget (see the LCP-regression
+// note in scripts/utils/media.js) — a test that needs it has no choice but to
+// poll for it, same pattern used in test/utils/media.test.js.
+const waitFor = async (check, { timeout = 2000, interval = 10 } = {}) => {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const result = check();
+    if (result) return result;
+    await new Promise((resolve) => { setTimeout(resolve, interval); });
+  }
+  throw new Error('waitFor: condition never became true');
+};
 
 const block = (rowsHtml) => {
   const el = document.createElement('div');
@@ -20,6 +34,8 @@ const block = (rowsHtml) => {
 const img = '<picture><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></picture>';
 
 describe('hero-side-by-side', () => {
+  afterEach(() => sinon.restore());
+
   it('classifies the row with a picture as media regardless of position', () => {
     const el = block([[img], ['<h1>Title</h1>']]);
     decorate(el);
@@ -69,5 +85,42 @@ describe('hero-side-by-side', () => {
     const evt = new MouseEvent('click', { bubbles: true, cancelable: true });
     link.dispatchEvent(evt);
     expect(evt.defaultPrevented).to.be.true;
+  });
+
+  it('double-decorate does not attach a second click listener to the video link', () => {
+    const wistiaHtml = '<p><a href="https://frameio.wistia.com/medias/abc123">Watch</a></p>';
+    const el = block([[img], [wistiaHtml]]);
+    decorate(el);
+    const link = el.querySelector('a');
+    const addSpy = sinon.spy(link, 'addEventListener');
+    decorate(el); // second call must be a no-op due to the idempotency guard
+    expect(addSpy.callCount).to.equal(0);
+    expect(el.querySelectorAll('.hero-side-by-side-content').length).to.equal(1);
+  });
+
+  // Regression for the traced re-decoration bug (DA live-preview reload path):
+  // a double-decorate landing in the async window before the background
+  // video's `canplay` fires used to build a second, live media div while the
+  // first decorateVideoMedia() call's in-flight addVideoPauseControl()
+  // promise still resolved against the now-detached original div — the
+  // pause/play toggle got built but silently never rendered anywhere in the
+  // live DOM (WCAG 2.2.2 regression). With the idempotency guard, the second
+  // decorate() call is a no-op, so exactly one video and one toggle end up
+  // live under `el`.
+  it('double-decorate before canplay leaves exactly one live video and pause toggle (no orphaned media div)', async () => {
+    sinon.stub(navigator, 'hardwareConcurrency').value(8);
+    const videoImg = '<a href="/media/clip.mp4">'
+      + '<picture><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></picture>'
+      + '</a>';
+    const el = block([[videoImg], ['<h1>Title</h1>']]);
+    decorate(el);
+    decorate(el); // lands in the async placeholder-fetch window, before canplay
+
+    const toggle = await waitFor(() => el.querySelector('.video-pause-toggle'));
+    expect(toggle.isConnected).to.be.true;
+    expect(el.querySelectorAll('.video-pause-toggle').length).to.equal(1);
+    expect(el.querySelectorAll('.hero-side-by-side-media').length).to.equal(1);
+    expect(el.querySelectorAll('video').length).to.equal(1);
+    expect(el.querySelector('video').isConnected).to.be.true;
   });
 });
