@@ -59,24 +59,29 @@ const placeMedia = (card) => {
 // bottom, centre-aligned, background images cover, foreground icons small + bordered.
 const applyOptions = (card) => {
   const {
-    textPlacement = 'bottom', textAlign = 'center', mediaSize, decoration, bgMode,
+    textPlacement = 'bottom', textAlign = 'center', mediaSize, decoration,
   } = card.dataset;
   card.classList.add(`text-${textPlacement}`, `align-${textAlign}`);
   if (mediaSize) card.classList.add(`media-${mediaSize}`);
   if (decoration === 'glassborder') card.classList.add('glassborder');
-  if (bgMode) card.dataset.bgMode = bgMode;
 };
 
 export default (el) => {
+  // Scoped to this decorate() call (not per-row, not module-scope) so every
+  // card across every authored row gets a unique index — a per-row counter
+  // produced duplicate data-testids across rows, and a module-scope counter
+  // would leak across separate bentos instances on the same page.
+  let cardIndex = 0;
   [...el.children].forEach((row) => {
     row.classList.add('bento-grid');
     const cards = [...row.children];
     row.style = `--card-count: ${cards.length}`;
-    cards.forEach((card, idx) => {
+    cards.forEach((card) => {
       parseConfig(card);
       const media = placeMedia(card);
       applyOptions(card);
-      decorateTout(card, 'bento-card', `bento-card-${idx}`);
+      decorateTout(card, 'bento-card', `bento-card-${cardIndex}`);
+      cardIndex += 1;
       if (media) card.prepend(media);
     });
   });
