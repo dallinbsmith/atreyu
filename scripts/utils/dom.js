@@ -33,6 +33,15 @@ export const createElement = (tag, attrs, ...children) => {
 // handling is baked into the HTML parsing algorithm itself.
 export const parseSvg = (markup) => new DOMParser().parseFromString(markup, 'text/html').querySelector('svg');
 
+// A block's row/cell shape is fixed by the platform's own document model
+// (blocks.md's Init Contract: children of `el` are rows, children of rows
+// are cells) — this just flattens that two-level structure into one array
+// of every cell, for blocks that classify a specific cell (e.g. "whichever
+// cell holds a picture") rather than a whole row. Real DOM traversal
+// (`.children`), not a `:scope > div > div` selector string, so a typo
+// can't silently return an empty list.
+export const getCells = (el) => [...el.children].flatMap((row) => [...row.children]);
+
 // Shared chevron glyph — same path already hand-duplicated as an inline
 // string in blocks/quote-interactive/quote-modal.js's own `arrow()` helper;
 // centralized here for any new caller (e.g. carousel.js) rather than

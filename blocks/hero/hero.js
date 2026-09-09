@@ -1,6 +1,6 @@
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
-import { createElement } from '../../scripts/utils/dom.js';
+import { createElement, getCells } from '../../scripts/utils/dom.js';
 import { decorateVideoMedia } from '../../scripts/utils/media.js';
 
 const decorateForeground = (fg) => {
@@ -43,7 +43,7 @@ export default (el) => {
   // than one column (children of rows are columns), so a row that mixes a
   // picture cell with a text/heading cell must not sweep the heading into
   // the background along with the picture.
-  const cells = [...el.querySelectorAll(':scope > div > div')];
+  const cells = getCells(el);
   const bgCell = cells.find((c) => c.querySelector('picture'));
   const contentCells = cells.filter((c) => c !== bgCell);
 

@@ -4,7 +4,7 @@
 // reduced motion it stays at the resting (progress: 0) frame.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
-import { createElement } from '../../scripts/utils/dom.js';
+import { createElement, getCells } from '../../scripts/utils/dom.js';
 
 export default (el) => {
   // Idempotency guard — checked before any DOM restructuring below. A second
@@ -20,7 +20,7 @@ export default (el) => {
   // more than one column: a row that mixes a picture cell with a sibling
   // text cell must not sweep the text cell into the background along with
   // the picture (see hero.js's identical cells/bgCell/contentCells pattern).
-  const cells = [...el.querySelectorAll(':scope > div > div')];
+  const cells = getCells(el);
   const bgCell = cells.find((c) => c.querySelector('picture'));
   const pic = bgCell?.querySelector('picture');
   if (pic) {
