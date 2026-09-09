@@ -11,13 +11,25 @@ import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 // Scrub an authored video to scroll progress. Browsers can't seek a not-yet-
 // buffered frame, so we guard on readiness and only seek on meaningful deltas
 // to avoid thrashing the decoder (keeps the scrub smooth and INP-friendly).
+// preload starts at 'metadata' — block decoration is not viewport-gated (runs
+// during the Lazy phase for every instance on the page), so an unconditional
+// 'auto' here would eagerly download the full video for a below-fold instance
+// long before a user scrolls near it. Bumped to 'auto' on the first scroll-
+// progress callback, which trackScrollProgress only fires once its own
+// IntersectionObserver (rootMargin: '100% 0px') reports the block near-
+// viewport — reusing that existing gate rather than registering a second one.
 const scrubVideo = (video) => {
   video.muted = true;
   video.playsInline = true;
-  video.preload = 'auto';
+  video.preload = 'metadata';
   video.removeAttribute('autoplay');
   video.pause();
+  let primed = false;
   return (p) => {
+    if (!primed) {
+      primed = true;
+      video.preload = 'auto';
+    }
     if (!video.duration) return;
     const t = p * video.duration;
     if (Math.abs(video.currentTime - t) > 0.02) video.currentTime = t;
@@ -25,6 +37,9 @@ const scrubVideo = (video) => {
 };
 
 export default (el) => {
+  if (el.dataset.imgSeq) return;
+  el.dataset.imgSeq = 'true';
+
   el.classList.add('prompter');
   const text = el.querySelector('h1, h2, h3, p');
   if (!text) return;

@@ -10,11 +10,16 @@
 
   /* Set by image-sequence.js via inline style, one per word (--count: total
      words, --i: this word's index) — typed here so they're real, typed
-     custom properties rather than magic undeclared strings. */
+     custom properties rather than magic undeclared strings. --count is set
+     ONLY on the parent .prompter-text, never per-span, so it MUST inherit —
+     with inherits: false every .prompter-word silently reads the registered
+     initial-value (0) instead of the parent's real word count, permanently
+     zeroing the --lit reveal formula below (confirmed via computed-style
+     regression test in test/blocks/image-sequence.test.js). */
   @property --count {
     syntax: '<number>';
     initial-value: 0;
-    inherits: false;
+    inherits: true;
   }
 
   @property --i {
