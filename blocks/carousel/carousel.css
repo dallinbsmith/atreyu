@@ -1,0 +1,129 @@
+@layer blocks {
+  .carousel {
+    position: relative;
+    isolation: isolate;
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-xl);
+
+    --carousel-scrim: linear-gradient(180deg, transparent 25%, color-mix(in srgb, var(--color-dark) 88%, transparent));
+
+    .carousel-viewport {
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .carousel-track {
+      display: flex;
+      gap: var(--spacing-m);
+    }
+
+    .carousel-slide {
+      position: relative;
+      isolation: isolate;
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: var(--spacing-s);
+      border-radius: 12px;
+      overflow: hidden;
+      padding: var(--spacing-l);
+
+      > * {
+        position: relative;
+        z-index: 1;
+      }
+    }
+
+    .carousel-slide-media {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+
+      img,
+      picture {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--carousel-scrim);
+      }
+    }
+
+    /* host may be a bare <img> or a <picture> wrapping one — size both
+       the element itself and any img descendant so either shape works */
+    .carousel-slide-logo {
+      display: block;
+      width: auto;
+      height: 28px;
+      object-fit: contain;
+
+      img {
+        width: auto;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+
+    .carousel-slide-title {
+      margin: 0;
+      color: var(--color-light);
+      font-size: var(--body-font-size-m);
+      font-weight: 600;
+    }
+
+    .carousel-nav {
+      position: absolute;
+      top: 50%;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--color-alpha-light-15);
+      border-radius: 50%;
+      background: var(--color-alpha-dark-50);
+      color: var(--color-light);
+      cursor: pointer;
+      transform: translateY(-50%);
+
+      svg {
+        width: 0.7rem;
+        height: auto;
+      }
+
+      &.carousel-nav-prev {
+        left: 0;
+
+        svg {
+          transform: rotate(180deg);
+        }
+      }
+
+      &.carousel-nav-next {
+        right: 0;
+      }
+    }
+  }
+
+  @media (width >= 768px) {
+    .carousel:not(.one-card) .carousel-slide {
+      flex: 0 0 calc(50% - var(--spacing-m) / 2);
+    }
+  }
+}
