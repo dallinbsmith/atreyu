@@ -1,17 +1,22 @@
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 
-// Authoring shape: two rows — row 0 is the side rail (intro heading, optional
-// PDF download link, logo image, stats list, intro paragraph, in any order),
-// row 1 is the main article body (subheadings + paragraphs).
+// Authoring shape: two rows, classified by content shape, never by index —
+// side rail = a row containing a stats <ul>, a PDF download link, or an
+// image (intro heading, optional PDF link, logo image, stats list, intro
+// paragraph, in any order); article = the other row (subheadings + paragraphs).
 export default (el) => {
+  if (el.dataset.caseStudy) return;
+  el.dataset.caseStudy = 'true';
+
   const rows = [...el.querySelectorAll(':scope > div')];
-  const [sideRailRow, articleRow] = rows;
+  const sideRailRow = rows.find((r) => r.querySelector('ul, a[href$=".pdf"], img'));
+  const articleRow = rows.find((r) => r !== sideRailRow);
   if (!sideRailRow || !articleRow) return;
 
-  const sideRail = sideRailRow.querySelector(':scope > div');
+  const sideRail = sideRailRow.querySelector(':scope > div') ?? sideRailRow;
   sideRail.classList.add('case-study-side-rail');
 
-  const article = articleRow.querySelector(':scope > div');
+  const article = articleRow.querySelector(':scope > div') ?? articleRow;
   article.classList.add('case-study-article');
 
   sideRail.querySelector('a[href$=".pdf"]')?.classList.add('case-study-download');
