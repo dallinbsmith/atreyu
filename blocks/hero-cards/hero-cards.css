@@ -1,9 +1,16 @@
 @layer blocks {
-  /* Back-compat shim — see hero-cards.js. The JS swaps the element class to
-     `hero-cards-transition` before delegation, so we just re-import the canonical
-     block's stylesheet so the framework's auto-load of THIS file is meaningful
-     (otherwise hero-cards-transition.css wouldn't be requested for an element
-     that was authored as `Hero Cards`). Delete with the directory once every
-     page is re-authored. */
-  @import url('../hero-cards-transition/hero-cards-transition.css');
+  /* Intentionally empty. This file exists only so the framework's fixed-path
+     auto-load of `hero-cards.css` (for an element still authored with the old
+     `Hero Cards` table header) resolves to something.
+
+     The real styling comes from hero-cards-transition.css, loaded explicitly
+     by hero-cards.js via loadStyle() — NOT by `@import` here. `@import` is
+     only valid as a top-level statement in a stylesheet; nesting it inside
+     `@layer blocks { }` (as this file used to) is silently dropped by
+     browsers, and a working top-level `@import` can't satisfy this project's
+     own tools/lint-css-layers.mjs, which requires the file's ENTIRE content
+     to be wrapped in `@layer blocks { }`. See hero-cards.js for the fix.
+
+     Delete this file (and the whole directory) once every page's table
+     header is re-authored to `Hero Cards Transition`. */
 }
