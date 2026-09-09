@@ -4,6 +4,9 @@ import { initHover } from './quote-hover.js';
 import { initModal } from './quote-modal.js';
 
 export default (el) => {
+  if (el.dataset.qi) return;
+  el.dataset.qi = 'true';
+
   const rows = [...el.children];
   const head = rows.shift();
   head?.classList.add('qi-head');
