@@ -1,5 +1,5 @@
 import { getConfig } from '../../scripts/ak.js';
-import { loadFragment } from '../fragment/fragment.js';
+import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
 import { setColorScheme } from '../section-metadata/section-metadata.js';
 import { trapFocus } from '../../scripts/utils/a11y.js';
 import {
@@ -15,9 +15,17 @@ const decorateLanguage = (btn) => {
   btn.addEventListener('click', async () => {
     let menu = section.querySelector('.language.menu');
     if (!menu) {
-      const content = document.createElement('div');
-      content.classList.add('block-content');
-      const fragment = await loadFragment(`${locale.prefix}${HEADER_PATH}/languages`);
+      let fragment;
+      try {
+        fragment = await loadFragmentWithFallback([
+          `${locale.prefix}${HEADER_PATH}/languages`,
+          `${HEADER_PATH}/languages`,
+        ]);
+      } catch (ex) {
+        getConfig().log(ex, section);
+        return;
+      }
+      const content = document.createElement('div'); content.classList.add('block-content');
       menu = document.createElement('div');
       menu.className = 'language menu';
       menu.append(fragment);

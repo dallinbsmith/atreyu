@@ -77,3 +77,30 @@ export const getReplaceEl = (a) => {
 
   return current;
 };
+
+// Page-lifetime counter, folded into each fragment's id alongside path/idx so
+// two separate anchors pointing at the same fragment path never collide on
+// the same DOM id (scripts/utils/lazyhash.js scrollIntoView()s to a captured
+// id — a collision means a deep link to the second instance silently lands
+// on the first). Safe as page-lifetime module state: there's only ever one
+// page's worth of fragment decorations happening, not per-instance state
+// that could leak across independent block instances.
+let fragmentInstance = 0;
+
+// blocks/schedule/schedule.js has an equivalent inline copy of this
+// replace-loop (minus id assignment) that could be migrated to this shared
+// helper separately — out of scope here, left as a follow-up.
+export const replaceElWithFragment = (elToReplace, fragment, path) => {
+  const instance = fragmentInstance;
+  fragmentInstance += 1;
+
+  const sections = fragment.querySelectorAll(':scope > .section');
+  const children = sections.length === 1
+    ? fragment.querySelectorAll(':scope > *')
+    : [fragment];
+  for (const [idx, child] of children.entries()) {
+    if (path.startsWith('/')) child.id = btoa(encodeURIComponent(`${path}/${idx + 1}/${instance}`));
+    elToReplace.after(child);
+  }
+  elToReplace.remove();
+};
