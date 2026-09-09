@@ -7,19 +7,29 @@ import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 import { createElement } from '../../scripts/utils/dom.js';
 
 export default (el) => {
-  // Row meaning is classified by content shape, never by position — the
-  // background row is whichever row (if any) holds a picture, and every
-  // other row is content, merged in rather than assumed-single.
-  const rows = [...el.querySelectorAll(':scope > div')];
-  const bgRow = rows.find((r) => r.querySelector('picture'));
-  const pic = bgRow?.querySelector('picture');
+  // Idempotency guard — checked before any DOM restructuring below. A second
+  // decorate() call (e.g. DA's live-preview reload path) would otherwise
+  // re-find the same cells and register a second scroll-progress observer
+  // that never gets cleaned up (see the discarded cleanup handle below).
+  if (el.dataset.pothole) return;
+  el.dataset.pothole = 'true';
+
+  // Cell meaning is classified by content shape, never by position — the
+  // background cell is whichever cell (if any) holds a picture. Classifying
+  // at the CELL level (not the whole row) matters because a row can hold
+  // more than one column: a row that mixes a picture cell with a sibling
+  // text cell must not sweep the text cell into the background along with
+  // the picture (see hero.js's identical cells/bgCell/contentCells pattern).
+  const cells = [...el.querySelectorAll(':scope > div > div')];
+  const bgCell = cells.find((c) => c.querySelector('picture'));
+  const pic = bgCell?.querySelector('picture');
   if (pic) {
     const img = pic.querySelector('img');
     if (img) img.alt = '';
   }
 
   const content = createElement('div', { className: 'pothole-content' });
-  rows.filter((r) => r !== bgRow).forEach((row) => content.append(...row.children));
+  cells.filter((c) => c !== bgCell).forEach((cell) => content.append(...cell.children));
   el.replaceChildren(content);
 
   if (pic) {
