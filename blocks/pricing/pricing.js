@@ -50,7 +50,7 @@ const buildCard = (row, badgeText) => {
 
   const cta = ctaCol?.querySelector('a');
   if (cta) {
-    cta.className = 'pricing-cta';
+    cta.classList.add('pricing-cta');
     card.append(cta);
   }
 
@@ -59,12 +59,13 @@ const buildCard = (row, badgeText) => {
 
 const injectSchema = (plans) => {
   const offers = plans
-    .filter(({ price }) => price && price !== 'Custom')
-    .map(({ name, price, description }) => ({
+    .map(({ name, price, description }) => ({ name, description, numericPrice: price.replace(/[^0-9.]/g, '') }))
+    .filter(({ numericPrice }) => numericPrice !== '' && Number.isFinite(Number(numericPrice)))
+    .map(({ name, description, numericPrice }) => ({
       '@type': 'Offer',
       name,
       description,
-      price: price.replace(/[^0-9.]/g, '') || '0',
+      price: numericPrice,
       priceCurrency: 'USD',
     }));
 
@@ -80,6 +81,9 @@ const injectSchema = (plans) => {
 };
 
 export default async (el) => {
+  if (el.dataset.pricing) return;
+  el.dataset.pricing = 'true';
+
   const rows = [...el.querySelectorAll(':scope > div')];
   const plans = [];
   const badgeText = await getPlaceholder('pricingMostPopular', 'Most Popular');
