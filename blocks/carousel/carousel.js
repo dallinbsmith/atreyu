@@ -2,6 +2,7 @@ import { decorateTout, inferMediaLayout } from '../../scripts/utils/touts.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { parseSvg, CHEVRON_SVG } from '../../scripts/utils/dom.js';
+import { announce } from '../../scripts/utils/a11y.js';
 
 // Detaches an image from wherever it's authored, then removes its wrapping
 // `<p>` too — but only once genuinely emptied (checked AFTER detaching; an
@@ -45,9 +46,8 @@ const buildSlide = (row, idx, total, slideLabel) => {
   // rather than leaving unstyled stray images behind.
   let media = null;
   const logos = [];
-  [...row.querySelectorAll('picture, img')].forEach((node) => {
-    const img = node.tagName === 'IMG' ? node : node.querySelector('img');
-    const host = node.closest('picture') ?? node;
+  [...row.querySelectorAll('img')].forEach((img) => {
+    const host = img.closest('picture') ?? img;
     if (inferMediaLayout(img) === 'background') {
       if (media) detach(host);
       else media = host;
@@ -81,6 +81,15 @@ const buildSlide = (row, idx, total, slideLabel) => {
   }
 };
 
+// Announces the now-current slide once scroll has settled — not mid-scroll,
+// which would fire before the new slide is actually in view and could
+// double-fire on fast repeat clicks.
+const announceCurrentSlide = (viewport, total, slideLabel) => {
+  const raw = Math.round(viewport.scrollLeft / viewport.clientWidth);
+  const idx = Math.min(Math.max(raw, 0), total - 1);
+  announce(slideLabel.replace('{current}', idx + 1).replace('{total}', total));
+};
+
 const makeNavButton = (label, dir, viewport) => {
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -100,6 +109,9 @@ const makeNavButton = (label, dir, viewport) => {
 // this await-before-render shape (matching pricing.js's identical pattern)
 // would need revisiting per scripts.md's eager-phase network-call rule.
 export default async (el) => {
+  if (el.dataset.carousel) return;
+  el.dataset.carousel = 'true';
+
   const rows = [...el.children].filter((r) => r.textContent.trim() || r.querySelector('picture, img'));
   if (rows.length < 3) return;
 
@@ -129,4 +141,10 @@ export default async (el) => {
     makeNavButton(prevLabel, 'prev', viewport),
     makeNavButton(nextLabel, 'next', viewport),
   );
+
+  let scrollTimer;
+  viewport.addEventListener('scroll', () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => announceCurrentSlide(viewport, rows.length, slideLabel), 150);
+  });
 };
