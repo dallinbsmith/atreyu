@@ -17,9 +17,26 @@ export const createElement = (tag, attrs, ...children) => {
   return el;
 };
 
-// Parses an SVG markup string into a real element — same DOMParser approach
-// already used for author-supplied SVGs in icons.js/partner-logo.js. Lets a
-// caller avoid `el.innerHTML = markup` entirely (no-unsanitized/property
-// flags that regardless of whether `markup` is a fixed constant or not) by
-// building real nodes and appending them instead.
-export const parseSvg = (markup) => new DOMParser().parseFromString(markup, 'image/svg+xml').querySelector('svg');
+// Parses an SVG markup string into a real element. Deliberately parses as
+// 'text/html', not 'image/svg+xml': confirmed live (2026-09-09) that
+// DOMParser's XML mode only assigns the SVG element the correct
+// http://www.w3.org/2000/svg namespace when the markup itself carries an
+// explicit xmlns attribute — real standalone .svg files always have one
+// (icons.js fetches real files directly, unaffected; partner-logo.js goes
+// through sanitizeMarkup(), which already parses as 'text/html'), but a
+// hand-written inline SVG string constant (the actual use case here) never
+// does. Without the right namespace the element doesn't render as SVG at all
+// (no intrinsic sizing, presentation attributes like fill="currentColor" do
+// nothing) — a real, silent-failure regression this rule found in
+// tile-modal.js/youtube.js before this fix. HTML parsing assigns the correct
+// namespace either way, no xmlns required, since foreign-content (svg/math)
+// handling is baked into the HTML parsing algorithm itself.
+export const parseSvg = (markup) => new DOMParser().parseFromString(markup, 'text/html').querySelector('svg');
+
+// Shared chevron glyph — same path already hand-duplicated as an inline
+// string in blocks/quote-interactive/quote-modal.js's own `arrow()` helper;
+// centralized here for any new caller (e.g. carousel.js) rather than
+// re-copying it again. `fill="currentColor"` + a CSS `rotate(180deg)` on the
+// consuming element is the established way to mirror it for a "previous"
+// direction (see quote-interactive.css's `.qi-modal-arrow-prev`).
+export const CHEVRON_SVG = '<svg viewBox="0 0 32.2 54.4" fill="currentColor"><path d="M30.8,23.6c2,2,2,5.1,0,7.1L8.6,52.9c-1.9,2-5.1,2-7.1,0c-2-1.9-2-5.1,0-7.1l18.7-18.7L1.5,8.5c-1.9-2-1.8-5.2,.1-7.1c1.9-1.9,5-1.9,6.9,0Z"/></svg>';

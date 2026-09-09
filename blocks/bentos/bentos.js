@@ -1,14 +1,4 @@
-import { decorateTout } from '../../scripts/utils/touts.js';
-
-// Falkor's bentoMediaLayout: photos fill the card as a full-bleed BACKGROUND with
-// text overlaid (`background`); graphics/logos render as a FOREGROUND icon above the
-// text (`foreground`). Used only as a fallback when authors set no explicit option.
-const inferMediaLayout = (img) => {
-  const src = img?.getAttribute('src') ?? '';
-  const w = Number.parseInt(img?.getAttribute('width'), 10) || img?.naturalWidth || 0;
-  const isPhoto = /\.jpe?g($|\?)/i.test(src) || /format=(jpe?g|pjpg)/i.test(src);
-  return (isPhoto || w >= 1000) ? 'background' : 'foreground';
-};
+import { decorateTout, inferMediaLayout } from '../../scripts/utils/touts.js';
 
 // DA / Google-Docs fallback: authors set per-card options with a leading config
 // line, e.g. "media: background; bg: full; decoration: glassborder". Recognized

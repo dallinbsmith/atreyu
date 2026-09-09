@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { createElement } from '../../scripts/utils/dom.js';
+import { createElement, parseSvg } from '../../scripts/utils/dom.js';
 
 describe('utils/dom createElement', () => {
   it('creates an element with the given tag', () => {
@@ -41,5 +41,25 @@ describe('utils/dom createElement', () => {
 
   it('works with no attrs and no children', () => {
     expect(() => createElement('div')).to.not.throw();
+  });
+});
+
+describe('utils/dom parseSvg', () => {
+  // Regression for a real, silent-failure bug (2026-09-09): DOMParser's XML
+  // mode only assigns the correct SVG namespace when the markup itself
+  // carries an explicit xmlns — a hand-written inline SVG constant (the
+  // real use case for this function) never does, so parsing it that way
+  // produced an element that quietly didn't render as SVG at all (zero
+  // intrinsic size, fill="currentColor" ignored) while every other test
+  // still passed. Asserting the namespace directly is what would have
+  // caught it.
+  it('assigns the real SVG namespace even when the markup has no xmlns attribute', () => {
+    const svg = parseSvg('<svg viewBox="0 0 10 10" fill="currentColor"><path d="M0 0"/></svg>');
+    expect(svg.namespaceURI).to.equal('http://www.w3.org/2000/svg');
+  });
+
+  it('preserves presentation attributes (e.g. fill) on the parsed element', () => {
+    const svg = parseSvg('<svg viewBox="0 0 10 10" fill="currentColor"><path d="M0 0"/></svg>');
+    expect(svg.getAttribute('fill')).to.equal('currentColor');
   });
 });

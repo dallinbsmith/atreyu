@@ -1,3 +1,15 @@
+// Falkor's bentoMediaLayout heuristic: a large photo (JPEG, or wide) reads as a
+// full-bleed BACKGROUND; a small graphic/logo (SVG, PNG, small) reads as a
+// FOREGROUND icon. Shared by bentos.js and carousel.js — both distinguish a
+// photo background from a small foreground logo by the same image shape, not
+// by authored column position.
+export const inferMediaLayout = (img) => {
+  const src = img?.getAttribute('src') ?? '';
+  const w = Number.parseInt(img?.getAttribute('width'), 10) || img?.naturalWidth || 0;
+  const isPhoto = /\.jpe?g($|\?)/i.test(src) || /format=(jpe?g|pjpg)/i.test(src);
+  return (isPhoto || w >= 1000) ? 'background' : 'foreground';
+};
+
 // Shared tout/card decoration: heading → title, body paragraphs → body,
 // CTA links lifted into a single cta wrapper (first = primary, rest = secondary).
 // Reused by the bentos and side-by-side blocks. Class prefix is configurable so
