@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { createElement, parseSvg } from '../../scripts/utils/dom.js';
+import { createElement, parseSvg, getCells } from '../../scripts/utils/dom.js';
 
 describe('utils/dom createElement', () => {
   it('creates an element with the given tag', () => {
@@ -41,6 +41,27 @@ describe('utils/dom createElement', () => {
 
   it('works with no attrs and no children', () => {
     expect(() => createElement('div')).to.not.throw();
+  });
+});
+
+describe('utils/dom getCells', () => {
+  const block = (rows) => {
+    const el = document.createElement('div');
+    rows.forEach((cellCount) => {
+      const row = document.createElement('div');
+      for (let i = 0; i < cellCount; i += 1) row.append(document.createElement('div'));
+      el.append(row);
+    });
+    return el;
+  };
+
+  it('flattens every row into a single array of its cells', () => {
+    const el = block([2, 1, 3]);
+    expect(getCells(el)).to.have.length(6);
+  });
+
+  it('returns an empty array for a block with no rows', () => {
+    expect(getCells(document.createElement('div'))).to.deep.equal([]);
   });
 });
 
