@@ -321,6 +321,11 @@
      token, not a literal — image-sequence.css depends on this exact value).
      Cards are absolutely positioned in 5 staggered columns (3 on mobile),
      with per-column parallax ratios and max opacities matching Falkor.
+
+     The `:nth-child(1)` through `:nth-child(12)` selectors below (and the
+     mobile `nth-child(n + 7)` cutoff) are a second, independent source of
+     truth for hero-cards-transition.js's `MAX_CARDS = 12` — changing one
+     without the other silently breaks the column layout.
      ===================================================================== */
   .hero-cards-transition.hc-scrub {
     min-height: var(--hero-scrub-stage-height);
