@@ -33,6 +33,13 @@ const buildTrack = (items) => {
 };
 
 export default async (el) => {
+  // Guard must run synchronously, before this function's only `await` below —
+  // a second concurrent call needs to see the flag already set and bail out
+  // before it can start racing the first call's in-flight async work (icon
+  // loads / placeholder fetches). See side-by-side.js for the same pattern.
+  if (el.dataset.logoWall) return;
+  el.dataset.logoWall = 'true';
+
   const items = [...el.querySelectorAll(':scope > div')]
     .map((row) => {
       const link = row.querySelector('a');
