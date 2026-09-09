@@ -1,4 +1,7 @@
+import { getConfig } from '../../scripts/ak.js';
 import { inject } from '../../scripts/utils/seo/jsonld.js';
+
+const { log } = getConfig();
 
 const buildSchema = (items) => {
   const mainEntity = items.map(({ question, answer }) => ({
@@ -15,13 +18,17 @@ const buildSchema = (items) => {
 };
 
 export default (el) => {
+  if (el.dataset.faq) return;
+  el.dataset.faq = 'true';
+
   const rows = [...el.querySelectorAll(':scope > div')];
   const items = [];
 
   for (const row of rows) {
     const [qCol, aCol] = [...row.children];
-    if (qCol && aCol) {
-      const question = qCol.textContent.trim();
+    const question = qCol?.textContent.trim();
+
+    if (qCol && aCol && question) {
       const answerText = aCol.textContent.trim();
 
       const details = document.createElement('details');
@@ -41,6 +48,8 @@ export default (el) => {
 
       el.append(details);
       items.push({ question, answer: answerText });
+    } else {
+      log('Skipping FAQ row with missing question or answer content.');
     }
   }
 
