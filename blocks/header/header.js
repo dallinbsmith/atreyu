@@ -1,4 +1,4 @@
-import { getConfig, getMetadata } from '../../scripts/ak.js';
+import { getConfig } from '../../scripts/ak.js';
 import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
 import { decorateNavSection } from './header-nav.js';
 import { decorateAction, decorateActionSection } from './header-actions.js';
@@ -16,8 +16,8 @@ const decorateBrandSection = (section) => {
   section.classList.add('brand-section');
   const brandLink = section.querySelector('a');
   if (!brandLink) return;
-  const children = [...brandLink.childNodes];
-  const text = children.length > 1 ? children[1] : children[0];
+  const text = [...brandLink.childNodes]
+    .find((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
   if (!text) return;
   const span = document.createElement('span');
   span.className = 'brand-text';
@@ -25,11 +25,19 @@ const decorateBrandSection = (section) => {
   brandLink.append(span);
 };
 
+// Classify by content shape, never position — see side-by-side.js/footer.js.
+// nav = the section with the main nav <ul>; brand = the remaining section
+// with exactly one link (the logo); actions = whatever's left.
 const decorateHeaderContent = async (fragment) => {
-  const sections = fragment.querySelectorAll(':scope > .section');
-  if (sections[0]) decorateBrandSection(sections[0]);
-  if (sections[1]) decorateNavSection(sections[1]);
-  if (sections[2]) decorateActionSection(sections[2]);
+  const sections = [...fragment.querySelectorAll(':scope > .section')];
+  const navSection = sections.find((s) => s.querySelector('ul'));
+  const brandSection = sections
+    .find((s) => s !== navSection && s.querySelectorAll('a').length === 1);
+  const actionsSection = sections.find((s) => s !== navSection && s !== brandSection);
+
+  if (brandSection) decorateBrandSection(brandSection);
+  if (navSection) decorateNavSection(navSection);
+  if (actionsSection) decorateActionSection(actionsSection);
 
   for (const pattern of HEADER_ACTIONS) {
     decorateAction(fragment, pattern);
@@ -37,9 +45,10 @@ const decorateHeaderContent = async (fragment) => {
 };
 
 export default async (el) => {
-  const headerMeta = getMetadata('header');
-  const path = headerMeta || HEADER_PATH;
-  const fragment = await loadFragmentWithFallback([`${locale.prefix}${path}`, path]);
+  if (el.dataset.headerDecorated) return;
+  el.dataset.headerDecorated = 'true';
+
+  const fragment = await loadFragmentWithFallback([`${locale.prefix}${HEADER_PATH}`, HEADER_PATH]);
   fragment.classList.add('header-content');
   await decorateHeaderContent(fragment);
   el.append(fragment);
