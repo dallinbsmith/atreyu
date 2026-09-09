@@ -4,40 +4,60 @@ import { createElement } from '../../scripts/utils/dom.js';
 import { decorateVideoMedia } from '../../scripts/utils/media.js';
 
 const decorateForeground = (fg) => {
-  [...fg.children].forEach((child, idx) => {
+  const children = [...fg.children];
+  let textIdx = -1;
+  children.forEach((child, idx) => {
     const heading = child.querySelector('h1, h2, h3, h4, h5, h6');
     const text = heading || child.querySelector('p, a, ul');
-    if (heading) {
-      heading.classList.add('hero-heading');
-      heading.previousElementSibling?.classList.add('hero-detail');
-    }
+    // Eyebrow/detail line is classified by content shape — the `.rt-eyebrow`
+    // span decorateRichText() produces for authored `[[eyebrow|text]]`
+    // syntax — never by "whatever happens to sit before the heading".
+    // Matches side-by-side.js's `.rt-eyebrow` → `closest('p')` convention.
+    child.querySelector('.rt-eyebrow')?.closest('p')?.classList.add('hero-detail');
+    if (heading) heading.classList.add('hero-heading');
     if (text) {
       child.classList.add('fg-text');
-      child.closest('.hero').classList.add(idx === 0 ? 'hero-text-start' : 'hero-text-end');
+      if (textIdx === -1) textIdx = idx;
     }
   });
+  // Decide start/end exactly once, based on the first text-bearing cell's
+  // position — never per-iteration, which could add both classes to the
+  // same element when more than one cell carries text.
+  if (textIdx !== -1) {
+    const hero = fg.closest('.hero');
+    hero.classList.remove('hero-text-start', 'hero-text-end');
+    hero.classList.add(textIdx === 0 ? 'hero-text-start' : 'hero-text-end');
+  }
 };
 
 export default (el) => {
-  // Row meaning is classified by content shape, never by position/count: the
-  // background row is whichever row (if any) holds a picture — not "whatever
-  // is left after popping the last row" — so an unexpected extra row is
-  // never silently misattributed as background or dropped as content.
-  const rows = [...el.querySelectorAll(':scope > div')];
-  const bgRow = rows.find((r) => r.querySelector('picture'));
-  const contentRows = rows.filter((r) => r !== bgRow);
+  // Idempotency guard — checked before any DOM restructuring below. A second
+  // decorate() call would otherwise re-find the same cells (the foreground's
+  // children sit at the same `:scope > div > div` depth as the originally
+  // authored rows/cells) and re-wire a second click listener onto the same
+  // still-present video link.
+  if (el.dataset.heroDecorated) return;
+  el.dataset.heroDecorated = 'true';
+
+  // Background is classified by CELL, not by whole row: a row can hold more
+  // than one column (children of rows are columns), so a row that mixes a
+  // picture cell with a text/heading cell must not sweep the heading into
+  // the background along with the picture.
+  const cells = [...el.querySelectorAll(':scope > div > div')];
+  const bgCell = cells.find((c) => c.querySelector('picture'));
+  const contentCells = cells.filter((c) => c !== bgCell);
 
   const fg = createElement('div', { className: 'hero-foreground' });
-  contentRows.forEach((row) => fg.append(...row.children));
+  fg.append(...contentCells);
   el.replaceChildren(fg);
+  decorateRichText(fg); // must run before decorateForeground so .rt-eyebrow exists
   decorateForeground(fg);
   wireVideoModalLinks(fg);
 
-  if (bgRow) {
+  if (bgCell) {
     const bg = createElement('div', { className: 'hero-background' });
-    bg.append(...bgRow.children);
+    bg.append(bgCell);
     decorateVideoMedia(bg);
     el.prepend(bg);
   }
-  decorateRichText(el);
 };
