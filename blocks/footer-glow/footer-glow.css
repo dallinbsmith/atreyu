@@ -47,6 +47,29 @@
       );
       mix-blend-mode: screen;
     }
+
+    /* The block root is pointer-events: none so the glow never intercepts
+       clicks meant for the footer riding up over it — the pause toggle is
+       real interactive UI appended into that same root, so it needs its own
+       explicit override or it would render but be unclickable. */
+    .footer-glow-toggle {
+      position: absolute;
+
+      /* percentage, not a spacing token: the mask-image above fades the top
+         14% of this element to transparent, so a token-sized (fixed px)
+         offset would still land inside the fade at any of this block's
+         min-heights — 20% clears it with margin to spare. */
+      top: 20%;
+      right: var(--spacing-s);
+      z-index: 1;
+      padding: var(--spacing-xs) var(--spacing-s);
+      font-size: var(--eyebrow-font-size);
+      pointer-events: auto;
+      background: none;
+      border: 1px solid currentcolor;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   }
 
   @media (width >= 768px) {
