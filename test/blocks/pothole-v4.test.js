@@ -1,4 +1,5 @@
 import { expect } from '@esm-bundle/chai';
+import sinon from 'sinon';
 import decorate from '../../blocks/pothole-v4/pothole-v4.js';
 
 const block = (classes, rowsHtml) => {
@@ -15,7 +16,43 @@ const block = (classes, rowsHtml) => {
   return el;
 };
 
+// EDS-shaped multi-cell row: each string in `cellsHtml` becomes its own cell
+// (sibling `div` under the row), matching the real authoring shape where a
+// picture cell and a text cell can live in the SAME row as sibling columns.
+const rowWithCells = (cellsHtml) => {
+  const el = document.createElement('div');
+  el.className = 'pothole-v4';
+  const row = document.createElement('div');
+  cellsHtml.forEach((html) => {
+    const cell = document.createElement('div');
+    cell.innerHTML = html;
+    row.append(cell);
+  });
+  el.append(row);
+  document.body.append(el);
+  return el;
+};
+
 const img = '<picture><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></picture>';
+
+// Real IntersectionObserver timing is not deterministic in a headless test
+// runner, and scroll.js's trackScrollProgress looks up the global
+// `IntersectionObserver` identifier at call-time (not an imported binding) —
+// so swapping the global constructor for a fake that just records how many
+// times it was constructed lets a test assert on instance count
+// deterministically. Restored in afterEach. Pattern matches pothole.test.js.
+class FakeIntersectionObserver {
+  constructor() {
+    FakeIntersectionObserver.instances.push(this);
+  }
+
+  observe() {}
+
+  unobserve() {}
+
+  disconnect() {}
+}
+FakeIntersectionObserver.instances = [];
 
 describe('pothole-v4', () => {
   it('moves the background media into .pothole-background', () => {
@@ -104,5 +141,41 @@ describe('pothole-v4', () => {
     el.className = 'pothole-v4';
     document.body.append(el);
     expect(() => decorate(el)).to.not.throw();
+  });
+
+  it('a picture cell and a sibling text cell in the SAME row: the text is preserved, not dropped', () => {
+    const el = rowWithCells([img, '<h2>Real content</h2><p><a href="/a">Go</a></p>']);
+    decorate(el);
+    expect(el.querySelector('.pothole-background picture')).to.exist;
+    const text = el.querySelector('.pothole-content')?.textContent ?? '';
+    expect(text).to.include('Real content');
+    expect(el.querySelector('.pothole-content a')).to.exist;
+  });
+
+  describe('re-decoration idempotency', () => {
+    let originalIO;
+
+    beforeEach(() => {
+      originalIO = window.IntersectionObserver;
+      window.IntersectionObserver = FakeIntersectionObserver;
+      FakeIntersectionObserver.instances = [];
+    });
+
+    afterEach(() => {
+      window.IntersectionObserver = originalIO;
+      sinon.restore();
+    });
+
+    it('double-decorate does not create a second IntersectionObserver', () => {
+      sinon.stub(navigator, 'hardwareConcurrency').value(8);
+      const el = block('', [img, '<h2>Title</h2><p><a href="/a">Go</a></p>']);
+
+      decorate(el);
+      expect(FakeIntersectionObserver.instances).to.have.length(1);
+
+      decorate(el);
+      expect(FakeIntersectionObserver.instances).to.have.length(1);
+      expect(el.querySelector('.pothole-content h2')?.textContent).to.equal('Title');
+    });
   });
 });
