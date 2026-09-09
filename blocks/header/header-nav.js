@@ -1,7 +1,27 @@
 let releaseFocusTrap;
+// docClose/handleEscape and closeAllMenus/closeMobileNav each reference the
+// other (close* tears down the listeners docClose/handleEscape were added
+// as; docClose/handleEscape call close* to actually close things). docClose
+// is never exported, so a plain forward-declared `let` (assigned further
+// down, same shape as releaseFocusTrap above) is enough. handleEscape IS
+// exported and must keep one stable identity for add/removeEventListener,
+// so the mutable implementation stays private (handleEscapeImpl) behind a
+// const wrapper — exporting the `let` directly would trip
+// import/no-mutable-exports.
+let docClose;
+let handleEscapeImpl;
 
 export const setReleaseFocusTrap = (fn) => { releaseFocusTrap = fn; };
 
+export const handleEscape = (e) => handleEscapeImpl(e);
+
+// Every path that closes a menu/mega-menu (closeAllMenus, called by
+// toggleMenu/docClose/handleEscape) and every path that closes the mobile
+// nav (closeMobileNav, called by docClose/handleEscape/the mobile toggle
+// button in header-actions.js) tears down the same two document-level
+// listeners here, centrally — removeEventListener is a no-op if the
+// listener isn't currently attached, so calling it from both places when
+// both run back-to-back (docClose/handleEscape call both) is harmless.
 export const closeAllMenus = () => {
   const openMenus = document.body.querySelectorAll('header .is-open');
   for (const openMenu of openMenus) {
@@ -9,6 +29,8 @@ export const closeAllMenus = () => {
     const trigger = openMenu.querySelector('[aria-expanded]');
     if (trigger) trigger.setAttribute('aria-expanded', 'false');
   }
+  document.removeEventListener('click', docClose);
+  document.removeEventListener('keydown', handleEscape);
 };
 
 export const closeMobileNav = () => {
@@ -21,30 +43,27 @@ export const closeMobileNav = () => {
     releaseFocusTrap = null;
     const toggle = header.querySelector('.action-wrapper.toggle button');
     if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', docClose);
+    document.removeEventListener('keydown', handleEscape);
   }
 };
 
-const docClose = (e) => {
+docClose = (e) => {
   if (e.target.closest('header')) return;
   closeAllMenus();
   closeMobileNav();
 };
 
-export const handleEscape = (e) => {
+handleEscapeImpl = (e) => {
   if (e.key !== 'Escape') return;
   closeAllMenus();
   closeMobileNav();
-  document.removeEventListener('keydown', handleEscape);
 };
 
 export const toggleMenu = (menu) => {
   const isOpen = menu.classList.contains('is-open');
   closeAllMenus();
-  if (isOpen) {
-    document.removeEventListener('click', docClose);
-    document.removeEventListener('keydown', handleEscape);
-    return;
-  }
+  if (isOpen) return;
 
   document.addEventListener('click', docClose);
   document.addEventListener('keydown', handleEscape);

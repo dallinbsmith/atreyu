@@ -2,6 +2,7 @@ import { getConfig } from '../../scripts/ak.js';
 import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
 import { setColorScheme } from '../section-metadata/section-metadata.js';
 import { trapFocus } from '../../scripts/utils/a11y.js';
+import { createElement } from '../../scripts/utils/dom.js';
 import {
   toggleMenu, handleEscape, closeMobileNav, setReleaseFocusTrap,
 } from './header-nav.js';
@@ -10,29 +11,33 @@ const { locale } = getConfig();
 
 const HEADER_PATH = '/system/fragments/nav/header';
 
+// Shares one in-flight fetch across rapid clicks (Fix 3) instead of starting
+// a new one per click, and re-checks for the menu after the await in case a
+// concurrent click already built it while this one was pending.
 const decorateLanguage = (btn) => {
   const section = btn.closest('.section');
+  btn.setAttribute('aria-expanded', 'false');
+  let pending = null;
   btn.addEventListener('click', async () => {
     let menu = section.querySelector('.language.menu');
     if (!menu) {
+      const paths = [`${locale.prefix}${HEADER_PATH}/languages`, `${HEADER_PATH}/languages`];
+      pending ??= loadFragmentWithFallback(paths);
       let fragment;
-      try {
-        fragment = await loadFragmentWithFallback([
-          `${locale.prefix}${HEADER_PATH}/languages`,
-          `${HEADER_PATH}/languages`,
-        ]);
-      } catch (ex) {
+      try { fragment = await pending; } catch (ex) {
+        pending = null;
         getConfig().log(ex, section);
         return;
       }
-      const content = document.createElement('div'); content.classList.add('block-content');
-      menu = document.createElement('div');
-      menu.className = 'language menu';
-      menu.append(fragment);
-      content.append(menu);
-      section.append(content);
+      pending = null;
+      menu = section.querySelector('.language.menu');
+      if (!menu) {
+        menu = createElement('div', { className: 'language menu' }, fragment);
+        section.append(createElement('div', { className: 'block-content' }, menu));
+      }
     }
     toggleMenu(section);
+    btn.setAttribute('aria-expanded', String(section.classList.contains('is-open')));
   });
 };
 
@@ -40,17 +45,15 @@ const decorateScheme = (btn) => {
   btn.addEventListener('click', async () => {
     const { body } = document;
 
-    let currPref = localStorage.getItem('color-scheme');
-    currPref ??= matchMedia('(prefers-color-scheme: dark)')
-      .matches ? 'dark-scheme' : 'light-scheme';
+    let currPref;
+    try { currPref = localStorage.getItem('color-scheme'); } catch { /* private browsing / quota */ }
+    currPref ??= matchMedia('(prefers-color-scheme: dark)').matches ? 'dark-scheme' : 'light-scheme';
 
-    const theme = currPref === 'dark-scheme'
-      ? { add: 'light-scheme', remove: 'dark-scheme' }
-      : { add: 'dark-scheme', remove: 'light-scheme' };
+    const theme = currPref === 'dark-scheme' ? { add: 'light-scheme', remove: 'dark-scheme' } : { add: 'dark-scheme', remove: 'light-scheme' };
 
     body.classList.remove(theme.remove);
     body.classList.add(theme.add);
-    localStorage.setItem('color-scheme', theme.add);
+    try { localStorage.setItem('color-scheme', theme.add); } catch { /* private browsing / quota */ }
     const sections = document.querySelectorAll('.section');
     for (const section of sections) {
       setColorScheme(section);
@@ -76,7 +79,7 @@ const decorateNavToggle = (btn) => {
   });
 };
 
-const decorateAction = async (header, pattern) => {
+const decorateAction = (header, pattern) => {
   const link = header.querySelector(`[href*="${pattern}"]`);
   if (!link) return;
 
@@ -109,6 +112,6 @@ const decorateAction = async (header, pattern) => {
 
 export { decorateAction };
 
-export const decorateActionSection = async (section) => {
+export const decorateActionSection = (section) => {
   section.classList.add('actions-section');
 };
