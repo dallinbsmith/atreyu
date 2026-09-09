@@ -141,4 +141,44 @@ describe('carousel', () => {
     expect(spy.secondCall.args[0].left).to.be.lessThan(0);
     sinon.restore();
   });
+
+  // Regression for the missing re-decoration guard: a second decorate() call
+  // on an already-decorated element must be a no-op, not rebuild (or
+  // corrupt) the viewport/track/nav structure.
+  it('decorating an already-decorated element twice is a no-op', async () => {
+    const el = block([slideRow(), slideRow(), slideRow()]);
+    await decorate(el);
+    const firstViewport = el.querySelector('.carousel-viewport');
+    await decorate(el);
+    expect(el.querySelector('.carousel-viewport')).to.equal(firstViewport);
+    expect(el.querySelectorAll('.carousel-nav-prev')).to.have.length(1);
+  });
+
+  it('announces the settled slide position after scrolling stops', async () => {
+    const el = block([slideRow(), slideRow(), slideRow()]);
+    await decorate(el);
+    const viewport = el.querySelector('.carousel-viewport');
+    Object.defineProperty(viewport, 'clientWidth', { value: 800, configurable: true });
+    Object.defineProperty(viewport, 'scrollLeft', { value: 1600, configurable: true });
+    viewport.dispatchEvent(new Event('scroll'));
+    await new Promise((resolve) => { setTimeout(resolve, 400); });
+    const liveRegion = document.body.querySelector('[role="status"]');
+    expect(liveRegion).to.exist;
+    expect(liveRegion.textContent).to.equal('3 of 3');
+  });
+
+  it('debounces rapid scroll events into a single announcement for the final settled slide', async () => {
+    const el = block([slideRow(), slideRow(), slideRow()]);
+    await decorate(el);
+    const viewport = el.querySelector('.carousel-viewport');
+    Object.defineProperty(viewport, 'clientWidth', { value: 800, configurable: true });
+    Object.defineProperty(viewport, 'scrollLeft', { value: 0, configurable: true });
+    viewport.dispatchEvent(new Event('scroll'));
+    await new Promise((resolve) => { setTimeout(resolve, 50); });
+    Object.defineProperty(viewport, 'scrollLeft', { value: 800, configurable: true });
+    viewport.dispatchEvent(new Event('scroll'));
+    await new Promise((resolve) => { setTimeout(resolve, 400); });
+    const liveRegion = document.body.querySelector('[role="status"]');
+    expect(liveRegion.textContent).to.equal('2 of 3');
+  });
 });

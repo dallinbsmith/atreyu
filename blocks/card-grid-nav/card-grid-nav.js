@@ -1,6 +1,9 @@
 // Feature navigation grid. Each authored row is [media, label, link]; the whole
 // card becomes the link target. Used to cross-link sibling feature pages.
 export default (el) => {
+  if (el.dataset.cgn) return;
+  el.dataset.cgn = 'true';
+
   [...el.children].forEach((row) => {
     const link = row.querySelector('a');
     const media = row.querySelector('picture, img, video');
