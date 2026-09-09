@@ -1,4 +1,5 @@
 import { expect } from '@esm-bundle/chai';
+import sinon from 'sinon';
 import decorate from '../../blocks/hero-screen/hero-screen.js';
 
 const block = (rowsHtml) => {
@@ -20,6 +21,8 @@ const block = (rowsHtml) => {
 const img = '<picture><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></picture>';
 
 describe('hero-screen', () => {
+  afterEach(() => sinon.restore());
+
   it('classifies the row with a picture as media regardless of position', () => {
     const el = block([[img], ['<h1>Title</h1>']]);
     decorate(el);
@@ -59,5 +62,16 @@ describe('hero-screen', () => {
     const evt = new MouseEvent('click', { bubbles: true, cancelable: true });
     link.dispatchEvent(evt);
     expect(evt.defaultPrevented).to.be.true;
+  });
+
+  it('double-decorate does not attach a second click listener to the video link', () => {
+    const wistiaHtml = '<p><a href="https://frameio.wistia.com/medias/abc123">Watch</a></p>';
+    const el = block([[img], [wistiaHtml]]);
+    decorate(el);
+    const link = el.querySelector('a');
+    const addSpy = sinon.spy(link, 'addEventListener');
+    decorate(el); // second call must be a no-op due to the idempotency guard
+    expect(addSpy.callCount).to.equal(0);
+    expect(el.querySelectorAll('.hero-screen-content').length).to.equal(1);
   });
 });
