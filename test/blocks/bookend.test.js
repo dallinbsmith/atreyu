@@ -28,4 +28,15 @@ describe('bookend', () => {
     expect(a.classList.contains('btn-accent')).to.be.true;
     expect(a.classList.contains('btn-primary')).to.be.false;
   });
+
+  it('merges two separate CTA paragraphs into one .bookend-cta container, styling both links', () => {
+    const el = block('<h2>Title</h2><p><a href="/a">A</a></p><p><a href="/b">B</a></p>');
+    decorate(el);
+    const ctaContainers = el.querySelectorAll('.bookend-cta');
+    expect(ctaContainers).to.have.length(1);
+    const links = ctaContainers[0].querySelectorAll('a');
+    expect(links).to.have.length(2);
+    expect(links[0].classList.contains('btn-primary')).to.be.true;
+    expect(links[1].classList.contains('btn-secondary')).to.be.true;
+  });
 });

@@ -7,18 +7,27 @@ export default (el) => {
   if (heading) heading.classList.add('bookend-heading');
 
   const paragraphs = [...inner.querySelectorAll('p')];
-  for (const p of paragraphs) {
-    if (!p.querySelector('a')) {
-      p.classList.add('bookend-body');
-    }
-  }
+  const ctaParas = paragraphs.filter((p) => p.querySelector('a'));
+  const bodyParas = paragraphs.filter((p) => !p.querySelector('a'));
 
-  const ctaPara = [...inner.querySelectorAll('p')].findLast((p) => p.querySelector('a'));
-  if (ctaPara) {
-    ctaPara.classList.add('bookend-cta');
-    const links = ctaPara.querySelectorAll('a');
-    for (const [idx, a] of [...links].entries()) {
-      if (!a.classList.contains('btn')) a.classList.add('btn', idx === 0 ? 'btn-primary' : 'btn-secondary');
-    }
-  }
+  bodyParas.forEach((p) => p.classList.add('bookend-body'));
+
+  if (!ctaParas.length) return;
+
+  // Merge every link-bearing paragraph into one CTA container — an author
+  // authoring two separate CTA paragraphs must not have the earlier one
+  // silently lose its .btn styling (see scripts/utils/touts.js decorateTout
+  // for the same merge pattern used elsewhere).
+  const ctaWrapper = document.createElement('div');
+  ctaWrapper.classList.add('bookend-cta');
+  ctaParas[0].parentNode.insertBefore(ctaWrapper, ctaParas[0]);
+
+  ctaParas.forEach((p) => {
+    [...p.querySelectorAll('a')].forEach((a) => ctaWrapper.append(a));
+    p.remove();
+  });
+
+  [...ctaWrapper.querySelectorAll('a')].forEach((a, idx) => {
+    if (!a.classList.contains('btn')) a.classList.add('btn', idx === 0 ? 'btn-primary' : 'btn-secondary');
+  });
 };

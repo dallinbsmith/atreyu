@@ -57,4 +57,21 @@ describe('advanced-tabs', () => {
     expect(panels[2].hasAttribute('hidden')).to.be.false;
     expect(panels[0].hasAttribute('hidden')).to.be.true;
   });
+
+  it('never leaves the parent hidden when the block has no authored <ul>', () => {
+    const main = document.createElement('main');
+    const currSection = document.createElement('div');
+    currSection.className = 'section';
+    const el = document.createElement('div');
+    el.className = 'advanced-tabs';
+    // no <ul> authored — this is the missing-content case
+    currSection.append(el);
+    main.append(currSection);
+    document.body.append(main);
+
+    decorate(el);
+
+    expect(main.getAttribute('style')).to.not.exist;
+    expect(main.style.display).to.not.equal('none');
+  });
 });

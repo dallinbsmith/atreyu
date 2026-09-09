@@ -34,24 +34,26 @@ const buildTabList = (tabItems, panels) => {
 };
 
 export default (el) => {
-  const parent = el.closest('.fragment-content, main');
-  parent.style = 'display: none;';
-
-  const currSection = el.closest('.section');
   const tabs = el.querySelector('ul');
-
   if (!tabs) {
     log('Please add an unordered list to the advanced tabs block.');
     return;
   }
 
-  const tabItems = tabs.querySelectorAll('li');
-  const panels = [...parent.querySelectorAll(':scope > .section')]
-    .filter((section) => section !== currSection);
+  const parent = el.closest('.fragment-content, main');
+  parent.style = 'display: none;';
 
-  const tabList = buildTabList(tabItems, panels);
+  try {
+    const currSection = el.closest('.section');
+    const tabItems = tabs.querySelectorAll('li');
+    const panels = [...parent.querySelectorAll(':scope > .section')]
+      .filter((section) => section !== currSection);
 
-  tabs.remove();
-  el.append(tabList, ...panels);
-  parent.removeAttribute('style');
+    const tabList = buildTabList(tabItems, panels);
+
+    tabs.remove();
+    el.append(tabList, ...panels);
+  } finally {
+    parent.removeAttribute('style');
+  }
 };
