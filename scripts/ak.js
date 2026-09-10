@@ -304,6 +304,33 @@ const decorateSection = (section) => {
         section.classList.add(...styles);
         return;
       }
+      // Reserved `anchor` key → a real, deep-linkable section id (marketing
+      // deep-links, in-page jump nav). Slugified via toClassName — lowercase,
+      // mirroring the standard EDS heading-slug convention so a section anchor
+      // reads like a heading anchor (exact server-pipeline parity is not
+      // verifiable from this repo; the document-wide de-dup below is the safety
+      // net for any residual mismatch). De-duped with a
+      // numeric suffix (against the whole document, so it also can't collide
+      // with a heading's own id) — none of the reference EDS sites this was
+      // modelled on (cmegroup/vitamix/stericycle) did that. Assigned here in
+      // eager section decoration (decorateSections runs over every section
+      // before the block-load loop and before lazy.js imports lazyhash.js), so
+      // the id exists before lazyhash's scrollIntoView fires on a cold
+      // deep-link to a below-fold section.
+      if (key === 'anchor') {
+        const base = toClassName(text);
+        let id = base;
+        let n = 2;
+        // CSS.escape (not getElementById): a slug can start with a digit
+        // (`2024-roadmap`), an invalid bare CSS selector — same reason
+        // lazyhash.js escapes before querying these very ids.
+        while (id && document.querySelector(`#${CSS.escape(id)}`)) {
+          id = `${base}-${n}`;
+          n += 1;
+        }
+        if (id) section.id = id;
+        return;
+      }
       section.dataset[key] = text;
     });
     metaEl.remove();
