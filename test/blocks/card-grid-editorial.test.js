@@ -102,6 +102,16 @@ describe('card-grid-editorial', () => {
     expect(cards.slice(6).every((c) => c.classList.contains('cge-hidden'))).to.be.true;
   });
 
+  it('discards any pre-existing classes on the authored link (e.g. btn/btn-primary from decorateButton) instead of adding cge-card on top of them', async () => {
+    // Simulates ak.js's real pipeline order: decorateButton() already ran on
+    // this <a> (as it would for **bold**-authored CTA text) before this
+    // block's own decorate() ever runs.
+    const el = block([cardRow({ link: '<a href="/x" class="btn btn-primary" data-testid="btn-primary">Go</a>' })]);
+    await decorate(el);
+    const card = el.querySelector('.cge-card');
+    expect(card.className).to.equal('cge-card');
+  });
+
   it('collapsing while focus is inside a card being hidden moves focus to the toggle instead of stranding it', async () => {
     const el = block(Array.from({ length: 8 }, (_, i) => cardRow({ heading: `Card ${i}` })));
     await decorate(el);

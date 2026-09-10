@@ -37,8 +37,13 @@ const buildCard = (row, idx) => {
   // Reuse the real, already-decorated <a> rather than rebuilding a parallel
   // one — ak.js's decorateLink()/decorateButton() already ran on it (e.g. the
   // rel="noopener noreferrer" it sets on an external href), and a fresh
-  // createElement('a', ...) would silently drop that treatment.
-  link.classList.add('cge-card');
+  // createElement('a', ...) would silently drop that treatment. But
+  // decorateButton() may ALSO have added btn/btn-primary/etc (if the CTA text
+  // was authored with **bold**/*italic* emphasis) — those bring their own
+  // padding/border/border-radius that would otherwise wrap the whole card in
+  // an unwanted button box. Full reset, not classList.add, so the card is
+  // ONLY ever styled as a card, regardless of what ran on this <a> before.
+  link.className = 'cge-card';
   link.dataset.testid = `card-grid-editorial-card-${idx}`;
   link.replaceChildren(...[media, heading, cta].filter(Boolean));
   return link;
@@ -62,8 +67,10 @@ export default async (el) => {
   const toggle = createElement('button', {
     type: 'button', className: 'cge-toggle', 'aria-expanded': 'false',
   }, more);
+  let expanded = false;
   toggle.addEventListener('click', () => {
-    const expanding = toggle.getAttribute('aria-expanded') !== 'true';
+    const expanding = !expanded;
+    expanded = expanding;
     // Move focus off a card that's about to leave the layout/a11y tree
     // (display: none) BEFORE hiding it — the browser doesn't auto-blur it,
     // which would otherwise strand focus on an invisible, unreachable card.
