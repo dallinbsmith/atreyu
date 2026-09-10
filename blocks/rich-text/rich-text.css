@@ -109,7 +109,7 @@
       }
 
       .rich-text-content .rt-cta,
-      .rich-text-content p:has(a) {
+      .rich-text-content .rt-cta-para {
         justify-content: center;
       }
     }

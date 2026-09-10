@@ -78,6 +78,16 @@ describe('hero-side-by-side', () => {
     expect(el.querySelector('.hero-side-by-side-media picture')).to.exist;
   });
 
+  it('classifies a CTA paragraph (contains a link) with .hero-side-by-side-cta instead of relying on a structural selector', () => {
+    const el = block([[img], ['<h1>Title</h1><p>Body copy</p><p><a href="/a">Go</a></p>']]);
+    decorate(el);
+    const ctaPara = el.querySelector('.hero-side-by-side-cta');
+    expect(ctaPara).to.exist;
+    expect(ctaPara.tagName).to.equal('P');
+    expect(ctaPara.querySelector('a')).to.exist;
+    expect(el.querySelector('.hero-side-by-side-content p:not(.hero-side-by-side-cta)').textContent).to.equal('Body copy');
+  });
+
   it('wires a Wistia link in the content to open the video modal instead of navigating', () => {
     const el = block([[img], ['<p><a href="https://frameio.wistia.com/medias/abc123">Watch Overview</a></p>']]);
     decorate(el);

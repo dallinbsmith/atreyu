@@ -7,7 +7,7 @@
 // its own block per the no-nested-blocks rule, not a variant of either.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
-import { createElement } from '../../scripts/utils/dom.js';
+import { createElement, classifyCtaParagraphs } from '../../scripts/utils/dom.js';
 import { decorateVideoMedia } from '../../scripts/utils/media.js';
 
 export default (el) => {
@@ -27,6 +27,7 @@ export default (el) => {
 
   const content = createElement('div', { className: 'hero-side-by-side-content' });
   contentRows.forEach((row) => content.append(...row.children));
+  classifyCtaParagraphs(content, 'hero-side-by-side-cta');
   wireVideoModalLinks(content);
   const hasText = content.querySelector('h1, h2, h3, h4, h5, h6, p');
 

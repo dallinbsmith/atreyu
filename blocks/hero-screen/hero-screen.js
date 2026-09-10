@@ -7,7 +7,7 @@
 // inventing a second one; the glow treatment matches hero-transition-v4's.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
-import { createElement } from '../../scripts/utils/dom.js';
+import { createElement, classifyCtaParagraphs } from '../../scripts/utils/dom.js';
 import { decorateVideoMedia } from '../../scripts/utils/media.js';
 
 export default (el) => {
@@ -27,6 +27,7 @@ export default (el) => {
 
   const content = createElement('div', { className: 'hero-screen-content' });
   contentRows.forEach((row) => content.append(...row.children));
+  classifyCtaParagraphs(content, 'hero-screen-cta');
   el.replaceChildren(content);
   wireVideoModalLinks(content);
 

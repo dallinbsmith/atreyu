@@ -54,6 +54,15 @@ describe('rich-text', () => {
     expect(span.textContent).to.equal('Root');
   });
 
+  it('classifies a paragraph containing a link with .rt-cta-para instead of relying on a structural selector', () => {
+    const el = block(['<p>Body copy</p><p><a href="/a">Go</a></p>']);
+    decorate(el);
+    const ctaPara = el.querySelector('.rt-cta-para');
+    expect(ctaPara).to.exist;
+    expect(ctaPara.querySelector('a')).to.exist;
+    expect(el.querySelector('.rich-text-content p:not(.rt-cta-para)').textContent).to.equal('Body copy');
+  });
+
   it('double-decorate does not throw or duplicate content', () => {
     const el = block(['<p>[[eyebrow|One]]</p>', '<p>[[eyebrow|TWO]]</p>']);
     decorate(el);
