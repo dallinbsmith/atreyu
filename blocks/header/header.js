@@ -41,7 +41,12 @@ const decorateHeaderContent = async (fragment) => {
     decorateActionSection(actionsSection);
     // Classify once here rather than let CSS re-derive "which link is the
     // primary CTA" via a positional p:last-child selector — see scripts.md's
-    // "Identifying Elements" rule.
+    // "Identifying Elements" rule. Must run before the HEADER_ACTIONS loop
+    // below converts any widget-marker <p> (scheme/language/toggle) into a
+    // <button> — this assumes real authored content orders the CTA link(s)
+    // before any widget-marker link, so `p:last-child` still lands on a real
+    // CTA and not a marker that's about to be discarded (same assumption the
+    // prior p:last-child a CSS rule this replaces already depended on).
     actionsSection.querySelector(':scope > .default-content > p:last-child a')
       ?.classList.add('action-primary');
   }

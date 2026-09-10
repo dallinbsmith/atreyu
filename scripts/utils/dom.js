@@ -42,6 +42,18 @@ export const parseSvg = (markup) => new DOMParser().parseFromString(markup, 'tex
 // can't silently return an empty list.
 export const getCells = (el) => [...el.children].flatMap((row) => [...row.children]);
 
+// Classify by content shape, never a structural selector (scripts.md's
+// "Identifying Elements" rule): every paragraph that contains a link gets
+// className, so CSS keys off the class instead of re-deriving "which
+// paragraph is the CTA" via `p:has(a)`. Shared by hero-screen.js,
+// hero-side-by-side.js, and rich-text.js — all three had this exact 3-line
+// classifier duplicated verbatim before being extracted here.
+export const classifyCtaParagraphs = (scope, className) => {
+  [...scope.querySelectorAll('p')]
+    .filter((p) => p.querySelector('a'))
+    .forEach((p) => p.classList.add(className));
+};
+
 // Shared chevron glyph — same path already hand-duplicated as an inline
 // string in blocks/quote-interactive/quote-modal.js's own `arrow()` helper;
 // centralized here for any new caller (e.g. carousel.js) rather than

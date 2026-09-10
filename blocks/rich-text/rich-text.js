@@ -1,4 +1,5 @@
 import { decorateRichText } from '../../scripts/utils/richtext.js';
+import { classifyCtaParagraphs } from '../../scripts/utils/dom.js';
 
 // Behavioral marks (/widgets/{name} links) are handled centrally by the
 // scripts/behaviors.js registry: ak.js tags them, the phase runners init them.
@@ -9,7 +10,5 @@ export default (el) => {
   cells.slice(1).forEach((cell) => content.append(...cell.childNodes));
   content.classList.add('rich-text-content');
   decorateRichText(content);
-  [...content.querySelectorAll('p')]
-    .filter((p) => p.querySelector('a'))
-    .forEach((p) => p.classList.add('rt-cta-para'));
+  classifyCtaParagraphs(content, 'rt-cta-para');
 };
