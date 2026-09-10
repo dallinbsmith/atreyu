@@ -1,0 +1,132 @@
+@layer blocks {
+  .card-grid-editorial {
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-l);
+
+    .cge-card {
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-s);
+      color: var(--color-light);
+      text-decoration: none;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity var(--duration-500) var(--transition-ease-out), transform var(--duration-500) var(--transition-ease-out);
+    }
+
+    &.cge-in .cge-card {
+      opacity: 1;
+      transform: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cge-card {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+    }
+
+    .cge-media {
+      position: relative;
+      aspect-ratio: 1.4;
+      border-radius: var(--radius-16, 16px);
+      overflow: hidden;
+      background: var(--color-alpha-light-5);
+
+      picture,
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform var(--duration-400) var(--transition-ease-out);
+      }
+
+      /* explicit class set by JS (see buildCard) — a second, smaller picture
+         in the same row is the optional brand-logo overlay, never a second
+         content image */
+      .cge-logo {
+        position: absolute;
+        z-index: 1;
+        left: var(--spacing-m);
+        bottom: var(--spacing-m);
+        width: auto;
+        height: 32px;
+      }
+
+      .cge-logo img {
+        width: auto;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+
+    @media (hover: hover) {
+      .cge-card:hover .cge-media picture:first-child img {
+        transform: scale(1.04);
+      }
+    }
+
+    .cge-title {
+      margin: 0;
+      color: var(--color-light);
+      font-size: var(--body-font-size-m);
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    .cge-cta {
+      color: var(--color-alpha-light-70);
+      font-size: var(--body-font-size-s);
+      font-weight: 600;
+
+      &::after {
+        content: '→';
+        margin-inline-start: 0.4em;
+        transition: transform var(--duration-200) var(--transition-ease-out);
+      }
+    }
+
+    @media (hover: hover) {
+      .cge-card:hover .cge-cta::after {
+        transform: translateX(3px);
+      }
+    }
+
+    .cge-hidden {
+      display: none;
+    }
+
+    .cge-toggle {
+      grid-column: 1 / -1;
+      justify-self: center;
+      margin-top: var(--spacing-m);
+      padding: var(--spacing-xs) var(--spacing-l);
+      color: var(--color-light);
+      background: none;
+      border: 1px solid var(--color-alpha-light-40);
+      border-radius: var(--radius-16, 16px);
+      font-size: var(--body-font-size-s);
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color var(--duration-200) var(--transition-ease-out), background var(--duration-200) var(--transition-ease-out);
+
+      &:hover {
+        border-color: var(--color-alpha-light-60);
+        background: var(--color-alpha-light-5);
+      }
+    }
+  }
+
+  @media (width >= 768px) {
+    .card-grid-editorial {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+}
