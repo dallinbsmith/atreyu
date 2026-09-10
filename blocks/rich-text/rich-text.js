@@ -9,4 +9,7 @@ export default (el) => {
   cells.slice(1).forEach((cell) => content.append(...cell.childNodes));
   content.classList.add('rich-text-content');
   decorateRichText(content);
+  [...content.querySelectorAll('p')]
+    .filter((p) => p.querySelector('a'))
+    .forEach((p) => p.classList.add('rt-cta-para'));
 };

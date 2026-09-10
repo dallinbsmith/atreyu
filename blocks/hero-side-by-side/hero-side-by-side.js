@@ -27,6 +27,9 @@ export default (el) => {
 
   const content = createElement('div', { className: 'hero-side-by-side-content' });
   contentRows.forEach((row) => content.append(...row.children));
+  [...content.querySelectorAll('p')]
+    .filter((p) => p.querySelector('a'))
+    .forEach((p) => p.classList.add('hero-side-by-side-cta'));
   wireVideoModalLinks(content);
   const hasText = content.querySelector('h1, h2, h3, h4, h5, h6, p');
 

@@ -55,6 +55,16 @@ describe('hero-screen', () => {
     decorate(el); // Mocha fails the test if this throws
   });
 
+  it('classifies a CTA paragraph (contains a link) with .hero-screen-cta instead of relying on a structural selector', () => {
+    const el = block([[img], ['<h1>Title</h1><p>Body copy</p><p><a href="/a">Go</a></p>']]);
+    decorate(el);
+    const ctaPara = el.querySelector('.hero-screen-cta');
+    expect(ctaPara).to.exist;
+    expect(ctaPara.tagName).to.equal('P');
+    expect(ctaPara.querySelector('a')).to.exist;
+    expect(el.querySelector('.hero-screen-content p:not(.hero-screen-cta)').textContent).to.equal('Body copy');
+  });
+
   it('wires a Wistia link in the content to open the video modal instead of navigating', () => {
     const el = block([[img], ['<p><a href="https://frameio.wistia.com/medias/abc123">Watch the Video</a></p>']]);
     decorate(el);

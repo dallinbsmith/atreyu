@@ -27,6 +27,9 @@ export default (el) => {
 
   const content = createElement('div', { className: 'hero-screen-content' });
   contentRows.forEach((row) => content.append(...row.children));
+  [...content.querySelectorAll('p')]
+    .filter((p) => p.querySelector('a'))
+    .forEach((p) => p.classList.add('hero-screen-cta'));
   el.replaceChildren(content);
   wireVideoModalLinks(content);
 

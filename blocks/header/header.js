@@ -37,7 +37,14 @@ const decorateHeaderContent = async (fragment) => {
 
   if (brandSection) decorateBrandSection(brandSection);
   if (navSection) decorateNavSection(navSection);
-  if (actionsSection) decorateActionSection(actionsSection);
+  if (actionsSection) {
+    decorateActionSection(actionsSection);
+    // Classify once here rather than let CSS re-derive "which link is the
+    // primary CTA" via a positional p:last-child selector — see scripts.md's
+    // "Identifying Elements" rule.
+    actionsSection.querySelector(':scope > .default-content > p:last-child a')
+      ?.classList.add('action-primary');
+  }
 
   for (const pattern of HEADER_ACTIONS) {
     decorateAction(fragment, pattern);

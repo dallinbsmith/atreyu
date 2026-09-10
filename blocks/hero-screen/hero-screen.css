@@ -33,7 +33,7 @@
         color: var(--color-alpha-light-70);
       }
 
-      p:has(a) {
+      .hero-screen-cta {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;

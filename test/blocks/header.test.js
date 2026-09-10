@@ -100,6 +100,19 @@ describe('header', () => {
     expect(nav).to.not.equal(actions);
   });
 
+  it('classifies the last actions-section content link as .action-primary instead of relying on a structural selector', async () => {
+    const realLinksActions = '<p><a href="/login">Log in</a></p><p><a href="/signup">Sign up</a></p>';
+    const stub = stubFetch(fragmentHtml([brandSection, navSection, realLinksActions]));
+    restoreFetch = stub.restore;
+    const el = block();
+    await decorate(el);
+
+    const actions = el.querySelector('.actions-section');
+    const primary = actions.querySelector('.action-primary');
+    expect(primary?.textContent.trim()).to.equal('Sign up');
+    expect(actions.querySelector('a[href="/login"]').classList.contains('action-primary')).to.be.false;
+  });
+
   it('double-decorate does not duplicate content', async () => {
     const stub = stubFetch(fragmentHtml([brandSection, navSection, actionsSection]));
     restoreFetch = stub.restore;
