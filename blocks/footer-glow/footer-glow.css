@@ -1,6 +1,7 @@
 @layer blocks {
   .footer-glow {
     position: relative;
+    isolation: isolate;
     width: 100%;
     min-height: 400px;
     overflow: hidden;
