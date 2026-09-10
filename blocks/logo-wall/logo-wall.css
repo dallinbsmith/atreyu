@@ -1,6 +1,7 @@
 @layer blocks {
   .logo-wall {
     position: relative;
+    isolation: isolate;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
