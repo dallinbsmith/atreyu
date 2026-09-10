@@ -61,3 +61,16 @@ export const classifyCtaParagraphs = (scope, className) => {
 // consuming element is the established way to mirror it for a "previous"
 // direction (see quote-interactive.css's `.qi-modal-arrow-prev`).
 export const CHEVRON_SVG = '<svg viewBox="0 0 32.2 54.4" fill="currentColor"><path d="M30.8,23.6c2,2,2,5.1,0,7.1L8.6,52.9c-1.9,2-5.1,2-7.1,0c-2-1.9-2-5.1,0-7.1l18.7-18.7L1.5,8.5c-1.9-2-1.8-5.2,.1-7.1c1.9-1.9,5-1.9,6.9,0Z"/></svg>';
+
+// Compact stroke-style chevron for small nav buttons (12×12) — visually
+// distinct from CHEVRON_SVG's filled portrait glyph. Consuming element
+// rotates 180deg for a "previous" arrow (see tile-table.css `.tt-modal-prev`).
+export const CHEVRON_LINE_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M4.5 2L8.5 6L4.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+// Close (X) glyph for modal/dialog close buttons — 12×12 stroke, currentColor.
+export const CLOSE_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+
+// YouTube-styled play button — 68×48. Unlike the other SVGs here, paths
+// carry `class="youtube-play-bg"` and `class="youtube-play-icon"` hooks
+// (not `currentColor`); consumer CSS must style them (see youtube.css).
+export const PLAY_SVG = '<svg viewBox="0 0 68 48" aria-hidden="true"><path class="youtube-play-bg" d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55C3.97 2.33 2.27 4.81 1.48 7.74.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z"/><path class="youtube-play-icon" d="M45 24 27 14v20z"/></svg>';

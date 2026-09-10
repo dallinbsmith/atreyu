@@ -1,17 +1,15 @@
 import { announce } from '../../scripts/utils/a11y.js';
-import { parseSvg } from '../../scripts/utils/dom.js';
+import {
+  parseSvg, createElement, CLOSE_SVG, CHEVRON_LINE_SVG,
+} from '../../scripts/utils/dom.js';
 import {
   wireModalClose, openModal, closeModal, clampIndex,
 } from '../../scripts/utils/modal/modal.js';
 
-const CLOSE_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
-const ARROW_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M4.5 2L8.5 6L4.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-const makeEl = (tag, cls, attrs = {}) => {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
-  return e;
+const iconButton = (cls, label, glyph) => {
+  const btn = createElement('button', { className: cls, 'aria-label': label });
+  btn.append(parseSvg(glyph));
+  return btn;
 };
 
 export const initTileModal = (items) => {
@@ -45,26 +43,21 @@ export const initTileModal = (items) => {
   };
 
   const build = () => {
-    modal = makeEl('div', 'tt-modal');
-    const backdrop = makeEl('div', 'tt-modal-backdrop');
-    const card = makeEl('div', 'tt-modal-card');
-    const closeBtn = makeEl('button', 'tt-modal-close', { 'aria-label': 'Close' });
-    closeBtn.append(parseSvg(CLOSE_SVG));
-    const body = makeEl('div', 'tt-modal-body');
-    nameEl = makeEl('h3', 'tt-modal-name');
-    detailEl = makeEl('p', 'tt-modal-detail');
-    linkEl = makeEl('a', 'btn btn-secondary', { target: '_blank', rel: 'noopener noreferrer' });
-    const nav = makeEl('div', 'tt-modal-nav');
-    prevBtn = makeEl('button', 'tt-modal-prev', { 'aria-label': 'Previous' });
-    prevBtn.append(parseSvg(ARROW_SVG));
-    counterEl = makeEl('span', 'tt-modal-counter');
-    nextBtn = makeEl('button', 'tt-modal-next', { 'aria-label': 'Next' });
-    nextBtn.append(parseSvg(ARROW_SVG));
+    nameEl = createElement('h3', { className: 'tt-modal-name' });
+    detailEl = createElement('p', { className: 'tt-modal-detail' });
+    linkEl = createElement('a', {
+      className: 'btn btn-secondary', target: '_blank', rel: 'noopener noreferrer',
+    });
+    counterEl = createElement('span', { className: 'tt-modal-counter' });
+    prevBtn = iconButton('tt-modal-prev', 'Previous', CHEVRON_LINE_SVG);
+    nextBtn = iconButton('tt-modal-next', 'Next', CHEVRON_LINE_SVG);
+    const closeBtn = iconButton('tt-modal-close', 'Close', CLOSE_SVG);
 
-    body.append(nameEl, detailEl, linkEl);
-    nav.append(prevBtn, counterEl, nextBtn);
-    card.append(closeBtn, body, nav);
-    modal.append(backdrop, card);
+    const body = createElement('div', { className: 'tt-modal-body' }, nameEl, detailEl, linkEl);
+    const nav = createElement('div', { className: 'tt-modal-nav' }, prevBtn, counterEl, nextBtn);
+    const card = createElement('div', { className: 'tt-modal-card' }, closeBtn, body, nav);
+    const backdrop = createElement('div', { className: 'tt-modal-backdrop' });
+    modal = createElement('div', { className: 'tt-modal' }, backdrop, card);
 
     prevBtn.addEventListener('click', () => setSlide(current - 1));
     nextBtn.addEventListener('click', () => setSlide(current + 1));

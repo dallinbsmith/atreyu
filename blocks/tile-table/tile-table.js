@@ -1,40 +1,31 @@
 import { initTileModal } from './tile-modal.js';
 import { loadPartnerLogo } from '../../scripts/utils/partner-logo.js';
+import { createElement } from '../../scripts/utils/dom.js';
+
+const rowToItem = (row) => {
+  const [nameCell, detailCell, linkCell] = row.children;
+  const link = linkCell?.querySelector('a[href]');
+  return {
+    name: nameCell.textContent.trim(),
+    detail: detailCell.textContent.trim(),
+    href: link?.href ?? '',
+    linkText: link?.textContent.trim() ?? '',
+  };
+};
+
+const buildTile = (item, i, openModal) => {
+  const logo = createElement('span', { className: 'tt-logo', 'aria-hidden': 'true' });
+  const label = createElement('span', { className: 'tt-label' }, item.name);
+  const tile = createElement('button', { type: 'button', className: 'tt-tile' }, logo, label);
+  tile.addEventListener('click', () => openModal(i, tile));
+  loadPartnerLogo(logo, item.name);
+  return tile;
+};
 
 export default (el) => {
-  const rows = [...el.children].filter((r) => r.textContent.trim());
-  const items = rows.map((row) => {
-    const cols = [...row.children];
-    const linkEl = cols[2]?.querySelector('a');
-    return {
-      name: cols[0]?.textContent.trim() ?? '',
-      detail: cols[1]?.textContent.trim() ?? '',
-      href: linkEl?.href ?? '',
-      linkText: linkEl?.textContent.trim() ?? '',
-    };
-  });
-
-  el.replaceChildren();
-  const grid = document.createElement('div');
-  grid.className = 'tt-grid';
+  const items = [...el.children].filter((r) => r.textContent.trim()).map(rowToItem);
   const openModal = initTileModal(items);
-
-  items.forEach((item, i) => {
-    const tile = document.createElement('button');
-    tile.className = 'tt-tile';
-    tile.type = 'button';
-    const logo = document.createElement('span');
-    logo.className = 'tt-logo';
-    logo.setAttribute('aria-hidden', 'true');
-    const label = document.createElement('span');
-    label.className = 'tt-label';
-    label.textContent = item.name;
-    tile.append(logo, label);
-    tile.addEventListener('click', () => openModal(i, tile));
-    grid.append(tile);
-
-    loadPartnerLogo(logo, item.name);
-  });
-
-  el.append(grid);
+  const grid = createElement('div', { className: 'tt-grid' });
+  grid.append(...items.map((item, i) => buildTile(item, i, openModal)));
+  el.replaceChildren(grid);
 };
