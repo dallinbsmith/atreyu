@@ -1,69 +1,45 @@
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { decorateTout } from '../../scripts/utils/touts.js';
+import { createElement } from '../../scripts/utils/dom.js';
 
-// One authored block instance = ONE Frame.io `SideBySideItem`.
-// Rows are detected by content shape, never by index:
-//   media row  = first row containing an img/picture
-//   touts row  = a row whose cell holds a <ul> (each <li> is a tout)
-//   text rows  = everything else (eyebrow / heading / subheads / body / links)
+// One authored block = ONE Frame.io `SideBySideItem`. Rows classified by
+// content shape, never by index: media (picture/img), touts (UL first-cell), text (rest).
 
-const cellOf = (row) => row.querySelector(':scope > div') ?? row;
+const cellOf = (row) => row.firstElementChild ?? row;
 
+const retag = (h, tag, attrs) => h.replaceWith(createElement(tag, attrs, ...h.childNodes));
+
+// Force valid heading outline: first → <h2>, rest → <h3.side-by-side-subhead>.
 const normalizeHeadings = (scope) => {
-  const headings = [...scope.querySelectorAll('h1, h2, h3, h4, h5, h6')];
-  if (!headings.length) return;
-  const [primary, ...rest] = headings;
-  if (primary.tagName !== 'H2') {
-    const h2 = document.createElement('h2');
-    h2.append(...primary.childNodes);
-    primary.replaceWith(h2);
-  }
-  // keep a valid, non-skipping outline: demote remaining headings to <h3>,
-  // preserving visual scale via a class rather than an invalid level.
-  rest.forEach((h) => {
-    const h3 = document.createElement('h3');
-    h3.className = 'side-by-side-subhead';
-    h3.append(...h.childNodes);
-    h.replaceWith(h3);
-  });
+  const [primary, ...rest] = scope.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  if (!primary) return;
+  if (primary.tagName !== 'H2') retag(primary, 'h2');
+  rest.forEach((h) => retag(h, 'h3', { className: 'side-by-side-subhead' }));
 };
 
-const buildTouts = (cell) => {
-  const list = cell.querySelector(':scope > ul');
-  const items = [...list.children];
-  const touts = document.createElement('div');
-  touts.className = 'side-by-side-touts';
-  touts.style = `--tout-count: ${items.length}`;
-  items.forEach((li, idx) => {
-    const tout = document.createElement('div');
-    tout.append(...li.childNodes);
+const buildTouts = (list) => {
+  const touts = [...list.children].map((li, idx) => {
+    const tout = createElement('div', null, ...li.childNodes);
     decorateTout(tout, 'side-by-side-tout', `side-by-side-tout-${idx}`);
-    touts.append(tout);
+    return tout;
   });
-  return touts;
+  return createElement('div', {
+    className: 'side-by-side-touts',
+    style: `--tout-count: ${touts.length}`,
+  }, ...touts);
 };
 
 const buildText = (rows) => {
-  const text = document.createElement('div');
-  text.className = 'side-by-side-text';
-  const title = document.createElement('div');
-  title.className = 'side-by-side-title';
-  const body = document.createElement('div');
-  body.className = 'side-by-side-body';
+  const body = createElement('div', { className: 'side-by-side-body' });
+  for (const row of rows) body.append(...cellOf(row).children);
+  decorateRichText(body); // must precede the .rt-eyebrow lookup below
 
-  // Collect every text-row cell child, decorate inline styles first so the
-  // eyebrow span exists, then partition: eyebrow + first heading → title.
-  rows.forEach((row) => body.append(...cellOf(row).children));
-  decorateRichText(body);
-
-  // eyebrow is authored on its own line ([[eyebrow|…]]); move its paragraph
   const eyebrow = body.querySelector('.rt-eyebrow')?.closest('p');
-  if (eyebrow) title.append(eyebrow);
   const heading = body.querySelector('h1, h2, h3, h4, h5, h6');
-  if (heading) title.append(heading);
+  const title = createElement('div', { className: 'side-by-side-title' }, eyebrow, heading);
 
-  text.append(title, body);
-  normalizeHeadings(text); // one h2 across the whole region; rest → h3 subheads
+  const text = createElement('div', { className: 'side-by-side-text' }, title, body);
+  normalizeHeadings(text);
   return text;
 };
 
@@ -72,30 +48,28 @@ export default (el) => {
   el.dataset.sbs = 'true';
 
   const rows = [...el.children];
-  const mediaRow = rows.find((r) => r.querySelector(':scope img, :scope picture'));
-  const toutsRow = rows.find((r) => r !== mediaRow && cellOf(r).querySelector(':scope > ul'));
+  const mediaRow = rows.find((r) => r.querySelector('picture, img'));
+  const toutsRow = rows.find((r) => r !== mediaRow && cellOf(r).firstElementChild?.tagName === 'UL');
   const textRows = rows.filter((r) => r !== mediaRow && r !== toutsRow);
 
   el.replaceChildren();
 
   const text = buildText(textRows);
-  if (toutsRow) text.append(buildTouts(cellOf(toutsRow)));
-  if (!text.querySelector('h1, h2, h3, h4, h5, h6, p, .side-by-side-touts')) {
-    el.classList.add('no-text');
-  } else {
-    el.append(text); // DOM order text→media for a11y; CSS flips visually
+  if (toutsRow) text.append(buildTouts(cellOf(toutsRow).firstElementChild));
+  const hasContent = text.querySelector('h1, h2, h3, h4, h5, h6, p, .side-by-side-touts');
+  if (hasContent) el.append(text); // text→media DOM order for a11y; CSS flips visually
+  else el.classList.add('no-text');
+
+  if (!mediaRow) {
+    el.classList.add('no-media');
+    return;
   }
 
-  if (mediaRow) {
-    const media = document.createElement('div');
-    media.className = 'side-by-side-media';
-    media.append(mediaRow.querySelector('picture') ?? mediaRow.querySelector('img'));
-    [...media.querySelectorAll('img')].forEach((img) => {
-      img.setAttribute('loading', img.getAttribute('loading') ?? 'lazy');
-      img.setAttribute('decoding', 'async');
-    });
-    el.append(media);
-  } else {
-    el.classList.add('no-media');
+  const picture = mediaRow.querySelector('picture, img');
+  const media = createElement('div', { className: 'side-by-side-media' }, picture);
+  for (const img of media.querySelectorAll('img')) {
+    if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+    img.setAttribute('decoding', 'async');
   }
+  el.append(media);
 };

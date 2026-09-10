@@ -8,16 +8,12 @@
 //   which default content has no way to express on its own.
 
 export default (el) => {
-  const row = el.querySelector(':scope > div');
+  const row = el.firstElementChild;
   if (!row) return;
-  const cols = [...row.children];
+  const [heading, body] = row.children;
 
-  if (cols.length < 2) {
-    el.classList.add('standalone-text-single');
-    return;
-  }
-
-  el.classList.add('standalone-text-columns');
-  cols[0].classList.add('standalone-text-heading');
-  cols[1].classList.add('standalone-text-body');
+  el.classList.add(body ? 'standalone-text-columns' : 'standalone-text-single');
+  if (!body) return;
+  heading.classList.add('standalone-text-heading');
+  body.classList.add('standalone-text-body');
 };
