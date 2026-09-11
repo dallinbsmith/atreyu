@@ -83,6 +83,11 @@ export const CLOSE_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M1 1l10 
 // quote-interactive's modal open timeline, which rotates the child SVG).
 export const PLUS_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
 
+// Nine-dot "more" glyph — 256×256, currentColor. Decorative chin mark on
+// hero-cards-transition tiles (not the author `:more:` path — loadIcons
+// runs before decorate, so the block inlines via parseSvg).
+export const MORE_SVG = '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M128,148c-11.03,0-20-8.97-20-20s8.97-20,20-20,20,8.97,20,20-8.97,20-20,20Z"/><path d="M128,72c-11.03,0-20-8.97-20-20s8.97-20,20-20,20,8.97,20,20-8.97,20-20,20Z"/><path d="M128,224c-11.03,0-20-8.97-20-20s8.97-20,20-20,20,8.97,20,20-8.97,20-20,20Z"/><path d="M52,148c-11.03,0-20-8.97-20-20s8.97-20,20-20,20,8.97,20,20-8.97,20-20,20Z"/><path d="M52,224c-11.03,0-20-8.97-20-20s8.97-20,20-20,20,8.97,20,20-8.97,20-20,20Z"/><path d="M52,72c-11.03,0-20-8.97-20-20s8.97-20,20-20,20,8.97,20,20-8.97,20-20,20Z"/><path d="M204,148c-11.03,0-20-8.97-20-20s8.97-20,20-20,20,8.97,20,20-8.97,20-20,20Z"/><path d="M204,224c-11.03,0-20-8.97-20-20s8.97-20,20-20,20,8.97,20,20-8.97,20-20,20Z"/><path d="M204,72c-11.03,0-20-8.97-20-20s8.97-20,20-20,20,8.97,20,20-8.97,20-20,20Z"/></svg>';
+
 // YouTube-styled play button — 68×48. Unlike the other SVGs here, paths
 // carry `class="youtube-play-bg"` and `class="youtube-play-icon"` hooks
 // (not `currentColor`); consumer CSS must style them (see youtube.css).

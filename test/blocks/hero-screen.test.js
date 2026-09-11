@@ -48,6 +48,15 @@ describe('hero-screen', () => {
     expect(el.querySelector('.hero-screen-media picture')).to.exist;
   });
 
+  it('a picture cell with a sibling text cell in the same row keeps the text in content (F-66)', () => {
+    const el = block([[img, '<p>Caption</p>']]);
+    decorate(el);
+    const content = el.querySelector('.hero-screen-content');
+    expect(el.querySelector('.hero-screen-media picture')).to.exist;
+    expect(content.textContent).to.include('Caption');
+    expect(el.querySelector('.hero-screen-media').textContent).to.not.include('Caption');
+  });
+
   it('an empty block does not throw', () => {
     const el = document.createElement('div');
     el.className = 'hero-screen';

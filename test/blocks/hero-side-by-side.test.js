@@ -61,6 +61,17 @@ describe('hero-side-by-side', () => {
     expect(el.querySelector('.hero-side-by-side-media picture')).to.exist;
   });
 
+  it('a picture cell with a sibling text cell in the same row keeps the text in content (F-66)', () => {
+    const el = block([[img, '<p>Caption</p>']]);
+    decorate(el);
+    const content = el.querySelector('.hero-side-by-side-content');
+    expect(el.querySelector('.hero-side-by-side-media picture')).to.exist;
+    expect(content).to.exist;
+    expect(content.textContent).to.include('Caption');
+    expect(el.classList.contains('no-text')).to.be.false;
+    expect(el.querySelector('.hero-side-by-side-media').textContent).to.not.include('Caption');
+  });
+
   it('an empty block does not throw', () => {
     const el = document.createElement('div');
     el.className = 'hero-side-by-side';

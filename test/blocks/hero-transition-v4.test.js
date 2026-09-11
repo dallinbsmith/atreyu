@@ -69,6 +69,21 @@ describe('hero-transition-v4', () => {
     expect(() => decorate(el)).to.not.throw();
   });
 
+  it('reduced-motion / shouldAnimate()-false: is-in immediately, no IntersectionObserver', () => {
+    const originalIO = window.IntersectionObserver;
+    window.IntersectionObserver = FakeIntersectionObserver;
+    FakeIntersectionObserver.instances = [];
+    sinon.stub(navigator, 'hardwareConcurrency').value(1);
+    try {
+      const el = block([[img]]);
+      decorate(el);
+      expect(el.classList.contains('is-in')).to.be.true;
+      expect(FakeIntersectionObserver.instances).to.have.length(0);
+    } finally {
+      window.IntersectionObserver = originalIO;
+    }
+  });
+
   describe('re-decoration idempotency (Fix 2)', () => {
     let originalIO;
 
