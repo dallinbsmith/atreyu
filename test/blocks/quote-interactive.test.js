@@ -3,8 +3,8 @@ import sinon from 'sinon';
 import decorate from '../../blocks/quote-interactive/quote-interactive.js';
 
 // Polls until `check()` is truthy — used below to await the async close()
-// path (withGsap() is an async function, so its resolution/`.then()` lands on
-// a later microtask/tick, never synchronously). Same technique
+// path (close() awaits loadGsap() before teardown, so the DOM cleanup lands
+// on a later microtask/tick, never synchronously). Same technique
 // test/blocks/footer-glow.test.js already uses for its own async assertions.
 const waitFor = async (check, { timeout = 2000, interval = 10 } = {}) => {
   const deadline = Date.now() + timeout;
@@ -77,10 +77,14 @@ describe('quote-interactive', () => {
 describe('quote-interactive modal — close when shouldAnimate() is false', () => {
   afterEach(() => sinon.restore());
 
-  // Regression for the modal-can-never-close bug: withGsap() is async and
-  // therefore always returns a truthy Promise synchronously, so branching on
-  // it directly (the prior code) could never reach the shouldAnimate()-false
-  // fallback — the modal stayed in the DOM forever with body scroll locked.
+  // Regression for the modal-can-never-close bug: when shouldAnimate() is
+  // false, loadGsap() resolves to null and the caller must run its own
+  // teardown fallback. Two prior implementations got this wrong — one
+  // branched on an async wrapper's synchronous return (always a truthy
+  // Promise); the next used a `.then((animated) => !animated && teardown())`
+  // check that fired teardown from the microtask before the tween even
+  // ticked, wiping the modal invisibly instead of letting it animate out.
+  // Both left the modal in an incorrect state.
   it('clicking close actually closes the modal (DOM removed, scroll restored, focus returned) when shouldAnimate() is false', async () => {
     sinon.stub(navigator, 'hardwareConcurrency').value(1); // forces shouldAnimate() false
     const el = build([['Sports', 'Great tool', 'Alex'], ['Film', 'Loved it', 'Sam']]);

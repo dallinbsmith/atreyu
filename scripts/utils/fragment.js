@@ -87,9 +87,9 @@ export const getReplaceEl = (a) => {
 // that could leak across independent block instances.
 let fragmentInstance = 0;
 
-// blocks/schedule/schedule.js has an equivalent inline copy of this
-// replace-loop (minus id assignment) that could be migrated to this shared
-// helper separately — out of scope here, left as a follow-up.
+// `path` is optional — when omitted (e.g. blocks/schedule/schedule.js, which
+// doesn't want deep-link ids on scheduled event fragments), children get no
+// ids and the loop just inserts/removes.
 export const replaceElWithFragment = (elToReplace, fragment, path) => {
   const instance = fragmentInstance;
   fragmentInstance += 1;
@@ -99,7 +99,7 @@ export const replaceElWithFragment = (elToReplace, fragment, path) => {
     ? fragment.querySelectorAll(':scope > *')
     : [fragment];
   for (const [idx, child] of children.entries()) {
-    if (path.startsWith('/')) child.id = btoa(encodeURIComponent(`${path}/${idx + 1}/${instance}`));
+    if (path?.startsWith('/')) child.id = btoa(encodeURIComponent(`${path}/${idx + 1}/${instance}`));
     elToReplace.after(child);
   }
   elToReplace.remove();

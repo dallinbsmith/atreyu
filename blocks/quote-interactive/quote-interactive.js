@@ -1,111 +1,87 @@
 import { generateId, rovingTabindex, activateTab } from '../../scripts/utils/a11y.js';
 import { decorateRichText } from '../../scripts/utils/richtext.js';
+import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
+import { MQ_MD } from '../../scripts/utils/breakpoints.js';
+import { buildPanel } from './quote-view.js';
 import { initHover } from './quote-hover.js';
 import { initModal } from './quote-modal.js';
+
+// One row → one slide. Pic and icon are located by selector (author-flexible:
+// they may live in any cell); the remaining cells hold `category | quote |
+// attribution` positionally. Cloned once here so `slides` is the authoritative
+// data source — every consumer (panel, modal-slide, hover card) clones again
+// at render time and never mutates the canonical copy.
+const extractSlide = (row, i) => {
+  const img = row.querySelector('picture, img');
+  const pic = img?.closest('picture') ?? img;
+  const icon = row.querySelector('.icon');
+  // Whatever cells are left, in DOM order, are the positional
+  // `category | quote | attribution` triple.
+  const [cat, quote, attr] = [...row.children].filter(
+    (c) => !c.contains(pic) && !c.contains(icon),
+  );
+  const clone = (el) => el?.cloneNode(true) ?? null;
+  return {
+    category: cat?.textContent.trim() || `Quote ${i + 1}`,
+    quote: clone(quote),
+    attr: clone(attr),
+    pic: clone(pic),
+    icon: clone(icon),
+  };
+};
+
+// Decorative-only text list of category names — the tablist is the accessible
+// source of truth for those same labels, so this is aria-hidden to avoid
+// double-announcing categories to screen readers.
+const buildGradient = (slides) => createElement('div', {
+  className: 'qi-gradient', 'aria-hidden': 'true',
+}, ...slides.flatMap(({ category }, i) => (
+  i ? [document.createElement('br'), category] : [category]
+)));
+
+const buildView = (slides, ariaLabel) => {
+  const tablist = createElement('div', { className: 'qi-tabs', role: 'tablist', 'aria-label': ariaLabel });
+  const stage = createElement('div', { className: 'qi-stage' });
+  const tabs = slides.map((slide) => {
+    const tabId = generateId('qi-tab');
+    const panelId = generateId('qi-panel');
+    const tab = createElement('button', {
+      type: 'button', className: 'qi-tab', id: tabId, role: 'tab', 'aria-controls': panelId,
+    }, slide.category);
+    tablist.append(tab);
+    stage.append(buildPanel(slide, tabId, panelId));
+    return tab;
+  });
+  const tabWrap = createElement('div', { className: 'qi-tab-wrap' }, tablist, buildGradient(slides));
+  return { tabWrap, stage, tablist, tabs };
+};
+
+// Mount the rebuilt view, then wire one click path for both widths.
+// Mobile: activateTab shows the matching panel (real tablist UX).
+// Desktop: panels are display:none and openModal(i) is the actual UX —
+// activateTab still runs so aria-selected stays consistent at both
+// widths, and screen-reader semantics are the same everywhere.
+const wire = (el, { tabWrap, stage, tablist, tabs }, slides) => {
+  el.replaceChildren(el.firstElementChild, tabWrap, stage);
+  decorateRichText(el);
+  const mql = window.matchMedia(MQ_MD);
+  initHover(el, tabs, slides, mql);
+  const openModal = initModal(tabs, slides);
+  tabs.forEach((tab, i) => tab.addEventListener('click', () => {
+    activateTab(tabs, stage.children, i);
+    if (mql.matches) openModal(i);
+  }));
+  activateTab(tabs, stage.children, 0);
+  rovingTabindex(tablist, tabs, { orientation: 'horizontal' });
+};
 
 export default (el) => {
   if (el.dataset.qi) return;
   el.dataset.qi = 'true';
-
-  const rows = [...el.children];
-  const head = rows.shift();
+  const [head, ...rows] = el.children;
   head?.classList.add('qi-head');
   if (!rows.length) return;
-
-  const headingText = head?.querySelector('h1, h2, h3, h4, h5, h6')?.textContent.trim();
-
-  const tablist = document.createElement('div');
-  tablist.className = 'qi-tabs';
-  tablist.setAttribute('role', 'tablist');
-  tablist.setAttribute('aria-label', headingText || 'Customer quotes by industry');
-  const stage = document.createElement('div');
-  stage.className = 'qi-stage';
-
-  const slides = [];
-  const tabs = rows.map((row, i) => {
-    const pic = row.querySelector('picture, img');
-    const icon = row.querySelector('.icon');
-    const skip = (c) => (pic && c.contains(pic)) || (icon && c.contains(icon));
-    const [cat, quote, attr] = [...row.children].filter((c) => !skip(c));
-
-    slides.push({
-      i,
-      category: cat?.textContent.trim() || `Quote ${i + 1}`,
-      quoteNodes: quote ? [...quote.childNodes].map((n) => n.cloneNode(true)) : [],
-      attrNodes: attr ? [...attr.childNodes].map((n) => n.cloneNode(true)) : [],
-      pic: pic ? (pic.closest('picture') ?? pic).cloneNode(true) : null,
-      icon: icon?.cloneNode(true) ?? null,
-    });
-    const tabId = generateId('qi-tab');
-    const panelId = generateId('qi-panel');
-
-    const tab = document.createElement('button');
-    tab.type = 'button';
-    tab.className = 'qi-tab';
-    tab.id = tabId;
-    tab.setAttribute('role', 'tab');
-    tab.setAttribute('aria-controls', panelId);
-    tab.textContent = cat?.textContent.trim() || `Quote ${i + 1}`;
-
-    const panel = document.createElement('figure');
-    panel.className = 'qi-panel';
-    panel.id = panelId;
-    panel.setAttribute('role', 'tabpanel');
-    panel.setAttribute('aria-labelledby', tabId);
-    panel.setAttribute('tabindex', '0');
-    if (quote) {
-      const bq = document.createElement('blockquote');
-      bq.append(...quote.childNodes);
-      panel.append(bq);
-    }
-    if (attr) {
-      const cap = document.createElement('figcaption');
-      cap.append(...attr.childNodes);
-      panel.append(cap);
-    }
-    if (pic) {
-      const bg = document.createElement('div');
-      bg.className = 'qi-bg';
-      bg.setAttribute('aria-hidden', 'true');
-      bg.append(pic.closest('picture') ?? pic);
-      panel.prepend(bg);
-    }
-    if (icon) {
-      const logo = document.createElement('div');
-      logo.className = 'qi-logo';
-      logo.setAttribute('aria-hidden', 'true');
-      logo.append(icon);
-      panel.append(logo);
-    }
-
-    tab.addEventListener('click', () => activateTab(tabs, stage.children, i));
-
-    tablist.append(tab);
-    stage.append(panel);
-    return tab;
-  });
-
-  activateTab(tabs, stage.children, 0);
-
-  const gradient = document.createElement('div');
-  gradient.className = 'qi-gradient';
-  gradient.setAttribute('aria-hidden', 'true');
-  slides.forEach(({ category }, idx) => {
-    if (idx > 0) gradient.append(document.createElement('br'));
-    gradient.append(document.createTextNode(category));
-  });
-
-  const tabWrap = document.createElement('div');
-  tabWrap.className = 'qi-tab-wrap';
-  tabWrap.append(tablist, gradient);
-
-  rows.forEach((r) => r.remove());
-  el.append(tabWrap, stage);
-  rovingTabindex(tablist, tabs, { orientation: 'horizontal' });
-  decorateRichText(el);
-
-  const mql = window.matchMedia('(width >= 768px)');
-  initHover(el, tabs, slides, mql);
-  const openModal = initModal(el, tabs, slides);
-  tabs.forEach((tab, i) => tab.addEventListener('click', () => mql.matches && openModal(i)));
+  const slides = rows.map(extractSlide);
+  const headingText = head?.querySelector(HEADING_SELECTOR)?.textContent.trim();
+  wire(el, buildView(slides, headingText || 'Customer quotes by industry'), slides);
 };

@@ -103,7 +103,7 @@ The block reads `data-*` attributes from the section element (set by the EDS fra
 | `spacing` | `xs`, `s`, `m`, `l`, `xl`, `xxl` | Sets top/bottom padding on the section |
 | `container` | `2`, `4`, `6` | Constrains section content width (2 = narrow, 6 = full grid width) |
 | `background` | URL or CSS color or `color-token-*` | Sets a background image, color, or design token. URLs ending in `.mp4` are ignored. Token format: `color-token-accent` maps to `var(--color-accent)`. |
-| `layout` | `bento` | Applies a predefined asymmetric bento grid layout (3-column at 900px+ with named grid areas) |
+| `layout` | `bento` | Applies a predefined asymmetric bento grid layout (3-column at 768px+ with named grid areas) |
 | `style` | CSS class names | Applied directly as classes on the section by the framework (not handled by this JS) |
 | `anchor` | Any text | Reserved key. Framework promotes it to a real, slugified section `id` (e.g. `Pricing` → `id="pricing"`), giving a deep-linkable `#anchor` target for marketing campaign links and in-page jump navigation — it does **not** produce a `data-anchor` attribute. Auto de-duped with a numeric suffix if repeated. Slugged lowercase like a heading anchor. Handled in `ak.js`, not this block's JS. |
 

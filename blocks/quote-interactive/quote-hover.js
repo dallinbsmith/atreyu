@@ -1,40 +1,33 @@
-import { withGsap } from '../../scripts/utils/motion/gsap-loader.js';
+import { getConfig } from '../../scripts/ak.js';
+import { createElement } from '../../scripts/utils/dom.js';
+import { loadGsap } from '../../scripts/utils/motion/gsap-loader.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 
+const EASE = 'power2.out';
+
 const buildCard = () => {
-  const card = document.createElement('div');
-  card.className = 'qi-hover';
-  card.setAttribute('aria-hidden', 'true');
-  const inner = document.createElement('div');
-  inner.className = 'qi-hover-inner';
-  const media = document.createElement('div');
-  media.className = 'qi-hover-media';
-  const logo = document.createElement('div');
-  logo.className = 'qi-hover-logo';
-  const plus = document.createElement('div');
-  plus.className = 'qi-hover-plus';
-  plus.textContent = '+';
-  inner.append(media, logo, plus);
-  card.append(inner);
-  return card;
+  const media = createElement('div', { className: 'qi-hover-media' });
+  const logo = createElement('div', { className: 'qi-hover-logo' });
+  const inner = createElement(
+    'div',
+    { className: 'qi-hover-inner' },
+    media,
+    logo,
+    createElement('div', { className: 'qi-hover-plus' }, '+'),
+  );
+  const card = createElement('div', {
+    className: 'qi-hover', 'aria-hidden': 'true',
+  }, inner);
+  return { card, inner, media, logo };
 };
 
-export const initHover = (blockEl, tabs, slides, mql) => {
-  if (!mql.matches || !shouldAnimate()) return;
+const fill = (host, node) => host.replaceChildren(node?.cloneNode(true) ?? '');
 
-  const card = buildCard();
-  const inner = card.querySelector('.qi-hover-inner');
-  document.body.append(card);
-  let active = -1;
-
-  const tabsEl = blockEl.querySelector('.qi-tabs');
-
-  // Coalesce to one style write per frame instead of one per mousemove event —
-  // matches the rAF-throttled pattern scripts/utils/motion/scroll.js already
-  // uses for its own shared scroll listener, rather than a second ad-hoc one.
+// One style write per frame, same rAF-coalesce as scripts/utils/motion/scroll.js.
+const trackPointer = (el, card) => {
   let raf = 0;
   let pointer = null;
-  tabsEl.addEventListener('mousemove', (e) => {
+  el.addEventListener('mousemove', (e) => {
     pointer = e;
     raf ||= requestAnimationFrame(() => {
       raf = 0;
@@ -42,41 +35,49 @@ export const initHover = (blockEl, tabs, slides, mql) => {
       card.style.setProperty('--hover-y', `${pointer.clientY}px`);
     });
   });
+};
 
+// Sync half (mount + pointer tracking) runs before the first await, so tests
+// can assert the card is in the DOM as soon as initHover is invoked. Async
+// half wires GSAP; null core (shouldAnimate flipped, or load failed) leaves
+// the card mounted-but-invisible via CSS defaults.
+export const initHover = async (blockEl, tabs, slides, mql) => {
+  if (!mql.matches || !shouldAnimate()) return;
+
+  const { card, inner, media, logo } = buildCard();
+  document.body.append(card);
+  const tabsEl = blockEl.querySelector('.qi-tabs');
+  trackPointer(tabsEl, card);
+
+  const core = await loadGsap().catch((ex) => {
+    getConfig().log(ex);
+    return null;
+  });
+  if (!core) return;
+  const { gsap } = core;
+  const to = (el, vars) => gsap.to(el, { ease: EASE, ...vars });
+
+  let active = -1;
   tabs.forEach((tab, i) => {
     tab.addEventListener('mouseenter', () => {
       if (i === active) return;
-      const wasHidden = active < 0;
+      const reveal = active < 0;
       active = i;
-      card.querySelector('.qi-hover-media').replaceChildren(
-        slides[i].pic?.cloneNode(true) ?? '',
+      fill(media, slides[i].pic);
+      fill(logo, slides[i].icon);
+      if (!reveal) return;
+      to(card, { '--hover-progress': 1, duration: 0.35, overwrite: true });
+      gsap.fromTo(
+        inner,
+        { '--scale-y': 0.1, '--inner-scale-y': 2 },
+        { '--scale-y': 1, '--inner-scale-y': 1, duration: 0.3, ease: EASE },
       );
-      card.querySelector('.qi-hover-logo').replaceChildren(
-        slides[i].icon?.cloneNode(true) ?? '',
-      );
-      if (!wasHidden) return;
-      withGsap(({ gsap }) => {
-        gsap.to(card, {
-          '--hover-progress': 1, duration: 0.35, ease: 'power2.out', overwrite: true,
-        });
-        gsap.fromTo(
-          inner,
-          { '--scale-y': 0.1, '--inner-scale-y': 2 },
-          { '--scale-y': 1, '--inner-scale-y': 1, duration: 0.3, ease: 'power2.out' },
-        );
-      });
     });
   });
 
   tabsEl.addEventListener('mouseleave', () => {
     active = -1;
-    withGsap(({ gsap }) => {
-      gsap.to(card, {
-        '--hover-progress': 0, duration: 0.3, ease: 'power2.out', overwrite: true,
-      });
-      gsap.to(inner, {
-        '--scale-y': 0.5, '--inner-scale-y': 2, duration: 0.3, ease: 'power2.out',
-      });
-    });
+    to(card, { '--hover-progress': 0, duration: 0.3, overwrite: true });
+    to(inner, { '--scale-y': 0.5, '--inner-scale-y': 2, duration: 0.3 });
   });
 };

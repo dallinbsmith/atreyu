@@ -11,6 +11,7 @@
  */
 
 import { tagBehavior } from './behaviors.js';
+import { MQ_GRID_CAP } from './utils/breakpoints.js';
 
 const LOG = async (ex, el) => (await import('./utils/error.js')).default(ex, el);
 
@@ -119,7 +120,7 @@ const decoratePictures = (el) => {
       const search = new URLSearchParams(params);
       search.set('width', 3000);
       clone.setAttribute('srcset', `${pathname}?${search.toString()}`);
-      clone.setAttribute('media', '(min-width: 1440px)');
+      clone.setAttribute('media', MQ_GRID_CAP);
       pic.prepend(clone);
     }
   }

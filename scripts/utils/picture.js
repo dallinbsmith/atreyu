@@ -1,4 +1,6 @@
-const DEF_BREAK = [{ media: '(min-width: 768px)', width: '2000' }, { width: '750' }];
+import { MQ_MD } from './breakpoints.js';
+
+const DEF_BREAK = [{ media: MQ_MD, width: '2000' }, { width: '750' }];
 
 export const createPicture = ({ src, alt = '', eager = false, breakpoints = DEF_BREAK }) => {
   const url = new URL(src, window.location.href);

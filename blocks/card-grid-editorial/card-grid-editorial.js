@@ -10,14 +10,14 @@
 import { inferMediaLayout } from '../../scripts/utils/touts.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { onReveal } from '../../scripts/utils/motion/motion.js';
-import { createElement } from '../../scripts/utils/dom.js';
+import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 
 // Falkor shows 6 cards and hides the rest behind a "Show more" toggle.
 const DEFAULT_VISIBLE = 6;
 
 const buildCard = (row, idx) => {
   const link = row.querySelector('a');
-  const heading = row.querySelector('h1, h2, h3, h4, h5, h6');
+  const heading = row.querySelector(HEADING_SELECTOR);
   if (!link || !heading) return null;
 
   // Every picture that reads as a real photo is main-image material; only one
