@@ -151,6 +151,47 @@ describe('image-sequence', () => {
     expect(video.preload).to.equal('auto');
   });
 
+  // First progress tick can fire during Lazy (100% rootMargin, block sits
+  // behind the hero) before the mp4 has duration. Without a loadedmetadata
+  // retry the video stays at 0 until the next scroll.
+  it('seeks on loadedmetadata when the first progress tick arrived before duration', async () => {
+    sinon.stub(navigator, 'hardwareConcurrency').value(8);
+    const el = block();
+    decorate(el);
+
+    const video = el.querySelector('video');
+    let duration = Number.NaN;
+    let current = 0;
+    Object.defineProperty(video, 'duration', { configurable: true, get: () => duration });
+    Object.defineProperty(video, 'currentTime', {
+      configurable: true,
+      get: () => current,
+      set: (v) => { current = Number(v); },
+    });
+    const rect = {
+      top: -500,
+      height: 2000,
+      bottom: 1500,
+      left: 0,
+      right: 800,
+      width: 800,
+      x: 0,
+      y: -500,
+      toJSON: () => {},
+    };
+    sinon.stub(el, 'getBoundingClientRect').returns(rect);
+
+    FakeIntersectionObserver.instances[0].callback([{ isIntersecting: true, target: el }]);
+    await nextFrames();
+    await waitFor(() => video.preload === 'auto');
+    expect(current).to.equal(0);
+
+    duration = 10;
+    video.dispatchEvent(new Event('loadedmetadata'));
+    const p = Math.min(1, Math.max(0, -rect.top / Math.max(rect.height - window.innerHeight, 1)));
+    expect(current).to.be.closeTo(p * 10, 0.021);
+  });
+
   it('reduced-motion / shouldAnimate()-false fallback: video gets native controls, no word-reveal, no scroll tracking', () => {
     sinon.stub(navigator, 'hardwareConcurrency').value(1);
     const el = block();

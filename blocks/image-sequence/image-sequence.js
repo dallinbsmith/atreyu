@@ -1,97 +1,96 @@
-// "Prompter" / manifesto block — a faithful take on Frame.io's scroll-scrubbed
-// module: a tall section pins a 100vh stage while large prompter text lights up
-// word-by-word, driven by scroll position (not a one-shot entry animation). An
-// authored video is scrubbed frame-accurately to the same progress. The reveal
-// lives in CSS off a single `--progress` custom property; JS only emits the
-// number and nudges `video.currentTime`. Reduced motion / save-data falls back
-// to fully-lit static text (the resting state) via the shared engine's no-op.
+// Scroll-scrubbed prompter (authored as the image-sequence block): a tall
+// section pins a 100vh stage while text lights up word-by-word off `--progress`.
+// An authored video is seeked to the same progress. Reduced motion / save-data
+// keeps the resting (fully lit) layout via shouldAnimate().
+import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 
-// Scrub an authored video to scroll progress. Browsers can't seek a not-yet-
-// buffered frame, so we guard on readiness and only seek on meaningful deltas
-// to avoid thrashing the decoder (keeps the scrub smooth and INP-friendly).
-// preload starts at 'metadata' — block decoration is not viewport-gated (runs
-// during the Lazy phase for every instance on the page), so an unconditional
-// 'auto' here would eagerly download the full video for a below-fold instance
-// long before a user scrolls near it. Bumped to 'auto' on the first scroll-
-// progress callback, which trackScrollProgress only fires once its own
-// IntersectionObserver (rootMargin: '100% 0px') reports the block near-
-// viewport — reusing that existing gate rather than registering a second one.
-const scrubVideo = (video) => {
+const MP4 = /\.mp4(\?|#|$)/i;
+const SEEK_EPS = 0.02;
+
+const prepareScrub = (video) => {
   video.muted = true;
   video.playsInline = true;
   video.preload = 'metadata';
   video.removeAttribute('autoplay');
   video.pause();
-  let primed = false;
-  return (p) => {
-    if (!primed) {
-      primed = true;
-      video.preload = 'auto';
-    }
-    if (!video.duration) return;
+};
+
+// preload stays 'metadata' until the first progress tick — decoration is not
+// viewport-gated, so 'auto' here would download below-fold videos during Lazy.
+// trackScrollProgress's IO (rootMargin: 100%) is that gate. The first tick can
+// beat loadedmetadata (homepage: this block sits behind the hero), so we stash
+// `last` and seek again when duration appears. Seek-lock waits for `seeked`
+// unless currentTime applied synchronously (tests / already-buffered).
+const scrubOnProgress = (video) => {
+  let last = 0;
+  let seeking = false;
+  const seek = (p) => {
+    last = p;
+    if (video.preload !== 'auto') video.preload = 'auto';
+    if (!video.duration || seeking) return;
     const t = p * video.duration;
-    if (Math.abs(video.currentTime - t) > 0.02) video.currentTime = t;
+    if (Math.abs(video.currentTime - t) <= SEEK_EPS) return;
+    seeking = true;
+    video.currentTime = t;
+    if (Math.abs(video.currentTime - t) <= SEEK_EPS) seeking = false;
   };
+  video.addEventListener('seeked', () => { seeking = false; });
+  if (!video.duration) {
+    video.addEventListener('loadedmetadata', () => seek(last), { once: true });
+  }
+  return seek;
+};
+
+// DA can't insert <video>; the manifesto clip is an authored .mp4 link.
+const findVideo = (el) => {
+  const existing = el.querySelector('video');
+  if (existing) return existing;
+  const href = [...el.querySelectorAll('a')]
+    .find((a) => MP4.test(a.getAttribute('href') ?? ''))
+    ?.getAttribute('href');
+  return href ? createElement('video', { src: href }) : null;
+};
+
+const splitWords = (text) => {
+  const words = text.textContent.trim().split(/\s+/);
+  text.replaceChildren();
+  text.style.setProperty('--count', words.length);
+  for (const [i, word] of words.entries()) {
+    const span = createElement('span', { className: 'prompter-word' }, word);
+    span.style.setProperty('--i', i);
+    text.append(span, ' ');
+  }
+};
+
+// Stage is exactly [media?, textwrap]. Extra authored rows are dropped —
+// the contract is one heading/p plus an optional video or .mp4 link.
+const buildStage = (el, text, video) => {
+  text.classList.add('prompter-text');
+  const media = video && createElement('div', { className: 'prompter-media' }, video);
+  el.replaceChildren(...(media ? [media] : []), createElement('div', {
+    className: 'prompter-textwrap',
+  }, text));
 };
 
 export default (el) => {
   if (el.dataset.imgSeq) return;
   el.dataset.imgSeq = 'true';
-
   el.classList.add('prompter');
-  const text = el.querySelector('h1, h2, h3, p');
+
+  const text = el.querySelector(`${HEADING_SELECTOR}, p`);
   if (!text) return;
-  text.classList.add('prompter-text');
 
-  // Media: an authored <video>, or an authored link to an .mp4 we upgrade to one
-  // (DA can't insert a <video>, so the manifesto video is authored as a link).
-  let video = el.querySelector('video');
-  const link = video ? null
-    : [...el.querySelectorAll('a')].find((a) => /\.mp4(\?|#|$)/i.test(a.getAttribute('href') ?? ''));
-  if (link) {
-    video = document.createElement('video');
-    video.src = link.getAttribute('href');
-  }
-  const media = video && document.createElement('div');
-  if (media) {
-    media.className = 'prompter-media';
-    media.append(video);
-  }
-
-  // Flatten to [media?, textwrap] direct children. The text lives inside a
-  // wrapper so the wrapper owns the sticky 100vh centering — the text element
-  // itself must stay normal flow, or its per-word spans become grid items
-  // (one word per line). The -100vh overlap pins text over the video.
-  const textwrap = document.createElement('div');
-  textwrap.className = 'prompter-textwrap';
-  textwrap.append(text);
-  el.replaceChildren(...(media ? [media] : []), textwrap);
-
-  // No scroll-scrubbing (reduced motion / save-data / low-end): the text rests
-  // fully lit, and the video would otherwise be a dead, control-less element —
-  // give it native controls so it stays manually playable.
+  const video = findVideo(el);
+  buildStage(el, text, video);
   if (!shouldAnimate()) {
     if (video) video.controls = true;
     return;
   }
   el.classList.add('prompter-scrub');
-
-  const words = text.textContent.trim().split(/\s+/);
-  text.textContent = '';
-  text.style.setProperty('--count', words.length);
-  words.forEach((word, i) => {
-    const span = document.createElement('span');
-    span.className = 'prompter-word';
-    span.textContent = word;
-    span.style.setProperty('--i', i);
-    text.append(span, document.createTextNode(' '));
-  });
-
-  const seek = video ? scrubVideo(video) : null;
-  // Cleanup handle intentionally discarded: `el` lives for the page's full
-  // lifetime (EDS is full-page-load, no client routing) — there's no removal
-  // hook to call it from today.
-  trackScrollProgress(el, seek);
+  splitWords(text);
+  if (video) prepareScrub(video);
+  // Cleanup discarded: no client routing, so `el` lives for the page lifetime.
+  trackScrollProgress(el, video ? scrubOnProgress(video) : undefined);
 };

@@ -1,81 +1,31 @@
-// Pothole V4: richer sibling of pothole.js — same scroll-parallax background
-// (`--progress` from trackScrollProgress), plus V4-only extras: an
-// author-set glow-color variant, a numeric media-scale row, and layout/
-// alignment variants (see blocks.md variant convention).
-import { decorateRichText } from '../../scripts/utils/richtext.js';
-import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
-import { createElement, getCells } from '../../scripts/utils/dom.js';
+// Pothole V4: same layout as pothole.js, plus a trailing `key: value`
+// metadata row (`scale: n` → `--media-scale`, `glow: color` → `.glow-{color}`)
+// and CSS variants (top/bottom/overflow/right-aligned).
+import { decoratePothole } from '../../scripts/utils/pothole.js';
 
-const GLOW_COLORS = ['purple', 'blue', 'pink', 'green'];
+const GLOW_COLORS = new Set(['purple', 'blue', 'pink', 'green']);
 const META_RE = /^(scale|glow)\s*:\s*(.+)$/i;
 
-// A trailing single-cell "key: value" row is metadata, not content — explicit
-// key prefixes (rather than sniffing bare text against a number/color-name
-// pattern) so real heading/body copy is never misread as a scale or glow row.
-// Requires a background + content row to remain even after removal, so a
-// 1- or 2-row block is never mistaken for having a metadata row at all.
-const extractMetaRow = (rows) => {
-  if (rows.length < 3) return null;
-  const last = rows.at(-1);
-  const cells = [...last.children];
-  if (cells.length !== 1) return null;
-  const match = cells[0].textContent.trim().match(META_RE);
-  if (!match) return null;
-  rows.pop().remove();
-  const [, key, value] = match;
-  return { key: key.toLowerCase(), value: value.trim().toLowerCase() };
+const apply = {
+  scale: (el, value) => el.style.setProperty('--media-scale', value),
+  glow: (el, value) => GLOW_COLORS.has(value) && el.classList.add(`glow-${value}`),
+};
+
+// Trailing single-cell `key: value` only — never a bare "1.2"/"purple", so
+// real copy is not misread as metadata. Needs a background + content row
+// left after removal, so a 1- or 2-row block is never treated as meta.
+const applyMeta = (el) => {
+  const last = el.lastElementChild;
+  if (el.childElementCount < 3 || last.children.length !== 1) return;
+  const [, key, value] = last.textContent.trim().match(META_RE) ?? [];
+  if (!key) return;
+  last.remove();
+  apply[key.toLowerCase()]?.(el, value.trim().toLowerCase());
 };
 
 export default (el) => {
-  // Idempotency guard — checked before any DOM restructuring below. A second
-  // decorate() call (e.g. DA's live-preview reload path) would otherwise
-  // re-find the same cells and register a second scroll-progress observer
-  // that never gets cleaned up (see the discarded cleanup handle below).
   if (el.dataset.potholeV4) return;
   el.dataset.potholeV4 = 'true';
-
-  const rows = [...el.querySelectorAll(':scope > div')];
-  const meta = extractMetaRow(rows);
-  if (meta?.key === 'scale') el.style.setProperty('--media-scale', meta.value);
-  else if (meta?.key === 'glow' && GLOW_COLORS.includes(meta.value)) el.classList.add(`glow-${meta.value}`);
-
-  // Cell meaning is classified by content shape, never by position — the
-  // background cell is whichever cell (if any) holds a picture. Classifying
-  // at the CELL level (not the whole row) matters because a row can hold
-  // more than one column: a row that mixes a picture cell with a sibling
-  // text cell must not sweep the text cell into the background along with
-  // the picture (see hero.js's identical cells/bgCell/contentCells pattern).
-  // The metadata row (if any) was already removed from the DOM above, so it
-  // naturally never appears in this cell query.
-  const cells = getCells(el);
-  const bgCell = cells.find((c) => c.querySelector('picture'));
-  const pic = bgCell?.querySelector('picture');
-  if (pic) {
-    const img = pic.querySelector('img');
-    if (img) img.alt = '';
-  }
-
-  const content = createElement('div', { className: 'pothole-content' });
-  cells.filter((c) => c !== bgCell).forEach((cell) => content.append(...cell.children));
-  el.replaceChildren(content);
-
-  if (pic) {
-    const bg = createElement('div', { className: 'pothole-background', 'aria-hidden': 'true' });
-    bg.append(pic);
-    el.prepend(bg);
-  }
-
-  // Defer to an author-set variant (e.g. from decorateButton's **bold**/*italic*
-  // convention) instead of overriding it with a positional class.
-  [...content.querySelectorAll('a')].forEach((a, i) => {
-    a.dataset.testid ||= `pothole-v4-cta-${i === 0 ? 'primary' : 'secondary'}`;
-    if (a.classList.contains('btn')) return;
-    a.classList.add('btn', i === 0 ? 'btn-primary' : 'btn-secondary');
-  });
-  decorateRichText(el);
-
-  // Cleanup handle intentionally discarded: `el` lives for the page's full
-  // lifetime (EDS is full-page-load, no client routing) — there's no removal
-  // hook to call it from today.
-  trackScrollProgress(el);
+  applyMeta(el);
+  decoratePothole(el, { testidPrefix: 'pothole-v4' });
 };

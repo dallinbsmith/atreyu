@@ -2,11 +2,6 @@
   .logo-wall {
     position: relative;
     isolation: isolate;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--spacing-xl);
     width: 100%;
   }
 
@@ -80,7 +75,7 @@
     font-size: var(--eyebrow-font-size);
     background: none;
     border: 1px solid currentcolor;
-    border-radius: 4px;
+    border-radius: var(--radius-5);
     cursor: pointer;
   }
 

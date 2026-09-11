@@ -29,9 +29,9 @@
   }
 
   .image-sequence.prompter {
-    max-width: 1100px;
+    max-width: var(--grid-container-width);
     margin: 0 auto;
-    padding: var(--spacing-xxl, 48px) var(--grid-gutter-width);
+    padding: var(--spacing-xxl) var(--grid-gutter-width);
     text-align: center;
 
     .prompter-text {
@@ -40,7 +40,7 @@
       font-size: clamp(1.75rem, 4vw, 3rem);
       font-weight: 600;
       letter-spacing: -0.02em;
-      line-height: 1.18;
+      line-height: var(--heading-line-height);
       text-wrap: balance;
     }
 
@@ -50,7 +50,7 @@
 
       video {
         width: 100%;
-        border-radius: var(--radius-16, 16px);
+        border-radius: var(--radius-16);
         display: block;
       }
     }
@@ -161,17 +161,21 @@
 
         video {
           height: auto;
-          border-radius: var(--radius-16, 16px);
+          border-radius: var(--radius-16);
         }
       }
 
-      .prompter-text {
+      /* Sticky/overlap live on the wrapper, not .prompter-text. */
+      .prompter-textwrap {
         position: relative;
         height: auto;
-        margin: var(--spacing-xl) auto 0;
+        opacity: 1;
+        display: block;
       }
 
-      .prompter-media + .prompter-text { margin-top: var(--spacing-xl); }
+      .prompter-media + .prompter-textwrap { margin-top: var(--spacing-xl); }
+
+      .prompter-text { transform: none; }
 
       .prompter-word { color: var(--color-light); }
     }
