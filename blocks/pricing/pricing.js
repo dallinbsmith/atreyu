@@ -1,101 +1,71 @@
-import { inject } from '../../scripts/utils/seo/jsonld.js';
+import { getMetadata } from '../../scripts/ak.js';
+import { createElement } from '../../scripts/utils/dom.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
+import { inject } from '../../scripts/utils/seo/jsonld.js';
 
-const buildCard = (row, badgeText) => {
-  const cols = [...row.children];
-  const [nameCol, priceCol, descCol, featuresCol, ctaCol] = cols;
-  if (!nameCol) return null;
-
-  const name = nameCol.textContent.trim();
-  const isHighlighted = !!nameCol.querySelector('strong');
-  const price = priceCol?.textContent.trim() ?? '';
-  const description = descCol?.textContent.trim() ?? '';
-
-  const card = document.createElement('div');
-  card.className = `pricing-plan${isHighlighted ? ' highlighted' : ''}`;
-
-  if (isHighlighted) {
-    const badge = document.createElement('span');
-    badge.className = 'pricing-badge';
-    badge.textContent = badgeText;
-    card.append(badge);
-  }
-
-  const heading = document.createElement('h3');
-  heading.className = 'pricing-name';
-  heading.textContent = name;
-  card.append(heading);
-
-  if (price) {
-    const priceEl = document.createElement('p');
-    priceEl.className = 'pricing-price';
-    priceEl.textContent = price;
-    card.append(priceEl);
-  }
-
-  if (description) {
-    const desc = document.createElement('p');
-    desc.className = 'pricing-description';
-    desc.textContent = description;
-    card.append(desc);
-  }
-
-  if (featuresCol) {
-    const list = featuresCol.querySelector('ul');
-    if (list) {
-      list.className = 'pricing-features';
-      card.append(list);
-    }
-  }
-
-  const cta = ctaCol?.querySelector('a');
-  if (cta) {
-    cta.classList.add('pricing-cta');
-    card.append(cta);
-  }
-
-  return { card, name, price, description };
+const numericPrice = (price) => {
+  const n = price.replace(/[^0-9.]/g, '');
+  return n !== '' && Number.isFinite(Number(n)) ? n : null;
 };
 
 const injectSchema = (plans) => {
-  const offers = plans
-    .map(({ name, price, description }) => ({ name, description, numericPrice: price.replace(/[^0-9.]/g, '') }))
-    .filter(({ numericPrice }) => numericPrice !== '' && Number.isFinite(Number(numericPrice)))
-    .map(({ name, description, numericPrice }) => ({
-      '@type': 'Offer',
-      name,
-      description,
-      price: numericPrice,
-      priceCurrency: 'USD',
-    }));
-
+  const offers = plans.flatMap(({ name, price, description }) => {
+    const value = numericPrice(price);
+    return value ? [{
+      '@type': 'Offer', name, description, price: value, priceCurrency: 'USD',
+    }] : [];
+  });
   if (!offers.length) return;
-
   inject({
-    '@context': 'https://schema.org',
     '@type': 'Product',
     name: 'Frame.io',
-    description: 'Video collaboration and review platform by Adobe.',
+    description: getMetadata('description') || 'Video collaboration and review platform by Adobe.',
     offers,
   });
+};
+
+const para = (className, text) => (text ? createElement('p', { className }, text) : null);
+
+// Features (`ul`) and CTA (`a`) by content shape; leftover cells in DOM
+// order are the positional `name | price | description` triple.
+const buildCard = (row, badgeText) => {
+  const list = row.querySelector('ul');
+  const cta = row.querySelector('a');
+  const [nameCol, priceCol, descCol] = [...row.children].filter(
+    (c) => !c.contains(list) && !c.contains(cta),
+  );
+  if (!nameCol) return null;
+
+  const [name, price, description] = [nameCol, priceCol, descCol]
+    .map((el) => el?.textContent.trim() ?? '');
+  const highlighted = !!nameCol.querySelector('strong');
+  list?.classList.add('pricing-features');
+  cta?.classList.add('pricing-cta');
+
+  return {
+    name,
+    price,
+    description,
+    card: createElement(
+      'div',
+      {
+        className: `pricing-plan${highlighted ? ' highlighted' : ''}`,
+      },
+      highlighted && createElement('span', { className: 'pricing-badge' }, badgeText),
+      createElement('h3', { className: 'pricing-name' }, name),
+      para('pricing-price', price),
+      para('pricing-description', description),
+      list,
+      cta,
+    ),
+  };
 };
 
 export default async (el) => {
   if (el.dataset.pricing) return;
   el.dataset.pricing = 'true';
-
-  const rows = [...el.querySelectorAll(':scope > div')];
-  const plans = [];
   const badgeText = await getPlaceholder('pricingMostPopular', 'Most Popular');
-
-  for (const row of rows) {
-    const result = buildCard(row, badgeText);
-    if (result) {
-      el.append(result.card);
-      plans.push(result);
-    }
-  }
-
-  for (const row of rows) row.remove();
+  const plans = [...el.children].map((row) => buildCard(row, badgeText)).filter(Boolean);
+  el.replaceChildren(...plans.map(({ card }) => card));
   if (plans.length) injectSchema(plans);
 };

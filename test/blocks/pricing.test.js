@@ -2,10 +2,9 @@ import { expect } from '@esm-bundle/chai';
 import decorate from '../../blocks/pricing/pricing.js';
 import { flush } from '../../scripts/utils/seo/jsonld.js';
 
-// Build an EDS-shaped pricing table: each row is a div, each cell (name,
-// price, description, features, cta) is a sibling div child of the row —
-// matching pricing.js's `[nameCol, priceCol, descCol, featuresCol, ctaCol] =
-// [...row.children]` positional destructure.
+// Build an EDS-shaped pricing table: each row is a div of cells. Features
+// (`ul`) and CTA (`a`) are found by content shape; leftover cells in DOM
+// order are the positional `name | price | description` triple.
 const cell = (html) => {
   const c = document.createElement('div');
   c.innerHTML = html;
