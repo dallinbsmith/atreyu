@@ -7,41 +7,38 @@
 // its own block per the no-nested-blocks rule, not a variant of either.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
-import { createElement, classifyCtaParagraphs, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
+import {
+  createElement, classifyCtaParagraphs, getCells, HEADING_SELECTOR,
+} from '../../scripts/utils/dom.js';
 import { decorateVideoMedia } from '../../scripts/utils/media.js';
 
 export default (el) => {
-  // Idempotency guard — checked before any DOM restructuring below. A second
-  // decorate() call would otherwise re-find the same cells (rows sit at the
-  // same `:scope > div` depth as originally authored) and re-wire a second
-  // click listener onto the same still-present video link.
+  // Idempotency guard — a second decorate() call would otherwise re-find the
+  // same cells and re-wire a second click listener onto the video link.
   if (el.dataset.heroSideBySideDecorated) return;
   el.dataset.heroSideBySideDecorated = 'true';
 
-  // Row meaning is classified by content shape, never by position: the
-  // media row is whichever row (if any) holds a picture; every other row's
-  // content is merged into the text block rather than dropped.
-  const rows = [...el.querySelectorAll(':scope > div')];
-  const mediaRow = rows.find((r) => r.querySelector('picture'));
-  const contentRows = rows.filter((r) => r !== mediaRow);
+  // Cell, not row: a picture cell with a sibling text cell must not sweep
+  // that sibling into `.hero-side-by-side-media` (overflow:hidden + abs
+  // picture would clip it). Same F-66 pattern as hero.js / hero-transition-v4.
+  const cells = getCells(el);
+  const picCell = cells.find((c) => c.querySelector('picture'));
+  const extra = cells.filter((c) => c !== picCell);
 
-  const content = createElement('div', { className: 'hero-side-by-side-content' });
-  contentRows.forEach((row) => content.append(...row.children));
+  const content = createElement('div', { className: 'hero-side-by-side-content' }, ...extra);
   classifyCtaParagraphs(content, 'hero-side-by-side-cta');
   wireVideoModalLinks(content);
   const hasText = content.querySelector(`${HEADING_SELECTOR}, p`);
+  const media = picCell && createElement(
+    'div',
+    { className: 'hero-side-by-side-media' },
+    ...picCell.children,
+  );
+  if (media) decorateVideoMedia(media);
+  else el.classList.add('no-media');
+  if (!hasText) el.classList.add('no-text');
 
-  el.replaceChildren();
-  if (hasText) el.append(content); // DOM order text→media for a11y; CSS flips visually
-  else el.classList.add('no-text');
-
-  if (mediaRow) {
-    const media = createElement('div', { className: 'hero-side-by-side-media' });
-    media.append(...mediaRow.children);
-    decorateVideoMedia(media);
-    el.append(media);
-  } else {
-    el.classList.add('no-media');
-  }
+  // DOM order text→media for a11y; CSS flips visually.
+  el.replaceChildren(...(hasText ? [content] : []), ...(media ? [media] : []));
   decorateRichText(el);
 };

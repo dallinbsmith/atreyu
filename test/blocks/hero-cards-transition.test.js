@@ -60,6 +60,14 @@ describe('hero-cards-transition CTA classing', () => {
     expect(a.classList.contains('btn-primary')).to.be.true;
   });
 
+  it('does not class an eyebrow token paragraph as a CTA', () => {
+    const el = block('<p>[[eyebrow|Root]]</p><h1>Title</h1><p>Subtitle</p>');
+    decorate(el);
+    const eye = el.querySelector('.rt-eyebrow').closest('p');
+    expect(eye.classList.contains('hc-cta')).to.be.false;
+    expect(el.querySelector('.hc-title').textContent).to.equal('Title');
+  });
+
   it('does not override a link already classed .btn (e.g. by decorateButton)', () => {
     const el = block('<h1>Title</h1><p><a class="btn btn-accent" href="/a">A</a></p>');
     decorate(el);
@@ -88,6 +96,17 @@ describe('hero-cards-transition collect() row classification', () => {
     decorate(el);
     expect(el.querySelector('.hc-bg')).to.not.exist;
     expect(el.querySelector('.hc-wall img[src$="card.jpg"]')).to.exist;
+  });
+
+  it('a later lone image does not replace the first background', () => {
+    const el = rowsBlock([
+      ['<picture><img src="bg.jpg"></picture>'],
+      ['<picture><img src="extra.jpg"></picture>'],
+    ]);
+    decorate(el);
+    expect(el.querySelector('.hc-bg img').src).to.contain('bg.jpg');
+    expect(el.querySelector('.hc-wall img[src$="extra.jpg"]')).to.exist;
+    expect(el.querySelector('.hc-wall img[src$="bg.jpg"]')).to.not.exist;
   });
 
   it('a multi-picture row becomes multiple cards', () => {
@@ -160,5 +179,29 @@ describe('hero-cards-transition re-decoration idempotency', () => {
     expect(el.querySelector('.hc-title')?.textContent).to.equal(titleBefore);
     expect(el.querySelectorAll('.hc-cta').length).to.equal(ctaCountBefore);
     expect(FakeIntersectionObserver.instances.length).to.equal(ioCountBefore);
+  });
+});
+
+describe('hero-cards-transition reduced motion', () => {
+  let originalIO;
+
+  beforeEach(() => {
+    originalIO = window.IntersectionObserver;
+    window.IntersectionObserver = FakeIntersectionObserver;
+    FakeIntersectionObserver.instances = [];
+  });
+
+  afterEach(() => {
+    window.IntersectionObserver = originalIO;
+    sinon.restore();
+  });
+
+  it('shouldAnimate()-false: no hc-scrub, no observers, tiles still render', () => {
+    sinon.stub(navigator, 'hardwareConcurrency').value(1);
+    const el = rowsBlock([['<h1>Title</h1>']]);
+    decorate(el);
+    expect(el.classList.contains('hc-scrub')).to.be.false;
+    expect(el.querySelectorAll('.hc-tile').length).to.be.at.least(12);
+    expect(FakeIntersectionObserver.instances).to.have.length(0);
   });
 });

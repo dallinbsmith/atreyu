@@ -7,35 +7,31 @@
 // inventing a second one; the glow treatment matches hero-transition-v4's.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
-import { createElement, classifyCtaParagraphs } from '../../scripts/utils/dom.js';
+import { createElement, classifyCtaParagraphs, getCells } from '../../scripts/utils/dom.js';
 import { decorateVideoMedia } from '../../scripts/utils/media.js';
 
 export default (el) => {
-  // Idempotency guard — checked before any DOM restructuring below. A second
-  // decorate() call would otherwise re-find the same cells (rows sit at the
-  // same `:scope > div` depth as originally authored) and re-wire a second
-  // click listener onto the same still-present video link.
+  // Idempotency guard — a second decorate() would re-find cells and re-wire
+  // a second click listener onto the same still-present video link.
   if (el.dataset.heroScreenDecorated) return;
   el.dataset.heroScreenDecorated = 'true';
 
-  // Row meaning is classified by content shape, never by position: the
-  // media row is whichever row (if any) holds a picture; every other row's
-  // content is merged into the centered text block rather than dropped.
-  const rows = [...el.querySelectorAll(':scope > div')];
-  const mediaRow = rows.find((r) => r.querySelector('picture'));
-  const contentRows = rows.filter((r) => r !== mediaRow);
+  // Cell, not row (`el.children` / getCells — not `:scope > div`). A picture
+  // cell with a sibling text cell must not sweep that sibling into media.
+  const cells = getCells(el);
+  const picCell = cells.find((c) => c.querySelector('picture'));
+  const extra = cells.filter((c) => c !== picCell);
 
-  const content = createElement('div', { className: 'hero-screen-content' });
-  contentRows.forEach((row) => content.append(...row.children));
+  const content = createElement('div', { className: 'hero-screen-content' }, ...extra);
   classifyCtaParagraphs(content, 'hero-screen-cta');
-  el.replaceChildren(content);
   wireVideoModalLinks(content);
 
-  if (mediaRow) {
-    const media = createElement('div', { className: 'hero-screen-media' });
-    media.append(...mediaRow.children);
-    decorateVideoMedia(media);
-    el.append(media);
-  }
+  const media = picCell && createElement(
+    'div',
+    { className: 'hero-screen-media' },
+    ...picCell.children,
+  );
+  if (media) decorateVideoMedia(media);
+  el.replaceChildren(content, ...(media ? [media] : []));
   decorateRichText(el);
 };

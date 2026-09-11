@@ -1,106 +1,75 @@
 @layer blocks {
   .hero {
-    --gradient-start: rgb(var(--color-dark-base) / 80%);
-    --gradient-end: rgb(var(--color-dark-base) / 20%);
-    --default-min-height: 400px;
-    --min-height: var(--default-min-height);
+    --hero-size: 400px;
+    --min-height: var(--hero-size);
+    --hero-fg-padding: 120px 0 80px;
+    --hero-focal-x: 50%;
 
     position: relative;
-    color: var(--color-light);
     overflow: hidden;
+    isolation: isolate;
+    color: var(--color-light);
 
-    &.small {
-      --min-height: 180px;
-    }
+    &.small { --min-height: 180px; }
+    &.large { --min-height: 720px; }
+    &.full { --min-height: calc(100vh - var(--header-height)); }
+    &.light { color: var(--color-dark); }
 
-    &.large {
-      --min-height: 720px;
-    }
+    &.hero-text-start { --hero-focal-x: 10%; }
+    &.hero-text-end { --hero-focal-x: 90%; }
 
-    &.full {
-      --min-height: calc(100vh - var(--header-height));
-    }
-
-    &.light {
-      --gradient-start: rgb(var(--color-light-base) / 80%);
-
-      color: var(--color-dark);
-    }
-
-    &.dark {
-      color: var(--color-light);
-    }
-
-    &.quiet-background {
-      .hero-background div::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        backdrop-filter: blur(200px);
-        mask-image: linear-gradient(to right bottom, rgb(0 0 0 / 80%) 40%, rgb(0 0 0 / 20%) 125%);
-      }
-    }
-
-    &.hero-text-start {
-      img {
-        object-position: 10% 50%;
-      }
-    }
-
-    &.hero-text-end {
-      img {
-        object-position: 90% 50%;
-      }
-    }
+    img { object-position: var(--hero-focal-x) 50%; }
 
     .hero-background {
+      position: absolute;
+      inset: 0;
+      background-color: var(--color-background);
+
       picture {
         position: absolute;
         inset: 0;
       }
 
-      img {
-        display: block;
-        object-fit: cover;
-        width: 100%;
-        height: 100%;
-      }
-
-      > div {
-        /* Used for quiet-background */
-        background-color: var(--color-background);
-        position: absolute;
-        inset: 0;
-      }
-
+      img,
       video {
+        display: block;
         object-fit: cover;
         width: 100%;
         height: 100%;
       }
     }
 
-    /* Base chrome lives in styles.css's shared .video-pause-toggle utility;
-       only position is block-specific. Anchors to .hero (the nearest
-       positioned ancestor) — .hero-background itself is intentionally
-       static, same as its picture/video children. */
+    &.quiet-background .hero-background::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      backdrop-filter: blur(200px);
+      mask-image: linear-gradient(
+        to right bottom,
+        rgb(var(--color-dark-base) / 80%) 40%,
+        rgb(var(--color-dark-base) / 20%) 125%
+      );
+    }
+
+    /* Base chrome lives in styles.css's shared .video-pause-toggle;
+       only position is block-specific. */
     .video-pause-toggle {
       top: 0;
       right: 0;
     }
 
     .hero-foreground {
-      min-height: var(--min-height);
-      padding: 120px 0 80px;
-      box-sizing: border-box;
       position: relative;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
+      box-sizing: border-box;
+      min-height: var(--min-height);
+      padding: var(--hero-fg-padding);
       background: var(--color-background);
 
       p {
-        margin: 8px 0;
+        margin: var(--spacing-s) 0;
         color: var(--color-alpha-light-50);
       }
 
@@ -109,17 +78,11 @@
         margin: 0 auto;
       }
 
-      div > *:first-child {
-        margin-top: 0;
-      }
-
-      div > *:last-child {
-        margin-bottom: 0;
-      }
+      div > :first-child { margin-top: 0; }
+      div > :last-child { margin-bottom: 0; }
 
       .hero-detail {
         margin: 0;
-        color: var(--color-alpha-light-50);
         font-size: var(--body-font-size-l);
       }
 
@@ -128,7 +91,6 @@
         letter-spacing: -0.045em;
         line-height: 1.04;
 
-        /* two-tone heading: emphasized line renders as the muted second tone, not italic */
         em {
           font-style: normal;
           color: var(--em-color, var(--color-alpha-light-50));
@@ -137,38 +99,20 @@
     }
 
     &.stack {
+      --hero-focal-x: 50%;
+
+      &.hero-text-start { --hero-focal-x: 80%; }
+      &.hero-text-end { --hero-focal-x: 20%; }
+
       .hero-background {
-        > div {
-          min-height: var(--default-min-height);
-          position: relative;
-        }
+        position: relative;
+        min-height: var(--hero-size);
       }
 
-      .hero-foreground {
-        background: var(--color-shaded);
-      }
-
-      &.light {
-        .hero-foreground {
-          background: var(--color-shaded);
-        }
-      }
-
-      &.hero-text-start {
-        img {
-          object-position: 80% 50%;
-        }
-      }
-
-      &.hero-text-end {
-        img {
-          object-position: 20% 50%;
-        }
-      }
+      .hero-foreground { background: var(--color-shaded); }
     }
 
     &.center {
-      /* text-only centered title — no background; spacing is owned by spacer blocks */
       --min-height: 0;
 
       .hero-foreground {
@@ -176,22 +120,21 @@
         text-align: center;
         padding-block: 0;
 
-        .hero-heading {
-          max-width: 14ch;
-        }
+        .hero-heading { max-width: 14ch; }
       }
     }
   }
 
   @media (width >= 768px) {
     .hero {
+      --hero-fg-padding: 160px 0 96px;
+
       .hero-foreground {
         display: grid;
         grid-template-columns: 45% 45%;
         justify-content: space-between;
         max-width: var(--grid-container-width);
         margin: 0 auto;
-        padding: 160px 0 96px;
         background: unset;
 
         .fg-text {
@@ -200,36 +143,21 @@
         }
       }
 
-      &.center {
-        .hero-foreground {
-          display: flex;
-          max-width: 100%;
-          background: var(--color-background);
-        }
+      &.center .hero-foreground {
+        display: flex;
+        max-width: 100%;
+        background: var(--color-background);
       }
 
       &.stack {
+        &.hero-text-start { --hero-focal-x: 0%; }
+        &.hero-text-end { --hero-focal-x: 100%; }
+
         .hero-background {
-          > div {
-            position: absolute;
-          }
+          position: absolute;
+          min-height: 0;
         }
-
-        .hero-foreground {
-          background: unset;
-        }
-
-        &.hero-text-start {
-          img {
-            object-position: 0% 50%;
-          }
-        }
-
-        &.hero-text-end {
-          img {
-            object-position: 100% 50%;
-          }
-        }
+        .hero-foreground { background: unset; }
       }
     }
   }
@@ -242,18 +170,13 @@
 
   @media (width >= 1240px) {
     .hero {
-      .hero-foreground {
-        grid-template-columns: 40% 40%;
-        padding: 180px 0 124px;
-      }
+      --hero-fg-padding: 180px 0 124px;
+
+      .hero-foreground { grid-template-columns: 40% 40%; }
     }
   }
 
   @media (width >= 1440px) {
-    .hero {
-      .hero-foreground {
-        grid-template-columns: 33% 33%;
-      }
-    }
+    .hero .hero-foreground { grid-template-columns: 33% 33%; }
   }
 }
