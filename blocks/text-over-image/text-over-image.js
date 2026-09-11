@@ -1,7 +1,7 @@
 // Section banner: an eyebrow + large title set over a full-bleed media panel
 // with a darkening overlay. Authored as one cell of text plus a media reference.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
-import { createElement } from '../../scripts/utils/dom.js';
+import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 
 export default (el) => {
   // Media = whichever picture/video/img the author placed anywhere in the
@@ -24,7 +24,7 @@ export default (el) => {
   const content = el.querySelector(':scope > div:not(.toi-media)');
   if (content) {
     content.classList.add('toi-content');
-    content.querySelector('h1, h2, h3, h4, h5, h6')?.classList.add('toi-title');
+    content.querySelector(HEADING_SELECTOR)?.classList.add('toi-title');
   }
   decorateRichText(el);
 };

@@ -1,4 +1,5 @@
 import { track, EVENTS } from '../utils/analytics/analytics.js';
+import { MQ_MD } from '../utils/breakpoints.js';
 
 // Outlook widget: choose desktop deeplink vs mailto at click time.
 // Link carries ?to=…&subject=…&body=… ; desktop deeplink used on wide viewports.
@@ -25,7 +26,7 @@ export default (a) => {
   const params = new URL(a.href, window.location.href).searchParams;
   a.addEventListener('click', (e) => {
     e.preventDefault();
-    const desktop = window.matchMedia('(width >= 768px)').matches;
+    const desktop = window.matchMedia(MQ_MD).matches;
     const href = desktop ? buildDeeplink(params) : buildMailto(params);
     track(EVENTS.OUTLOOK_COMPOSE, { desktop, to: params.get('to') });
     window.location.href = href;

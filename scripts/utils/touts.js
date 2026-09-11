@@ -1,3 +1,5 @@
+import { HEADING_SELECTOR } from './dom.js';
+
 // Falkor's bentoMediaLayout heuristic: a large photo (JPEG, or wide) reads as a
 // full-bleed BACKGROUND; a small graphic/logo (SVG, PNG, small) reads as a
 // FOREGROUND icon. Shared by bentos.js and carousel.js — both distinguish a
@@ -32,7 +34,7 @@ export const decorateTout = (el, prefix = 'tout', testidId = prefix) => {
     if (wrap && wrap !== el && !wrap.textContent.trim() && !wrap.querySelector('a, img')) wrap.remove();
   }
 
-  const heading = el.querySelector('h1, h2, h3, h4, h5, h6');
+  const heading = el.querySelector(HEADING_SELECTOR);
   if (heading) heading.classList.add(`${prefix}-title`);
 
   const paragraphs = [...el.querySelectorAll('p')];

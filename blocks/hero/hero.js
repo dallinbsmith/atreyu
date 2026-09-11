@@ -1,13 +1,13 @@
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
-import { createElement, getCells } from '../../scripts/utils/dom.js';
+import { createElement, getCells, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 import { decorateVideoMedia } from '../../scripts/utils/media.js';
 
 const decorateForeground = (fg) => {
   const children = [...fg.children];
   let textIdx = -1;
   children.forEach((child, idx) => {
-    const heading = child.querySelector('h1, h2, h3, h4, h5, h6');
+    const heading = child.querySelector(HEADING_SELECTOR);
     const text = heading || child.querySelector('p, a, ul');
     // Eyebrow/detail line is classified by content shape — the `.rt-eyebrow`
     // span decorateRichText() produces for authored `[[eyebrow|text]]`

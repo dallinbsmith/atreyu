@@ -1,9 +1,11 @@
+import { HEADING_SELECTOR } from '../../scripts/utils/dom.js';
+
 export default (el) => {
   const inner = el.querySelector(':scope > div > div');
   if (!inner) return;
   inner.classList.add('bookend-content');
 
-  const heading = inner.querySelector('h1, h2, h3, h4, h5, h6');
+  const heading = inner.querySelector(HEADING_SELECTOR);
   if (heading) heading.classList.add('bookend-heading');
 
   const paragraphs = [...inner.querySelectorAll('p')];

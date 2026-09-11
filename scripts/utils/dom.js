@@ -54,6 +54,13 @@ export const classifyCtaParagraphs = (scope, className) => {
     .forEach((p) => p.classList.add(className));
 };
 
+// The "any HTML heading" selector, named once. HTML5 has no `<h>` element,
+// so the six-tag list is the shortest native form — but every block that
+// asks for "the heading" was spelling it out inline (8 duplicated sites at
+// extraction time, across blocks and scripts/utils/touts.js), so the
+// literal string moves here and callers reference the constant instead.
+export const HEADING_SELECTOR = 'h1, h2, h3, h4, h5, h6';
+
 // Shared chevron glyph — same path already hand-duplicated as an inline
 // string in blocks/quote-interactive/quote-modal.js's own `arrow()` helper;
 // centralized here for any new caller (e.g. carousel.js) rather than
@@ -69,6 +76,12 @@ export const CHEVRON_LINE_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M
 
 // Close (X) glyph for modal/dialog close buttons — 12×12 stroke, currentColor.
 export const CLOSE_SVG = '<svg viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+
+// Plus (+) glyph — 24×24 stroke, currentColor. Distinct from CLOSE_SVG:
+// this is a `+` that consumers may either use as-is (add/expand affordances)
+// or animate a 45° rotation on to morph it into an `×` (see
+// quote-interactive's modal open timeline, which rotates the child SVG).
+export const PLUS_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
 
 // YouTube-styled play button — 68×48. Unlike the other SVGs here, paths
 // carry `class="youtube-play-bg"` and `class="youtube-play-icon"` hooks

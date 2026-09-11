@@ -28,12 +28,12 @@ Falkor/Sanity's real locale model — what this migration needs to match, not a 
 
 Real, verified capabilities of `section-metadata` — atreyu-native, no Falkor equivalent:
 - **Style**: free-text, comma-separated raw CSS class names (`center`, `peek-background`, `glow`, etc.), applied as-is.
-- **Grid**: 2, 4, 6 fully supported at all breakpoints. 3 and 5 are settable but only become a real multi-column grid at ≥1200px — a known, unfixed gap below that width.
+- **Grid**: 2, 4, 6 fully supported at all breakpoints. 3 and 5 are settable but only become a real multi-column grid at ≥1240px — a known, unfixed gap below that width.
 - **Container**: 2, 4, 6 — controls max content width, not column count.
 - **Gap / Spacing**: xs, s, m, l, xl, xxl.
 - **Background**: color token, plain color, or image. Video URLs are silently ignored; gradients aren't supported.
 - **Color scheme**: computed automatically from background luminance, not an author-facing toggle.
-- **Layout**: one preset, `bento` (3-column asymmetric grid, ≥900px, up to 6 children).
+- **Layout**: one preset, `bento` (3-column asymmetric grid, ≥768px, up to 6 children).
 
 ## Base content
 
@@ -91,7 +91,7 @@ No literal LCP measurement — a structural proxy instead. Once the first sectio
 - **Emphasis**: not a universal system — `.quiet` is a per-block modifier on `card` and `hero` only.
 - **Buttons**: see Base content for the real full list.
 - **Columns**: no independent column system exists.
-- **Grid**: 2, 4, 6 fully supported; 3 and 5 only become a real grid at ≥1200px (see Section authoring).
+- **Grid**: 2, 4, 6 fully supported; 3 and 5 only become a real grid at ≥1240px (see Section authoring).
 - **Color tokens**: blue, gray, green, magenta, orange, purple, red, teal, yellow — each with a 100-900 scale.
 - **Color schemes**: light, dark (see Section authoring / Base content).
 

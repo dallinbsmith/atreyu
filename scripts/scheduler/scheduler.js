@@ -1,6 +1,6 @@
 import { LitElement, html } from '../vendor/lit/dist/index.js';
-import ENV from '../utils/env.js';
 import loadStyle from '../utils/styles.js';
+import { getScheduleSim, setScheduleSim, consumeUrlSim } from '../utils/schedule-sim.js';
 import { formatDate } from './utils.js';
 
 const styles = await loadStyle(import.meta.url);
@@ -21,17 +21,7 @@ class AemScheduler extends LitElement {
   }
 
   handleSet(timestamp) {
-    const { origin, pathname, searchParams, hash } = new URL(window.location.href);
-    if (!timestamp) {
-      searchParams.delete('schedule');
-      localStorage.removeItem('aem-schedule');
-    } else {
-      searchParams.set('schedule', timestamp);
-      localStorage.setItem('aem-schedule', timestamp);
-    }
-    let search = searchParams.toString();
-    search = search ? `?${search}` : '';
-    window.location = `${origin}${pathname}${search}${hash}`;
+    setScheduleSim(timestamp || null);
   }
 
   handleTabClick(e) {
@@ -97,54 +87,16 @@ class AemScheduler extends LitElement {
 customElements.define(EL_NAME, AemScheduler);
 
 const toggleScheduler = () => {
-  const { origin, pathname, searchParams, hash } = new URL(window.location.href);
-
-  const querySim = searchParams.get('schedule');
-  const localSim = localStorage.getItem('aem-schedule');
-  if (querySim || localSim) {
-    searchParams.delete('schedule');
-    localStorage.removeItem('aem-schedule');
-  } else {
-    searchParams.set('schedule', 'now');
-  }
-
-  let search = searchParams.toString();
-  search = search ? `?${search}` : '';
-  window.location = `${origin}${pathname}${search}${hash}`;
+  setScheduleSim(getScheduleSim() ? null : Math.floor(Date.now() / 1000));
 };
 
 export default toggleScheduler;
 
-/**
- * This will automatically detect if scheduler should be shown.
- */
-(async () => {
-  if (ENV === 'prod') return;
-
-  // Query param takes most precedence
-  let sim = new URL(window.location.href).searchParams.get('schedule');
-
-  if (sim) {
-    // If reset, remove anything from localStorage
-    if (sim === 'reset') {
-      localStorage.removeItem('aem-schedule');
-      return;
-    }
-    if (sim === 'now') sim = Math.floor(Date.now() / 1000);
-    localStorage.setItem('aem-schedule', sim);
-  }
-
-  // If no query param, try existing local storage
-  if (!sim) sim = localStorage.getItem('aem-schedule');
-
-  // If still empty, use the current time
+// Auto-mount the scheduler UI when a sim is active. Runs once per page load.
+(() => {
+  const sim = consumeUrlSim();
   if (!sim) return;
-
-  let scheduler = document.querySelector('aem-scheduler');
-  if (!scheduler) {
-    scheduler = document.createElement(EL_NAME);
-    document.body.append(scheduler);
-  }
-
+  const scheduler = document.querySelector('aem-scheduler')
+    ?? document.body.appendChild(document.createElement(EL_NAME));
   scheduler.current = sim;
 })();

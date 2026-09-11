@@ -1,5 +1,7 @@
 // Feature navigation grid. Each authored row is [media, label, link]; the whole
 // card becomes the link target. Used to cross-link sibling feature pages.
+import { HEADING_SELECTOR } from '../../scripts/utils/dom.js';
+
 export default (el) => {
   if (el.dataset.cgn) return;
   el.dataset.cgn = 'true';
@@ -7,7 +9,7 @@ export default (el) => {
   [...el.children].forEach((row) => {
     const link = row.querySelector('a');
     const media = row.querySelector('picture, img, video');
-    const label = [...row.querySelectorAll('h1, h2, h3, h4, h5, h6, p')]
+    const label = [...row.querySelectorAll(`${HEADING_SELECTOR}, p`)]
       .map((n) => n.textContent.trim())
       .find((t) => t && !t.startsWith('http'))
       || link?.textContent.trim()

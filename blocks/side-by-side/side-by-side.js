@@ -1,6 +1,6 @@
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { decorateTout } from '../../scripts/utils/touts.js';
-import { createElement } from '../../scripts/utils/dom.js';
+import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 
 // One authored block = ONE Frame.io `SideBySideItem`. Rows classified by
 // content shape, never by index: media (picture/img), touts (UL first-cell), text (rest).
@@ -11,7 +11,7 @@ const retag = (h, tag, attrs) => h.replaceWith(createElement(tag, attrs, ...h.ch
 
 // Force valid heading outline: first → <h2>, rest → <h3.side-by-side-subhead>.
 const normalizeHeadings = (scope) => {
-  const [primary, ...rest] = scope.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  const [primary, ...rest] = scope.querySelectorAll(HEADING_SELECTOR);
   if (!primary) return;
   if (primary.tagName !== 'H2') retag(primary, 'h2');
   rest.forEach((h) => retag(h, 'h3', { className: 'side-by-side-subhead' }));
@@ -35,7 +35,7 @@ const buildText = (rows) => {
   decorateRichText(body); // must precede the .rt-eyebrow lookup below
 
   const eyebrow = body.querySelector('.rt-eyebrow')?.closest('p');
-  const heading = body.querySelector('h1, h2, h3, h4, h5, h6');
+  const heading = body.querySelector(HEADING_SELECTOR);
   const title = createElement('div', { className: 'side-by-side-title' }, eyebrow, heading);
 
   const text = createElement('div', { className: 'side-by-side-text' }, title, body);
@@ -56,7 +56,7 @@ export default (el) => {
 
   const text = buildText(textRows);
   if (toutsRow) text.append(buildTouts(cellOf(toutsRow).firstElementChild));
-  const hasContent = text.querySelector('h1, h2, h3, h4, h5, h6, p, .side-by-side-touts');
+  const hasContent = text.querySelector(`${HEADING_SELECTOR}, p, .side-by-side-touts`);
   if (hasContent) el.append(text); // text→media DOM order for a11y; CSS flips visually
   else el.classList.add('no-text');
 
