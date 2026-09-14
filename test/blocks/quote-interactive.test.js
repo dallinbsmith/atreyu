@@ -178,15 +178,28 @@ describe('quote-interactive re-decoration idempotency', () => {
     ).to.not.exist;
   });
 
-  it('double-decorate does not leak a second floating hover card into document.body', () => {
-    const before = document.querySelectorAll('.qi-hover').length;
+  // The hover card is a document.body singleton — quote-hover.js tears down the
+  // prior card before mounting a new one, so exactly one may ever exist. Asserted
+  // as an absolute count (not a delta) precisely because that teardown is global:
+  // each decorate() collapses the body to a single card regardless of history.
+  it('double-decorate does not leave a second floating hover card in document.body', () => {
     const el = build([['Sports', 'Great tool', 'Alex'], ['Film', 'Loved it', 'Sam']]);
     decorate(el);
     decorate(el);
-    const after = document.querySelectorAll('.qi-hover').length;
+    expect(document.querySelectorAll('.qi-hover')).to.have.length(1);
+  });
+
+  // The guarded same-el path above can't catch the real DA Quick Edit case:
+  // Quick Edit swaps document.body's innerHTML, so re-decoration runs on a
+  // FRESH el that passes guardDecorate. The body-appended hover card lives
+  // outside the block subtree, so without the module-scope abort-before-recreate
+  // teardown in quote-hover.js, each fresh decoration would leak another card.
+  it('decorating a fresh element tears down the prior element\'s body hover card', () => {
+    decorate(build([['Sports', 'Great tool', 'Alex'], ['Film', 'Loved it', 'Sam']]));
+    decorate(build([['Sports', 'Great tool', 'Alex'], ['Film', 'Loved it', 'Sam']]));
     expect(
-      after - before,
-      'at most one hover card may be appended for this element across both decorate() calls',
-    ).to.equal(1);
+      document.querySelectorAll('.qi-hover'),
+      'the prior element\'s hover card must be removed when a fresh element is decorated',
+    ).to.have.length(1);
   });
 });

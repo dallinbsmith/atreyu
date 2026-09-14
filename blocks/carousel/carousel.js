@@ -2,6 +2,7 @@ import { decorateTout, inferMediaLayout } from '../../scripts/utils/touts.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { announce } from '../../scripts/utils/a11y.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 // Detaches an image from wherever it's authored, then removes its wrapping
 // `<p>` too — but only once genuinely emptied (checked AFTER detaching; an
@@ -107,8 +108,7 @@ const makeNavButton = (label, dir, viewport) => {
 // this await-before-render shape (matching pricing.js's identical pattern)
 // would need revisiting per scripts.md's eager-phase network-call rule.
 export default async (el) => {
-  if (el.dataset.carousel) return;
-  el.dataset.carousel = 'true';
+  if (!guardDecorate(el, 'carousel')) return;
 
   const rows = [...el.children].filter((r) => r.textContent.trim() || r.querySelector('picture, img'));
   if (rows.length < 3) return;
