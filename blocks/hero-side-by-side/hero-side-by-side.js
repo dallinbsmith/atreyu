@@ -2,7 +2,7 @@
 // (eyebrow/title/body/CTAs next to a video or image), verified against 2
 // real instances in the live Sanity dataset (features/workflow-management,
 // homepage). Reuses the same video-behind-poster-picture convention as
-// hero.js/hero-screen.js (scripts/utils/media.js) and the same text/media
+// hero.js/hero-screen.js (scripts/utils/media/video.js) and the same text/media
 // two-column grid idiom as the body-content side-by-side block — kept as
 // its own block per the no-nested-blocks rule, not a variant of either.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
@@ -10,13 +10,13 @@ import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
 import {
   createElement, classifyCtaParagraphs, getCells, HEADING_SELECTOR,
 } from '../../scripts/utils/dom.js';
-import { decorateVideoMedia } from '../../scripts/utils/media.js';
+import { decorateVideoMedia } from '../../scripts/utils/media/video.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 export default (el) => {
   // Idempotency guard — a second decorate() call would otherwise re-find the
   // same cells and re-wire a second click listener onto the video link.
-  if (el.dataset.heroSideBySideDecorated) return;
-  el.dataset.heroSideBySideDecorated = 'true';
+  if (!guardDecorate(el, 'heroSideBySideDecorated')) return;
 
   // Cell, not row: a picture cell with a sibling text cell must not sweep
   // that sibling into `.hero-side-by-side-media` (overflow:hidden + abs

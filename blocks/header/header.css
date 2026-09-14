@@ -59,8 +59,8 @@
         width: 64px;
 
         .icon {
-          width: 24px;
-          height: 24px;
+          width: var(--spacing-l);
+          height: var(--spacing-l);
         }
 
         .text {
@@ -99,7 +99,7 @@
       }
 
       li {
-        margin-block: 12px;
+        margin-block: var(--spacing-m);
       }
 
       ul:not(:has(+ *)) {
@@ -109,7 +109,7 @@
       }
 
       .section {
-        margin-block: 24px;
+        margin-block: var(--spacing-l);
       }
 
       &.language {
@@ -152,7 +152,7 @@
 
           .brand-text {
             display: block;
-            font-size: 18px;
+            font-size: var(--heading-font-size-s);
             font-weight: 600;
             letter-spacing: -0.02em;
           }
@@ -168,25 +168,25 @@
       grid-area: actions;
       max-height: var(--header-height);
       overflow: hidden;
-      transition: all 0.2s ease-in-out;
+      transition: max-height 0.2s ease-in-out;
 
       > .default-content {
         display: flex;
         justify-content: end;
         align-items: center;
         height: var(--header-height);
-        gap: 8px;
+        gap: var(--spacing-s);
 
         p {
           margin: 0;
         }
 
         p a {
-          font-size: 14px;
+          font-size: var(--body-font-size-s);
           font-weight: 600;
           letter-spacing: 0.01em;
           color: var(--color-light);
-          padding: 0 12px;
+          padding: 0 var(--spacing-m);
         }
 
         .action-primary {
@@ -244,7 +244,7 @@
       }
 
       .main-nav-item a {
-        font-size: 14px;
+        font-size: var(--body-font-size-s);
         font-weight: 600;
         letter-spacing: 0.01em;
         line-height: var(--header-height);
@@ -331,19 +331,6 @@
         }
       }
 
-      .mega-menu {
-        > .fragment-content {
-          display: grid;
-          grid-template-columns: repeat(var(--mega-columns), 1fr);
-          max-width: var(--grid-container-width);
-          margin: 0 auto;
-
-          .section {
-            margin-block: initial;
-          }
-        }
-      }
-
       .brand-section {
         border-bottom: initial;
 
@@ -351,10 +338,10 @@
           max-width: initial;
           margin: 0;
         }
+      }
 
-        .action-wrapper.more {
-          display: none;
-        }
+      .action-wrapper.toggle {
+        display: none;
       }
 
       .main-nav-section {
@@ -374,6 +361,17 @@
           &.is-open {
             .main-nav-link {
               border-bottom: initial;
+            }
+
+            .mega-menu {
+              display: grid;
+              grid-template-columns: repeat(var(--mega-columns), 1fr);
+              max-width: var(--grid-container-width);
+              margin: 0 auto;
+
+              .section {
+                margin-block: initial;
+              }
             }
           }
         }

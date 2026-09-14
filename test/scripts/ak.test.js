@@ -1,4 +1,5 @@
 import { expect } from '@esm-bundle/chai';
+import sinon from 'sinon';
 import {
   setConfig, getConfig, loadBlock, decorateLink, loadArea,
 } from '../../scripts/ak.js';
@@ -194,5 +195,106 @@ describe('ak.js decorateSection — author-set anchor id', () => {
     const section = area.querySelector('.section');
     expect(section.id).to.equal('deals');
     expect(section.dataset.note).to.equal('internal'); // anchor never also becomes data-anchor
+  });
+});
+
+describe('ak.js loadBlock — framework-level re-entrancy guard', () => {
+  before(() => {
+    setConfig({ components: [], hostnames: [], linkBlocks: [] });
+  });
+
+  // A nonexistent block class 404s on its dynamic import (caught by
+  // loadExperience's own .catch), same as any unrecognized block name would
+  // in production — that failure path is what we're observing here, not
+  // block content itself. Real trigger this guards against: DA Quick Edit's
+  // content-change callback re-runs loadPage() -> loadArea() on the live
+  // document, which would otherwise call loadBlock (and re-attempt the
+  // import) on every already-loaded block a second time.
+  it('does not re-attempt an already-loaded block\'s module import on a second call', async () => {
+    const el = document.createElement('div');
+    el.className = 'nonexistent-test-block-xyz';
+    document.body.append(el);
+    const log = sinon.spy();
+    setConfig({
+      components: [], hostnames: [], linkBlocks: [], log,
+    });
+
+    await loadBlock(el);
+    await loadBlock(el);
+
+    expect(el.dataset.blockStatus).to.equal('loaded');
+    expect(log.callCount).to.equal(1); // the failed import was only attempted once
+    el.remove();
+  });
+});
+
+describe('ak.js decorateSections (via loadArea) — re-entrancy guard against double-wrapping', () => {
+  before(() => {
+    setConfig({ components: [], hostnames: [], linkBlocks: [], log: () => {} });
+  });
+
+  // A section shaped like real authored output: one top-level block div
+  // (class = the block name) containing one row with one cell. groupChildren
+  // wraps this in a single `.block-content` div on first decoration.
+  const blockArea = () => {
+    const area = document.createElement('div');
+    const section = document.createElement('div');
+    const blockEl = document.createElement('div');
+    blockEl.className = 'nonexistent-test-block-abc';
+    const row = document.createElement('div');
+    const cell = document.createElement('div');
+    cell.textContent = 'content';
+    row.append(cell);
+    blockEl.append(row);
+    section.append(blockEl);
+    area.append(section);
+    document.body.append(area);
+    return area;
+  };
+
+  it('a second loadArea call does not nest-wrap an already-wrapped section a second time', async () => {
+    const area = blockArea();
+    await loadArea({ area });
+    const section = area.querySelector('.section');
+    expect(section.querySelectorAll('.block-content').length).to.equal(1);
+    expect(section.blocks).to.have.length(1);
+
+    await loadArea({ area });
+    // Without the sectionStatus guard, groupChildren() re-wraps the existing
+    // .block-content div in a second .block-content layer — this would both
+    // double the .block-content count and make the outer wrapper itself
+    // match `.block-content > div[class]`, inflating section.blocks to 2.
+    expect(section.querySelectorAll('.block-content').length).to.equal(1);
+    expect(section.blocks).to.have.length(1);
+    expect(section.blocks[0].className).to.equal('nonexistent-test-block-abc');
+    area.remove();
+  });
+});
+
+describe('ak.js decoratePictures (via loadArea) — re-entrancy guard against duplicate <source>', () => {
+  before(() => {
+    setConfig({ components: [], hostnames: [], linkBlocks: [], log: () => {} });
+  });
+
+  it('a second loadArea call does not clone a second grid-cap <source> onto the same picture', async () => {
+    const area = document.createElement('div');
+    const section = document.createElement('div');
+    const picture = document.createElement('picture');
+    const source = document.createElement('source');
+    source.setAttribute('srcset', '/media/img.png?width=750');
+    source.setAttribute('media', '(min-width: 600px)');
+    const img = document.createElement('img');
+    img.src = '/media/img.png';
+    picture.append(source, img);
+    section.append(picture);
+    area.append(section);
+    document.body.append(area);
+
+    await loadArea({ area });
+    expect(picture.querySelectorAll('source').length).to.equal(2); // original + grid-cap clone
+
+    await loadArea({ area });
+    expect(picture.querySelectorAll('source').length).to.equal(2); // unchanged, not 3
+    area.remove();
   });
 });

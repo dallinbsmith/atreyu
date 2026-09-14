@@ -1,4 +1,4 @@
-import { MQ_MD } from './breakpoints.js';
+import { MQ_MD } from '../breakpoints.js';
 
 const DEF_BREAK = [{ media: MQ_MD, width: '2000' }, { width: '750' }];
 

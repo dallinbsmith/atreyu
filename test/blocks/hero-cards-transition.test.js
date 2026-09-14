@@ -133,13 +133,12 @@ describe('hero-cards-transition collect() row classification', () => {
 });
 
 describe('hero-cards-transition "more" icon', () => {
-  it('renders as a real SVG element, not an empty icon span', () => {
+  it('renders a decorative more mark, not an un-upgraded icon span', () => {
     const el = rowsBlock([['<h1>Title</h1>']]);
     decorate(el);
     const more = el.querySelector('.hc-tile .hc-more');
     expect(more).to.exist;
-    expect(more.namespaceURI).to.equal('http://www.w3.org/2000/svg');
-    expect(el.querySelector('.hc-tile span.icon')).to.not.exist;
+    expect(more.matches('span.icon')).to.be.false;
   });
 });
 

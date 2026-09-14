@@ -150,9 +150,9 @@ export default defineConfig([
       // build real DOM nodes (scripts/utils/dom.js's parseSvg()) instead of
       // ever assigning to innerHTML at all — not silenced, actually avoided.
       //
-      // For dynamic import(), the 3 real non-literal call sites are each
+      // For dynamic import(), the 2 real non-literal call sites are each
       // wrapped in a small, named, documented function (resolvePreviewOrigin,
-      // resolveVariantPath, resolveModulePath) whose contract is "this only
+      // resolveModulePath) whose contract is "this only
       // ever returns a same-origin/validated string, never arbitrary attacker
       // input" — registered below so the rule trusts their return value
       // instead of needing a disable at every call site. See each function's
@@ -160,7 +160,7 @@ export default defineConfig([
       'no-unsanitized/property': 'error',
       'no-unsanitized/method': ['error', {
         escape: {
-          methods: ['resolvePreviewOrigin', 'resolveVariantPath', 'resolveModulePath'],
+          methods: ['resolvePreviewOrigin', 'resolveModulePath'],
         },
       }],
 

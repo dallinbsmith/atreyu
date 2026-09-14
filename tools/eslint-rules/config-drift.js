@@ -52,7 +52,7 @@
  *  - chained registries built with `Map.set()` / `Set.add()` calls (only
  *    single array/object literals are inspected — this project's own
  *    scripts/behaviors.js, scripts/utils/motion/gsap-loader.js, and
- *    scripts/utils/icons.js all build lookups this way, and none of that
+ *    scripts/utils/media/icons.js all build lookups this way, and none of that
  *    is covered);
  *  - destructuring assignment targets (`[a, b] = [...]`, `{ a, b } = {...}`)
  *    and default parameter values (`(host = ['/de-de', ...]) => {}`);

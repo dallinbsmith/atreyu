@@ -2,6 +2,7 @@ import { generateId, rovingTabindex, activateTab } from '../../scripts/utils/a11
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 import { MQ_MD } from '../../scripts/utils/breakpoints.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 import { buildPanel } from './quote-view.js';
 import { initHover } from './quote-hover.js';
 import { initModal } from './quote-modal.js';
@@ -76,8 +77,7 @@ const wire = (el, { tabWrap, stage, tablist, tabs }, slides) => {
 };
 
 export default (el) => {
-  if (el.dataset.qi) return;
-  el.dataset.qi = 'true';
+  if (!guardDecorate(el, 'qi')) return;
   const [head, ...rows] = el.children;
   head?.classList.add('qi-head');
   if (!rows.length) return;

@@ -1,5 +1,5 @@
-import { sanitizeMarkup } from './security/sanitize.js';
-import { slugify } from './slugify.js';
+import { sanitizeMarkup } from '../security/sanitize.js';
+import { slugify } from '../slugify.js';
 
 // Fetches a partner/brand SVG by name from /img/partners/, inlines it
 // (sanitized) into `target` rather than using <img>, so it can inherit

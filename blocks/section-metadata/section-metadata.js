@@ -32,7 +32,7 @@ export const setColorScheme = (section) => {
 const applyMediaBackground = async (background, section) => {
   const url = new URL(background);
   if (url.pathname.endsWith('.mp4')) return;
-  const { createPicture } = await import('../../scripts/utils/picture.js');
+  const { createPicture } = await import('../../scripts/utils/media/picture.js');
   const pic = createPicture({ src: url.href });
   pic.classList.add('section-background');
   section.classList.add('has-background');

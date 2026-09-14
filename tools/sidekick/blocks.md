@@ -109,7 +109,7 @@ The block reads `data-*` attributes from the section element (set by the EDS fra
 
 The block also exports `setColorScheme(section)` and `getColorScheme(section)`, which calculate whether a section background is light or dark (using relative luminance) and apply `light-scheme` or `dark-scheme` classes to child elements.
 
-**Dependencies**: `scripts/utils/picture.js` (`createPicture`) -- dynamically imported only when the background is an image URL.
+**Dependencies**: `scripts/utils/media/picture.js` (`createPicture`) -- dynamically imported only when the background is an image URL.
 
 **Example**:
 
@@ -141,19 +141,21 @@ The block also exports `setColorScheme(section)` and `getColorScheme(section)`, 
 
 **Content structure**:
 
-The header does not read rows from the block element directly. Instead, it loads a fragment from `/system/fragments/nav/header` (or a path specified in the `header` page metadata). The fragment is expected to contain three sections:
+The header does not read rows from the block element directly. Instead, it loads a fragment from `/system/fragments/nav/header`. Page metadata `header: off` removes the header; any other `header` metadata value is applied as the `<header>` class, not as a fragment path. The fragment is classified by content shape, not section order:
 
-| Section | Purpose |
-|---------|---------|
-| 1 -- Brand | Logo and site name link. Decorated with `.brand-section`. |
-| 2 -- Navigation | Unordered list of nav items. Each `<li>` becomes a `.main-nav-item`. Nested fragment content inside a nav item becomes a `.mega-menu`. |
-| 3 -- Actions | Links matching specific widget paths are replaced with buttons: `/tools/widgets/scheme` (color scheme toggle), `/tools/widgets/language` (language selector), `/tools/widgets/toggle` (mobile hamburger menu). |
+| Section | Shape |
+|---------|-------|
+| Brand (`.brand-section`) | Remaining section with exactly one non-widget link (the logo). A `/tools/widgets/toggle` marker next to the logo does not disqualify it. |
+| Navigation (`.main-nav-section`) | The section that contains a `<ul>`. Each `<li>` becomes a `.main-nav-item`. Nested fragment content inside a nav item becomes a `.mega-menu`. |
+| Actions (`.actions-section`) | Whatever is left. The last real content link is stamped `.action-primary`. |
+
+Links whose href contains `/tools/widgets/{scheme,language,toggle}` are replaced with buttons (`.action-wrapper.{scheme,language,toggle}`). The toggle is then moved into the brand section so the hamburger sits next to the logo on mobile and is hidden at the 1240px breakpoint.
 
 The language selector lazy-loads a sub-fragment from `/system/fragments/nav/header/languages` when clicked.
 
 **Dependencies**:
-- `scripts/ak.js` (`getConfig`, `getMetadata`)
-- `blocks/fragment/fragment.js` (`loadFragment`)
+- `scripts/ak.js` (`getConfig`)
+- `scripts/utils/fragment.js` (`loadFragmentWithFallback`)
 - `blocks/section-metadata/section-metadata.js` (`setColorScheme`)
 
 **Example**:
@@ -432,7 +434,7 @@ The block receives a link element (`<a>`) rather than the standard block `<div>`
 
 Any additional query parameters (except `v`) are forwarded to the embed URL. The `rel=0` parameter is always appended (disables related videos from other channels).
 
-**Dependencies**: `scripts/utils/observer.js` -- defers iframe creation until the element scrolls into view.
+**Dependencies**: Click-to-play lite embed -- the iframe is created on user click, not on viewport entry.
 
 **Example**:
 

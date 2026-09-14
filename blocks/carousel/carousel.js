@@ -1,7 +1,6 @@
 import { decorateTout, inferMediaLayout } from '../../scripts/utils/touts.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
-import { parseSvg, CHEVRON_SVG } from '../../scripts/utils/dom.js';
 import { announce } from '../../scripts/utils/a11y.js';
 
 // Detaches an image from wherever it's authored, then removes its wrapping
@@ -96,7 +95,6 @@ const makeNavButton = (label, dir, viewport) => {
   btn.className = `carousel-nav carousel-nav-${dir}`;
   btn.setAttribute('aria-label', label);
   btn.dataset.testid = `carousel-nav-${dir}`;
-  btn.append(parseSvg(CHEVRON_SVG));
   btn.addEventListener('click', () => {
     const amount = viewport.clientWidth * 0.8 * (dir === 'prev' ? -1 : 1);
     viewport.scrollBy({ left: amount, behavior: shouldAnimate() ? 'smooth' : 'auto' });

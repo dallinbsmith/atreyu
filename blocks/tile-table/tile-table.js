@@ -1,5 +1,5 @@
 import { initTileModal } from './tile-modal.js';
-import { loadPartnerLogo } from '../../scripts/utils/partner-logo.js';
+import { loadPartnerLogo } from '../../scripts/utils/media/partner-logo.js';
 import { createElement } from '../../scripts/utils/dom.js';
 
 const rowToItem = (row) => {

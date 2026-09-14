@@ -3,7 +3,7 @@
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { shouldAnimate, onReveal } from '../../scripts/utils/motion/motion.js';
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
-import { createElement, classifyCtaParagraphs, parseSvg, HEADING_SELECTOR, MORE_SVG } from '../../scripts/utils/dom.js';
+import { createElement, classifyCtaParagraphs, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 import { POSTERS, posterUrl } from './posters/catalog.js';
 
 // Also hardcoded as CSS `:nth-child(1)`–`(12)` and mobile `nth-child(n + 7)`.
@@ -39,8 +39,7 @@ const collect = (el) => {
 const buildTile = (i, card) => {
   const fallback = POSTERS[i % POSTERS.length];
   const [aTitle, aAuthor, aDate] = (card?.chin ?? []).map((c) => c.textContent.trim());
-  const more = parseSvg(MORE_SVG);
-  more.setAttribute('class', 'hc-more'); more.setAttribute('aria-hidden', 'true');
+  const more = createElement('span', { className: 'hc-more', 'aria-hidden': 'true' });
   const pic = card?.pic ?? createElement('img', {
     src: posterUrl(fallback.slug), alt: '', loading: 'lazy', decoding: 'async',
   });

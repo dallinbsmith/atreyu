@@ -81,6 +81,20 @@ export const loadExperience = async (el, type, name, opts) => {
 };
 
 export const loadBlock = async (block) => {
+  // Re-entrancy guard, restored from upstream aem-boilerplate's own
+  // loadBlock() (block.dataset.blockStatus), dropped somewhere in this
+  // fork's customization. Without it, loadArea() being called a second
+  // time on the same, still-connected DOM (the real trigger: DA Quick
+  // Edit's content-change callback re-runs loadPage() -> loadArea() on
+  // the live document) re-invokes every already-decorated block's
+  // default(el) a second time on the exact same el — most blocks guard
+  // themselves individually against this (see scripts.md's Block
+  // Lifecycle section), but nothing forced that, and this is the one
+  // place that can guarantee it for every block, guarded or not.
+  const status = block.dataset.blockStatus;
+  if (status === 'loading' || status === 'loaded') return block;
+  block.dataset.blockStatus = 'loading';
+
   const { components } = getConfig();
   const { classList } = block;
   const name = classList[0];
@@ -93,7 +107,9 @@ export const loadBlock = async (block) => {
     decorate: true,
     style: !components.some((cmp) => name === cmp),
   };
-  return loadExperience(block, 'blocks', name, opts);
+  await loadExperience(block, 'blocks', name, opts);
+  block.dataset.blockStatus = 'loaded';
+  return block;
 };
 
 const loadTemplate = () => {
@@ -113,8 +129,13 @@ const loadTemplate = () => {
 const decoratePictures = (el) => {
   const pics = el.querySelectorAll('picture');
   for (const pic of pics) {
-    const source = pic.querySelector('source');
+    // Guard against loadArea() re-running on the same DOM (see loadBlock()'s
+    // comment): without it, a second pass would find the clone this
+    // function itself just prepended (also a real <source>), clone that,
+    // and prepend yet another — one extra duplicate <source> per re-run.
+    const source = !pic.dataset.gridSource && pic.querySelector('source');
     if (source) {
+      pic.dataset.gridSource = 'true';
       const clone = source.cloneNode();
       const [pathname, params] = clone.getAttribute('srcset').split('?');
       const search = new URLSearchParams(params);
@@ -256,7 +277,7 @@ const decorateLinks = (el) => {
 const loadIcons = (el) => {
   const icons = el.querySelectorAll('span.icon');
   if (!icons.length) return;
-  import('./utils/icons.js')
+  import('./utils/media/icons.js')
     .then((mod) => mod.default(icons))
     .catch((ex) => getConfig().log(ex));
 };
@@ -344,10 +365,26 @@ const decorateSection = (section) => {
 const decorateSections = (parent, isDoc) => {
   const selector = isDoc ? 'main > div' : ':scope > div';
   return [...parent.querySelectorAll(selector)].map((section) => {
-    decorateSection(section);
-    const groups = groupChildren(section);
-    section.append(...groups);
-    section.dataset.status = 'decorated';
+    // Persistent guard (distinct from the transient `dataset.status`
+    // reveal-gate below — see styles.css's `div[data-status]` rule) against
+    // loadArea() re-running on the same, still-connected DOM (see
+    // loadBlock()'s guard comment above for the real trigger). Without it,
+    // groupChildren() would re-wrap an already-wrapped section's
+    // .block-content/.default-content divs in a second layer of the same
+    // wrappers on every re-decoration, corrupting the structure and making
+    // `.block-content > div[class]` below also match the newly-nested
+    // wrapper div itself.
+    if (!section.dataset.sectionStatus) {
+      decorateSection(section);
+      const groups = groupChildren(section);
+      section.append(...groups);
+      section.dataset.status = 'decorated';
+      section.dataset.sectionStatus = 'decorated';
+    }
+    // Re-run every time, guarded re-decoration or not: this is how content
+    // added to an already-decorated section (a real Quick Edit case) gets
+    // picked up. Safe to repeat over already-processed links/blocks —
+    // decorateLink() is idempotent and loadBlock() has its own guard.
     section.linkBlocks = decorateLinks(section);
     section.blocks = [...section.querySelectorAll('.block-content > div[class]')];
     return section;
@@ -379,7 +416,10 @@ const decorateSession = () => {
 
 const decorateSkipToContent = () => {
   const main = document.querySelector('main');
-  if (!main) return;
+  // The `.skip-to-content` check guards against loadArea() re-running on
+  // the same document (see loadBlock()'s comment) — without it, every
+  // re-decoration prepends another skip link.
+  if (!main || document.body.querySelector('.skip-to-content')) return;
   main.id ||= 'main';
   const skip = document.createElement('a');
   skip.href = `#${main.id}`;

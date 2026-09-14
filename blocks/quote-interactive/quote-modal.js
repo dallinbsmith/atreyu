@@ -1,7 +1,7 @@
 import { getConfig } from '../../scripts/ak.js';
 import { loadGsap } from '../../scripts/utils/motion/gsap-loader.js';
 import { announce } from '../../scripts/utils/a11y.js';
-import { createElement, parseSvg, CHEVRON_SVG, PLUS_SVG } from '../../scripts/utils/dom.js';
+import { createElement } from '../../scripts/utils/dom.js';
 import {
   wireModalClose, openModal, closeModal, clampIndex,
 } from '../../scripts/utils/modal/modal.js';
@@ -9,7 +9,7 @@ import { buildModalSlide } from './quote-view.js';
 
 const arrow = (prev) => createElement('span', {
   className: `qi-modal-arrow${prev ? ' qi-modal-arrow-prev' : ''}`,
-}, parseSvg(CHEVRON_SVG));
+});
 
 // Single controller object — `null` when closed, a fully-populated snapshot
 // when open. Previously five module-scope `let`s (modal/releaseTrap/current/
@@ -75,7 +75,7 @@ const navButton = (dir) => {
 const buildModal = (slides) => {
   const closeBtn = createElement('button', {
     className: 'qi-modal-close', 'aria-label': 'Close',
-  }, parseSvg(PLUS_SVG));
+  }, createElement('span', { className: 'qi-modal-close-icon', 'aria-hidden': 'true' }));
   closeBtn.addEventListener('click', close);
 
   const track = createElement('div', { className: 'qi-modal-track' }, ...slides.map(buildModalSlide));
@@ -125,7 +125,7 @@ export const initModal = (tabs, slides) => async (index) => {
   const slide = modal.querySelectorAll('.qi-modal-slide')[index];
   const tl = core.gsap.timeline({ defaults: { ease: 'power2.out' } });
   tl.fromTo(modal.querySelector('.qi-modal-content'), { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5 });
-  tl.fromTo(modal.querySelector('.qi-modal-close svg'), { rotate: 0 }, { rotate: 45, duration: 0.5 }, '<');
+  tl.fromTo(modal.querySelector('.qi-modal-close-icon'), { rotate: 0 }, { rotate: 45, duration: 0.5 }, '<');
   tl.fromTo(modal.querySelector('.qi-modal-backdrop'), { opacity: 0 }, { opacity: 1 }, '<+0.3');
   if (slide) tl.fromTo(slide, { '--item-progress': 0 }, { '--item-progress': 1, duration: 0.4 }, '<');
 };

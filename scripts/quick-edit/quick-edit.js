@@ -1,5 +1,5 @@
 import { loadPage } from '../scripts.js';
-import { resolvePreviewOrigin } from '../utils/preview-origin.js';
+import { resolvePreviewOrigin } from '../utils/security/preview-origin.js';
 
 const importMap = {
   imports: {

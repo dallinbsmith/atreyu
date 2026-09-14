@@ -1,4 +1,4 @@
-import { getConfig, getMetadata } from '../ak.js';
+import { getConfig, getMetadata } from '../../ak.js';
 
 const createLink = (rel, href) => {
   const link = document.createElement('link');

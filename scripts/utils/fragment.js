@@ -80,7 +80,7 @@ export const getReplaceEl = (a) => {
 
 // Page-lifetime counter, folded into each fragment's id alongside path/idx so
 // two separate anchors pointing at the same fragment path never collide on
-// the same DOM id (scripts/utils/lazyhash.js scrollIntoView()s to a captured
+// the same DOM id (scripts/utils/page/lazyhash.js scrollIntoView()s to a captured
 // id — a collision means a deep link to the second instance silently lands
 // on the first). Safe as page-lifetime module state: there's only ever one
 // page's worth of fragment decorations happening, not per-instance state

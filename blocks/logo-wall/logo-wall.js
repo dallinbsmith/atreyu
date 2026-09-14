@@ -1,6 +1,6 @@
 import { createElement } from '../../scripts/utils/dom.js';
 import { shouldAnimate, addPauseToggle } from '../../scripts/utils/motion/motion.js';
-import { buildAccessibleLogo } from '../../scripts/utils/partner-logo.js';
+import { buildAccessibleLogo } from '../../scripts/utils/media/partner-logo.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 
 // Authoring: one partner/brand per row — plain text, or a link (href =

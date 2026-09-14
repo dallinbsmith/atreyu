@@ -656,7 +656,7 @@
     border: 0;
   }
 
-  /* Shared chrome for scripts/utils/media.js's video pause/play toggle.
+  /* Shared chrome for scripts/utils/media/video.js's video pause/play toggle.
      Consuming blocks (hero, hero-screen, hero-side-by-side) only need to
      position it — `top`/`right` vary per layout, everything else shouldn't
      drift as three separate hand-maintained copies. */

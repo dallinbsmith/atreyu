@@ -16,8 +16,8 @@
 // and the toggle's i18n label lookup is a network fetch with no timeout — it
 // must never gate section reveal / LCP. addVideoPauseControl() is exported
 // separately so it can still be awaited directly in tests.
-import { shouldAnimate, addPauseToggle } from './motion/motion.js';
-import { getPlaceholder } from './placeholders.js';
+import { shouldAnimate, addPauseToggle } from '../motion/motion.js';
+import { getPlaceholder } from '../placeholders.js';
 
 const setBackgroundFocus = (img) => {
   const { title } = img.dataset;

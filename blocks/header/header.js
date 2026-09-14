@@ -1,65 +1,50 @@
 import { getConfig } from '../../scripts/ak.js';
 import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
+import { createElement } from '../../scripts/utils/dom.js';
 import { decorateNavSection } from './header-nav.js';
-import { decorateAction, decorateActionSection } from './header-actions.js';
+import { HEADER_PATH, decorateWidgets, isWidgetLink } from './header-actions.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
-const { locale } = getConfig();
-
-const HEADER_PATH = '/system/fragments/nav/header';
-const HEADER_ACTIONS = [
-  '/tools/widgets/scheme',
-  '/tools/widgets/language',
-  '/tools/widgets/toggle',
-];
+const contentLinks = (section) => [...section.querySelectorAll('a')].filter((a) => !isWidgetLink(a));
 
 const decorateBrandSection = (section) => {
   section.classList.add('brand-section');
-  const brandLink = section.querySelector('a');
+  const brandLink = contentLinks(section)[0];
   if (!brandLink) return;
   const text = [...brandLink.childNodes]
     .find((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
   if (!text) return;
-  const span = document.createElement('span');
-  span.className = 'brand-text';
-  span.append(text);
-  brandLink.append(span);
+  brandLink.append(createElement('span', { className: 'brand-text' }, text));
 };
 
 // Classify by content shape, never position — see side-by-side.js/footer.js.
-// nav = the section with the main nav <ul>; brand = the remaining section
-// with exactly one link (the logo); actions = whatever's left.
+// Widget-marker links (`/tools/widgets/{scheme,language,toggle}`) don't count
+// as content: nav = the section with the main nav <ul>; brand = the remaining
+// section with exactly one real link (the logo, even if a hamburger marker
+// sits next to it); actions = whatever's left. The last real actions link is
+// the primary CTA — widgets after that CTA must not steal the stamp.
 const decorateHeaderContent = async (fragment) => {
   const sections = [...fragment.querySelectorAll(':scope > .section')];
   const navSection = sections.find((s) => s.querySelector('ul'));
-  const brandSection = sections
-    .find((s) => s !== navSection && s.querySelectorAll('a').length === 1);
+  const brandSection = sections.find((s) => s !== navSection && contentLinks(s).length === 1);
   const actionsSection = sections.find((s) => s !== navSection && s !== brandSection);
 
   if (brandSection) decorateBrandSection(brandSection);
-  if (navSection) decorateNavSection(navSection);
+  if (navSection) await decorateNavSection(navSection);
   if (actionsSection) {
-    decorateActionSection(actionsSection);
-    // Classify once here rather than let CSS re-derive "which link is the
-    // primary CTA" via a positional p:last-child selector — see scripts.md's
-    // "Identifying Elements" rule. Must run before the HEADER_ACTIONS loop
-    // below converts any widget-marker <p> (scheme/language/toggle) into a
-    // <button> — this assumes real authored content orders the CTA link(s)
-    // before any widget-marker link, so `p:last-child` still lands on a real
-    // CTA and not a marker that's about to be discarded (same assumption the
-    // prior p:last-child a CSS rule this replaces already depended on).
-    actionsSection.querySelector(':scope > .default-content > p:last-child a')
-      ?.classList.add('action-primary');
+    actionsSection.classList.add('actions-section');
+    contentLinks(actionsSection).at(-1)?.classList.add('action-primary');
   }
 
-  for (const pattern of HEADER_ACTIONS) {
-    decorateAction(fragment, pattern);
-  }
+  await decorateWidgets(fragment);
+  const toggle = fragment.querySelector('.action-wrapper.toggle');
+  if (toggle) brandSection?.querySelector('.default-content')?.append(toggle);
 };
 
 export default async (el) => {
-  if (el.dataset.headerDecorated) return;
-  el.dataset.headerDecorated = 'true';
+  if (!guardDecorate(el, 'headerDecorated')) return;
 
+  const { locale } = getConfig();
   const fragment = await loadFragmentWithFallback([`${locale.prefix}${HEADER_PATH}`, HEADER_PATH]);
   fragment.classList.add('header-content');
   await decorateHeaderContent(fragment);

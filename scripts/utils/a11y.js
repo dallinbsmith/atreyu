@@ -1,3 +1,5 @@
+import { listenGroup } from './listen.js';
+
 let idCounter = 0;
 
 export const generateId = (prefix = 'a11y') => {
@@ -60,8 +62,9 @@ export const rovingTabindex = (container, items, options = {}) => {
     }
   };
 
-  container.addEventListener('keydown', onKeydown);
-  return () => container.removeEventListener('keydown', onKeydown);
+  const group = listenGroup();
+  group.listen(container, 'keydown', onKeydown);
+  return () => group.end();
 };
 
 export const trapFocus = (container) => {
@@ -85,10 +88,11 @@ export const trapFocus = (container) => {
     }
   };
 
-  container.addEventListener('keydown', onKeydown);
+  const group = listenGroup();
+  group.listen(container, 'keydown', onKeydown);
 
   return () => {
-    container.removeEventListener('keydown', onKeydown);
+    group.end();
     for (const sib of siblings) sib.removeAttribute('inert');
   };
 };
