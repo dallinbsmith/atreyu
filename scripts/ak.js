@@ -12,6 +12,7 @@
 
 import { tagBehavior } from './behaviors.js';
 import { MQ_GRID_CAP } from './utils/breakpoints.js';
+import ENV from './utils/env.js';
 
 const LOG = async (ex, el) => (await import('./utils/error.js')).default(ex, el);
 
@@ -41,7 +42,19 @@ export const [setConfig, getConfig] = (() => {
       };
       return config;
     },
-    () => (config || setConfig()),
+    () => {
+      if (config) return config;
+      // Read before scripts.js's setConfig() ran. The lazy fallback below
+      // produces a config missing hostnames/locales/linkBlocks/components, so
+      // an early reader (decorateLink/loadBlock) would throw and poison the
+      // singleton. Safe today by load order — warn (non-prod) so a future
+      // import-order regression is loud, not silent. See scripts.md's Global
+      // State & Data Flow. ENV is the designated env classifier, not an inline
+      // hostname check (config-drift/no-inline-env-check).
+      // eslint-disable-next-line no-console -- this warning IS the diagnostic (dev-only)
+      if (ENV !== 'prod') console.warn('ak.js: getConfig() called before setConfig() — returning an incomplete default config.');
+      return setConfig();
+    },
   ];
 })();
 
