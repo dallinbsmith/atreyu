@@ -1,12 +1,12 @@
 import { decorateRichText } from '../../scripts/utils/richtext.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 // Authoring shape: two rows, classified by content shape, never by index —
 // side rail = a row containing a stats <ul>, a PDF download link, or an
 // image (intro heading, optional PDF link, logo image, stats list, intro
 // paragraph, in any order); article = the other row (subheadings + paragraphs).
 export default (el) => {
-  if (el.dataset.caseStudy) return;
-  el.dataset.caseStudy = 'true';
+  if (!guardDecorate(el, 'caseStudy')) return;
 
   const rows = [...el.querySelectorAll(':scope > div')];
   const sideRailRow = rows.find((r) => r.querySelector('ul, a[href$=".pdf"], img'));

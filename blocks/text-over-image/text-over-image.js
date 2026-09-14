@@ -2,8 +2,12 @@
 // with a darkening overlay. Authored as one cell of text plus a media reference.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 export default (el) => {
+  // Guard re-decoration: prepending a fresh .toi-media each run would re-wrap
+  // the already-wrapped media in a second .toi-media. See scripts.md Block Lifecycle.
+  if (!guardDecorate(el, 'toi')) return;
   // Media = whichever picture/video/img the author placed anywhere in the
   // cell. querySelector walks document order (parent-before-child), so a
   // <picture> is always found before its own inner <img>; the

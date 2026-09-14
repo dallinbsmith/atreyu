@@ -1,6 +1,7 @@
 import { initTileModal } from './tile-modal.js';
 import { loadPartnerLogo } from '../../scripts/utils/media/partner-logo.js';
 import { createElement } from '../../scripts/utils/dom.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const rowToItem = (row) => {
   const [nameCell, detailCell, linkCell] = row.children;
@@ -23,6 +24,10 @@ const buildTile = (item, i, openModal) => {
 };
 
 export default (el) => {
+  // Guard re-decoration: replaceChildren(grid) below means a second pass would
+  // read the grid's own tile <button>s as name/detail/link cells and rebuild
+  // from garbage. See scripts.md Block Lifecycle.
+  if (!guardDecorate(el, 'tileTable')) return;
   const items = [...el.children].filter((r) => r.textContent.trim()).map(rowToItem);
   const openModal = initTileModal(items);
   const grid = createElement('div', { className: 'tt-grid' });

@@ -1,6 +1,7 @@
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { decorateTout } from '../../scripts/utils/touts.js';
 import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 // One authored block = ONE Frame.io `SideBySideItem`. Rows classified by
 // content shape, never by index: media (picture/img), touts (UL first-cell), text (rest).
@@ -44,8 +45,7 @@ const buildText = (rows) => {
 };
 
 export default (el) => {
-  if (el.dataset.sbs) return;
-  el.dataset.sbs = 'true';
+  if (!guardDecorate(el, 'sbs')) return;
 
   const rows = [...el.children];
   const mediaRow = rows.find((r) => r.querySelector('picture, img'));

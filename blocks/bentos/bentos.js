@@ -1,4 +1,5 @@
 import { decorateTout, inferMediaLayout } from '../../scripts/utils/touts.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 // DA / Google-Docs fallback: authors set per-card options with a leading config
 // line, e.g. "media: background; bg: full; decoration: glassborder". Recognized
@@ -57,6 +58,10 @@ const applyOptions = (card) => {
 };
 
 export default (el) => {
+  // Guard re-decoration: placeMedia() prepends a fresh .bento-card-media each
+  // run, so a second pass would re-wrap the already-wrapped picture in a second
+  // wrapper and duplicate the media node. See scripts.md Block Lifecycle.
+  if (!guardDecorate(el, 'bentos')) return;
   // Scoped to this decorate() call (not per-row, not module-scope) so every
   // card across every authored row gets a unique index — a per-row counter
   // produced duplicate data-testids across rows, and a module-scope counter

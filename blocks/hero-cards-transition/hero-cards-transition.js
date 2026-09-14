@@ -5,6 +5,7 @@ import { shouldAnimate, onReveal } from '../../scripts/utils/motion/motion.js';
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 import { createElement, classifyCtaParagraphs, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 import { POSTERS, posterUrl } from './posters/catalog.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 // Also hardcoded as CSS `:nth-child(1)`–`(12)` and mobile `nth-child(n + 7)`.
 const MAX_CARDS = 12;
@@ -90,8 +91,7 @@ const buildWall = (cards) => {
 };
 
 export default (el) => {
-  if (el.dataset.hct) return;
-  el.dataset.hct = 'true';
+  if (!guardDecorate(el, 'hct')) return;
   el.classList.add('hero-cards-transition');
   const { bg, text: textRows, cards } = collect(el);
   el.replaceChildren(createElement(

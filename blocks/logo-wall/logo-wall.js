@@ -2,6 +2,7 @@ import { createElement } from '../../scripts/utils/dom.js';
 import { shouldAnimate, addPauseToggle } from '../../scripts/utils/motion/motion.js';
 import { buildAccessibleLogo } from '../../scripts/utils/media/partner-logo.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 // Authoring: one partner/brand per row — plain text, or a link (href =
 // partner site, text = name). Auto-scrolling marquee, failing open to a
@@ -51,8 +52,7 @@ const startMarquee = async (el, viewport, { track, loads }) => {
 export default async (el) => {
   // Guard before the first await so a concurrent decorate() bails instead
   // of racing icon loads / placeholder fetches (see side-by-side.js).
-  if (el.dataset.logoWall) return;
-  el.dataset.logoWall = 'true';
+  if (!guardDecorate(el, 'logoWall')) return;
 
   const items = extractItems(el);
   el.replaceChildren();
