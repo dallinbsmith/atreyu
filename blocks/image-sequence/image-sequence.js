@@ -5,6 +5,7 @@
 import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const MP4 = /\.mp4(\?|#|$)/i;
 const SEEK_EPS = 0.02;
@@ -75,8 +76,7 @@ const buildStage = (el, text, video) => {
 };
 
 export default (el) => {
-  if (el.dataset.imgSeq) return;
-  el.dataset.imgSeq = 'true';
+  if (!guardDecorate(el, 'imgSeq')) return;
   el.classList.add('prompter');
 
   const text = el.querySelector(`${HEADING_SELECTOR}, p`);
