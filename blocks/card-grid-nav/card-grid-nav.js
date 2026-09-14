@@ -1,10 +1,10 @@
 // Feature navigation grid. Each authored row is [media, label, link]; the whole
 // card becomes the link target. Used to cross-link sibling feature pages.
 import { HEADING_SELECTOR } from '../../scripts/utils/dom.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 export default (el) => {
-  if (el.dataset.cgn) return;
-  el.dataset.cgn = 'true';
+  if (!guardDecorate(el, 'cgn')) return;
 
   [...el.children].forEach((row) => {
     const link = row.querySelector('a');

@@ -1,11 +1,11 @@
 import { onReveal, addPauseToggle } from '../../scripts/utils/motion/motion.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const asset = (file) => new URL(file, import.meta.url).href;
 
 export default (el) => {
-  if (el.dataset.footerGlow) return;
-  el.dataset.footerGlow = 'true';
+  if (!guardDecorate(el, 'footerGlow')) return;
 
   // Row-scoped, not whole-block: this is a single optional override row
   // (video link + poster image), so we only ever look inside it — never at

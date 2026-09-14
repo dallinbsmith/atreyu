@@ -2,6 +2,7 @@
 // metadata row (`scale: n` → `--media-scale`, `glow: color` → `.glow-{color}`)
 // and CSS variants (top/bottom/overflow/right-aligned).
 import { decoratePothole } from '../pothole/decorate.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const GLOW_COLORS = new Set(['purple', 'blue', 'pink', 'green']);
 const META_RE = /^(scale|glow)\s*:\s*(.+)$/i;
@@ -24,8 +25,7 @@ const applyMeta = (el) => {
 };
 
 export default (el) => {
-  if (el.dataset.potholeV4) return;
-  el.dataset.potholeV4 = 'true';
+  if (!guardDecorate(el, 'potholeV4')) return;
   applyMeta(el);
   decoratePothole(el, { testidPrefix: 'pothole-v4' });
 };

@@ -1,5 +1,6 @@
 import { getConfig } from '../../scripts/ak.js';
 import { inject } from '../../scripts/utils/seo/jsonld.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const { log } = getConfig();
 
@@ -18,8 +19,7 @@ const buildSchema = (items) => {
 };
 
 export default (el) => {
-  if (el.dataset.faq) return;
-  el.dataset.faq = 'true';
+  if (!guardDecorate(el, 'faq')) return;
 
   const rows = [...el.querySelectorAll(':scope > div')];
   const items = [];

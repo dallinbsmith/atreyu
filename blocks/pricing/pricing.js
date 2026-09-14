@@ -2,6 +2,7 @@ import { getMetadata } from '../../scripts/ak.js';
 import { createElement } from '../../scripts/utils/dom.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { inject } from '../../scripts/utils/seo/jsonld.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const numericPrice = (price) => {
   const n = price.replace(/[^0-9.]/g, '');
@@ -62,8 +63,7 @@ const buildCard = (row, badgeText) => {
 };
 
 export default async (el) => {
-  if (el.dataset.pricing) return;
-  el.dataset.pricing = 'true';
+  if (!guardDecorate(el, 'pricing')) return;
   const badgeText = await getPlaceholder('pricingMostPopular', 'Most Popular');
   const plans = [...el.children].map((row) => buildCard(row, badgeText)).filter(Boolean);
   el.replaceChildren(...plans.map(({ card }) => card));

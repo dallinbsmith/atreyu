@@ -11,6 +11,7 @@ import { inferMediaLayout } from '../../scripts/utils/touts.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { onReveal } from '../../scripts/utils/motion/motion.js';
 import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 // Falkor shows 6 cards and hides the rest behind a "Show more" toggle.
 const DEFAULT_VISIBLE = 6;
@@ -50,8 +51,7 @@ const buildCard = (row, idx) => {
 };
 
 export default async (el) => {
-  if (el.dataset.cge) return;
-  el.dataset.cge = 'true';
+  if (!guardDecorate(el, 'cge')) return;
 
   const cards = [...el.children].map(buildCard).filter(Boolean);
   el.replaceChildren(...cards);
