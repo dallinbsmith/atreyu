@@ -56,6 +56,9 @@ jobs:
       - name: Run Stylelint rule tests
         run: npm run test:stylelint-rules
 
+      - name: Run config-sync tests
+        run: npm run test:config-sync
+
       - name: Run tests
         run: npm test
 

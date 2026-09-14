@@ -1,5 +1,4 @@
 import { getMetadata } from '../../ak.js';
-import { emit } from '../event-bus.js';
 import { track, EVENTS } from './analytics.js';
 import { sanitizeMarkup } from '../security/sanitize.js';
 import { hasConsent } from './consent.js';
@@ -114,7 +113,6 @@ export const runExperiment = async () => {
     renderType: 'full-page-swap',
     bucket,
   };
-  emit('experiment', detail);
   track(EVENTS.EXPERIMENT, detail);
   return { experiment, variant };
 };
