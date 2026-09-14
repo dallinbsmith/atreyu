@@ -239,17 +239,19 @@ All utilities live in `scripts/utils/`. Import with explicit `.js` extensions.
 | `env.js` | default export (`'prod'` / `'stage'` / `'dev'`) | Detects environment from hostname. `--` in host = stage, `local` = dev, everything else = prod. |
 | `error.js` | default export `(ex, el)` | Logs errors to console. In non-prod, wraps the failing element in a visible `.has-error` container. |
 | `event-bus.js` | `emit(name, detail)`, `on(name, handler)`, `off(name, handler)` | Namespaced (`atreyu:*`) event bus on `document` for inter-block communication. `on()` returns a cleanup function. |
-| `favicon.js` | (self-executing) | Sets favicon and apple-touch-icon from `img/favicons/`. Reads `favicon` metadata for custom name. |
+| `listen.js` | `listenGroup()` | Disposable `addEventListener` session. `listen(target, type, handler)` then `end()` drops the whole group (AbortController). For overlays that stay in the DOM. Modals that `remove()` themselves don't need it. |
+| `page/favicon.js` | (self-executing) | Sets favicon and apple-touch-icon from `img/favicons/`. Reads `favicon` metadata for custom name. |
 | `fetch-data.js` | `fetchData(url, options)` | Fetches JSON with automatic caching. Supports `sheet`, `limit`, and `offset` options for EDS spreadsheet endpoints. |
-| `footer.js` | default export `()` | Loads the global footer block from `footer` metadata or the default footer class. |
+| `page/footer.js` | default export `()` | Loads the global footer block from `footer` metadata or the default footer class. |
 | `fragment.js` | `loadFragment(path)`, `getReplaceEl(anchor)` | Fetches a fragment page, decorates its blocks, and returns the fragment DOM. `getReplaceEl` finds the correct ancestor to replace when inlining. |
 | `hreflang.js` | default export `()` | Injects `<link rel="alternate" hreflang="...">` tags for all configured locales. |
-| `icons.js` | default export `(icons)` | Replaces `<span class="icon icon-name">` elements with inline SVG `<use>` references to `/icons/name.svg`. |
+| `media/icons.js` | default export `(icons)` | Replaces `<span class="icon icon-name">` elements with inline SVG from `/icons/name.svg`. |
 | `jsonld.js` | `inject(data)`, `flush()`, default export `()` | Manages a JSON-LD `@graph` in `<head>`. `inject()` adds a schema entry; `flush()` writes to the DOM. Default export builds site-wide schema (Organization, WebSite, WebPage, BreadcrumbList). |
-| `lazyhash.js` | (self-executing) | After lazy load, scrolls to the element matching the URL hash that was stored before eager phase. |
+| `page/lazyhash.js` | (self-executing) | After lazy load, scrolls to the element matching the URL hash that was stored before eager phase. |
 | `motion.js` | `shouldAnimate()`, `getTransitionDuration(ms)`, `onReveal(el, callback, options)` | Motion guard: returns `false` if user prefers reduced motion, is on a slow connection, or has limited CPU. `onReveal` triggers a callback when an element enters the viewport. |
-| `observer.js` | default export `(el, callback)` | Lightweight IntersectionObserver wrapper. Fires callback once when element enters viewport, then unobserves. |
-| `picture.js` | `createPicture({ src, alt, eager, breakpoints })` | Programmatically creates a responsive `<picture>` element with WebP sources and breakpoint-based sizing. |
+| `glyphs.js` | `loadSvg(url)` | Fetches a code-owned `.svg` file and returns a fresh SVG element. Markup lives in the file, not in JS. Prefer a CSS mask unless you need a real node. |
+| `media/picture.js` | `createPicture({ src, alt, eager, breakpoints })` | Programmatically creates a responsive `<picture>` element with WebP sources and breakpoint-based sizing. |
+| `media/video.js` | `decorateVideoMedia(bg)`, `addVideoPauseControl(bg, video, onToggle)` | Picture-wrapped `.mp4` link becomes a looping muted video, gated by `shouldAnimate()`, with a pause control. |
 | `placeholders.js` | `getPlaceholders()`, `getPlaceholder(key, fallback)` | Fetches the locale-specific `/placeholders.json` spreadsheet. Returns a `Map` of key-value pairs for i18n text replacement. |
 | `script.js` | default export `(src)` | Loads an external `<script>` tag into `<head>`. Returns a promise. Deduplicates by `src`. Uses `Promise.withResolvers()`. |
 | `styles.js` | default export `(href)` | Fetches a CSS file and returns a `CSSStyleSheet` (constructable stylesheet). Caches by path. Accepts `.js` paths and swaps extension to `.css`. |

@@ -19,9 +19,9 @@ const loadSidekick = async () => {
   const { log } = getConfig();
 
   loadStyle('/styles/lazy-styles.css');
-  import('./utils/lazyhash.js');
-  import('./utils/favicon.js');
-  import('./utils/footer.js').then(({ default: footer }) => footer()).catch((ex) => log(ex));
+  import('./utils/page/lazyhash.js');
+  import('./utils/page/favicon.js');
+  import('./utils/page/footer.js').then(({ default: footer }) => footer()).catch((ex) => log(ex));
   import('./utils/seo/jsonld.js').then(({ default: jsonld }) => jsonld()).catch((ex) => log(ex));
   import('./utils/seo/hreflang.js').then(({ default: hreflang }) => hreflang()).catch((ex) => log(ex));
   import('./utils/seo/canonical.js').then(({ default: canonical }) => canonical()).catch((ex) => log(ex));

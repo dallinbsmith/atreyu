@@ -7,7 +7,7 @@
 //     the sim on every link click).
 // URL always wins on conflict. The scheduler UI keeps both in sync.
 
-import ENV from './env.js';
+import ENV from '../utils/env.js';
 
 const STORAGE_KEY = 'aem-schedule';
 const URL_KEY = 'schedule';

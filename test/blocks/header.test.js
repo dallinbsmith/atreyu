@@ -26,6 +26,10 @@ const brandSection = `<p><a href="/">
 const navSection = '<ul><li><p><a href="/features">Features</a></p></li>'
   + '<li><p><a href="/pricing">Pricing</a></p></li></ul>';
 
+const navWithMega = '<ul><li><p><a href="/features">Features</a></p>'
+  + '<div class="fragment-content"><div class="section">Column</div></div></li>'
+  + '<li><p><a href="/pricing">Pricing</a></p></li></ul>';
+
 const actionsSection = '<p><a href="/tools/widgets/scheme"><span class="icon icon-scheme"></span>Scheme</a></p>'
   + '<p><a href="/tools/widgets/language"><span class="icon icon-language"></span>Language</a></p>';
 
@@ -38,11 +42,15 @@ const stubFetch = (headerHtml) => {
   const original = window.fetch;
   let languageFetchCount = 0;
   window.fetch = async (url) => {
-    if (String(url).includes('/languages')) {
+    const href = String(url);
+    if (href.includes('/languages')) {
       languageFetchCount += 1;
       return new Response(languageFragmentHtml, { status: 200 });
     }
-    return new Response(headerHtml, { status: 200 });
+    if (href.includes('/system/fragments/nav/header')) {
+      return new Response(headerHtml, { status: 200 });
+    }
+    return original(url);
   };
   return {
     restore: () => { window.fetch = original; },
@@ -100,6 +108,24 @@ describe('header', () => {
     expect(nav).to.not.equal(actions);
   });
 
+  it('stamps .mega-menu on nested fragment content and toggles the item without following the href', async () => {
+    const stub = stubFetch(fragmentHtml([brandSection, navWithMega, actionsSection]));
+    restoreFetch = stub.restore;
+    const el = block();
+    await decorate(el);
+
+    const item = el.querySelector('.main-nav-item');
+    const link = item.querySelector('.main-nav-link');
+    const menu = item.querySelector('.fragment-content.mega-menu');
+    expect(menu).to.exist;
+    expect(item.querySelector('.mega-menu .fragment-content')).to.not.exist;
+    expect(link.getAttribute('aria-expanded')).to.equal('false');
+
+    link.click();
+    expect(item.classList.contains('is-open')).to.be.true;
+    expect(link.getAttribute('aria-expanded')).to.equal('true');
+  });
+
   it('classifies the last actions-section content link as .action-primary instead of relying on a structural selector', async () => {
     const realLinksActions = '<p><a href="/login">Log in</a></p><p><a href="/signup">Sign up</a></p>';
     const stub = stubFetch(fragmentHtml([brandSection, navSection, realLinksActions]));
@@ -111,6 +137,45 @@ describe('header', () => {
     const primary = actions.querySelector('.action-primary');
     expect(primary?.textContent.trim()).to.equal('Sign up');
     expect(actions.querySelector('a[href="/login"]').classList.contains('action-primary')).to.be.false;
+  });
+
+  it('stamps .action-primary on the last real CTA even when widget markers follow it', async () => {
+    const mixed = '<p><a href="/login">Log in</a></p>'
+      + '<p><a href="/signup">Sign up</a></p>'
+      + '<p><a href="/tools/widgets/scheme"><span class="icon icon-scheme"></span>Scheme</a></p>';
+    const stub = stubFetch(fragmentHtml([brandSection, navSection, mixed]));
+    restoreFetch = stub.restore;
+    const el = block();
+    await decorate(el);
+
+    const actions = el.querySelector('.actions-section');
+    expect(actions.querySelector('.action-primary')?.textContent.trim()).to.equal('Sign up');
+    expect(actions.querySelector('.action-wrapper.scheme')).to.exist;
+  });
+
+  it('treats a brand section that also holds the nav toggle as brand, not actions', async () => {
+    const brandWithToggle = `${brandSection}`
+      + '<p><a href="/tools/widgets/toggle"><span class="icon icon-more"></span>Menu</a></p>';
+    const stub = stubFetch(fragmentHtml([brandWithToggle, navSection, actionsSection]));
+    restoreFetch = stub.restore;
+    const el = block();
+    await decorate(el);
+
+    expect(el.querySelector('.brand-section .brand-text')?.textContent.trim()).to.equal('Frame.io');
+    expect(el.querySelector('.brand-section .action-wrapper.toggle')).to.exist;
+    expect(el.querySelector('.actions-section .action-wrapper.toggle')).to.not.exist;
+  });
+
+  it('moves a nav toggle authored in the actions section into brand', async () => {
+    const actionsWithToggle = `${actionsSection}`
+      + '<p><a href="/tools/widgets/toggle"><span class="icon icon-toggle"></span>Menu</a></p>';
+    const stub = stubFetch(fragmentHtml([brandSection, navSection, actionsWithToggle]));
+    restoreFetch = stub.restore;
+    const el = block();
+    await decorate(el);
+
+    expect(el.querySelector('.brand-section .action-wrapper.toggle')).to.exist;
+    expect(el.querySelector('.actions-section .action-wrapper.toggle')).to.not.exist;
   });
 
   it('double-decorate does not duplicate content', async () => {
@@ -170,5 +235,46 @@ describe('header', () => {
     btn.click();
     await tick();
     expect(btn.getAttribute('aria-expanded')).to.equal('false');
+  });
+
+  it('closing a dropdown does not drop Escape handling while mobile nav is open', async () => {
+    const actionsWithToggle = `${actionsSection}`
+      + '<p><a href="/tools/widgets/toggle"><span class="icon icon-toggle"></span>Menu</a></p>';
+    const stub = stubFetch(fragmentHtml([brandSection, navSection, actionsWithToggle]));
+    restoreFetch = stub.restore;
+    const el = block();
+    await decorate(el);
+
+    el.querySelector('.action-wrapper.toggle button').click();
+    const lang = el.querySelector('button[aria-label="Select language"]');
+    lang.click();
+    await tick();
+    lang.click();
+    await tick();
+
+    expect(el.classList.contains('is-mobile-open')).to.be.true;
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(el.classList.contains('is-mobile-open')).to.be.false;
+  });
+
+  it('Escape closes an open dropdown before the mobile nav', async () => {
+    const actionsWithToggle = `${actionsSection}`
+      + '<p><a href="/tools/widgets/toggle"><span class="icon icon-toggle"></span>Menu</a></p>';
+    const stub = stubFetch(fragmentHtml([brandSection, navSection, actionsWithToggle]));
+    restoreFetch = stub.restore;
+    const el = block();
+    await decorate(el);
+
+    el.querySelector('.action-wrapper.toggle button').click();
+    const lang = el.querySelector('button[aria-label="Select language"]');
+    lang.click();
+    await tick();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(el.querySelector('.actions-section.is-open')).to.not.exist;
+    expect(el.classList.contains('is-mobile-open')).to.be.true;
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(el.classList.contains('is-mobile-open')).to.be.false;
   });
 });

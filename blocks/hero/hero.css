@@ -81,7 +81,7 @@
       div > :first-child { margin-top: 0; }
       div > :last-child { margin-bottom: 0; }
 
-      .hero-detail {
+      p:has(> .rt-eyebrow) {
         margin: 0;
         font-size: var(--body-font-size-l);
       }

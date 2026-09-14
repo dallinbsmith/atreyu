@@ -1,4 +1,4 @@
-import { getConfig } from '../ak.js';
+import { getConfig } from '../../ak.js';
 
 const { codeBase } = getConfig();
 const cache = new Map();

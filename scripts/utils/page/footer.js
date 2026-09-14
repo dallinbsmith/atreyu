@@ -1,4 +1,4 @@
-import { getMetadata, loadBlock } from '../ak.js';
+import { getMetadata, loadBlock } from '../../ak.js';
 
 export default async () => {
   const footer = document.querySelector('footer');

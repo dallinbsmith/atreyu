@@ -1,11 +1,11 @@
 import { getConfig } from '../../scripts/ak.js';
 import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const FOOTER_PATH = '/system/fragments/nav/footer';
 
 export default async (el) => {
-  if (el.dataset.footerDecorated) return;
-  el.dataset.footerDecorated = 'true';
+  if (!guardDecorate(el, 'footerDecorated')) return;
 
   const { locale } = getConfig();
   const fragment = await loadFragmentWithFallback([`${locale.prefix}${FOOTER_PATH}`, FOOTER_PATH]);

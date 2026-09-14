@@ -47,9 +47,9 @@ Real, verified capabilities of `section-metadata` — atreyu-native, no Falkor e
 
 ## Header and footer content
 
-- **Brand**: the header fragment's first section, decorating its first link.
-- **Main menu**: the first `<ul>` in the second section.
-- **Actions**: the third section, plus three built-in widgets always appended — color-scheme toggle, language selector, mobile-menu toggle.
+- **Brand**: the fragment section with exactly one non-widget link (the logo). The mobile nav toggle is moved here after decoration.
+- **Main menu**: the fragment section that contains a `<ul>`.
+- **Actions**: the remaining section. Widget-marker links (`/tools/widgets/{scheme,language,toggle}`) become buttons; the last real content link is the primary CTA.
 - **Mega menu support**: real, via nested fragment content per menu item.
 - **Disable header/footer**: `header: off` / `footer: off` metadata.
 

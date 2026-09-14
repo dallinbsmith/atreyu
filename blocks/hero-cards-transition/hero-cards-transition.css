@@ -175,9 +175,11 @@
     }
 
     .hc-more {
+      flex-shrink: 0;
       width: calc(1.1 * var(--frem));
       height: calc(1.1 * var(--frem));
-      color: var(--color-alpha-light-50);
+      background-color: var(--color-alpha-light-50);
+      mask: url('/icons/more.svg') center / contain no-repeat;
     }
 
     .hc-title {

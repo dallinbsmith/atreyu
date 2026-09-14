@@ -10,14 +10,14 @@
 // pattern instead.
 import { onReveal } from '../../scripts/utils/motion/motion.js';
 import { createElement, getCells } from '../../scripts/utils/dom.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 export default (el) => {
   // Idempotency guard — a second decorate() call (e.g. DA's live-preview
   // reload path re-running loadBlock unconditionally) must not re-classify
   // already-restructured DOM: doing so would strip a level of wrapping off
   // any merged extra content on every subsequent call.
-  if (el.dataset.heroTransitionV4Decorated) return;
-  el.dataset.heroTransitionV4Decorated = 'true';
+  if (!guardDecorate(el, 'heroTransitionV4Decorated')) return;
 
   // Row meaning is classified by CELL, not by whole row: a row can hold more
   // than one column (children of rows are cells), so a row that pairs the

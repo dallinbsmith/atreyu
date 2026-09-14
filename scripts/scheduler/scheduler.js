@@ -1,6 +1,6 @@
 import { LitElement, html } from '../vendor/lit/dist/index.js';
 import loadStyle from '../utils/styles.js';
-import { getScheduleSim, setScheduleSim, consumeUrlSim } from '../utils/schedule-sim.js';
+import { getScheduleSim, setScheduleSim, consumeUrlSim } from './schedule-sim.js';
 import { formatDate } from './utils.js';
 
 const styles = await loadStyle(import.meta.url);

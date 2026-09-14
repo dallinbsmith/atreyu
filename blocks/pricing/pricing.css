@@ -85,7 +85,7 @@
           width: 16px;
           height: 16px;
           background: var(--color-electric);
-          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url('check.svg') center / contain no-repeat;
         }
       }
     }

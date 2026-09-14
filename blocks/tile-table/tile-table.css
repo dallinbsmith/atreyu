@@ -102,9 +102,12 @@
     color: var(--color-light);
     cursor: pointer;
 
-    svg {
+    &::before {
+      content: '';
       width: 0.625rem;
       height: 0.625rem;
+      background-color: var(--color-light);
+      mask: url('close.svg') center / contain no-repeat;
     }
 
     &:hover {
@@ -150,9 +153,12 @@
     color: var(--color-light);
     cursor: pointer;
 
-    svg {
+    &::before {
+      content: '';
       width: 0.75rem;
       height: 0.75rem;
+      background-color: var(--color-light);
+      mask: url('chevron-line.svg') center / contain no-repeat;
     }
 
     &:disabled {

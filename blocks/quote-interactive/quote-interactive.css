@@ -384,9 +384,11 @@
       transform: scale(1.2);
     }
 
-    svg {
+    .qi-modal-close-icon {
       width: 0.625rem;
       height: 0.625rem;
+      background-color: var(--color-light);
+      mask: url('plus.svg') center / contain no-repeat;
     }
   }
 
@@ -522,13 +524,8 @@
     width: 0.875rem;
     height: 1em;
     transition: transform 0.4s var(--ease-basic-butter);
-
-    svg {
-      position: absolute;
-      right: 0;
-      height: 0.55rem;
-      width: auto;
-    }
+    background-color: var(--color-light);
+    mask: url('/img/glyphs/chevron.svg') center / contain no-repeat;
 
     &.qi-modal-arrow-prev {
       transform: rotate(180deg);

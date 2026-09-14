@@ -1,7 +1,7 @@
 import { getConfig, localizeUrl } from '../../scripts/ak.js';
 import ENV from '../../scripts/utils/env.js';
 import { loadFragment, getReplaceEl, replaceElWithFragment } from '../../scripts/utils/fragment.js';
-import { getScheduleSim } from '../../scripts/utils/schedule-sim.js';
+import { getScheduleSim } from '../../scripts/scheduler/schedule-sim.js';
 
 const config = getConfig();
 

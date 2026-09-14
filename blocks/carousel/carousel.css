@@ -102,15 +102,18 @@
       cursor: pointer;
       transform: translateY(-50%);
 
-      svg {
+      &::before {
+        content: '';
         width: 0.7rem;
-        height: auto;
+        height: 1.18rem;
+        background-color: var(--color-light);
+        mask: url('/img/glyphs/chevron.svg') center / contain no-repeat;
       }
 
       &.carousel-nav-prev {
         left: 0;
 
-        svg {
+        &::before {
           transform: rotate(180deg);
         }
       }

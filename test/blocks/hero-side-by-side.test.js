@@ -3,8 +3,8 @@ import sinon from 'sinon';
 import decorate from '../../blocks/hero-side-by-side/hero-side-by-side.js';
 
 // decorateVideoMedia's pause toggle is fire-and-forget (see the LCP-regression
-// note in scripts/utils/media.js) — a test that needs it has no choice but to
-// poll for it, same pattern used in test/utils/media.test.js.
+// note in scripts/utils/media/video.js) — a test that needs it has no choice but to
+// poll for it, same pattern used in test/utils/media/video.test.js.
 const waitFor = async (check, { timeout = 2000, interval = 10 } = {}) => {
   const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {

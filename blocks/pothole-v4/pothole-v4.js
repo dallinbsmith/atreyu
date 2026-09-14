@@ -1,7 +1,7 @@
 // Pothole V4: same layout as pothole.js, plus a trailing `key: value`
 // metadata row (`scale: n` → `--media-scale`, `glow: color` → `.glow-{color}`)
 // and CSS variants (top/bottom/overflow/right-aligned).
-import { decoratePothole } from '../../scripts/utils/pothole.js';
+import { decoratePothole } from '../pothole/decorate.js';
 
 const GLOW_COLORS = new Set(['purple', 'blue', 'pink', 'green']);
 const META_RE = /^(scale|glow)\s*:\s*(.+)$/i;

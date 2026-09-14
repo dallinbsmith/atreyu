@@ -1,11 +1,11 @@
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
-import { decorateVideoMedia, addVideoPauseControl } from '../../scripts/utils/media.js';
+import { decorateVideoMedia, addVideoPauseControl } from '../../../scripts/utils/media/video.js';
 
 const img = '<picture><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></picture>';
 
 // decorateVideoMedia's pause toggle is fire-and-forget (see the LCP-regression
-// note in media.js) — a test that needs it has no choice but to poll for it,
+// note in video.js) — a test that needs it has no choice but to poll for it,
 // same as the real page would just render without it for a beat.
 const waitFor = async (check, { timeout = 2000, interval = 10 } = {}) => {
   const deadline = Date.now() + timeout;

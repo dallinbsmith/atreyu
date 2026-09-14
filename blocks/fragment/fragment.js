@@ -3,6 +3,7 @@ import {
 } from '../../scripts/utils/fragment.js';
 import { isPlatformHost } from '../../scripts/utils/platform-host.js';
 import { getConfig } from '../../scripts/ak.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const getRequestPath = (a) => {
   const { hostname, pathname } = a;
@@ -18,8 +19,7 @@ const getRequestPath = (a) => {
 };
 
 export default async (a) => {
-  if (a.dataset.fragmentDecorated) return;
-  a.dataset.fragmentDecorated = 'true';
+  if (!guardDecorate(a, 'fragmentDecorated')) return;
 
   const path = getRequestPath(a);
   const { locale, log } = getConfig();

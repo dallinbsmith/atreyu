@@ -81,18 +81,15 @@ describe('hero', () => {
     expect(el.querySelectorAll('.hero-foreground').length).to.equal(1);
   });
 
-  it('a plain paragraph preceding the heading (not an authored eyebrow) does not get hero-detail', async () => {
+  it('a plain paragraph preceding the heading is not an authored eyebrow', async () => {
     const el = block([['<p>Some intro</p><h1>Title</h1>']]);
     await decorate(el);
-    const p = el.querySelector('p');
-    expect(p.classList.contains('hero-detail')).to.be.false;
+    expect(el.querySelector('.rt-eyebrow')).to.not.exist;
   });
 
-  it('an authored eyebrow ([[eyebrow|text]]) gets hero-detail', async () => {
+  it('an authored eyebrow ([[eyebrow|text]]) becomes span.rt-eyebrow', async () => {
     const el = block([['<p>[[eyebrow|Featured]]</p><h1>Title</h1>']]);
     await decorate(el);
-    const eyebrowP = el.querySelector('.rt-eyebrow')?.closest('p');
-    expect(eyebrowP).to.exist;
-    expect(eyebrowP.classList.contains('hero-detail')).to.be.true;
+    expect(el.querySelector('p:has(> .rt-eyebrow)')).to.exist;
   });
 });

@@ -1,16 +1,10 @@
 import { announce } from '../../scripts/utils/a11y.js';
-import {
-  parseSvg, createElement, CLOSE_SVG, CHEVRON_LINE_SVG,
-} from '../../scripts/utils/dom.js';
+import { createElement } from '../../scripts/utils/dom.js';
 import {
   wireModalClose, openModal, closeModal, clampIndex,
 } from '../../scripts/utils/modal/modal.js';
 
-const iconButton = (cls, label, glyph) => {
-  const btn = createElement('button', { className: cls, 'aria-label': label });
-  btn.append(parseSvg(glyph));
-  return btn;
-};
+const iconButton = (cls, label) => createElement('button', { className: cls, 'aria-label': label });
 
 export const initTileModal = (items) => {
   let modal;
@@ -49,9 +43,9 @@ export const initTileModal = (items) => {
       className: 'btn btn-secondary', target: '_blank', rel: 'noopener noreferrer',
     });
     counterEl = createElement('span', { className: 'tt-modal-counter' });
-    prevBtn = iconButton('tt-modal-prev', 'Previous', CHEVRON_LINE_SVG);
-    nextBtn = iconButton('tt-modal-next', 'Next', CHEVRON_LINE_SVG);
-    const closeBtn = iconButton('tt-modal-close', 'Close', CLOSE_SVG);
+    prevBtn = iconButton('tt-modal-prev', 'Previous');
+    nextBtn = iconButton('tt-modal-next', 'Next');
+    const closeBtn = iconButton('tt-modal-close', 'Close');
 
     const body = createElement('div', { className: 'tt-modal-body' }, nameEl, detailEl, linkEl);
     const nav = createElement('div', { className: 'tt-modal-nav' }, prevBtn, counterEl, nextBtn);

@@ -1,6 +1,6 @@
-import { decorateRichText } from './richtext.js';
-import { trackScrollProgress } from './motion/scroll.js';
-import { createElement, getCells } from './dom.js';
+import { decorateRichText } from '../../scripts/utils/richtext.js';
+import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
+import { createElement, getCells } from '../../scripts/utils/dom.js';
 
 // Shared layout for pothole.js and pothole-v4.js: background is whichever
 // cell holds a picture (cell-level, not row-level — a mixed picture+text
