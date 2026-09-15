@@ -35,6 +35,13 @@ const loadSidekick = async () => {
     import('./utils/analytics/testid-audit.js')
       .then(({ default: auditTestids }) => auditTestids())
       .catch((ex) => log(ex));
+    // Personalization collision audit — reuses pzn.js's memoized loadVariants()
+    // (imported just below), so it adds no fetch. Warns when two variant rows
+    // share a placement+segment but target different selectors (a silently dead
+    // element), never on an intentional same-selector weighted split.
+    import('./utils/analytics/pzn-audit.js')
+      .then(({ default: auditPzn }) => auditPzn())
+      .catch((ex) => log(ex));
 
     // P0-44 personalization, graduated out of site/spike/ on 2026-08-28.
     // Gated to non-production environments deliberately, not as a placeholder:
