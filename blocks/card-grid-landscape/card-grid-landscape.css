@@ -1,0 +1,136 @@
+@layer blocks {
+  .card-grid-landscape {
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-xl);
+
+    .card-grid-landscape-title {
+      margin: 0 0 var(--spacing-m);
+    }
+
+    /* Below 768px: a horizontal scroll-snap slider (inverse of carousel.css,
+       which is a slider at every width) — matches Falkor's real behavior of
+       disabling its keen-slider instance at its own md breakpoint, i.e. the
+       slider exists only where a static grid wouldn't fit. */
+    .card-grid-landscape-viewport {
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .card-grid-landscape-track {
+      display: flex;
+      gap: var(--spacing-m);
+    }
+
+    .card-grid-landscape-card {
+      position: relative;
+      isolation: isolate;
+      flex: 0 0 78%;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: var(--spacing-xs);
+      min-height: 320px;
+      padding: var(--spacing-m);
+      border-radius: 12px;
+      overflow: hidden;
+      color: var(--color-light);
+
+      > * {
+        position: relative;
+        z-index: 1;
+      }
+    }
+
+    .card-grid-landscape-media {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+
+      img,
+      picture {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--color-dark) 85%, transparent));
+      }
+    }
+
+    .card-grid-landscape-logo {
+      display: block;
+      height: 24px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .card-grid-landscape-card-title {
+      margin: 0;
+      font-size: var(--body-font-size-m);
+      font-weight: 600;
+    }
+
+    .card-grid-landscape-dots {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      margin-top: var(--spacing-m);
+    }
+
+    .card-grid-landscape-dot {
+      width: 8px;
+      height: 8px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: var(--color-alpha-dark-30);
+      cursor: pointer;
+
+      &.is-active {
+        background: var(--color-cobalt);
+      }
+    }
+
+    /* square variant: no group title, no per-card logo — a simpler card. */
+    &.square {
+      .card-grid-landscape-title,
+      .card-grid-landscape-logo {
+        display: none;
+      }
+    }
+  }
+
+  /* 768px+: enough room for a static wrapping grid — slider/dots turn off. */
+  @media (width >= 768px) {
+    .card-grid-landscape {
+      .card-grid-landscape-viewport {
+        overflow: visible;
+        scroll-snap-type: none;
+      }
+
+      .card-grid-landscape-track {
+        flex-wrap: wrap;
+      }
+
+      .card-grid-landscape-card {
+        flex: 0 0 calc(33.33% - var(--spacing-m) * 2 / 3);
+      }
+
+      .card-grid-landscape-dots {
+        display: none;
+      }
+    }
+  }
+}
