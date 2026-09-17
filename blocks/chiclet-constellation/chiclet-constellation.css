@@ -1,0 +1,146 @@
+@layer blocks {
+  .chiclet-constellation {
+    --cc-icon-size: 40px;
+    --cc-tile: 96px;
+    --cc-drift: 5rem;
+    --cc-scatter: 2rem;
+    --cc-spread-x: 0.6rem;
+    --cc-spread-y: 1.5rem;
+    --cc-tilt: 3deg;
+
+    position: relative;
+    width: 100%;
+  }
+
+  /* Resting state: a centered, wrapping constellation of chiclets. Every tile
+     stays visible, readable and labeled — this is also the reduced-motion /
+     save-data / low-power fallback (JS never adds .is-animating in those cases,
+     and --progress is never set, so the animating rules below resolve to 0).
+     The horizontal padding absorbs each tile's outward scatter nudge so an
+     edge chiclet never overflows the block. */
+  .cc-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-l);
+    width: 100%;
+    margin: 0;
+    padding: var(--spacing-xl) var(--cc-spread-x);
+    list-style: none;
+  }
+
+  .cc-item {
+    display: flex;
+
+    /* Modest ORGANIC scatter seeded off the per-item index --i via a golden-
+       angle (2.399rad) walk: each chiclet lands on a slightly different point
+       and tilt, so the resting layout reads as a dispersed constellation
+       rather than a tidy grid — without Falkor's fragile per-breakpoint pixel
+       map, and content-count-agnostic (the pattern just keeps walking). These
+       are visual transforms only, so flex wrapping/centering is unaffected. */
+    --cc-x: calc(sin(var(--i, 0) * 2.399) * var(--cc-spread-x));
+    --cc-y: calc(cos(var(--i, 0) * 2.399) * var(--cc-spread-y));
+    --cc-rot: calc(sin(var(--i, 0) * 1.7) * var(--cc-tilt));
+  }
+
+  .cc-chiclet {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-s);
+    width: var(--cc-tile);
+    padding: var(--spacing-m);
+    color: var(--color-alpha-light-70);
+    text-align: center;
+    text-decoration: none;
+    background: color-mix(in srgb, rgb(var(--color-light-base)) 4%, transparent);
+    border: 1px solid var(--color-alpha-light-10);
+    border-radius: var(--radius-16);
+    transform: translate(var(--cc-x, 0), var(--cc-y, 0)) rotate(var(--cc-rot, 0deg));
+
+    &:where(a):hover {
+      color: var(--color-light);
+      border-color: var(--color-alpha-light-30);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+  }
+
+  .cc-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--cc-icon-size);
+    height: var(--cc-icon-size);
+
+    /* Real app marks keep their native colors; just constrain the box. */
+    svg,
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  .cc-label {
+    font-size: var(--body-font-size-xs);
+    line-height: 1.2;
+  }
+
+  /* Animating state — JS adds .is-animating only after shouldAnimate() passes,
+     then trackScrollProgress(el) sets --progress (0..1) on the block as the
+     section scrolls. Each chiclet floats up, scatters sideways (direction from
+     --cc-dir, alternated per item), and fades — a compositor-only transform +
+     opacity, staggered per item via --i for the constellation drift. This maps
+     Falkor's --constellation-progress parallax onto the shared primitive.
+     Under reduced motion / save-data / low power --progress is never set, so
+     var(--progress, 0) resolves every value back to the resting grid. */
+  .chiclet-constellation.is-animating {
+    .cc-item {
+      --cc-dir: 1;
+
+      opacity: calc(1 - var(--progress, 0) * 0.65);
+      transform:
+        translate(
+          calc(var(--progress, 0) * var(--cc-scatter) * var(--cc-dir)),
+          calc(var(--progress, 0) * var(--cc-drift) * (1 + var(--i, 0) * 0.14) * -1)
+        )
+        scale(calc(1 - var(--progress, 0) * 0.06));
+    }
+
+    .cc-item:nth-child(odd) {
+      --cc-dir: -1;
+    }
+  }
+
+  /* Belt-and-suspenders: if reduced motion is toggled on after decoration,
+     freeze at the resting layout rather than keep drifting (mirrors
+     logo-tile-wall / logo-wall). */
+  @media (prefers-reduced-motion: reduce) {
+    .chiclet-constellation.is-animating .cc-item {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (width >= 768px) {
+    .chiclet-constellation {
+      --cc-icon-size: 48px;
+      --cc-tile: 116px;
+      --cc-drift: 7rem;
+      --cc-scatter: 3rem;
+      --cc-spread-x: 1rem;
+      --cc-spread-y: 2.2rem;
+    }
+
+    .cc-list {
+      gap: var(--spacing-xl);
+    }
+  }
+}
