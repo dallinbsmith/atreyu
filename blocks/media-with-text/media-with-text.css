@@ -1,0 +1,86 @@
+@layer blocks {
+  .media-with-text {
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+
+    .media-with-text-media {
+      position: relative;
+      width: 100%;
+      border-radius: var(--radius-16);
+      overflow: hidden;
+
+      picture,
+      video,
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      /* Shared .video-pause-toggle chrome (styles.css) only sets position:
+         absolute; top/right are deliberately per-block — every consumer
+         (hero.css, hero-screen.css, standalone-media.css) supplies them. */
+      .video-pause-toggle {
+        top: var(--spacing-s);
+        right: var(--spacing-s);
+      }
+    }
+
+    .media-with-text-text {
+      margin-top: var(--spacing-l);
+
+      p {
+        margin: var(--spacing-s) 0;
+        color: var(--color-alpha-light-50);
+      }
+
+      div > :first-child { margin-top: 0; }
+      div > :last-child { margin-bottom: 0; }
+    }
+
+    .media-with-text-heading {
+      margin: 0;
+    }
+
+    /* Mobile-only bleed: media runs wider than its container and shifts
+       toward one edge — a real visual treatment (not just centering), see
+       Falkor's isMobileLeftAligned/isMobileRightAligned. Plain full-width
+       at 768px+. */
+    &.left .media-with-text-media,
+    &.right .media-with-text-media {
+      width: min(166%, 60rem);
+      max-width: none;
+    }
+
+    &.left .media-with-text-media {
+      margin-inline-end: auto;
+    }
+
+    &.right .media-with-text-media {
+      margin-inline-start: auto;
+    }
+
+    /* decoration: glassborder — same shared tokens as .btn-glass /
+       standalone-media.css's identical treatment. */
+    &.glassborder .media-with-text-media {
+      padding: var(--spacing-s);
+      background: var(--glass-bg);
+      border: var(--glass-border);
+      backdrop-filter: blur(var(--glass-blur));
+
+      /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+    }
+  }
+
+  @media (width >= 768px) {
+    .media-with-text {
+      &.left .media-with-text-media,
+      &.right .media-with-text-media {
+        width: 100%;
+        max-width: none;
+        margin-inline: 0;
+      }
+    }
+  }
+}
