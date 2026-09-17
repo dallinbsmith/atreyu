@@ -88,6 +88,11 @@
     }
   }
 
+  /* An icon-less (mis-authored) chiclet collapses its empty mark box. */
+  .cc-icon:empty {
+    display: none;
+  }
+
   .cc-label {
     font-size: var(--body-font-size-xs);
     line-height: 1.2;

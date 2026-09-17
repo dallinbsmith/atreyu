@@ -50,7 +50,7 @@ const buildImage = (pic, i) => {
 };
 
 const buildLockup = (textCells) => {
-  const lockup = createElement('div', { className: 'icloud-lockup' }, ...textCells.flatMap((c) => [...c.children]));
+  const lockup = createElement('div', { className: 'icloud-lockup' }, ...textCells.flatMap((c) => [...c.childNodes]));
   lockup.querySelector(HEADING_SELECTOR)?.classList.add('icloud-heading');
   return lockup;
 };

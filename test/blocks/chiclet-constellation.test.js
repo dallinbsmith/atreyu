@@ -75,6 +75,17 @@ describe('chiclet-constellation', () => {
       });
     });
 
+    it('two-cell "| Label | :icon: |" (text-first) resolves the label regardless of cell order', () => {
+      // The block advertises order-independent classification: the icon cell is
+      // the mark whether it is first or second, and the text cell is the name.
+      const el = block([['Photoshop', '<span class="icon icon-ps"></span>']]);
+      decorate(el);
+      const item = el.querySelector('.cc-item');
+      expect(item.querySelector('.cc-label').textContent).to.equal('Photoshop');
+      expect(item.querySelector('.cc-icon .icon')).to.exist;
+      expect(item.querySelector('.cc-icon').getAttribute('aria-hidden')).to.equal('true');
+    });
+
     it('is static: no is-animating class and no --progress set', () => {
       const el = block([['<span class="icon icon-ps"></span>', 'Photoshop']]);
       decorate(el);

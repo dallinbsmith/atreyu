@@ -54,8 +54,11 @@ export default (el) => {
   // Idempotent under DA Quick-Edit re-decoration. Below, trackScrollProgress's
   // disposer is intentionally discarded: its IntersectionObserver lives in the
   // scroll.js module (not this element's subtree) and does NOT self-disconnect
-  // when off screen -- but el lives for the page lifetime here, so there is
-  // nothing to tear down. Same page-lifetime drop as pothole.js / speedbump.js.
+  // when off screen. In prod el is page-lifetime so this never leaks; a DA
+  // Quick-Edit *node swap* would leak the old observer + detached node (bounded,
+  // author-only) -- the accepted page-lifetime trade-off shared with pothole.js
+  // / speedbump.js. If it ever matters, hold the disposer in a module-scope
+  // handle and abort before recreate (see lifecycle.js).
   if (!guardDecorate(el, 'chicletConstellation')) return;
   const items = [...el.children].map(buildChiclet).filter(Boolean);
   // Replace the raw authored rows even when nothing survives, so a malformed

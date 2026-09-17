@@ -63,9 +63,11 @@ const buildSection = (row, s) => {
 };
 
 export default (el) => {
-  if (!guardDecorate(el, 'stickyBackground')) return;
   const [mediaRow, ...sectionRows] = [...el.children];
+  // Check content BEFORE marking decorated, so a media-only block a later
+  // Quick-Edit fills in with sections can still re-decorate.
   if (!mediaRow || !sectionRows.length) return;
+  if (!guardDecorate(el, 'stickyBackground')) return;
   // createElement drops the null children that buildSection returns for empty rows.
   const sections = createElement('div', { className: 'sbg-sections' }, ...sectionRows.map((row, s) => buildSection(row, s)));
   const inner = createElement('div', { className: 'sbg-inner' }, buildMedia(mediaRow), sections);
