@@ -1,0 +1,143 @@
+@layer blocks {
+  /* JS emits --progress (0..1) on the block via trackScrollProgress. Declaring
+     it as a typed, inheriting property gives it a defined resting value (0) even
+     when the util no-ops (reduced motion / save-data / low-power), so the
+     parallax calc() below always resolves to a real length. */
+  @property --progress {
+    syntax: '<number>';
+    initial-value: 0;
+    inherits: true;
+  }
+
+  .image-cloud {
+    /* Vertical travel of the fastest image (factor 1) across the scroll range.
+       Per-image drift scales this by --icloud-factor, porting Falkor's
+       per-image parallaxFactors. */
+    --icloud-range: 16vh;
+    --icloud-width: clamp(120px, 26vw, 180px);
+    --icloud-min-height: 132vw;
+    --icloud-glow: color-mix(in srgb, var(--color-iris) 40%, transparent);
+
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: var(--spacing-xxl);
+    color: var(--color-light);
+
+    /* Below-fold section: skip layout/paint until near the viewport. The
+       intrinsic size mirrors the min-height so the reserved box is stable
+       (no CLS from the images that live inside it). */
+    content-visibility: auto;
+    contain-intrinsic-size: auto var(--icloud-min-height);
+  }
+
+  .icloud-inner {
+    position: relative;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--grid-container-width);
+    min-height: var(--icloud-min-height);
+    margin-inline: auto;
+    padding-inline: var(--spacing-l);
+  }
+
+  /* Absolute canvas the floating images anchor to; sits behind the lockup by
+     source order inside the isolated block (no z-index needed). */
+  .icloud-images {
+    position: absolute;
+    inset: 0;
+  }
+
+  .icloud-image {
+    --icloud-drift: 0px;
+
+    position: absolute;
+    top: var(--icloud-y, 50%);
+    left: var(--icloud-x, 50%);
+    width: var(--icloud-width);
+    transform: translate(-50%, calc(-50% + var(--icloud-drift)));
+
+    picture,
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1.43; /* Falkor IMAGE_ASPECT_RATIO */
+      object-fit: cover;
+      border-radius: var(--radius-8);
+      box-shadow: var(--shadow-card);
+    }
+  }
+
+  .icloud-lockup {
+    position: relative;
+    max-width: 26ch;
+    margin: 0 auto;
+    padding: var(--spacing-l);
+    text-align: center;
+
+    /* Soft ambient wash so the centered copy stays legible over the images
+       behind it -- block-private token composed from existing tokens, the same
+       local-glow pattern as hero-image-wall.css (no shared glow system). */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -30%;
+      z-index: -1;
+      background: radial-gradient(ellipse 60% 55% at 50% 50%, var(--icloud-glow), transparent 70%);
+    }
+
+    p {
+      margin: var(--spacing-s) 0;
+      color: var(--color-alpha-light-70);
+    }
+
+    :first-child { margin-top: 0; }
+    :last-child { margin-bottom: 0; }
+  }
+
+  .icloud-heading {
+    margin: 0 0 var(--spacing-s);
+    letter-spacing: -0.03em;
+    line-height: 1.06;
+  }
+
+  /* Animating state -- added by JS only after shouldAnimate() passes. Each
+     image drifts vertically by (progress - 0.5) so it travels through its rest
+     position as the section scrolls, scaled by its own factor. The short
+     transition smooths the per-frame --progress updates into buttery motion
+     (compositor-only transform, INP-safe), porting Falkor's 0.2s ease-out. */
+  .image-cloud.is-scrubbing .icloud-image {
+    --icloud-drift: calc((var(--progress) - 0.5) * var(--icloud-factor, 0.5) * var(--icloud-range));
+
+    transition: transform 0.2s var(--transition-ease-out);
+    will-change: transform;
+  }
+
+  /* Belt-and-suspenders: if reduced motion is enabled after scrubbing began,
+     freeze every image at its rest position rather than keep drifting. */
+  @media (prefers-reduced-motion: reduce) {
+    .image-cloud.is-scrubbing .icloud-image {
+      --icloud-drift: 0px;
+
+      transition: none;
+    }
+  }
+
+  @media (width >= 768px) {
+    .image-cloud {
+      --icloud-width: clamp(180px, 22vw, 300px);
+      --icloud-min-height: 92vh;
+      --icloud-range: 22vh;
+    }
+  }
+
+  @media (width >= 1240px) {
+    .image-cloud {
+      --icloud-width: clamp(240px, 20vw, 360px);
+      --icloud-min-height: 108vh;
+    }
+  }
+}
