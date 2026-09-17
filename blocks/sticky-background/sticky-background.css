@@ -1,0 +1,159 @@
+@layer blocks {
+  .sticky-background {
+    /* 0 while the block is scrolled through center (media fully visible), 1 at
+       the enter/leave edges. Set from JS only under shouldAnimate(); stays 0
+       (unset) under reduced motion / save-data / low-power, so the resting
+       state is the fully-visible media. */
+    --sbg-edge: 0;
+    --sbg-glow-color: var(--color-accent);
+
+    position: relative;
+    color: var(--color-light);
+  }
+
+  .sbg-inner {
+    position: relative;
+  }
+
+  /* Mobile: the media simply stacks above the sections (no pin). */
+  .sbg-media {
+    position: relative;
+    display: grid;
+    place-items: center;
+    isolation: isolate;
+    width: 100%;
+    aspect-ratio: 1.25;
+    margin-bottom: var(--spacing-xl);
+    overflow: hidden;
+  }
+
+  /* CSS approximation of Falkor's WebGL Glow behind the device/media. */
+  .sbg-glow {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--sbg-glow-color) 42%, transparent), transparent 62%);
+    filter: blur(40px);
+  }
+
+  .sbg-media-frame {
+    position: relative;
+    width: min(82%, 460px);
+
+    /* Fade + subtle scale driven by --sbg-edge. Scoped to the media itself, not
+       the frame, so the WCAG pause toggle never fades out of reach. */
+    > :not(.video-pause-toggle) {
+      opacity: calc(1 - var(--sbg-edge));
+      transform: scale(calc(1 - var(--sbg-edge) * 0.06));
+      transform-origin: center;
+    }
+
+    picture,
+    img,
+    video {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: var(--radius-16);
+    }
+  }
+
+  /* Shared chrome lives in styles.css's .video-pause-toggle; only position it. */
+  .sbg-media .video-pause-toggle {
+    top: var(--spacing-s);
+    right: var(--spacing-s);
+  }
+
+  .sbg-sections {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xxl);
+  }
+
+  .sbg-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-m);
+  }
+
+  .sbg-section-touts {
+    display: grid;
+    gap: var(--spacing-l);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .sbg-lockup-title,
+  .sbg-tout-title {
+    margin: 0;
+    font-size: var(--heading-font-size-l);
+    color: var(--color-light);
+  }
+
+  .sbg-lockup-body,
+  .sbg-tout-body {
+    margin: 0;
+    color: var(--color-alpha-light-70);
+  }
+
+  .sbg-lockup-cta,
+  .sbg-tout-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-m);
+    margin-top: var(--spacing-s);
+  }
+
+  .sbg-tout-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Desktop: pin the media to the right, scroll the sections past it on the left. */
+  @media (width >= 768px) {
+    .sbg-media {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      aspect-ratio: auto;
+      place-items: center end;
+      padding-inline-end: max(6vw, var(--spacing-xxl));
+      margin-bottom: 0;
+    }
+
+    .sbg-media-frame {
+      width: min(38vw, 520px);
+    }
+
+    .sbg-sections {
+      position: relative;
+      z-index: 1;
+
+      /* Pull the sections up over the sticky media so text scrolls past it. */
+      margin-top: -100vh;
+      gap: 0;
+      width: min(46%, 520px);
+      margin-inline-start: max(6vw, var(--spacing-xxl));
+    }
+
+    .sbg-section {
+      min-height: 100vh;
+      justify-content: center;
+    }
+  }
+
+  @media (width >= 1240px) {
+    .sbg-lockup-title,
+    .sbg-tout-title {
+      font-size: var(--heading-font-size-xl);
+    }
+  }
+
+  /* Belt-and-suspenders: if reduced motion turns on after decoration, freeze the
+     media fully visible rather than leaving it mid-fade. */
+  @media (prefers-reduced-motion: reduce) {
+    .sbg-media-frame > :not(.video-pause-toggle) {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
