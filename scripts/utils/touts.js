@@ -12,6 +12,41 @@ export const inferMediaLayout = (img) => {
   return (isPhoto || w >= 1000) ? 'background' : 'foreground';
 };
 
+// Removes an authored node, then its wrapping <p> too — but only once
+// genuinely emptied (checked AFTER detaching, since an authored image is
+// always its <p>'s only content). Shared by carousel.js and
+// card-grid-landscape.js, both of which extract media/logo images this way.
+export const detachFromRow = (node) => {
+  const wrapP = node.closest('p');
+  node.remove();
+  if (wrapP && !wrapP.textContent.trim() && !wrapP.querySelector('img, picture')) wrapP.remove();
+};
+
+// Classifies every img in `row` into one full-bleed background (`media`) and
+// at most one foreground logo, detaching every extra of either kind. Real
+// content is always exactly one background photo + zero-or-one logo, but
+// classify defensively: if a row is ever authored with more than one of
+// either, keep the first and remove the rest rather than leaving unstyled
+// stray images behind.
+export const extractRowMedia = (row) => {
+  let media = null;
+  const logos = [];
+  [...row.querySelectorAll('img')].forEach((img) => {
+    const host = img.closest('picture') ?? img;
+    if (inferMediaLayout(img) === 'background') {
+      if (media) detachFromRow(host);
+      else media = host;
+    } else {
+      logos.push(host);
+    }
+  });
+  logos.slice(1).forEach(detachFromRow);
+  const [logo] = logos;
+  if (media) detachFromRow(media);
+  if (logo) detachFromRow(logo);
+  return { media, logo };
+};
+
 // Shared tout/card decoration: heading → title, body paragraphs → body,
 // CTA links lifted into a single cta wrapper (first = primary, rest = secondary).
 // Reused by the bentos and side-by-side blocks. Class prefix is configurable so
