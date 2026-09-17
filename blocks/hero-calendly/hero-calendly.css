@@ -1,0 +1,74 @@
+@layer blocks {
+  .hero-calendly {
+    display: flex;
+    flex-direction: column;
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-m);
+    color: var(--color-light);
+    background: var(--color-dark);
+
+    &.light {
+      color: var(--color-dark);
+      background: var(--color-light);
+    }
+
+    .hero-calendly-content {
+      p {
+        margin: var(--spacing-s) 0;
+        color: var(--color-alpha-light-50);
+      }
+
+      div > :first-child { margin-top: 0; }
+      div > :last-child { margin-bottom: 0; }
+    }
+
+    .hero-calendly-heading {
+      max-width: 20ch;
+      margin: 0;
+      letter-spacing: -0.045em;
+      line-height: 1.04;
+    }
+
+    .hero-calendly-widget {
+      position: relative;
+      width: 100%;
+      min-height: 580px;
+      margin-top: var(--spacing-xl);
+
+      /* Calendly's inline widget injects its own iframe here at runtime;
+         the placeholder/fallback text (set when the widget can't load)
+         reuses this same container, centered so it isn't lost against the
+         min-height reserved to avoid layout shift once the iframe lands. */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+
+      iframe {
+        width: 100%;
+        height: 100%;
+      }
+    }
+  }
+
+  @media (width >= 1240px) {
+    .hero-calendly {
+      flex-direction: row;
+      gap: var(--spacing-xl);
+      padding: var(--spacing-xxl) var(--spacing-l);
+
+      .hero-calendly-content {
+        flex: 5;
+      }
+
+      .hero-calendly-widget {
+        flex: 6;
+        min-height: 680px;
+        margin-top: 0;
+      }
+
+      .hero-calendly-heading { max-width: 16ch; }
+    }
+  }
+}

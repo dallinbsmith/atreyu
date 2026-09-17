@@ -11,6 +11,7 @@ export const ALLOWED_EMBED_HOSTS = [
   'www.youtube-nocookie.com',
   'player.vimeo.com',
   'fast.wistia.net',
+  'calendly.com',
 ];
 
 export const isAllowedEmbedHost = (url) => {
