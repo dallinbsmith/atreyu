@@ -1,0 +1,218 @@
+@layer blocks {
+  /* CarouselWithTouts. Mobile-first: the default (narrow) styles are the
+     STACKED, non-carousel layout - media then tout caption, media alternating
+     alignment. The @media (width >= 768px) block turns the same single DOM into
+     a scroll-snap carousel inside a device frame with a label-pagination row.
+     No media is duplicated: the in-slide tout is the mobile caption and is
+     hidden on desktop, where the JS-built pagination buttons carry the labels. */
+  .carousel-with-touts {
+    position: relative;
+    isolation: isolate;
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-xl);
+
+    /* Mobile: the frame is just a passthrough wrapper (no device chrome), the
+       viewport does not scroll, and the track is a vertical stack. */
+    .cwt-viewport {
+      overflow: visible;
+    }
+
+    .cwt-track {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xxl);
+    }
+
+    .cwt-slide {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-l);
+    }
+
+    /* Media alternates alignment per slide (Falkor's OverflowingMedia).
+       position: relative anchors the shared .video-pause-toggle (absolute) to
+       the media box - without it the toggle escapes to the frame (desktop) or
+       to the bottom of the whole stack (mobile, where the frame is unpositioned). */
+    .cwt-media {
+      position: relative;
+      width: 85%;
+      border-radius: var(--radius-12);
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+    }
+
+    .cwt-slide:nth-child(even) .cwt-media {
+      margin-inline-start: auto;
+    }
+
+    .cwt-media :is(img, picture, video) {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .cwt-tout-title {
+      margin: 0 0 var(--spacing-s);
+      color: var(--color-light);
+      font-size: var(--heading-font-size-m);
+      font-weight: 600;
+    }
+
+    .cwt-tout-body {
+      margin: 0;
+      color: var(--color-gray-200);
+      font-size: var(--body-font-size-m);
+    }
+
+    .video-pause-toggle {
+      inset: auto var(--spacing-s) var(--spacing-s) auto;
+    }
+
+    /* Arrows + pagination are desktop-only affordances. */
+    .cwt-nav,
+    .cwt-pagination {
+      display: none;
+    }
+  }
+
+  /* An ambient wash behind the frame when the author opts into the blurred
+     background. NOTE: this is an APPROXIMATION - the faithful Falkor treatment
+     is a per-slide blurred COPY of each asset, which would duplicate every
+     media download and is deliberately not done here (see JS header). */
+  .carousel-with-touts.blurred-background .cwt-frame {
+    background:
+      radial-gradient(120% 120% at 50% 0%, var(--color-alpha-light-10), transparent 70%),
+      var(--color-shaded);
+  }
+
+  @media (width >= 768px) {
+    .carousel-with-touts {
+      /* The device frame: a bordered, rounded, shadowed screen (approximating
+         Falkor's GlassWrapper + Shadow), holding the scroll-snap viewport. */
+      .cwt-frame {
+        position: relative;
+        isolation: isolate;
+        padding: var(--spacing-s);
+        border: var(--card-border);
+        border-radius: var(--radius-18);
+        background: var(--color-shaded);
+        box-shadow: 0 var(--spacing-l) var(--spacing-xxl) var(--color-alpha-dark-80);
+      }
+
+      .cwt-viewport {
+        overflow-x: auto;
+        border-radius: var(--radius-12);
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+      }
+
+      .cwt-viewport::-webkit-scrollbar {
+        display: none;
+      }
+
+      .cwt-track {
+        flex-direction: row;
+        gap: 0;
+      }
+
+      .cwt-slide {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+      }
+
+      .cwt-media {
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+      }
+
+      /* Desktop shows the media only; the tout copy lives in the pagination. */
+      .cwt-tout {
+        display: none;
+      }
+
+      .cwt-nav {
+        position: absolute;
+        top: 50%;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        border: 1px solid var(--color-alpha-light-15);
+        border-radius: 50%;
+        background: var(--color-alpha-dark-50);
+        cursor: pointer;
+        transform: translateY(-50%);
+      }
+
+      .cwt-nav::before {
+        content: '';
+        width: 0.7rem;
+        height: 1.18rem;
+        background-color: var(--color-light);
+        mask: url('/img/glyphs/chevron.svg') center / contain no-repeat;
+      }
+
+      .cwt-nav-prev {
+        left: var(--spacing-m);
+      }
+
+      .cwt-nav-prev::before {
+        transform: rotate(180deg);
+      }
+
+      .cwt-nav-next {
+        right: var(--spacing-m);
+      }
+
+      /* Label-pagination: one button per slide, the tout title as its text.
+         The active one is fully opaque, the rest dimmed - opacity is the
+         visual layer only; aria-current carries the state programmatically. */
+      .cwt-pagination {
+        display: grid;
+        grid-auto-columns: 1fr;
+        grid-auto-flow: column;
+        gap: var(--spacing-m);
+        margin-top: var(--spacing-l);
+      }
+
+      .cwt-page {
+        padding: var(--spacing-m) 0 0;
+        border: none;
+        border-top: 2px solid var(--color-alpha-light-20);
+        background: none;
+        color: var(--color-light);
+        font-family: inherit;
+        font-size: var(--heading-font-size-s);
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+        opacity: 0.5;
+        transition: opacity var(--duration-300) var(--ease-out);
+      }
+
+      .cwt-page.is-active {
+        border-top-color: var(--color-accent);
+        opacity: 1;
+      }
+
+      .cwt-page:focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 4px;
+      }
+    }
+  }
+
+  /* Reduced-motion / low-end: the resting state is already valid (first slide
+     visible, arrows scroll instantly via JS), so only the opacity transition
+     needs disabling to avoid a non-essential animated dim. */
+  @media (prefers-reduced-motion: reduce) {
+    .carousel-with-touts .cwt-page {
+      transition: none;
+    }
+  }
+}

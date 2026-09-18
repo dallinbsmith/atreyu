@@ -1,0 +1,151 @@
+@layer blocks {
+  .logo-tile-wall {
+    --ltw-tile-height: 84px;
+    --ltw-gap: var(--spacing-m);
+    --ltw-duration: 40s;
+    --ltw-surface: color-mix(in srgb, rgb(var(--color-light-base)) 4%, transparent);
+
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-l);
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .ltw-row {
+    width: 100%;
+  }
+
+  .ltw-scroller {
+    display: flex;
+  }
+
+  /* Resting state: the track fills the row and wraps, so every tile stays
+     visible and readable — this is the reduced-motion / save-data / low-power
+     fallback (JS never adds .is-animating in those cases). */
+  .ltw-track {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    min-width: 0;
+    align-items: center;
+    gap: var(--ltw-gap);
+    margin: 0;
+    padding-inline: calc(var(--ltw-gap) / 2);
+  }
+
+  .ltw-tile {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-m);
+    flex-shrink: 0;
+    min-width: 200px;
+    height: var(--ltw-tile-height);
+    padding-inline: var(--spacing-l);
+    border: 1px solid var(--color-alpha-light-10);
+    border-radius: var(--radius-10);
+    background: var(--ltw-surface);
+    color: var(--color-alpha-light-70);
+    font-size: var(--heading-font-size-xs);
+  }
+
+  .ltw-logo {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+
+    /* Real brand marks keep their native colors (matches tile-table/logo-wall
+       precedent) rather than being forced to currentColor. */
+    svg,
+    img {
+      display: block;
+      max-height: 32px;
+    }
+  }
+
+  .ltw-label {
+    white-space: nowrap;
+  }
+
+  .ltw-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    padding: var(--spacing-xs) var(--spacing-s);
+    color: inherit;
+    font-size: var(--eyebrow-font-size);
+    background: none;
+    border: 1px solid currentcolor;
+    border-radius: var(--radius-5);
+    cursor: pointer;
+  }
+
+  /* Animating state — enabled by JS only after shouldAnimate() + in-view
+     (onReveal, mapped from Falkor's rootMargin 50% IntersectionObserver).
+     Responsibilities are split across two elements so the seam is correct:
+     .ltw-row stays the viewport-width, overflow-clipped, edge-masked box (its
+     mask percentages resolve against the viewport width, so the fade sits at the
+     visible edges); .ltw-scroller is width:max-content and carries the animation.
+     translateX(-50%) on the scroller advances exactly one track width because it
+     resolves against the doubled content width (track + aria-hidden clone) — NOT
+     a clamped/percentage viewport width, which was the original snap-back bug.
+     Per-row speed varies via nth-child (--ltw-duration inherits into the
+     scroller), porting Falkor's SPEEDS = [1, 1.5, 1.1, 2.3] as durations. */
+  .logo-tile-wall.is-animating {
+    .ltw-row {
+      overflow: hidden;
+
+      /* `black` is alpha-only here (mask reads the channel, not a real color) —
+         no design token exists for a mask stop and stylelint's color-no-hex is
+         satisfied; matches the logo-wall.js precedent. */
+      mask-image: linear-gradient(to right, transparent, black var(--spacing-xl), black calc(100% - var(--spacing-xl)), transparent);
+    }
+
+    .ltw-scroller {
+      width: max-content;
+      animation: logo-tile-wall-scroll var(--ltw-duration) linear infinite;
+    }
+
+    .ltw-track {
+      flex: none;
+      flex-wrap: nowrap;
+    }
+
+    .ltw-row:nth-child(4n + 2) { --ltw-duration: 27s; }
+    .ltw-row:nth-child(4n + 3) { --ltw-duration: 36s; }
+    .ltw-row:nth-child(4n) { --ltw-duration: 17s; }
+  }
+
+  /* One control pauses every row (button flips is-paused on the block). */
+  .logo-tile-wall.is-paused .ltw-scroller {
+    animation-play-state: paused;
+  }
+
+  /* Belt-and-suspenders: if reduced motion is enabled after animation began,
+     freeze rather than keep drifting (mirrors logo-wall.js). */
+  @media (prefers-reduced-motion: reduce) {
+    .logo-tile-wall.is-animating .ltw-scroller {
+      animation-play-state: paused;
+    }
+  }
+
+  @media (width >= 768px) {
+    .logo-tile-wall {
+      --ltw-tile-height: 102px;
+      --ltw-gap: var(--spacing-l);
+    }
+  }
+
+  @keyframes logo-tile-wall-scroll {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
