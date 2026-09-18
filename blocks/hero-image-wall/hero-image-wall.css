@@ -1,0 +1,99 @@
+@layer blocks {
+  .hero-image-wall {
+    --min-height: 480px;
+    --hero-image-wall-glow-color: color-mix(in srgb, var(--color-iris) 45%, transparent);
+
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: var(--min-height);
+    color: var(--color-light);
+
+    &.small { --min-height: 320px; }
+    &.large { --min-height: 720px; }
+    &.full { --min-height: calc(100vh - var(--header-height)); }
+    &.light { color: var(--color-dark); }
+
+    .hero-image-wall-tiles {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-rows: 1fr;
+      gap: 2px;
+    }
+
+    .hero-image-wall-tile {
+      position: relative;
+      overflow: hidden;
+
+      img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    /* Decorative wash over the tiles so foreground text stays legible —
+       block-private token, composed from existing design tokens rather than
+       a new global "glow" system (no shared glow-token family exists in
+       this project; see footer-glow.css for the same local-composition
+       pattern). */
+    .hero-image-wall-tiles::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 80% 60% at 50% 50%,
+        var(--hero-image-wall-glow-color),
+        transparent 70%
+      ), linear-gradient(to bottom, rgb(var(--color-dark-base) / 55%), rgb(var(--color-dark-base) / 55%));
+      mix-blend-mode: multiply;
+    }
+
+    .hero-image-wall-foreground {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+      min-height: var(--min-height);
+      padding: var(--spacing-xl) var(--spacing-m);
+      text-align: center;
+
+      p {
+        margin: var(--spacing-s) 0;
+        color: var(--color-alpha-light-50);
+      }
+
+      div > :first-child { margin-top: 0; }
+      div > :last-child { margin-bottom: 0; }
+    }
+
+    .hero-image-wall-heading {
+      max-width: 20ch;
+      margin: 0;
+      letter-spacing: -0.045em;
+      line-height: 1.04;
+    }
+  }
+
+  @media (width >= 768px) {
+    .hero-image-wall {
+      .hero-image-wall-tiles {
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+      }
+
+      .hero-image-wall-heading { max-width: 24ch; }
+    }
+  }
+
+  @media (width >= 1240px) {
+    .hero-image-wall .hero-image-wall-tiles {
+      grid-template-columns: repeat(6, 1fr);
+    }
+  }
+}

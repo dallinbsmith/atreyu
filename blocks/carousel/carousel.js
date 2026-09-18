@@ -1,24 +1,10 @@
-import { decorateTout, inferMediaLayout } from '../../scripts/utils/touts.js';
+import { decorateTout, extractRowMedia } from '../../scripts/utils/touts.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { announce } from '../../scripts/utils/a11y.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
-// Detaches an image from wherever it's authored, then removes its wrapping
-// `<p>` too — but only once genuinely emptied (checked AFTER detaching; an
-// authored image is always its `<p>`'s only content, so checking before
-// detaching would find the image itself and never consider the wrapper
-// empty). Mirrors bentos.js's identical `placeMedia` cleanup, for the same
-// reason: an emptied authoring wrapper left behind reads as a real content
-// gap to decorateTout (an empty `.carousel-slide-body` paragraph), not a
-// harmless leftover.
-const detach = (node) => {
-  const wrapP = node.closest('p');
-  node.remove();
-  if (wrapP && !wrapP.textContent.trim() && !wrapP.querySelector('img, picture')) wrapP.remove();
-};
-
-// One row = one slide. Classified by image shape (inferMediaLayout), not
+// One row = one slide. Classified by image shape (extractRowMedia), not
 // column position: the large photo becomes the full-bleed background, a
 // small logo/graphic is hoisted above the heading — same shape distinction
 // bentos.js uses for its cards, since a carousel slide is the same "photo +
@@ -39,27 +25,7 @@ const buildSlide = (row, idx, total, slideLabel) => {
   // the flat "media + title + cta" shape the CSS (and bentos' identical
   // pattern) expects.
   const originalCols = [...row.children];
-
-  // Real content is always exactly one background photo + zero-or-one logo,
-  // but classify defensively: if a slide is ever authored with more than
-  // one of either, keep the first of each and remove the rest outright
-  // rather than leaving unstyled stray images behind.
-  let media = null;
-  const logos = [];
-  [...row.querySelectorAll('img')].forEach((img) => {
-    const host = img.closest('picture') ?? img;
-    if (inferMediaLayout(img) === 'background') {
-      if (media) detach(host);
-      else media = host;
-    } else {
-      logos.push(host);
-    }
-  });
-  logos.slice(1).forEach(detach);
-  const [logo] = logos;
-
-  if (media) detach(media);
-  if (logo) detach(logo);
+  const { media, logo } = extractRowMedia(row);
 
   originalCols.forEach((col) => {
     row.append(...col.childNodes);

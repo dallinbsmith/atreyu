@@ -1,0 +1,80 @@
+@layer blocks {
+  .standalone-media {
+    width: 100%;
+
+    .standalone-media-media {
+      position: relative;
+      width: 100%;
+
+      picture,
+      video {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      /* No object-fit: cover here — media renders at its natural aspect
+         ratio (height: auto), not cropped into a fixed-height box, so a
+         crop-fit rule would be inert. If cropping is ever wanted, pair it
+         with a real fixed-height container (see hero.css/bentos.css). */
+      img {
+        width: 100%;
+        height: auto;
+      }
+
+      /* Shared .video-pause-toggle chrome (styles.css) only sets position:
+         absolute; top/right are deliberately per-block (see that rule's own
+         comment) — every consumer must supply them, matching hero.css and
+         hero-screen.css. */
+      .video-pause-toggle {
+        top: var(--spacing-s);
+        right: var(--spacing-s);
+      }
+    }
+
+    /* Mobile-only alignment (matches Falkor's real mobileAlignment field) —
+       becomes plain full-width at 768px+, same as the source component. */
+    &.left .standalone-media-media {
+      width: fit-content;
+      max-width: 100%;
+      margin-inline-end: auto;
+    }
+
+    &.right .standalone-media-media {
+      width: fit-content;
+      max-width: 100%;
+      margin-inline-start: auto;
+    }
+
+    &.center .standalone-media-media {
+      width: fit-content;
+      max-width: 100%;
+      margin-inline: auto;
+    }
+
+    /* decoration: glassborder — shared frosted-panel treatment, same tokens
+       styles.css already declares for .btn-glass (see css.md's "reference
+       tokens, never hardcode" rule). */
+    &.glassborder .standalone-media-media {
+      padding: var(--spacing-s);
+      border-radius: var(--radius-5);
+      background: var(--glass-bg);
+      border: var(--glass-border);
+      backdrop-filter: blur(var(--glass-blur));
+
+      /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+    }
+  }
+
+  @media (width >= 768px) {
+    .standalone-media {
+      &.left .standalone-media-media,
+      &.right .standalone-media-media,
+      &.center .standalone-media-media {
+        width: 100%;
+        margin-inline: 0;
+      }
+    }
+  }
+}
