@@ -285,6 +285,21 @@ const applyVariant = async (slot, target, row) => {
   return applied;
 };
 
+// EXP-014's other half — segment is null for the two earliest-possible
+// fallbacks (no variants authored at all, consent denied) since neither
+// reaches the point where a segment is known. Tracked on the preview path
+// too, for symmetry with applyVariant()'s own existing (pre-this-fix)
+// behavior of tracking a successful preview apply — this fix doesn't
+// introduce a new preview-vs-real asymmetry, just closes the fallback half.
+const trackFallback = (placement, segment, reason) => {
+  track(EVENTS.PERSONALIZATION_FALLBACK, {
+    anonId: getVisitorId(),
+    placement,
+    segment,
+    reason,
+  });
+};
+
 const crossFadeApply = async (slot, target, row) => {
   if (!shouldAnimate()) {
     await applyVariant(slot, target, row);
@@ -296,9 +311,15 @@ const crossFadeApply = async (slot, target, row) => {
   slot.classList.remove('pzn-transitioning');
 };
 
+// EXP-014 ("default and fallback") acceptance criteria: "the approved default
+// renders in every failure scenario and the fallback reason is logged." The
+// render half was already correct everywhere in this file; returning a
+// `reason` alongside a missing `target` (instead of a bare `null`) is what
+// lets decorateSection() log WHY, not just that nothing was applied — see
+// trackFallback() below.
 const resolveTarget = (section, variants, placementKey, segment) => {
   const rows = rowsFor(variants, placementKey, segment);
-  if (!rows.length) return null;
+  if (!rows.length) return { reason: 'no_variant_for_segment' };
   const row = weightedPick(rows, `${placementKey}:${segment}`);
   // Bug-squash fix: a malformed authored `selector` (unbalanced bracket, typo)
   // throws synchronously from querySelector — since decorateSection() is
@@ -310,9 +331,9 @@ const resolveTarget = (section, variants, placementKey, segment) => {
   try {
     target = section.querySelector(row.selector);
   } catch {
-    return null;
+    return { reason: 'invalid_selector' };
   }
-  if (!target) return null;
+  if (!target) return { reason: 'selector_not_found' };
   // A real weighted split across sibling rows is an 'a-b-split-test';
   // a single deterministic segment match is typed by its own segment name —
   // same shape as the current production site's variantType values.
@@ -324,11 +345,17 @@ const decorateSection = async (section) => {
   const placementKey = section.dataset.pzn;
   const variants = await loadVariants();
   // nothing authored for this slot
-  if (!variants.some((row) => row.placement === placementKey)) return;
+  if (!variants.some((row) => row.placement === placementKey)) {
+    trackFallback(placementKey, null, 'no_variant_authored');
+    return;
+  }
 
   if (config.previewSegment) {
     const resolved = resolveTarget(section, variants, placementKey, config.previewSegment);
-    if (!resolved) return;
+    if (!resolved.target) {
+      trackFallback(placementKey, config.previewSegment, resolved.reason);
+      return;
+    }
     // preview: no cookie, no fade
     await applyVariant(getOrCreateSlot(resolved.target), resolved.target, resolved.row);
     return;
@@ -337,7 +364,10 @@ const decorateSection = async (section) => {
   const cachedSegment = readCookie(COOKIE_NAME);
   if (cachedSegment) {
     const resolved = resolveTarget(section, variants, placementKey, cachedSegment);
-    if (!resolved) return;
+    if (!resolved.target) {
+      trackFallback(placementKey, cachedSegment, resolved.reason);
+      return;
+    }
     // WARM: synchronous, no fade
     await applyVariant(getOrCreateSlot(resolved.target), resolved.target, resolved.row);
     return;
@@ -346,14 +376,23 @@ const decorateSection = async (section) => {
   // COLD: default content is already live in the DOM — nothing to do yet.
   // The decision call itself must be consent-gated, not just its analytics
   // wrapper (P0-44's Intuit-asymmetry note) — check before firing.
-  if (!hasConsent('personalization')) return;
+  if (!hasConsent('personalization')) {
+    trackFallback(placementKey, null, 'consent_denied');
+    return;
+  }
 
   const segment = await fetchDecision();
-  if (!segment) return; // fail-open on timeout/error — baseline stands
+  if (!segment) {
+    trackFallback(placementKey, null, 'decision_failed');
+    return; // fail-open on timeout/error — baseline stands
+  }
   writeCookie(COOKIE_NAME, segment);
 
   const resolved = resolveTarget(section, variants, placementKey, segment);
-  if (!resolved) return;
+  if (!resolved.target) {
+    trackFallback(placementKey, segment, resolved.reason);
+    return;
+  }
   await crossFadeApply(getOrCreateSlot(resolved.target), resolved.target, resolved.row);
 };
 
