@@ -93,13 +93,64 @@ const fetchVariantContent = async (path) => {
   }
 };
 
-const applyVariant = (html) => {
-  const main = document.querySelector('main');
-  if (!main) return;
-  main.replaceChildren(...sanitizeMarkup(html).childNodes);
+const applyVariant = (html, target) => {
+  target.replaceChildren(...sanitizeMarkup(html).childNodes);
 };
 
-export const runExperiment = async () => {
+// UC-02 (chrome-scoped experiments — nav/footer/floating elements, see
+// ref_uc02_shared_fragment_scoped_testing memory): those targets don't exist
+// yet at this file's early call site in scripts.js's loadPage() — header
+// resolves later, in postlcp.js, footer later still, in lazy.js's own
+// default export. postlcp.js's header load is fire-and-forget from
+// loadArea() (no `.then()` awaited by the caller), so on a single-section
+// page there's a real, if uncommon, race where lazy.js's default could fire
+// before header finishes. A short bounded poll — not a MutationObserver,
+// this is a small-N wait against two known, sequential loaders, not an
+// open-ended DOM-wide watch — covers that race. Fails open to null after
+// exhausting attempts, same posture as every other missing-target case here.
+const waitForElement = async (selector, { attempts = 5, delayMs = 100 } = {}) => {
+  for (let i = 0; i < attempts; i += 1) {
+    const el = document.querySelector(selector);
+    if (el || i === attempts - 1) return el;
+    await new Promise((resolve) => { setTimeout(resolve, delayMs); });
+  }
+  return null;
+};
+
+const isPreviewing = (allVariants) => Boolean(previewVariant)
+  && allVariants.includes(previewVariant);
+
+// Preview forces a specific index directly; otherwise a visitor's sticky
+// hash point picks one via the (possibly uneven) weights. Extracted purely to
+// keep runExperiment()'s own branching within this project's cognitive-
+// complexity budget — see linting.md's "prefer extracting named helpers"
+// guidance — not because this logic is reused elsewhere.
+const resolveVariantIndex = (allVariants, experiment, visitorId, weights) => {
+  const previewIndex = previewVariant ? allVariants.indexOf(previewVariant) : -1;
+  if (previewIndex >= 0) return previewIndex;
+  return pickWeightedIndex(weights, pointFor(experiment, visitorId));
+};
+
+// Same extraction rationale as resolveVariantIndex above.
+const applyChallenger = async (isControl, variant, target) => {
+  if (isControl) return;
+  try {
+    const html = await fetchVariantContent(variant);
+    if (html) applyVariant(html, target);
+  } catch { /* control fallback — original content stays */ }
+};
+
+// `phase` distinguishes WHERE in the page-load sequence this runs, not which
+// experiment runs — a page has exactly one `Experiment` metadata value.
+// Selector-less (main-scoped, UC-01) experiments run in scripts.js's early
+// loadPage() phase, before loadArea() decorates anything, matching this
+// mechanism's original full-page-swap design. `experiment-selector` (UC-02:
+// nav/footer/floating elements) opts a page's experiment into the LATE phase
+// instead, fired from lazy.js's own default export, after header and footer
+// have actually loaded. Each call no-ops if it isn't the phase this page's
+// experiment belongs to, so scripts.js and lazy.js can both unconditionally
+// call this on every load without coordinating which one "wins."
+export const runExperiment = async (phase = 'early') => {
   const experiment = getMetadata('experiment');
   if (!experiment) return null;
 
@@ -109,9 +160,20 @@ export const runExperiment = async () => {
   const variantPaths = variantsMeta.split(',').map((p) => p.trim()).filter(Boolean);
   if (!variantPaths.length) return null;
 
+  const selector = getMetadata('experiment-selector');
+  if (Boolean(selector) !== (phase === 'late')) return null;
+
+  const target = selector ? await waitForElement(selector) : document.querySelector('main');
+  // Fail-open for the swap itself, but also skip tracking (not just skip the
+  // swap and still report an exposure): if the target never resolved we can't
+  // confirm this visitor's page actually rendered the element the experiment
+  // is about, even for a visitor bucketed into control — counting an
+  // unconfirmed render as a real exposure would corrupt the denominator the
+  // D18 stats layer's significance math depends on.
+  if (!target) return null;
+
   const allVariants = ['control', ...variantPaths];
-  const previewIndex = previewVariant ? allVariants.indexOf(previewVariant) : -1;
-  const isPreview = previewIndex >= 0;
+  const isPreview = isPreviewing(allVariants);
 
   // Bug-squash fix, 2026-08-28: this call used to write a persistent
   // cross-session visitor id (getVisitorId(), below) and bucket/track the
@@ -134,30 +196,23 @@ export const runExperiment = async () => {
   const visitorId = getVisitorId();
   const weights = parseWeights(getMetadata('experiment-split'), variantPaths.length)
     ?? allVariants.map(() => 1 / allVariants.length);
-  const bucket = isPreview
-    ? previewIndex
-    : pickWeightedIndex(weights, pointFor(experiment, visitorId));
+  const bucket = resolveVariantIndex(allVariants, experiment, visitorId, weights);
   const variant = allVariants[bucket];
   const isControl = bucket === 0;
 
-  if (!isControl) {
-    try {
-      const html = await fetchVariantContent(variant);
-      if (html) applyVariant(html);
-    } catch { /* control fallback — original content stays */ }
-  }
+  await applyChallenger(isControl, variant, target);
 
   // Schema reconciled 2026-08-28 to match pzn.js/P0-46's convention: always
   // 'a-b-split-test' here since this mechanism has no audience/segment
   // concept, just a random weighted hash split (uneven per-variant weights
   // are supported via `experiment-split` metadata, but the shape is still a
   // split test, not a segment match) — unlike pzn.js, where variantType can
-  // also resolve to a segment name. `renderType` distinguishes this
-  // full-page-swap mechanism from pzn.js's per-slot cta/fragment swaps.
-  // Preview runs are never tracked — an author repeatedly forcing a
-  // treatment would otherwise inflate that variant's sample size against the
-  // D18 stats layer's significance math with visits that were never really
-  // bucketed.
+  // also resolve to a segment name. `renderType` distinguishes a UC-01
+  // full-page swap from a UC-02 targeted element swap, and both from pzn.js's
+  // per-slot cta/fragment swaps. Preview runs are never tracked — an author
+  // repeatedly forcing a treatment would otherwise inflate that variant's
+  // sample size against the D18 stats layer's significance math with visits
+  // that were never really bucketed.
   if (!isPreview) {
     track(EVENTS.EXPERIMENT, {
       anonId: visitorId,
@@ -165,7 +220,7 @@ export const runExperiment = async () => {
       variantName: variant,
       variantType: 'a-b-split-test',
       variantId: `${experiment}:${variant}`,
-      renderType: 'full-page-swap',
+      renderType: selector ? 'element-swap' : 'full-page-swap',
       bucket,
     });
   }
