@@ -1,0 +1,145 @@
+@layer blocks {
+  .carousel-media {
+    position: relative;
+    isolation: isolate;
+    max-width: var(--grid-container-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-xl);
+
+    .carousel-media-header {
+      margin: 0 auto var(--spacing-l);
+      text-align: center;
+    }
+
+    /* Falkor's title2Block lockup — heading centred above the carousel. */
+    .carousel-media-title {
+      margin: 0;
+      color: var(--color-light);
+      font-size: var(--heading-font-size-xl);
+      font-weight: 600;
+    }
+
+    .carousel-media-stage {
+      position: relative;
+      isolation: isolate;
+    }
+
+    .carousel-media-viewport {
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+
+    .carousel-media-viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    .carousel-media-track {
+      display: flex;
+      gap: var(--spacing-m);
+    }
+
+    /* Edge spacers so the first & last slide can scroll to true centre with a
+       neighbour peeking — flex-basis = (100% - slide basis) / 2. A dead pseudo
+       spacer keeps the geometry correct at the ends, which track padding alone
+       does not (padding % and flex-basis % resolve against different boxes). */
+    .carousel-media-track::before,
+    .carousel-media-track::after {
+      content: '';
+      flex: 0 0 10%;
+    }
+
+    .carousel-media-slide {
+      flex: 0 0 80%;
+      scroll-snap-align: center;
+      border-radius: var(--radius-12);
+      overflow: hidden;
+
+      /* Default full clarity is the static resting state (motion off). The
+         is-active/is-inactive classes are only added by JS when
+         shouldAnimate() is true, so this transition never runs otherwise. */
+      transition:
+        filter var(--duration-500) var(--ease-out),
+        opacity var(--duration-500) var(--ease-out);
+    }
+
+    .carousel-media-slide-media {
+      position: relative;
+      width: 100%;
+
+      /* Uniform ratio from the authored media (--carousel-media-ratio, set in
+         JS from the first slide's intrinsic w/h); 16 / 9 is only a last-resort
+         fallback for when the authored image carries no height attribute. */
+      aspect-ratio: var(--carousel-media-ratio, 16 / 9);
+    }
+
+    .carousel-media-slide :is(picture, img, video) {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .carousel-media-slide.is-inactive {
+      filter: saturate(0.5) brightness(0.5);
+      opacity: 0.6;
+    }
+
+    .carousel-media-slide.is-active {
+      filter: none;
+      opacity: 1;
+    }
+
+    .video-pause-toggle {
+      inset: auto var(--spacing-s) var(--spacing-s) auto;
+    }
+
+    .carousel-media-nav {
+      position: absolute;
+      top: 50%;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--color-alpha-light-15);
+      border-radius: 50%;
+      background: var(--color-alpha-dark-50);
+      color: var(--color-light);
+      cursor: pointer;
+      transform: translateY(-50%);
+    }
+
+    .carousel-media-nav::before {
+      content: '';
+      width: 0.7rem;
+      height: 1.18rem;
+      background-color: var(--color-light);
+      mask: url('/img/glyphs/chevron.svg') center / contain no-repeat;
+    }
+
+    .carousel-media-nav-prev {
+      left: 0;
+    }
+
+    .carousel-media-nav-prev::before {
+      transform: rotate(180deg);
+    }
+
+    .carousel-media-nav-next {
+      right: 0;
+    }
+  }
+
+  @media (width >= 768px) {
+    .carousel-media .carousel-media-slide {
+      flex: 0 0 60%;
+    }
+
+    .carousel-media .carousel-media-track::before,
+    .carousel-media .carousel-media-track::after {
+      flex-basis: 20%;
+    }
+  }
+}
