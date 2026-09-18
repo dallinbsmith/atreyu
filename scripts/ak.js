@@ -482,5 +482,17 @@ export const loadArea = async ({ area } = { area: document }) => {
         .catch((ex) => getConfig().log(ex));
     }
   }
-  if (isDoc) import('./lazy.js');
+  // Bug-squash fix, 2026-09-18: was a bare `import('./lazy.js')` with no
+  // `.then()` — safe for lazy.js's one-shot bootstrap IIFE, but silently
+  // meant nothing in its real default export (footer/pzn re-decoration) ever
+  // ran on a second loadArea() call, since a repeat import of an
+  // already-evaluated module resolves from cache without re-running
+  // anything. `mod.default()` is a real function reference, so calling it
+  // here re-fires correctly every time, matching postlcp.js's identical
+  // pattern above.
+  if (isDoc) {
+    import('./lazy.js')
+      .then((mod) => mod.default())
+      .catch((ex) => getConfig().log(ex));
+  }
 };
