@@ -1,0 +1,144 @@
+@layer blocks {
+  /* Dark backstop: parallaxed media (title/device/cards) drift over this
+     block; a dark background-color means the section bg is never exposed at
+     the parallax extremes (the pothole lesson). */
+  .standout-mosaic {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: var(--spacing-xxl);
+    color: var(--color-light);
+    background-color: var(--color-dark);
+
+    .standout-mosaic-title {
+      max-width: var(--grid-container-width);
+      margin-inline: auto;
+      margin-bottom: var(--spacing-xl);
+      text-align: center;
+    }
+
+    /* Eyebrow authored via richtext [[eyebrow|...]] (decorateRichText). */
+    .rt-eyebrow {
+      display: inline-block;
+      margin-bottom: var(--spacing-m);
+      font-size: var(--eyebrow-font-size);
+      letter-spacing: var(--eyebrow-letter-spacing);
+      text-transform: uppercase;
+      color: var(--color-alpha-light-70);
+    }
+
+    .standout-mosaic-stage {
+      position: relative;
+      max-width: var(--grid-container-width);
+      margin-inline: auto;
+    }
+
+    /* Device mockup overlays the mosaic, centered, above the cards. */
+    .standout-mosaic-device {
+      position: absolute;
+      z-index: 2;
+      inset-block-start: 50%;
+      inset-inline-start: 50%;
+
+      /* Raw geometry (Falkor device sizing) — no token category exists for a
+         component width; kept raw like pothole's min-height. FLAG for parity. */
+      width: min(62%, 320px);
+      transform: translate(-50%, -50%);
+
+      /* Falkor device drop-shadow (raw rgb — no drop-shadow token exists;
+         matches pothole's raw-rgb overlay precedent). FLAG for integration. */
+      filter: drop-shadow(0 14px 38px rgb(0 0 0 / 45%));
+
+      picture,
+      img,
+      video {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      /* Shared chrome lives in styles.css's .video-pause-toggle; only position
+         is block-specific. */
+      .video-pause-toggle {
+        inset-block-start: var(--spacing-s);
+        inset-inline-end: var(--spacing-s);
+      }
+    }
+
+    /* Mobile resting layout: 2 static columns, no parallax (valid static DOM). */
+    .standout-mosaic-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-s);
+    }
+
+    .standout-mosaic-column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-s);
+    }
+
+    .standout-mosaic-card {
+      overflow: hidden;
+      aspect-ratio: 1 / 1;
+
+      /* Falkor card radius is 24px, which has NO token (nearest are --radius-20
+         and --radius-40); shipping --radius-20 is a deliberate 4px deviation.
+         FLAG: request a --radius-24 token from design rather than letting 20
+         settle as final. Falkor bg is #090a18 → --color-gray-900 (rgb 13 13 24),
+         low-stakes (only shows during image load). FLAG both for integration. */
+      border-radius: var(--radius-20);
+      background-color: var(--color-gray-900);
+
+      picture,
+      img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+  }
+
+  /* Desktop-only parallax. Every transform reads the single --progress
+     (0..1) from trackScrollProgress and fans it out via per-column
+     (--col-offset) and per-card (--card-index) custom properties. Below md
+     none of this applies -> the mosaic is a clean static layout. Reduced
+     motion / save-data leaves --progress unset (default 0) -> resting frame. */
+  @media (width >= 768px) {
+    .standout-mosaic {
+      .standout-mosaic-cards {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--spacing-m);
+      }
+
+      /* Title rises and fades out around the scroll midpoint. */
+      .standout-mosaic-title {
+        transform: translateY(calc(var(--progress, 0) * -6rem));
+        opacity: clamp(0, calc((0.55 - var(--progress, 0)) * 10), 1);
+      }
+
+      /* Device rises into place as the section scrubs. FIDELITY FLAG (pending a
+         design eyeball): this -8rem rise is a deliberate reduction from Falkor's
+         rise-from-offscreen (~56rem below) — a valid static resting frame
+         (device visible in place at progress 0, for reduced-motion/mobile) was
+         chosen over the dramatic entrance, which would leave the device
+         off-screen at rest. */
+      .standout-mosaic-device {
+        transform: translate(-50%, -50%) translateY(calc(var(--progress, 0) * -8rem));
+      }
+
+      /* Each column drifts up by its offset. FIDELITY FLAG: COLUMN_OFFSETS[0]
+         is 0, so column 1 (first visible drift) is intentionally still — matches
+         Falkor, but worth a design eyeball. */
+      .standout-mosaic-column {
+        transform: translateY(calc(var(--progress, 0) * var(--col-offset, 0) * 20rem));
+      }
+
+      /* Second card in each column gets extra staggered drift. */
+      .standout-mosaic-card {
+        transform: translateY(calc(var(--progress, 0) * var(--card-index, 0) * -2rem));
+      }
+    }
+  }
+}
