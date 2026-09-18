@@ -49,6 +49,7 @@ describe('scripts/utils/analytics/experimentation.js', () => {
     clearMeta('experiment');
     clearMeta('experiment-variants');
     clearMeta('experiment-split');
+    clearMeta('experiment-selector');
     setAnalyticsProvider(null);
     history.replaceState(null, '', window.location.pathname);
   });
@@ -212,6 +213,94 @@ describe('scripts/utils/analytics/experimentation.js', () => {
       const result = await freshRun();
 
       expect(result).to.not.equal(null);
+    });
+  });
+
+  describe('chrome-scoped experiments (experiment-selector + late phase, UC-02)', () => {
+    it('no-ops in the early phase when experiment-selector is set — belongs to the late phase instead', async () => {
+      setConsent({ personalization: true });
+      setMeta('experiment', 'nav-test');
+      setMeta('experiment-variants', '/variant-a');
+      setMeta('experiment-selector', '.nav-target');
+      document.body.insertAdjacentHTML('beforeend', '<nav class="nav-target"><p>Default nav</p></nav>');
+
+      const result = await runExperiment(); // default phase = 'early'
+
+      expect(result).to.equal(null);
+    });
+
+    it('no-ops in the late phase when experiment-selector is absent — belongs to the early phase instead', async () => {
+      setConsent({ personalization: true });
+      setMeta('experiment', 'hero-test');
+      setMeta('experiment-variants', '/variant-a');
+
+      const result = await runExperiment('late');
+
+      expect(result).to.equal(null);
+    });
+
+    it('applies the variant to the selector target in the late phase, leaving <main> untouched', async () => {
+      setMeta('experiment', 'nav-test');
+      setMeta('experiment-variants', '/variant-a');
+      setMeta('experiment-selector', '.nav-target');
+      document.body.insertAdjacentHTML('beforeend', '<nav class="nav-target"><p>Default nav</p></nav>');
+      window.fetch = async () => ({ ok: true, text: async () => '<p>Variant nav</p>' });
+
+      const { runExperiment: freshRun } = await freshExperimentation('?experimentPreview=/variant-a');
+      const result = await freshRun('late');
+
+      expect(result.variant).to.equal('/variant-a');
+      expect(document.querySelector('.nav-target p').textContent).to.equal('Variant nav');
+      expect(document.querySelector('main p').textContent).to.equal('Control content');
+    });
+
+    it('waits for a late-appearing selector target before applying (bounded poll)', async () => {
+      setMeta('experiment', 'nav-test');
+      setMeta('experiment-variants', '/variant-a');
+      setMeta('experiment-selector', '.nav-target');
+      window.fetch = async () => ({ ok: true, text: async () => '<p>Variant nav</p>' });
+
+      setTimeout(() => {
+        document.body.insertAdjacentHTML('beforeend', '<nav class="nav-target"><p>Default nav</p></nav>');
+      }, 150);
+
+      const { runExperiment: freshRun } = await freshExperimentation('?experimentPreview=/variant-a');
+      const result = await freshRun('late');
+
+      expect(result.variant).to.equal('/variant-a');
+      expect(document.querySelector('.nav-target p').textContent).to.equal('Variant nav');
+    });
+
+    it('fails open — no swap, no tracking — when the selector never resolves', async () => {
+      setConsent({ personalization: true, analytics: true });
+      setMeta('experiment', 'nav-test');
+      setMeta('experiment-variants', '/variant-a');
+      setMeta('experiment-selector', '.nav-target-that-never-appears');
+      let fetchCalled = false;
+      window.fetch = async () => {
+        fetchCalled = true;
+        return { ok: true, text: async () => '<p>x</p>' };
+      };
+
+      const result = await runExperiment('late');
+
+      expect(result).to.equal(null);
+      expect(fetchCalled).to.be.false;
+      expect(tracked).to.have.length(0);
+    });
+
+    it('tags the tracked event renderType as element-swap, not full-page-swap', async () => {
+      setConsent({ personalization: true, analytics: true });
+      setMeta('experiment', 'nav-test');
+      setMeta('experiment-variants', '/variant-a');
+      setMeta('experiment-selector', '.nav-target');
+      document.body.insertAdjacentHTML('beforeend', '<nav class="nav-target"><p>Default nav</p></nav>');
+      window.fetch = async () => ({ ok: true, text: async () => '<p>Variant nav</p>' });
+
+      await runExperiment('late');
+
+      expect(tracked).to.have.length(1);
+      expect(tracked[0].renderType).to.equal('element-swap');
     });
   });
 });
