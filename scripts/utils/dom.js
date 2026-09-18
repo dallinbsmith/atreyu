@@ -60,3 +60,17 @@ export const classifyCtaParagraphs = (scope, className) => {
 // extraction time, across blocks and scripts/utils/touts.js), so the
 // literal string moves here and callers reference the constant instead.
 export const HEADING_SELECTOR = 'h1, h2, h3, h4, h5, h6';
+
+// Parses a "decoration: glassborder"-style metadata paragraph (bentos.js's
+// split-into-pairs convention, so a compound "decoration: glassborder; bg:
+// full" line still resolves), applying the recognized value as a class and
+// removing the authored line. Shared by standalone-media.js and
+// media-with-text.js — extracted once it hit its second identical caller.
+export const parseGlassborderDecoration = (el) => {
+  const line = [...el.querySelectorAll('p')].find((p) => /^\s*decoration\s*[:=]/i.test(p.textContent));
+  if (!line) return;
+  const pair = line.textContent.split(/[;,\n]/).find((p) => /^\s*decoration\s*[:=]/i.test(p));
+  const [, value] = pair.split(/[:=]/).map((s) => s?.trim());
+  if (value?.toLowerCase() === 'glassborder') el.classList.add('glassborder');
+  line.remove();
+};

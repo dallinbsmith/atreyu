@@ -18,6 +18,19 @@ const setMeta = (name, content) => {
 
 const clearMeta = (name) => document.head.querySelector(`meta[name="${name}"]`)?.remove();
 
+// experimentation.js reads window.location.search at module scope (the
+// `experimentPreview` override) — same real constraint as pzn.js's `?segment=`
+// override, tested there with the identical pattern (see pzn.test.js's
+// `freshPzn`). history.replaceState changes the URL without a real
+// navigation; a cache-busting query string on the import specifier gets a
+// genuinely fresh module instance instead of the one statically imported above.
+let importCounter = 0;
+const freshExperimentation = async (search = '') => {
+  history.replaceState(null, '', `${window.location.pathname}${search}`);
+  importCounter += 1;
+  return import(`../../../scripts/utils/analytics/experimentation.js?t=${importCounter}`);
+};
+
 describe('scripts/utils/analytics/experimentation.js', () => {
   let originalFetch;
   let tracked;
@@ -35,7 +48,9 @@ describe('scripts/utils/analytics/experimentation.js', () => {
     window.fetch = originalFetch;
     clearMeta('experiment');
     clearMeta('experiment-variants');
+    clearMeta('experiment-split');
     setAnalyticsProvider(null);
+    history.replaceState(null, '', window.location.pathname);
   });
 
   it('does nothing when no experiment metadata is present', async () => {
@@ -122,5 +137,81 @@ describe('scripts/utils/analytics/experimentation.js', () => {
     expect(event.renderType).to.equal('full-page-swap');
     expect(event.variantId).to.equal(`hero-test:${result.variant}`);
     expect(event.anonId).to.equal(localStorage.getItem(VISITOR_KEY));
+  });
+
+  describe('preview override (?experimentPreview=)', () => {
+    it('forces the named variant, bypassing consent and skipping tracking', async () => {
+      setMeta('experiment', 'hero-test');
+      setMeta('experiment-variants', '/variant-a,/variant-b');
+      window.fetch = async () => ({ ok: true, text: async () => '<p>Variant B content</p>' });
+
+      const { runExperiment: freshRun } = await freshExperimentation('?experimentPreview=/variant-b');
+      const result = await freshRun();
+
+      expect(result.variant).to.equal('/variant-b');
+      expect(document.querySelector('main p').textContent).to.equal('Variant B content');
+      expect(tracked).to.have.length(0);
+    });
+
+    it('forces control when previewed explicitly, with no fetch', async () => {
+      setMeta('experiment', 'hero-test');
+      setMeta('experiment-variants', '/variant-a');
+      let fetchCalled = false;
+      window.fetch = async () => {
+        fetchCalled = true;
+        return { ok: true, text: async () => '<p>x</p>' };
+      };
+
+      const { runExperiment: freshRun } = await freshExperimentation('?experimentPreview=control');
+      const result = await freshRun();
+
+      expect(result.variant).to.equal('control');
+      expect(fetchCalled).to.be.false;
+    });
+
+    it('falls back to normal bucketing when the previewed name matches no configured variant', async () => {
+      setConsent({ personalization: true });
+      setMeta('experiment', 'hero-test');
+      setMeta('experiment-variants', '/variant-a');
+      window.fetch = async () => ({ ok: false });
+
+      const { runExperiment: freshRun } = await freshExperimentation('?experimentPreview=/not-a-real-variant');
+      const result = await freshRun();
+
+      expect(result).to.not.equal(null);
+    });
+  });
+
+  describe('uneven split (experiment-split metadata)', () => {
+    it('a 0% challenger weight always resolves to control, regardless of visitor hash', async () => {
+      setConsent({ personalization: true });
+      setMeta('experiment', 'hero-test');
+      setMeta('experiment-variants', '/variant-a');
+      setMeta('experiment-split', '0');
+      let fetchCalled = false;
+      window.fetch = async () => {
+        fetchCalled = true;
+        return { ok: true, text: async () => '<p>x</p>' };
+      };
+
+      const { runExperiment: freshRun } = await freshExperimentation();
+      const result = await freshRun();
+
+      expect(result.variant).to.equal('control');
+      expect(fetchCalled).to.be.false;
+    });
+
+    it('ignores a malformed split (wrong item count) without throwing — falls back to an even split', async () => {
+      setConsent({ personalization: true });
+      setMeta('experiment', 'hero-test');
+      setMeta('experiment-variants', '/variant-a,/variant-b');
+      setMeta('experiment-split', '10'); // only one value for two challengers
+      window.fetch = async () => ({ ok: false });
+
+      const { runExperiment: freshRun } = await freshExperimentation();
+      const result = await freshRun();
+
+      expect(result).to.not.equal(null);
+    });
   });
 });

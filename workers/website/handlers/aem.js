@@ -108,14 +108,19 @@ export const fetchFromAem = async ({ request, cache, savedSearch }) => {
     // - connect-src/img-src's *.aem.live/*.aem.page wildcard is kept as-is:
     //   da.js's real fetch() calls during ?dapreview authoring are a
     //   genuine, narrow dependency here, unlike script-src/frame-ancestors.
+    // - script-src/frame-src's calendly.com entries (2026-09-17): the
+    //   hero-calendly block embeds a live, inline Calendly scheduling
+    //   widget — a real third-party script + iframe, not a static library
+    //   (unlike gsap, this can't be vendored locally; it talks to
+    //   Calendly's own backend). Single-host, no wildcard subdomains.
     resp.headers.set('Content-Security-Policy', [
       "default-src 'self'",
-      `script-src 'nonce-${nonce}' 'strict-dynamic'`,
+      `script-src 'nonce-${nonce}' 'strict-dynamic' https://assets.calendly.com`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page",
       "font-src 'self'",
       "connect-src 'self' https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page",
-      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com",
+      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://calendly.com",
       "media-src 'self' https://*.youtube.com https://*.ytimg.com",
       "frame-ancestors 'self'",
       "base-uri 'self'",

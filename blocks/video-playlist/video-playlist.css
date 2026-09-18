@@ -1,0 +1,176 @@
+@layer blocks {
+  /* Featured card stacked above the list on mobile; two columns at md+
+     (Falkor's columnFeatured / columnVideoList). */
+  .video-playlist {
+    display: grid;
+    gap: var(--spacing-l);
+    width: 100%;
+  }
+
+  .video-playlist-list {
+    display: grid;
+    gap: var(--spacing-m);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .video-playlist-item {
+    margin: 0;
+  }
+
+  /* Both card variants are real buttons — reset the UA chrome, keep them
+     keyboard-operable. */
+  .video-playlist-featured,
+  .video-playlist-thumb,
+  .video-playlist-featured.is-static,
+  .video-playlist-thumb.is-static {
+    display: grid;
+    width: 100%;
+    padding: 0;
+    font: inherit;
+    color: var(--color-text);
+    text-align: start;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-12);
+    cursor: pointer;
+  }
+
+  .video-playlist-featured.is-static,
+  .video-playlist-thumb.is-static {
+    cursor: default;
+  }
+
+  .video-playlist-poster {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: var(--radius-12);
+    background: var(--color-shaded);
+  }
+
+  .video-playlist-poster img,
+  .video-playlist-poster picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Circular play affordance — triangle drawn with clip-path, no icon asset. */
+  .video-playlist-play {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-40);
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+
+    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+  }
+
+  .video-playlist-play::before {
+    content: "";
+    width: 34%;
+    height: 40%;
+    margin-inline-start: 10%;
+    background: var(--color-light);
+    clip-path: polygon(0% 0%, 100% 50%, 0% 100%);
+  }
+
+  .video-playlist-info {
+    display: grid;
+    gap: var(--spacing-xs);
+  }
+
+  .video-playlist-title {
+    font-family: var(--font-family);
+    font-size: var(--body-font-size-xl);
+    line-height: 1.15;
+  }
+
+  .video-playlist-subtitle {
+    font-family: var(--font-secondary);
+    font-size: var(--body-font-size-s);
+    color: var(--color-gray-300);
+  }
+
+  /* Featured: info overlaid on the poster over a bottom scrim, big play
+     centred. */
+  .video-playlist-featured .video-playlist-poster {
+    aspect-ratio: 16 / 9;
+  }
+
+  .video-playlist-featured .video-playlist-play {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    margin: auto;
+  }
+
+  .video-playlist-featured .video-playlist-info {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 1;
+    padding: var(--spacing-l) var(--spacing-m) var(--spacing-m);
+    background: linear-gradient(to top, color-mix(in srgb, var(--color-dark) 82%, transparent), transparent);
+  }
+
+  .video-playlist-featured .video-playlist-title {
+    font-size: var(--heading-font-size-l);
+  }
+
+  /* Thumb: small poster + small play, text alongside. */
+  .video-playlist-thumb {
+    grid-template-columns: 40% 1fr;
+    gap: var(--spacing-m);
+    align-items: center;
+  }
+
+  .video-playlist-thumb .video-playlist-poster {
+    aspect-ratio: 16 / 9;
+  }
+
+  .video-playlist-thumb .video-playlist-play {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    margin: auto;
+    width: 36px;
+    height: 36px;
+  }
+
+  .video-playlist-featured:not(.is-static):hover,
+  .video-playlist-thumb:not(.is-static):hover {
+    opacity: 0.92;
+  }
+
+  .video-playlist-featured:focus-visible,
+  .video-playlist-thumb:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  @media (width >= 768px) {
+    .video-playlist {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-xl);
+      align-items: start;
+    }
+
+    .video-playlist-thumb {
+      grid-template-columns: 33% 1fr;
+    }
+  }
+
+  @media (width >= 1240px) {
+    .video-playlist {
+      gap: var(--spacing-xxl);
+    }
+  }
+}

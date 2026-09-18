@@ -1,0 +1,99 @@
+@layer blocks {
+  .floating-action-button {
+    /* The button uses position: fixed and pins to the viewport corner, so the
+       block wrapper collapses to zero height in section flow (verified benign:
+       sections are display: block with no inter-block gap and block wrappers
+       carry no default margin, so a zero-height wrapper adds no visible space).
+
+       The z-index TIER — not the layout — follows quote-interactive: both use
+       --z-index-body-overlay, the documented tier for non-modal fixed UI. But
+       unlike quote-interactive's .qi-hover (appended to document.body), this
+       button is DELIBERATELY kept inside the block's own subtree. Body-
+       appending a fixed node would move it outside the block subtree and
+       reintroduce exactly the DA Quick-Edit duplication/leak class lifecycle.js
+       warns about (a node that survives a Quick-Edit DOM swap), forcing an
+       AbortController disposer. Staying in-section is the leak-safe choice:
+       the button is discarded with the block on re-decorate, and guardDecorate
+       alone is a sufficient idempotency guard. */
+
+    .fab-button {
+      position: fixed;
+      right: var(--spacing-l);
+      bottom: var(--spacing-l);
+
+      /* --z-index-body-overlay is the documented tier for non-modal
+         fixed/body-appended UI (same token quote-interactive uses). It sits
+         below --z-index-modal, so the opened video modal correctly covers the
+         FAB rather than the FAB bleeding through the modal. */
+      z-index: var(--z-index-body-overlay);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-s);
+
+      /* WCAG 2.5.8 target size: >= 24px required, 44px is the comfortable
+         floor for a primary floating control. */
+      min-height: 44px;
+      padding: var(--spacing-m) var(--spacing-l);
+      border: var(--glass-border);
+      border-radius: var(--radius-40);
+      background: var(--glass-bg);
+
+      /* stylelint-disable-next-line property-no-vendor-prefix -- Safari/iOS need the prefix; no build step adds it */
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      box-shadow: var(--shadow-button);
+      color: var(--color-text);
+      font-family: var(--font-family);
+      font-size: var(--button-font-size);
+      font-weight: 600;
+      letter-spacing: var(--button-letter-spacing);
+      cursor: pointer;
+      transition: background var(--duration-300) var(--ease-out);
+
+      &:hover {
+        background: var(--glass-bg-hover);
+      }
+
+      /* Decorative CSS play triangle — no asset needed, aria-hidden in JS. */
+      .fab-icon {
+        flex-shrink: 0;
+        width: 12px;
+        height: 14px;
+        background: var(--color-text);
+        clip-path: polygon(0 0, 100% 50%, 0 100%);
+      }
+    }
+
+    /* Subtle appear-on-load, only added by JS when shouldAnimate() is true and
+       re-gated here so a reduced-motion user never sees it even if the class
+       is present. The resting DOM (no animation) is the visible button. */
+    &.fab-animate .fab-button {
+      animation: fab-appear var(--duration-400) var(--ease-out) both;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .floating-action-button.fab-animate .fab-button {
+      animation: none;
+    }
+  }
+
+  @media (width >= 768px) {
+    .floating-action-button .fab-button {
+      right: var(--spacing-xl);
+      bottom: var(--spacing-xl);
+    }
+  }
+
+  @keyframes fab-appear {
+    from {
+      opacity: 0;
+      transform: translateY(var(--spacing-m));
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

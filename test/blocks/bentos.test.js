@@ -38,6 +38,15 @@ describe('bentos', () => {
     expect(new Set(testids).size).to.equal(testids.length);
   });
 
+  it('double-decorate does not duplicate card media (re-entrancy guard)', () => {
+    const img = '<picture><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></picture>';
+    const el = block([[`<h3>Card</h3>${img}`]]);
+    decorate(el);
+    decorate(el); // second pass must be a guarded no-op, not a second .bento-card-media wrap
+    expect(el.querySelectorAll('.bento-card-media')).to.have.length(1);
+    expect(el.querySelectorAll('.bento-card picture')).to.have.length(1);
+  });
+
   it('decorates each card via decorateTout (title/body/cta classes + .bento-card)', () => {
     const el = block([[card(0)]]);
     decorate(el);
