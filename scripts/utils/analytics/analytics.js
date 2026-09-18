@@ -18,6 +18,7 @@ export const EVENTS = Object.freeze({
   OUTLOOK_COMPOSE: 'outlook_compose',
   EXPERIMENT: 'experiment',
   PERSONALIZATION_APPLIED: 'personalization_applied',
+  PERSONALIZATION_FALLBACK: 'personalization_fallback',
 });
 
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];

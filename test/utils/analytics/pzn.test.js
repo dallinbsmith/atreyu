@@ -1,5 +1,6 @@
 import { expect } from '@esm-bundle/chai';
 import { setConsent, resetConsent } from '../../../scripts/utils/analytics/consent.js';
+import { setAnalyticsProvider } from '../../../scripts/utils/analytics/analytics.js';
 
 // pzn.js reads window.location.search and caches its own config, decision
 // promise, and variants promise at module scope — a real design constraint,
@@ -58,6 +59,7 @@ const variantsResponse = (rows) => ({
 
 describe('scripts/utils/analytics/pzn.js', () => {
   let originalFetch;
+  let tracked;
 
   beforeEach(() => {
     originalFetch = window.fetch;
@@ -65,10 +67,13 @@ describe('scripts/utils/analytics/pzn.js', () => {
     sessionStorage.clear();
     document.cookie = `${COOKIE_NAME}=; path=/; max-age=0`;
     resetConsent();
+    tracked = [];
+    setAnalyticsProvider((event, properties) => { tracked.push({ event, ...properties }); });
   });
 
   afterEach(() => {
     window.fetch = originalFetch;
+    setAnalyticsProvider(null);
   });
 
   describe('preview mode (?segment=)', () => {
@@ -293,6 +298,105 @@ describe('scripts/utils/analytics/pzn.js', () => {
       await new Promise((r) => { setTimeout(r, 300); });
 
       expect(calledUrl).to.not.include('evil.example');
+    });
+  });
+
+  describe('fallback reason logging (EXP-014)', () => {
+    it('logs no_variant_authored when nothing is authored for this placement', async () => {
+      setupSection();
+      setConsent({ analytics: true });
+      mockFetch([[FIXTURE_URL, () => variantsResponse([])]]);
+
+      const { decoratePznSlots } = await freshPzn();
+      decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 50); });
+
+      expect(tracked).to.have.length(1);
+      expect(tracked[0].event).to.equal('personalization_fallback');
+      expect(tracked[0].reason).to.equal('no_variant_authored');
+      expect(tracked[0].placement).to.equal('hero-cta');
+      expect(tracked[0].segment).to.equal(null);
+    });
+
+    it('logs consent_denied on a cold visit with no personalization consent', async () => {
+      setupSection();
+      setConsent({ analytics: true }); // personalization NOT granted
+      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
+
+      const { decoratePznSlots } = await freshPzn();
+      decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 50); });
+
+      expect(tracked).to.have.length(1);
+      expect(tracked[0].reason).to.equal('consent_denied');
+    });
+
+    it('logs decision_failed when the decision endpoint errors', async () => {
+      setupSection();
+      setConsent({ personalization: true, analytics: true });
+      mockFetch([
+        [DECISION_URL, () => ({ ok: false, status: 500 })],
+        [FIXTURE_URL, () => variantsResponse([variantRow()])],
+      ]);
+
+      const { decoratePznSlots } = await freshPzn();
+      decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); });
+
+      expect(tracked.some((e) => e.reason === 'decision_failed')).to.be.true;
+    });
+
+    it('logs no_variant_for_segment when the resolved segment has no matching row', async () => {
+      setupSection();
+      setConsent({ analytics: true });
+      // only an 'enterprise' row exists
+      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
+
+      const { decoratePznSlots } = await freshPzn('?segment=default');
+      decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 50); });
+
+      expect(tracked).to.have.length(1);
+      expect(tracked[0].reason).to.equal('no_variant_for_segment');
+      expect(tracked[0].segment).to.equal('default');
+    });
+
+    it('logs selector_not_found when the authored selector matches nothing in this section', async () => {
+      setupSection();
+      setConsent({ analytics: true });
+      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow({ selector: '.does-not-exist' })])]]);
+
+      const { decoratePznSlots } = await freshPzn('?segment=enterprise');
+      decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 50); });
+
+      expect(tracked).to.have.length(1);
+      expect(tracked[0].reason).to.equal('selector_not_found');
+    });
+
+    it('logs invalid_selector on a syntactically malformed authored selector', async () => {
+      setupSection();
+      setConsent({ analytics: true });
+      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow({ selector: '[' })])]]);
+
+      const { decoratePznSlots } = await freshPzn('?segment=enterprise');
+      decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 50); });
+
+      expect(tracked).to.have.length(1);
+      expect(tracked[0].reason).to.equal('invalid_selector');
+    });
+
+    it('does not log a fallback event on a successful apply', async () => {
+      setupSection();
+      setConsent({ analytics: true });
+      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
+
+      const { decoratePznSlots } = await freshPzn('?segment=enterprise');
+      decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 50); });
+
+      expect(tracked.some((e) => e.event === 'personalization_fallback')).to.be.false;
     });
   });
 });
