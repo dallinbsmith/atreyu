@@ -1,0 +1,133 @@
+@layer blocks {
+  /* Manifesto — a full-bleed image with a large statement lockup and a
+     "Watch the video" CTA overlaid on top, mirroring Falkor's Manifesto
+     module (a big statement over a dimmable background image). The image is
+     the background layer; the statement + CTA sit in front, bottom-aligned on
+     mobile and centered from 768px up (matching Falkor's mobile 100vh /
+     desktop centered aspect-boxed layout).
+
+     Authoring note: the manifesto image is a full-bleed BACKGROUND — do not
+     add a caption to the image cell. A caption gives the media cell non-empty
+     text, so the shape classifier (manifesto.js) treats it as content and
+     renders it inline instead of as the background layer. Put any caption in
+     the statement cell. (Matches media-with-text's same media-cell contract.) */
+  .manifesto {
+    position: relative;
+    display: grid;
+    align-content: end;
+    min-height: 100svh;
+    padding: var(--spacing-xxl) var(--spacing-l);
+    overflow: hidden;
+    isolation: isolate;
+    color: var(--color-gray-100);
+
+    /* Backstop for the animating media's uncompensated upward translate: the
+       media is position:absolute z-index:-1 and shifts up to ~4% at high
+       --progress, briefly exposing a strip at its bottom edge. A dark base
+       (same precedent as pothole.css) makes that strip read as dark scrim
+       rather than the section behind. Inert to the static resting DOM — the
+       media covers it fully when not animating. */
+    background-color: var(--color-dark);
+
+    .manifesto-media {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+
+      picture,
+      img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Dimming scrim so the statement stays legible over any image (Falkor's
+         dimmable/overlay image option). Tokens only — no raw color. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to top,
+          var(--color-alpha-dark-80),
+          var(--color-alpha-dark-30) 60%,
+          transparent
+        );
+      }
+    }
+
+    .manifesto-content {
+      max-width: 40ch;
+
+      /* Big statement type — the CTA paragraph is explicitly excluded so a
+         PLAIN-authored `<p><a>Watch the video</a></p>` (which ak.js only
+         promotes to a real .btn when the label is wrapped in em/strong/del/u)
+         never inherits the 30/44px statement size. Don't rely on the author
+         remembering to bold the label. */
+      .manifesto-heading,
+      p:not(.manifesto-cta) {
+        margin: 0 0 var(--spacing-l);
+        font-size: var(--heading-font-size-xl);
+        line-height: var(--heading-line-height);
+        letter-spacing: -0.02em;
+      }
+
+      > :last-child {
+        margin-bottom: 0;
+      }
+
+      /* The "Watch the video" CTA paragraph. When ak.js's button decoration
+         has wrapped the link in a real .btn, that class owns the link's size;
+         this explicit body size is the safe fallback for a plain-link author
+         shape so the CTA renders at normal control size, not statement size. */
+      .manifesto-cta {
+        margin-top: var(--spacing-xl);
+        font-size: var(--body-font-size-m);
+        line-height: var(--body-line-height);
+        letter-spacing: normal;
+      }
+    }
+
+    /* Motion: opt-in only when shouldAnimate() added .is-animating. A subtle
+       compositor-only parallax + fade of the background media, scrubbed off
+       --progress (0..1). Resting DOM (no .is-animating, or --progress unset)
+       leaves the media untouched. */
+    &.is-animating .manifesto-media {
+      will-change: transform, opacity;
+      transform: translate3d(0, calc(var(--progress, 0) * -4%), 0);
+      opacity: calc(1 - var(--progress, 0) * 0.35);
+    }
+  }
+
+  @media (width >= 768px) {
+    .manifesto {
+      align-content: center;
+      justify-items: center;
+      min-height: min(56.5vw, 100svh);
+      padding: var(--spacing-xxl);
+      text-align: center;
+
+      /* The statement moves to vertical center here, where the mobile
+         bottom-anchored gradient is too light for AA. Swap to a center-
+         weighted radial scrim so the strong dim (dark-80) sits under the
+         centered text, fading to the baseline dim at the edges. */
+      .manifesto-media::after {
+        background: radial-gradient(
+          ellipse 120% 90% at 50% 50%,
+          var(--color-alpha-dark-80),
+          var(--color-alpha-dark-30) 78%
+        );
+      }
+
+      .manifesto-content {
+        max-width: 60ch;
+
+        .manifesto-heading,
+        p:not(.manifesto-cta) {
+          font-size: var(--heading-font-size-xxl);
+        }
+      }
+    }
+  }
+}

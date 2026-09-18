@@ -1,0 +1,156 @@
+@layer blocks {
+  /* JS emits --progress (0..1) on the block via trackScrollProgress. Declaring
+     it as a typed, inheriting property gives it a defined resting value (0)
+     even when the util no-ops (reduced motion / save-data / low-power), so the
+     per-column parallax calc() below always resolves to a real length. */
+  @property --progress {
+    syntax: '<number>';
+    initial-value: 0;
+    inherits: true;
+  }
+
+  .organic-mosaic {
+    /* Vertical travel of a full-speed column across the scroll range; each
+       column scales this by its own --om-speed (Falkor's per-column rate). */
+    --om-range: 6vh;
+    --om-gap: var(--spacing-m);
+    --om-radius: var(--radius-12);
+    --om-min-height: 150vw;
+
+    display: block;
+    overflow: hidden;
+    padding-block: var(--spacing-xl);
+
+    /* Below-fold section: skip layout/paint until near the viewport. The
+       reserved intrinsic size mirrors the resting mosaic height so nothing
+       inside it causes CLS. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto var(--om-min-height);
+  }
+
+  /* Columns wrap: with four flex columns and a ~50% basis this is a stable
+     2-up masonry on mobile; the >=768px rule below drops the basis to 0 so the
+     same four columns sit side by side. */
+  .organic-mosaic-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--om-gap);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--grid-container-width);
+    margin-inline: auto;
+    padding-inline: var(--spacing-l);
+  }
+
+  .organic-mosaic-column {
+    display: flex;
+    flex: 1 1 calc(50% - var(--om-gap));
+    flex-direction: column;
+    gap: var(--om-gap);
+    min-width: 0;
+  }
+
+  /* position:relative anchors the shared .video-pause-toggle chrome (styles.css)
+     for any tile that decorateVideoMedia upgrades to a background video. */
+  .organic-mosaic-tile {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--om-radius);
+    background-color: var(--color-alpha-dark-30);
+    box-shadow: var(--shadow-card);
+
+    picture,
+    img,
+    video {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    img,
+    video {
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+    }
+  }
+
+  @media (width >= 768px) {
+    .organic-mosaic {
+      --om-range: 8vh;
+      --om-gap: var(--spacing-l);
+      --om-min-height: 90vh;
+    }
+
+    /* Four equal columns in one row (flex-basis 0 + grow). */
+    .organic-mosaic-column {
+      flex-basis: 0;
+    }
+
+    /* Static organic stagger -- part of the RESTING DOM, so the mosaic reads
+       as intentionally offset (not a rigid grid) even with zero motion.
+       Ports Falkor's per-column --offset-y (nth 1/2/4). */
+    .organic-mosaic-column:nth-child(2) {
+      margin-top: var(--spacing-xxl);
+    }
+
+    .organic-mosaic-column:nth-child(3) {
+      margin-top: var(--spacing-m);
+    }
+
+    .organic-mosaic-column:nth-child(4) {
+      margin-top: calc(var(--spacing-xxl) * 1.6);
+    }
+
+    /* Animating state -- added by JS only after shouldAnimate() passes. Each
+       column drifts vertically by (progress - 0.5) so it travels through its
+       rest position as the section scrolls, scaled by its own speed. The short
+       transition smooths per-frame --progress updates into buttery,
+       compositor-only (INP-safe) motion. Ports Falkor's expo.out column
+       parallax. Desktop-only, mirroring Falkor's mobile no-op. */
+    .organic-mosaic.is-scrubbing .organic-mosaic-column {
+      --om-speed: 0.5;
+
+      transform: translateY(calc((var(--progress) - 0.5) * var(--om-speed) * var(--om-range)));
+      transition: transform 0.3s var(--transition-ease-out);
+      will-change: transform;
+    }
+
+    .organic-mosaic.is-scrubbing .organic-mosaic-column:nth-child(2) {
+      --om-speed: 1;
+    }
+
+    .organic-mosaic.is-scrubbing .organic-mosaic-column:nth-child(3) {
+      --om-speed: 0.35;
+    }
+
+    .organic-mosaic.is-scrubbing .organic-mosaic-column:nth-child(4) {
+      --om-speed: 0.8;
+    }
+  }
+
+  @media (width >= 1240px) {
+    .organic-mosaic {
+      --om-range: 10vh;
+      --om-min-height: 100vh;
+    }
+
+    .organic-mosaic-grid {
+      padding-inline: 0;
+    }
+  }
+
+  @media (width >= 1440px) {
+    .organic-mosaic {
+      --om-gap: var(--spacing-xl);
+    }
+  }
+
+  /* Belt-and-suspenders: if reduced motion is enabled after scrubbing began,
+     freeze every column at its rest position rather than keep drifting. */
+  @media (prefers-reduced-motion: reduce) {
+    .organic-mosaic.is-scrubbing .organic-mosaic-column {
+      transform: none;
+      transition: none;
+    }
+  }
+}
