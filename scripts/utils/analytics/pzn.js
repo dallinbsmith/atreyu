@@ -177,7 +177,10 @@ const buildVariantsUrl = () => {
 // the same session read the mapping synchronously, same spirit as the cookie
 // making the DECISION synchronous on warm visits — see file header note.
 let variantsPromise;
-const loadVariants = () => {
+// Exported so the dev-mode-only pzn-audit.js can reuse this exact memoized,
+// isValidRow-filtered promise and issue zero extra network fetch (the audit
+// and decoratePznSlots share one in-flight load per tab session).
+export const loadVariants = () => {
   variantsPromise ??= (async () => {
     // Bug-squash fix, 2026-08-28: the cache-read branch used to sit outside
     // this try/catch, so a corrupted or shape-incompatible cached value (a
