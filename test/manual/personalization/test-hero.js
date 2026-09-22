@@ -37,8 +37,6 @@ if (params.get('consent') === 'granted') {
   setConsent({ personalization: true, analytics: true, marketing: true });
 }
 
-document.documentElement.dataset.pznReserve = params.get('reserve') || 'none';
-
 const section = document.querySelector('.section');
 const heroBlock = section.querySelector('.hero');
 

@@ -10,15 +10,26 @@
 //   - COLD visit (no segment cookie yet): default content paints immediately, never
 //     blocked. The decision call fires async; if it resolves before timeout, the
 //     slot cross-fades (opacity, reserved space) to the personalized variant.
-//   - WARM visit (segment cookie already set): the personalized variant is applied
-//     synchronously, straight from the cookie — no network wait, no fade.
-//   - Fail-open: timeout/error on the decision call, the variants-sheet fetch, or
-//     an individual malformed row all leave the baseline standing, never break
-//     the page.
-//   - Never a reveal-gate in either case (see the comment on decoratePznSlots below
-//     for the specific failure mode this file is built to avoid).
+//   - WARM visit (segment cookie already set): no network wait either way — that
+//     part of "synchronous, no fade" stands. CORRECTED 2026-09-22: it is NOT a
+//     zero-transition swap, and was never actually safe as one — nothing hid the
+//     resize when a variant's size differs from baseline. Warm visits now go
+//     through the same brief hide→measure→swap→reveal cycle as cold (see
+//     crossFadeApply), just with no decision call to wait on. Near-instant under
+//     `prefers-reduced-motion` (transition duration zeroed in CSS), never a
+//     network-wait-shaped delay either way.
+//   - Fail-open: timeout/error on the decision call, the variants-sheet fetch, an
+//     individual malformed row, or a failed fragment fetch all leave the baseline
+//     standing, never break the page.
+//   - Never a reveal-gate in any case (see the comment on decoratePznSlots below
+//     for the specific failure mode this file is built to avoid) — the brief
+//     hide-while-swapping above is a POST-render micro-transition on already-
+//     painted content, categorically different from blocking the initial render.
 //   - The decision call itself is consent-gated on `personalization` — not just an
 //     analytics wrapper around it (P0-44's Intuit-asymmetry finding).
+//   - Reserved space is measured, not guessed (2026-09-22 CLS fix — see
+//     reserveSpace below): a real probe node, not a fixed CSS number eyeballed
+//     against one label at one moment in time.
 //
 // Real slot-marker mechanism (verified against scripts/ak.js's decorateSection(),
 // not assumed): a `pzn: <placement>` Section Metadata row becomes
@@ -96,6 +107,11 @@ const config = {
   latencyMs: DEBUG_PARAMS_ALLOWED ? params.get('pznLatency') : null,
   timeoutMs: DEBUG_PARAMS_ALLOWED ? Number(params.get('pznTimeout') ?? DEFAULT_TIMEOUT_MS) : DEFAULT_TIMEOUT_MS,
   forceFail: DEBUG_PARAMS_ALLOWED && params.has('pznFail'),
+  // 2026-09-22 CLS-fix measurement affordance: reproduces the pre-fix
+  // behavior (swap with no space reservation at all) on demand, so the fix
+  // can be verified by comparing real CLS with and without this flag on the
+  // exact same code, instead of checking out a prior revision.
+  skipReserve: DEBUG_PARAMS_ALLOWED && params.has('pznSkipReserve'),
   previewSegment: params.get('segment'), // P0-45 `?segment=` preview override — a real feature, not debug-only
   variantsEndpoint: DEBUG_PARAMS_ALLOWED
     ? sameOriginOverride(params.get('pznVariantsEndpoint'), DEFAULT_VARIANTS_ENDPOINT) : DEFAULT_VARIANTS_ENDPOINT,
@@ -248,41 +264,72 @@ const getOrCreateSlot = (target) => {
 const applyCta = (target, row) => {
   target.textContent = row.label;
   target.href = row.href;
-  return true;
 };
 
-const applyFragment = async (target, row) => {
+const applyFragment = (target, nodes) => {
+  target.replaceChildren(...nodes);
+};
+
+const fetchFragmentNodes = async (row) => {
   try {
     const res = await fetch(`${row.fragment}.plain.html`);
-    if (!res.ok) return false;
+    if (!res.ok) return null;
     const html = await res.text();
-    target.replaceChildren(...sanitizeMarkup(html).childNodes);
-    return true;
+    return [...sanitizeMarkup(html).childNodes];
   } catch {
-    return false; // fail-open — target keeps its baseline content
+    return null; // fail-open — target keeps its baseline content
   }
 };
 
-const applyVariant = async (slot, target, row) => {
-  const applied = row.type === 'fragment' ? await applyFragment(target, row) : applyCta(target, row);
-  if (applied) {
-    slot.dataset.pznApplied = row.segment;
-    // P0-46 schema reconciliation: `variantType` here mirrors the current
-    // production site's schema (a-b-split-test vs. a named segment rule) —
-    // it is NOT this sheet's own `type` column (cta/fragment, a rendering
-    // mechanism), which is reported separately as `renderType` to avoid
-    // conflating the two concepts under one name.
-    track(EVENTS.PERSONALIZATION_APPLIED, {
-      anonId: getVisitorId(),
-      placement: row.placement,
-      segment: row.segment,
-      variantName: row.label || row.fragment,
-      variantType: row.variantType,
-      variantId: `${row.placement}:${row.segment}:${row.label || row.fragment}`,
-      renderType: row.type,
-    });
-  }
-  return applied;
+// CLS fix, 2026-09-22: the reserved-space strategy this file's cross-fade
+// relied on was never actually shipped (zero CSS for `.pzn-slot` in
+// styles.css/lazy-styles.css) and the one number that existed anywhere
+// (test/manual/personalization/test-hero.css's `min-width: 23rem`) was
+// eyeballed against one label at one moment in time, not measured — a real
+// gap surfaced by adversarial review, not a style nit. This replaces the
+// guess with a real measurement, taken via a briefly-appended, invisible
+// probe node, at the one moment it's safe to resize without it being seen:
+// while the slot is already hidden (`pzn-transitioning`, opacity 0) mid
+// cross-fade — see crossFadeApply below, which now runs this for every
+// path (cold, warm, preview), not just cold. `visibility: hidden` +
+// `position: absolute` means the probe produces no paint and is therefore
+// invisible to the Layout Instability API — this measures real rendered
+// size, not a guess, and never itself contributes a shift.
+const reserveSpace = (slot, target, row, preparedNodes) => {
+  const isFragment = row.type === 'fragment';
+  slot.style.display = isFragment ? 'block' : 'inline-flex';
+  const probe = isFragment ? document.createElement('div') : target.cloneNode(true);
+  Object.assign(probe.style, isFragment
+    ? { visibility: 'hidden', position: 'absolute', width: `${slot.getBoundingClientRect().width}px` }
+    : { visibility: 'hidden', position: 'absolute', whiteSpace: 'nowrap' });
+  if (isFragment) probe.append(...preparedNodes.map((node) => node.cloneNode(true)));
+  else probe.textContent = row.label;
+  document.body.append(probe);
+  const slotRect = slot.getBoundingClientRect();
+  const before = isFragment ? slotRect.height : slotRect.width;
+  const after = isFragment ? probe.scrollHeight : probe.getBoundingClientRect().width;
+  probe.remove();
+  slot.style[isFragment ? 'minHeight' : 'minWidth'] = `${Math.max(before, after)}px`;
+};
+
+const applyVariant = (slot, target, row, preparedNodes) => {
+  if (row.type === 'fragment') applyFragment(target, preparedNodes);
+  else applyCta(target, row);
+  slot.dataset.pznApplied = row.segment;
+  // P0-46 schema reconciliation: `variantType` here mirrors the current
+  // production site's schema (a-b-split-test vs. a named segment rule) —
+  // it is NOT this sheet's own `type` column (cta/fragment, a rendering
+  // mechanism), which is reported separately as `renderType` to avoid
+  // conflating the two concepts under one name.
+  track(EVENTS.PERSONALIZATION_APPLIED, {
+    anonId: getVisitorId(),
+    placement: row.placement,
+    segment: row.segment,
+    variantName: row.label || row.fragment,
+    variantType: row.variantType,
+    variantId: `${row.placement}:${row.segment}:${row.label || row.fragment}`,
+    renderType: row.type,
+  });
 };
 
 // EXP-014's other half — segment is null for the two earliest-possible
@@ -300,15 +347,39 @@ const trackFallback = (placement, segment, reason) => {
   });
 };
 
+// Unified for every path (cold, warm, preview) — not just cold. "WARM:
+// synchronous, no fade" in this file's header comment was true for the
+// network-wait half of the original design (no decision-endpoint round trip
+// on warm visits, still true), but was never actually safe against a
+// visible layout shift when the variant's content differs in size from the
+// baseline — nothing hid the resize. This still adds no network wait on any
+// path; it adds one hide→measure→swap→reveal cycle (near-instant under
+// `prefers-reduced-motion`, since the CSS transition duration is zeroed
+// there — see lazy-styles.css), which is what actually makes the "reserved
+// space" claim true rather than assumed.
+//
+// Real gap found and closed the same day, empirically, not by inspection:
+// under `prefers-reduced-motion` (or low-`hardwareConcurrency`/save-data —
+// see shouldAnimate()), skipping the FADE_MS wait entirely means there is no
+// `await` between adding `pzn-transitioning` and resizing/swapping — the
+// whole hide→resize→reveal sequence runs in one synchronous burst with zero
+// yield to the browser's paint cycle. A synchronous class toggle never gets
+// painted as its own frame; the "hidden" state exists only as a JS-visible
+// intermediate, never a real one, so the resize would still be visible.
+// `requestAnimationFrame` forces one real paint (the box, already hidden)
+// before resizing, at effectively zero added delay for this population.
 const crossFadeApply = async (slot, target, row) => {
-  if (!shouldAnimate()) {
-    await applyVariant(slot, target, row);
-    return;
-  }
+  const preparedNodes = row.type === 'fragment' ? await fetchFragmentNodes(row) : null;
+  if (row.type === 'fragment' && !preparedNodes) return false; // fail-open — fragment fetch failed, baseline stands
+
   slot.classList.add('pzn-transitioning');
-  await new Promise((resolve) => { setTimeout(resolve, FADE_MS); });
-  await applyVariant(slot, target, row);
+  await (shouldAnimate()
+    ? new Promise((resolve) => { setTimeout(resolve, FADE_MS); })
+    : new Promise((resolve) => { requestAnimationFrame(resolve); }));
+  if (!config.skipReserve) reserveSpace(slot, target, row, preparedNodes);
+  applyVariant(slot, target, row, preparedNodes);
   slot.classList.remove('pzn-transitioning');
+  return true;
 };
 
 // EXP-014 ("default and fallback") acceptance criteria: "the approved default
@@ -341,6 +412,23 @@ const resolveTarget = (section, variants, placementKey, segment) => {
   return { target, row: { ...row, variantType } };
 };
 
+// Shared by all three paths below: resolve, apply (always via crossFadeApply
+// now — see its own comment for why warm/preview need this too, not just
+// cold), and track whichever fallback reason applies. `fragment_fetch_failed`
+// is new: previously a failed fragment fetch made applyVariant's caller
+// silently drop the failure with no tracked reason at all (its return value
+// was discarded) — a real EXP-014 gap this same refactor closes, not a
+// separate change.
+const applyResolved = async (placementKey, resolved, segment) => {
+  if (!resolved.target) {
+    trackFallback(placementKey, segment, resolved.reason);
+    return;
+  }
+  const slot = getOrCreateSlot(resolved.target);
+  const applied = await crossFadeApply(slot, resolved.target, resolved.row);
+  if (!applied) trackFallback(placementKey, segment, 'fragment_fetch_failed');
+};
+
 const decorateSection = async (section) => {
   const placementKey = section.dataset.pzn;
   const variants = await loadVariants();
@@ -352,24 +440,14 @@ const decorateSection = async (section) => {
 
   if (config.previewSegment) {
     const resolved = resolveTarget(section, variants, placementKey, config.previewSegment);
-    if (!resolved.target) {
-      trackFallback(placementKey, config.previewSegment, resolved.reason);
-      return;
-    }
-    // preview: no cookie, no fade
-    await applyVariant(getOrCreateSlot(resolved.target), resolved.target, resolved.row);
+    await applyResolved(placementKey, resolved, config.previewSegment);
     return;
   }
 
   const cachedSegment = readCookie(COOKIE_NAME);
   if (cachedSegment) {
     const resolved = resolveTarget(section, variants, placementKey, cachedSegment);
-    if (!resolved.target) {
-      trackFallback(placementKey, cachedSegment, resolved.reason);
-      return;
-    }
-    // WARM: synchronous, no fade
-    await applyVariant(getOrCreateSlot(resolved.target), resolved.target, resolved.row);
+    await applyResolved(placementKey, resolved, cachedSegment);
     return;
   }
 
@@ -389,11 +467,7 @@ const decorateSection = async (section) => {
   writeCookie(COOKIE_NAME, segment);
 
   const resolved = resolveTarget(section, variants, placementKey, segment);
-  if (!resolved.target) {
-    trackFallback(placementKey, segment, resolved.reason);
-    return;
-  }
-  await crossFadeApply(getOrCreateSlot(resolved.target), resolved.target, resolved.row);
+  await applyResolved(placementKey, resolved, segment);
 };
 
 // CRITICAL: this must never be awaited by whatever decorates the section it's
@@ -422,4 +496,10 @@ export const decoratePznSlots = (root = document) => {
     if (readCookie(COOKIE_NAME)) return; // another slot already resolved a segment
     sections.forEach((section) => { decorateSection(section); });
   });
+  // Returned so a caller that re-runs this per test/session (e.g. this
+  // module's own test suite, which reimports pzn.js fresh per test but
+  // shares one `document`) can remove the listener explicitly instead of
+  // leaving it attached indefinitely — a real page only calls this once per
+  // load, so a real caller has no reason to use the return value.
+  return stopListening;
 };
