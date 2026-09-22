@@ -412,6 +412,69 @@
           padding: 0 var(--spacing-m);
         }
 
+        /* Real-browser measurement (2026-09-22): production's plain text
+           action links (Contact Us, Sign In) mutually dim each other on
+           hover — hovering one dims the OTHER to rgba(234,234,255,0.5)
+           (var(--color-alpha-light-50), exact match) while the hovered one
+           stays at rgb(252,252,252) (var(--color-light)). Confirmed via
+           computed-style diff against https://frame.io/: hovering the
+           Start Free Trial pill or the Adobe logo has zero effect on these
+           two links (and vice versa), so the dim/brighten pair must be
+           scoped to exclude `.action-primary` (the pill) and the Adobe
+           link — not a blanket `.default-content`-wide hover.
+
+           Reuses this file's own established sibling-dim precedent
+           (`.mega-menu-links`'s `:has(a:hover) a` pair below) rather than
+           the OTHER existing pattern (`.main-nav-item`'s ancestor-`:hover`
+           bubbling) — that pattern fires on ANY hover inside the
+           container, which would incorrectly dim these two when hovering
+           the pill/logo; `:has()` scoped to only the plain-text links
+           themselves is required here.
+
+           The Adobe link is excluded via `[title="Adobe"]`, NOT the
+           `.icon-adobe` hook this file documents elsewhere as the stable
+           target (see that rule below) — real-browser verification (CDP
+           CSSOM inspection of the actual compiled rule, not just visual
+           testing) caught a genuine CSS spec restriction: the argument of
+           `:has()` can never itself contain another `:has()`, even nested
+           inside a `:where()`. Chrome doesn't reject the whole rule for
+           this — it silently drops just the invalid `:has(.icon-adobe)`
+           branch from the forgiving `:where()` selector list, so the
+           container-level `:has()` below (already nested one level) quietly
+           stopped excluding the Adobe link at all, and hovering it wrongly
+           dimmed Contact Us/Sign In. `[title="Adobe"]` matches directly on
+           the anchor itself (no descendant lookup, so no nested `:has()`
+           needed) and is real authored content, not invented for this fix —
+           confirmed against the live DA fragment
+           (/system/fragments/nav/header): the author types
+           `[:adobe:](https://www.adobe.com "Adobe"){aria-label="Adobe"}`,
+           and `title="Adobe"` is the one attribute of that pair that
+           survives EDS's doc-to-HTML conversion through to the rendered
+           anchor (`aria-label` does not survive — a separate, pre-existing
+           accessibility gap on this icon-only link, out of scope for this
+           change, worth flagging separately).
+
+           Exclusion uses `:not(:where(...))` rather than plain
+           `:not(.action-primary):not([title="Adobe"])` specifically to
+           avoid this file's own documented `:has()` specificity trap (see
+           the `.mega-menu-links` comment below): `:where()` always
+           contributes zero specificity, so the exclusion doesn't inflate
+           the `:has()` argument's specificity contribution the way a bare
+           `:not()` chain would. Verified by hand: dim rule computes to
+           (0,3,4), brighten to (0,4,2) — brighten wins on the
+           class/pseudo-class count (4 > 3) before type count is ever
+           compared, so the literally-hovered link stays bright even though
+           the dim rule also matches it. `:any-link` on the brighten rule
+           is the same deliberate specificity-padding trick used below, not
+           decorative. */
+        &:has(p a:not(:where(.action-primary, [title="Adobe"])):hover) p a:not(:where(.action-primary, [title="Adobe"])) {
+          color: var(--color-alpha-light-50);
+        }
+
+        p a:not(:where(.action-primary, [title="Adobe"])):hover:any-link {
+          color: var(--color-light);
+        }
+
         .action-primary {
           background: var(--color-gray-100);
           color: var(--color-dark);
@@ -422,6 +485,29 @@
           &:hover {
             background: var(--color-alpha-light-70);
           }
+        }
+
+        /* Adobe logo link (author-typed :adobe: icon, see icons/adobe.svg),
+           last item in the actions row. No wrapper class exists for this plain
+           content link — .icon-adobe (the code-generated icon class, same
+           targeting pattern as styles.css's .btn .icon-arrow) is the stable
+           hook, not the href. Real measured production size is 19x16px, a
+           fixed logo aspect ratio, not a --spacing-* token (same precedent as
+           this file's own --logo-width/--logo-height above). color is
+           inherited from the shared `p a` rule above (var(--color-light)) and
+           reaches the SVG via its own fill="currentColor" path — an exact
+           match for production's measured rgb(252, 252, 252), no separate
+           color override needed. vertical-align: middle corrects the default
+           inline-replaced-element baseline gap so the logo centers with the
+           surrounding text/pill items, matching this row's shared
+           align-items: center. */
+        .icon-adobe {
+          display: inline-flex;
+          align-items: center;
+          width: 19px;
+          height: 16px;
+          flex: none;
+          vertical-align: middle;
         }
       }
 
