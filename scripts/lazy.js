@@ -56,6 +56,14 @@ export default async () => {
     import('./utils/analytics/pzn.js')
       .then(({ decoratePznSlots }) => decoratePznSlots())
       .catch((ex) => log(ex));
+
+    // ADR-003: dev-only mutual-exclusivity check between the late-phase
+    // `experiment-selector` chrome swap (run just above) and pzn.js's slots.
+    // Runs here, not in the one-shot IIFE below, because it must resolve
+    // selectors against the DOM only after footer + the late experiment exist.
+    import('./utils/analytics/pzn-audit.js')
+      .then(({ auditExperimentCollision }) => auditExperimentCollision())
+      .catch((ex) => log(ex));
   }
 };
 

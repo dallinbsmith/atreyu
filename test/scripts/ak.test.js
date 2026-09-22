@@ -1,7 +1,7 @@
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import {
-  setConfig, getConfig, loadBlock, decorateLink, loadArea,
+  setConfig, getConfig, loadBlock, decorateLink, loadArea, slugifyUnique,
 } from '../../scripts/ak.js';
 
 const block = (className) => {
@@ -106,6 +106,27 @@ describe('ak.js decorateButton — data-testid on markdown-emphasis buttons', ()
     expect(a.classList.contains('btn-primary')).to.be.true;
     expect(a.classList.contains('btn-outline')).to.be.true;
     expect(a.dataset.testid).to.equal('hero-cta-primary-outline');
+  });
+});
+
+describe('ak.js slugifyUnique — extracted, shared doc-wide de-dup slugifier', () => {
+  // Extracted from decorateSection()'s `anchor` branch (real second consumer:
+  // header-subcategories.js's decorateSubcategories()) — the anchor tests
+  // below already cover this logic end-to-end through decorateSection; these
+  // pin the function's own direct contract now that it's a standalone export.
+  it('slugifies via toClassName rules (lowercase, punctuation to hyphens)', () => {
+    expect(slugifyUnique('Q3 Launch!!')).to.equal('q3-launch');
+  });
+
+  it('de-dupes against an existing document id with a numeric suffix', () => {
+    const el = document.createElement('div');
+    el.id = 'features-standalone';
+    document.body.append(el);
+    expect(slugifyUnique('Features Standalone')).to.equal('features-standalone-2');
+  });
+
+  it('returns an empty string when the slug is empty (punctuation only), without an infinite loop', () => {
+    expect(slugifyUnique('!!!')).to.equal('');
   });
 });
 

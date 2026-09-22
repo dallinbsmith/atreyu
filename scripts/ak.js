@@ -323,6 +323,48 @@ const toClassName = (name) => (typeof name === 'string'
     .replace(/^-|-$/g, '')
   : '');
 
+// Extracted (per Senior Software Engineer review, ref_nav_architecture_
+// research memory) from decorateSection()'s `anchor` branch below, where this
+// exact loop previously lived hand-copied inline — the doc-wide de-dup logic
+// a heading-anchor-shaped id needs (slugify, then suffix-bump until no
+// existing element already claims that id) is not unique to section anchors.
+// Real second consumer: header-subcategories.js's decorateSubcategories().
+// De-duping against `document`-wide by default, so it also can't collide
+// with a heading's own server-slugified anchor id elsewhere on the page.
+// CSS.escape (not getElementById): a slug can start with a digit
+// (`2024-roadmap`), an invalid bare CSS selector.
+//
+// Optional `root` (real bug found building the subcategory consumer, not
+// hypothetical): loadFragment() detaches a fragment from `document` before
+// returning it (fragment.remove()), and header.js's decorateHeaderContent()
+// runs entirely on that detached fragment, appending it to the live
+// document only at the very end. Two sibling headings processed in the same
+// loop, while still part of that same detached subtree, are both invisible
+// to `document.querySelector` — de-duping against `document` alone let both
+// silently claim the identical id. Pass a reference node's `getRootNode()`
+// (returns `document` for an already-connected node, or the topmost
+// ancestor of a still-detached subtree otherwise — the exact right scope
+// either way, with no caller-side connected/detached branching needed) so
+// same-batch siblings can see each other's just-assigned ids even before
+// the subtree is connected. Defaults to `document` — decorateSection's own
+// anchor branch runs on sections that are connected at decoration time
+// (either the live document, or a fragment while still attached via
+// loadFragment's own temporary hidden container), so its existing call
+// keeps its exact current behavior unchanged.
+export const slugifyUnique = (text, root = document) => {
+  const base = toClassName(text);
+  let id = base;
+  let n = 2;
+  const taken = (candidate) => Boolean(candidate)
+    && (document.querySelector(`#${CSS.escape(candidate)}`)
+      || (root !== document && root.querySelector(`#${CSS.escape(candidate)}`)));
+  while (taken(id)) {
+    id = `${base}-${n}`;
+    n += 1;
+  }
+  return id;
+};
+
 const decorateSection = (section) => {
   section.classList.add('section');
 
@@ -340,29 +382,19 @@ const decorateSection = (section) => {
         return;
       }
       // Reserved `anchor` key → a real, deep-linkable section id (marketing
-      // deep-links, in-page jump nav). Slugified via toClassName — lowercase,
-      // mirroring the standard EDS heading-slug convention so a section anchor
-      // reads like a heading anchor (exact server-pipeline parity is not
-      // verifiable from this repo; the document-wide de-dup below is the safety
-      // net for any residual mismatch). De-duped with a
-      // numeric suffix (against the whole document, so it also can't collide
-      // with a heading's own id) — none of the reference EDS sites this was
-      // modelled on (cmegroup/vitamix/stericycle) did that. Assigned here in
-      // eager section decoration (decorateSections runs over every section
-      // before the block-load loop and before lazy.js imports lazyhash.js), so
-      // the id exists before lazyhash's scrollIntoView fires on a cold
-      // deep-link to a below-fold section.
+      // deep-links, in-page jump nav). Slugified via slugifyUnique() (wraps
+      // toClassName) — lowercase, mirroring the standard EDS heading-slug
+      // convention so a section anchor reads like a heading anchor (exact
+      // server-pipeline parity is not verifiable from this repo; slugifyUnique's
+      // own document-wide de-dup is the safety net for any residual mismatch)
+      // — none of the reference EDS sites this was modelled on
+      // (cmegroup/vitamix/stericycle) did that. Assigned here in eager section
+      // decoration (decorateSections runs over every section before the
+      // block-load loop and before lazy.js imports lazyhash.js), so the id
+      // exists before lazyhash's scrollIntoView fires on a cold deep-link to a
+      // below-fold section.
       if (key === 'anchor') {
-        const base = toClassName(text);
-        let id = base;
-        let n = 2;
-        // CSS.escape (not getElementById): a slug can start with a digit
-        // (`2024-roadmap`), an invalid bare CSS selector — same reason
-        // lazyhash.js escapes before querying these very ids.
-        while (id && document.querySelector(`#${CSS.escape(id)}`)) {
-          id = `${base}-${n}`;
-          n += 1;
-        }
+        const id = slugifyUnique(text);
         if (id) section.id = id;
         return;
       }

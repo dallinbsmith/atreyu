@@ -17,6 +17,18 @@
   src: local("Arial");
 }
 
+/* No metric-override data available for this font (single-weight brand font,
+   not on Google Fonts/a metrics database) — this is a short-text use case
+   (12px eyebrow labels + counter numerals only), so an unmeasured fallback
+   is an acceptable, explicitly-acknowledged simplification rather than a
+   precisely metric-matched one. Matches production's own real fallback,
+   confirmed by reading its computed @font-face rule: plain local("Arial"),
+   no size-adjust/ascent-override/descent-override at all. */
+@font-face {
+  font-family: NeueMachinaInktrap-fallback;
+  src: local("Arial");
+}
+
 /* Web fonts */
 @font-face {
   font-family: FrameGothic;
@@ -80,4 +92,27 @@
     U+2215,
     U+FEFF,
     U+FFFD;
+}
+
+/* Real production font — "PP Neue Machina Inktrap" (Pangram Pangram Foundry),
+   sourced directly from frame.io's own production CDN
+   (https://frame.io/_next/static/media/19874d4df76220a9-s.p.woff). Used here
+   under the same brand font license: this migration project is frame.io's
+   own intended successor site, and this specific use was explicitly
+   authorized by the user (2026-09-22) — this is NOT a default pattern to
+   repeat for other third-party/brand assets without the same explicit
+   authorization each time.
+   Single Regular (400) weight only, confirmed via fc-scan — no weight range
+   like FrameGothic/Montserrat above. Container is WOFF, not WOFF2 (confirmed
+   via `file`: "Web Open Font Format" magic bytes "wOFF", not "wOF2" — the
+   "version 2.0" `file` reports is the internal CFF table format, unrelated
+   to the WOFF/WOFF2 container distinction).
+   Full licensing/authorization record: see THIRD_PARTY_LICENSES.md at the
+   repo root — this comment is a summary, that file is the durable record. */
+@font-face {
+  font-family: NeueMachinaInktrap;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/styles/fonts/NeueMachinaInktrap.woff") format("woff");
 }

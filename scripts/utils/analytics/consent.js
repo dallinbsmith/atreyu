@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'atreyu-consent';
+const STORAGE_KEY = 'frameio-consent';
 const CATEGORIES = ['necessary', 'analytics', 'marketing', 'personalization'];
 const DEFAULTS = Object.fromEntries(CATEGORIES.map((c) => [c, c === 'necessary']));
 
