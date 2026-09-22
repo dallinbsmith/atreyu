@@ -60,6 +60,18 @@ const variantsResponse = (rows) => ({
 describe('scripts/utils/analytics/pzn.js', () => {
   let originalFetch;
   let tracked;
+  // 2026-09-22: decoratePznSlots() registers a `document`-level consent
+  // listener that's normally only ever cleaned up if a personalization
+  // consent-granted event fires after it's attached — fine for a real page
+  // (called once per load), but this suite reimports pzn.js fresh per test
+  // while sharing one real `document`, so a listener a test doesn't trigger
+  // itself stays attached and can react to a LATER test's setConsent() call,
+  // re-running that OLD test's own (now-detached) decorateSection and
+  // writing into whatever `tracked` array happens to be current at that
+  // moment. Capturing and stopping it here — not a pzn.js bug, since no real
+  // page ever re-runs decoratePznSlots() the way this suite deliberately
+  // does for isolation.
+  let stopPzn;
 
   beforeEach(() => {
     originalFetch = window.fetch;
@@ -68,12 +80,14 @@ describe('scripts/utils/analytics/pzn.js', () => {
     document.cookie = `${COOKIE_NAME}=; path=/; max-age=0`;
     resetConsent();
     tracked = [];
+    stopPzn = null;
     setAnalyticsProvider((event, properties) => { tracked.push({ event, ...properties }); });
   });
 
   afterEach(() => {
     window.fetch = originalFetch;
     setAnalyticsProvider(null);
+    stopPzn?.();
   });
 
   describe('preview mode (?segment=)', () => {
@@ -86,8 +100,11 @@ describe('scripts/utils/analytics/pzn.js', () => {
       ]);
 
       const { decoratePznSlots } = await freshPzn('?segment=enterprise');
-      decoratePznSlots(document);
-      await new Promise((r) => { setTimeout(r, 50); });
+      stopPzn = decoratePznSlots(document);
+      // 2026-09-22 CLS fix: preview now goes through the same brief
+      // hide-while-resizing cross-fade as every other path (see pzn.js's
+      // crossFadeApply) — still no decision call, but no longer instant.
+      await new Promise((r) => { setTimeout(r, 300); });
 
       expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
       expect(document.cookie).to.not.include(COOKIE_NAME);
@@ -99,7 +116,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
 
       const { decoratePznSlots } = await freshPzn('?segment=nonexistent-segment');
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 50); });
 
       expect(section.querySelector('.cta-link').textContent).to.equal('Default CTA');
@@ -107,7 +124,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
   });
 
   describe('warm visit (cookie already set)', () => {
-    it('applies synchronously with no decision call', async () => {
+    it('applies with no decision call — no longer instant as of the 2026-09-22 CLS fix', async () => {
       const section = setupSection();
       document.cookie = `${COOKIE_NAME}=enterprise; path=/`;
       let decisionCalled = false;
@@ -117,8 +134,11 @@ describe('scripts/utils/analytics/pzn.js', () => {
       ]);
 
       const { decoratePznSlots } = await freshPzn();
-      decoratePznSlots(document);
-      await new Promise((r) => { setTimeout(r, 50); });
+      stopPzn = decoratePznSlots(document);
+      // Still no network wait (decisionCalled stays false) — but warm visits
+      // now go through the same brief hide-while-resizing cross-fade as
+      // every other path, so this is no longer a zero-delay swap.
+      await new Promise((r) => { setTimeout(r, 300); });
 
       expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
       expect(decisionCalled).to.be.false;
@@ -135,7 +155,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       ]);
 
       const { decoratePznSlots } = await freshPzn();
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 400); }); // real fade + fetch round trip
 
       expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
@@ -151,7 +171,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       ]);
 
       const { decoratePznSlots } = await freshPzn();
-      decoratePznSlots(document); // consent never granted in this test
+      stopPzn = decoratePznSlots(document); // consent never granted in this test
       await new Promise((r) => { setTimeout(r, 100); });
 
       expect(decisionCalled).to.be.false;
@@ -166,7 +186,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       ]);
 
       const { decoratePznSlots } = await freshPzn();
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 300); });
 
       expect(section.querySelector('.cta-link').textContent).to.equal('Default CTA');
@@ -183,8 +203,8 @@ describe('scripts/utils/analytics/pzn.js', () => {
       ])]]);
 
       const { decoratePznSlots } = await freshPzn('?segment=default');
-      decoratePznSlots(document);
-      await new Promise((r) => { setTimeout(r, 50); });
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); }); // real cross-fade, see 2026-09-22 CLS fix
 
       expect(section.querySelector('.cta-link').textContent).to.equal('Default Variant');
     });
@@ -196,7 +216,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       ])]]);
 
       const { decoratePznSlots } = await freshPzn('?segment=enterprise');
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 50); });
 
       expect(section.querySelector('.cta-link').textContent).to.equal('Default CTA');
@@ -207,8 +227,8 @@ describe('scripts/utils/analytics/pzn.js', () => {
       mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow({ commit_until: '' })])]]);
 
       const { decoratePznSlots } = await freshPzn('?segment=enterprise');
-      decoratePznSlots(document);
-      await new Promise((r) => { setTimeout(r, 50); });
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); }); // real cross-fade, see 2026-09-22 CLS fix
 
       expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
     });
@@ -219,7 +239,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
 
       const { decoratePznSlots } = await freshPzn('?segment=enterprise');
-      expect(() => decoratePznSlots(document)).to.not.throw();
+      expect(() => { stopPzn = decoratePznSlots(document); }).to.not.throw();
       await new Promise((r) => { setTimeout(r, 50); });
 
       // loadVariants()'s outer try/catch treats a JSON.parse failure the same
@@ -243,7 +263,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
 
       try {
         const { decoratePznSlots } = await freshPzn('?segment=enterprise');
-        decoratePznSlots(document);
+        stopPzn = decoratePznSlots(document);
         await new Promise((r) => { setTimeout(r, 50); });
       } finally {
         window.removeEventListener('unhandledrejection', onRejection);
@@ -255,7 +275,11 @@ describe('scripts/utils/analytics/pzn.js', () => {
   });
 
   describe('weighted split (weightedPick)', () => {
-    it('sticky-splits distinct visitors across both variants of a real 50/50 row pair', async () => {
+    it('sticky-splits distinct visitors across both variants of a real 50/50 row pair', async function stickySplitTest() {
+      // 12 iterations x the real ~300ms cross-fade (2026-09-22 CLS fix) run
+      // sequentially and exceed mocha's 2000ms default — a real function,
+      // not an arrow, so `this` is mocha's own test context.
+      this.timeout(6000);
       mockFetch([[FIXTURE_URL, () => variantsResponse([
         variantRow({ segment: 'default', label: 'Variant A', href: '/a', weight: '50' }),
         variantRow({ segment: 'default', label: 'Variant B', href: '/b', weight: '50' }),
@@ -268,9 +292,9 @@ describe('scripts/utils/analytics/pzn.js', () => {
         // its own fresh visitor id + fresh module instance, sequentially.
         const { decoratePznSlots } = await freshPzn('?segment=default');
         setupSection();
-        decoratePznSlots(document);
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((r) => { setTimeout(r, 30); });
+        stopPzn = decoratePznSlots(document);
+        // eslint-disable-next-line no-await-in-loop -- real cross-fade, see 2026-09-22 CLS fix
+        await new Promise((r) => { setTimeout(r, 300); });
         seen.add(document.querySelector('.cta-link').textContent);
       }
 
@@ -294,7 +318,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       };
 
       const { decoratePznSlots } = await freshPzn('?pznEndpoint=https://evil.example/steal');
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 300); });
 
       expect(calledUrl).to.not.include('evil.example');
@@ -308,7 +332,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       mockFetch([[FIXTURE_URL, () => variantsResponse([])]]);
 
       const { decoratePznSlots } = await freshPzn();
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 50); });
 
       expect(tracked).to.have.length(1);
@@ -324,7 +348,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
 
       const { decoratePznSlots } = await freshPzn();
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 50); });
 
       expect(tracked).to.have.length(1);
@@ -340,7 +364,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       ]);
 
       const { decoratePznSlots } = await freshPzn();
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 300); });
 
       expect(tracked.some((e) => e.reason === 'decision_failed')).to.be.true;
@@ -353,7 +377,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
 
       const { decoratePznSlots } = await freshPzn('?segment=default');
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 50); });
 
       expect(tracked).to.have.length(1);
@@ -367,7 +391,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow({ selector: '.does-not-exist' })])]]);
 
       const { decoratePznSlots } = await freshPzn('?segment=enterprise');
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 50); });
 
       expect(tracked).to.have.length(1);
@@ -380,7 +404,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow({ selector: '[' })])]]);
 
       const { decoratePznSlots } = await freshPzn('?segment=enterprise');
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 50); });
 
       expect(tracked).to.have.length(1);
@@ -393,7 +417,7 @@ describe('scripts/utils/analytics/pzn.js', () => {
       mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
 
       const { decoratePznSlots } = await freshPzn('?segment=enterprise');
-      decoratePznSlots(document);
+      stopPzn = decoratePznSlots(document);
       await new Promise((r) => { setTimeout(r, 50); });
 
       expect(tracked.some((e) => e.event === 'personalization_fallback')).to.be.false;

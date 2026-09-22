@@ -1,25 +1,18 @@
 /* Manual personalization test harness — not production CSS.
  *
- * Three reserved-space strategies for the personalized CTA slot, toggled via
- * `?reserve=none|height|box` (see test-hero.js), so the CLS question this task
- * poses — does a fixed-height/fixed-width reserved box actually avoid layout
- * shift when the two variant lengths differ, or doesn't it? — can be measured
- * per-strategy instead of assumed. `box`'s min-width below was sized by eyeballing
- * the longer label at 14px in the real `.btn` styles (styles/styles.css), not by
- * pixel-measuring it — exactly the kind of number this harness's own CLS pass
- * should confirm or falsify, not something to trust because it's in a comment.
+ * SUPERSEDED 2026-09-22: this file previously shipped three fixed
+ * reserved-space strategies (`?reserve=none|height|box`), one of them
+ * ("box") sized by eyeballing a label at 14px, admittedly not measured —
+ * exactly the gap a later adversarial review caught. The real fix
+ * (`reserveSpace()` in scripts/utils/analytics/pzn.js) measures the actual
+ * incoming content against a briefly-appended, invisible probe node at swap
+ * time and sets `min-width`/`min-height`/`display` inline, per swap — no
+ * fixed CSS strategy to choose between anymore. This file now only ships
+ * the base transition (identical to the real `lazy-styles.css` rule this
+ * harness exercises) plus the `?pznSkipReserve` comparison path (see
+ * pzn.js's `config.skipReserve`) for reproducing the pre-fix, no-reservation
+ * behavior on demand.
  */
-
-[data-pzn-reserve="height"] .pzn-slot {
-  display: inline-flex;
-  min-height: 3rem;
-}
-
-[data-pzn-reserve="box"] .pzn-slot {
-  display: inline-flex;
-  min-height: 3rem;
-  min-width: 23rem;
-}
 
 .pzn-slot {
   transition: opacity 200ms ease;
