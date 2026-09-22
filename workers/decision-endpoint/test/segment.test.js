@@ -6,16 +6,21 @@ import assert from 'node:assert/strict';
 import { deriveSegment, DEFAULT_SEGMENT, ENTERPRISE_SEGMENT } from '../handlers/segment.js';
 
 test('deriveSegment returns the enterprise segment above the employee threshold', () => {
-  const reveal = { company: { metrics: { employees: 1001 } } };
+  const reveal = { company: { metrics: { employees: 150 } } };
   assert.equal(deriveSegment(reveal), ENTERPRISE_SEGMENT);
 });
 
-test('deriveSegment returns the default segment at exactly the threshold (not "over")', () => {
-  const reveal = { company: { metrics: { employees: 1000 } } };
+test('deriveSegment returns the enterprise segment at exactly the threshold (100+ is inclusive)', () => {
+  const reveal = { company: { metrics: { employees: 100 } } };
+  assert.equal(deriveSegment(reveal), ENTERPRISE_SEGMENT);
+});
+
+test('deriveSegment returns the default segment just below the threshold', () => {
+  const reveal = { company: { metrics: { employees: 99 } } };
   assert.equal(deriveSegment(reveal), DEFAULT_SEGMENT);
 });
 
-test('deriveSegment returns the default segment below the threshold', () => {
+test('deriveSegment returns the default segment well below the threshold', () => {
   const reveal = { company: { metrics: { employees: 50 } } };
   assert.equal(deriveSegment(reveal), DEFAULT_SEGMENT);
 });
