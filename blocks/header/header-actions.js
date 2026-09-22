@@ -3,7 +3,7 @@ import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
 import { setColorScheme } from '../section-metadata/section-metadata.js';
 import { createElement } from '../../scripts/utils/dom.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
-import { toggleMenu, openMobileNav, closeMobileNav } from './header-nav.js';
+import { toggleMenu, openMobileNav, closeMobileNav } from './header-menu-state.js';
 
 export const HEADER_PATH = '/system/fragments/nav/header';
 

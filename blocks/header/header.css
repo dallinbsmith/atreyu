@@ -2,7 +2,6 @@
   header {
     --logo-width: 40px;
     --logo-height: 40px;
-    --mega-columns: 4;
 
     display: block;
     position: fixed;
@@ -12,8 +11,97 @@
     z-index: var(--z-index-nav);
     overflow: hidden;
     max-height: var(--header-height);
-    background-color: var(--color-alpha-dark-30);
-    backdrop-filter: saturate(150%) blur(125px);
+
+    /* Real-browser bug (2026-09-21, found via direct experimentation, not
+       just reasoning): this rule used to carry `background-color:
+       var(--color-alpha-dark-30); backdrop-filter: saturate(150%)
+       blur(125px);` directly. That made `header` itself a backdrop-filter
+       ancestor of `.mega-menu` (a real DOM descendant, nested several
+       levels deep under `.main-nav-section`) — confirmed via puppeteer
+       screenshot comparison at 1440x900 against /c2c: `.mega-menu`'s own,
+       untouched `backdrop-filter: saturate(150%) blur(125px)` (below,
+       inside the >=1240px block) rendered as almost no blur at all, because
+       a descendant's backdrop-filter samples only what's already
+       composited inside the nearest backdrop-filter ancestor's own layer —
+       and header's own layer is nearly empty at the mega-menu's screen
+       position (header's real painted content is just this ~80px nav row).
+
+       This is the same root cause (header's own backdrop-filter doing
+       something unexpected to a descendant) as the `header::before`
+       containing-block bug fixed further down this file for the dim
+       scrim, just a different symptom (backdrop-root isolation instead of
+       containing-block creation).
+
+       Tried and rejected: conditionally disabling this backdrop-filter
+       only while a menu is open (`header:has(.main-nav-item.is-open) {
+       backdrop-filter: none; }`) does fix `.mega-menu`'s blur, but it also
+       disables the SAME element's blur for header's own ~80px nav-bar row
+       — confirmed via puppeteer screenshot at a scroll position with a
+       real card grid directly behind the nav bar: link/button text became
+       legible against real background text ("Lonely Highway" bleeding
+       through under "Pricing"), a real legibility regression the panel's
+       own dim scrim does not cover (the scrim only dims the page *below*
+       the header's own row, not the row itself).
+
+       Fix: move the background/blur off `header` itself onto a
+       `header::before` pseudo-element sized to header's own box (`inset:
+       0`) and painted behind header's real content (`z-index: -1`, safe
+       here because header already establishes its own stacking context
+       via `position: fixed` + `z-index: var(--z-index-nav)` — the "step
+       zero" condition in this project's z-index rules). `.mega-menu` is a
+       descendant of `header`, not of `header::before` (a pseudo-element
+       has no real descendants), so it no longer has a backdrop-filter
+       ancestor at all once this moves — its own blur reaches the real page
+       behind it. Visually identical everywhere else: `::before` with
+       `inset: 0` fills the exact same box `header` painted before,
+       including the full-viewport-height box header grows to on mobile's
+       `&.is-mobile-open` (verified via puppeteer at 390x844 — pixel-
+       identical before/after this change). */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-color: var(--color-alpha-dark-30);
+      backdrop-filter: saturate(150%) blur(125px);
+
+      /* Seam fix (2026-09-22, real-browser screenshot inspection at 1440x900,
+         /c2c, mega-menu open): this element and .mega-menu (>=1240px block
+         below) used to independently blur two adjacent-but-separate boxes
+         (this one sized to header's own ~80px row, .mega-menu sized to only
+         its own panel below that row) — two independent backdrop-filter
+         operations over two different source regions can never blend
+         seamlessly at their shared edge, producing a visible horizontal
+         seam/color-shift right at y=80. Fix: .mega-menu's own box now
+         extends upward to cover the nav row too (see its `top`/`padding-top`
+         below), becoming the SINGLE continuous blur source for the whole
+         nav-row+panel region while a menu is open — this element goes inert
+         for that duration instead (see the `:has()` override in the
+         >=1240px block) so the two blurred layers don't stack and produce a
+         darker/more-opaque band across the top 80px than the rest of the
+         panel. This transition lets that handoff crossfade smoothly instead
+         of an instant pop, matching .mega-menu's own open/close duration.
+
+         This duration/easing MUST stay matched to .mega-menu's own opacity
+         transition (>=1240px block, `.main-nav-item.is-open .mega-menu`,
+         search for `z-index: -1` nearby) — real-browser sampling confirmed
+         the two crossfades are quantitatively complementary throughout the
+         handoff (this element's fading-out alpha + .mega-menu's fading-in
+         opacity × its own tint sum to a constant total density at every
+         sampled instant), which is what prevents both a visible double-blur
+         hump and a visible gap. Nothing enforces this pairing structurally
+         — if either side's duration or easing token changes without the
+         other, the crossfade desyncs. Change both together.
+
+         Bumped 2026-09-22 from --duration-200 to --duration-300 (with its
+         pair below) — the user felt the open gesture read as quicker than
+         production overall; production's own real timing isn't measurable
+         here (see the panel's own comment below), so this is a judgment
+         call on feel, not a re-measurement. */
+      transition:
+        background-color var(--duration-300) var(--ease-out),
+        backdrop-filter var(--duration-300) var(--ease-out);
+    }
 
     ul {
       margin: 0;
@@ -98,26 +186,161 @@
         padding: 0;
       }
 
-      li {
-        margin-block: var(--spacing-m);
-      }
-
       ul:not(:has(+ *)) {
         li:last-child {
           margin-bottom: 0;
         }
       }
 
-      .section {
-        margin-block: var(--spacing-l);
+      .nav-subcategory + .nav-subcategory {
+        margin-top: var(--spacing-l);
+      }
+
+      /* ref_nav_visual_parity_gaps memory: measured against real production —
+         the subcategory label ("Product"/"Industries") is a small uppercase
+         eyebrow, not a page-level heading. Reference the same tokens
+         `.rt-eyebrow` (rich-text.css) already uses rather than the literal
+         class itself — a block should depend on shared :root tokens, not on
+         another block's own CSS class.
+         Correction (2026-09-22): production's real font here is
+         "PP Neue Machina Inktrap", not Montserrat — Montserrat was only ever
+         a stand-in because this project didn't have the real font file.
+         This migration project now has direct licensing coverage for it
+         (frame.io's own brand font, same company, explicitly authorized by
+         the user 2026-09-22 — see styles/fonts.css for full provenance), so
+         this is the actual production font now, not an approximation. */
+      .nav-subcategory > :is(h1, h2, h3, h4, h5, h6) {
+        display: block;
+        margin: 0 0 var(--spacing-m);
+        font-family: var(--font-tertiary);
+        font-size: var(--eyebrow-font-size);
+        font-weight: 400;
+        letter-spacing: var(--eyebrow-letter-spacing);
+        text-transform: uppercase;
+        color: var(--color-iris);
       }
 
       &.language {
         max-width: var(--grid-container-width);
         margin: 0 auto;
+      }
+    }
 
-        .section {
-          margin: 0;
+    /* Code-review fix: this used to be shared with .mega-menu too
+       (`.menu, .mega-menu { .section { ... } }`), but header-subcategories.js's
+       flatten always discards the `.section` wrapper inside `.mega-menu` —
+       that half could no longer match anything. Only `.menu` (the language
+       dropdown) still has a real `.section` child. */
+    .menu {
+      .section {
+        margin-block: var(--spacing-l);
+      }
+
+      &.language .section {
+        margin: 0;
+      }
+    }
+
+    /* Real-browser measurement gap (2026-09-21 parity pass): this used to be
+       shared with .mega-menu too (`.menu, .mega-menu { li { margin-block:
+       var(--spacing-m); } }`), but production's real mega-menu item spacing
+       comes entirely from a taller per-row box, not inter-item margin —
+       measured item-to-item gap is exactly 0px (item1.y - item0.y ===
+       item0.height precisely). Only .menu (the small language dropdown)
+       still wants margin-based spacing; .mega-menu-links below (which reverts
+       to this file's top-level `li { margin: 0; }` default now that it's no
+       longer in scope here) gets its breathing room from padding instead. */
+    .menu li {
+      margin-block: var(--spacing-m);
+    }
+
+    /* Real-browser measurement gap (2026-09-21): production repeats the
+       trigger's own label as an h2 at the mega-menu's top-left. header-nav.js
+       prepends it as a sibling of .mega-menu-links (not inside the grid), so
+       it never becomes a grid item/column of its own. No font-size/weight/
+       letter-spacing override here — a bare h2 already matches the measured
+       48px/600/-0.04em via this project's own base h1-h6/h2 rules. */
+    .mega-menu-heading {
+      margin: 0 0 var(--spacing-l);
+    }
+
+    /* Real-browser measurement gap (2026-09-21 parity pass): production
+       numbers every mega-menu link with a genuine CSS counter (content:
+       counter(nav-counter, decimal-leading-zero)), not authored text, and it
+       resets independently per subcategory group — confirmed visually:
+       Enterprise's "Industries" group numbers 01→04 and its separate
+       "Use Cases" group independently numbers 01→03, not continuing 05→07.
+       Scoping counter-reset to `ul` (not `.nav-subcategory`) covers both
+       real shapes header-subcategories.js produces without any JS change:
+       a heading-labeled group (its own <ul> nested inside .nav-subcategory)
+       and a bare heading-less list (its own <ul> as .mega-menu-links' direct
+       child) — every list already gets its own independent count either way.
+       Measured styling: font-size 12px (this project's --eyebrow-font-size
+       token is an exact match, already used elsewhere in this file),
+       color rgba(234,234,255,0.5) (var(--color-alpha-light-50) is an exact
+       match, ditto), margin-right 6px (no exact token; --spacing-xs (4px)
+       is the closest). Production's font-family (NeueMachinaInktrap) wasn't
+       in this project's stack. Fix (2026-09-21, second parity pass) tried
+       substituting --font-secondary (Montserrat) below, reusing the same
+       stand-in this project already made for the only OTHER place
+       production uses NeueMachinaInktrap, the "PRODUCT"/"INDUSTRIES"
+       eyebrow labels above (.nav-subcategory > :is(h1,h2,h3,h4,h5,h6)).
+       Correction (2026-09-22, first pass): real-browser zoomed screenshots
+       comparing our rendered "01" against production's real rendered "01"
+       (same crop/scale) showed Montserrat's digits are noticeably
+       rounder/more humanist than production's numerals, which are
+       narrower and more geometric. Swapped to --font-family (FrameGothic,
+       this project's other real font, already used by the link text
+       itself) as a closer-matching substitute.
+       Correction (2026-09-22, second pass, same day): this project now has
+       direct licensing coverage for the REAL font, "PP Neue Machina
+       Inktrap" (frame.io's own brand font), sourced directly from
+       production's own CDN and explicitly authorized by the user for use
+       here (see styles/fonts.css for full provenance/licensing note). Both
+       the FrameGothic substitution above and the Montserrat one before it
+       are now obsolete for this rule — swapped to --font-tertiary (the
+       real font) below, confirmed via the same side-by-side screenshot
+       method to render the distinctive slashed "0" production actually
+       uses. The eyebrow label above has also been switched to the real
+       font (see that rule's own updated comment).
+
+       This same measurement pass also found production's per-row breathing
+       room: item-to-item margin is exactly 0px; the ~49px of visual room
+       comes from a tall per-row box instead. --spacing-s (8px) is this
+       project's closest token to the measured 49.1875px row height; applied
+       as padding-block on the link (which also fills the row as a click
+       target) rather than a bare height, since the flex row below still
+       needs to lay out the counter and text along the same line. */
+    .mega-menu-links {
+      ul {
+        counter-reset: nav-counter;
+      }
+
+      li {
+        counter-increment: nav-counter;
+      }
+
+      a {
+        display: flex;
+        align-items: baseline;
+        padding-block: var(--spacing-s);
+
+        /* Real-browser measurement gap (2026-09-21 parity pass): production's
+           real sub-nav link transition is color 0.6s cubic-bezier(0.28,
+           0.44, 0.49, 1) — an exact match for this project's own
+           --duration-600/--ease-out tokens (styles.css), slower than this
+           file's default --transition-color (--duration-300/--ease-out,
+           see the global `a` rule at the top of this file). Overriding
+           here rather than changing the shared default, which every other
+           link in the header still wants. */
+        transition: color var(--duration-600) var(--ease-out);
+
+        &::before {
+          content: counter(nav-counter, decimal-leading-zero);
+          margin-right: var(--spacing-s);
+          font-family: var(--font-tertiary);
+          font-size: var(--eyebrow-font-size);
+          color: var(--color-alpha-light-50);
         }
       }
     }
@@ -241,23 +464,141 @@
       .main-nav-link {
         display: block;
         line-height: var(--header-height);
+
+        /* Real-browser measurement gap (2026-09-21 parity pass): production
+           pairs every trigger that opens a mega-menu with a small chevron
+           that rotates open/closed; measured transition: transform 0.3s
+           cubic-bezier(0.42, 0, 0.28, 0.99) on the chevron itself.
+           --ease-basic-butter is already paired with the same shared glyph
+           elsewhere in this project (faq.css's chevron), just at
+           --duration-500 there. Reuses the shared /img/glyphs/chevron.svg
+           mask + background-color pattern (carousel.css's nav arrows)
+           rather than a new local copy — header.js is a second-or-later
+           consumer of an already-shared glyph per .claude/rules/assets.md.
+           header-nav.js only appends this element to a trigger that
+           actually has a .mega-menu ("Pricing" has none, so it never gets
+           one).
+
+           Correction (2026-09-22): the literal measured 0.3s above was the
+           closest single-value read from production, but the user felt the
+           whole open gesture (chevron + panel together) read as noticeably
+           quicker than production's real pacing — production's own panel
+           timing was never cleanly measurable (JS-driven, generic
+           `transition: all` in computed style, see the panel's own comment
+           below), so the two were never actually synced to a shared,
+           verified duration in the first place. Bumped to --duration-400 to
+           read as deliberately unhurried rather than snappy, matching the
+           direction of the panel's own bump below — a judgment call on
+           feel, not a re-measurement, since production's real combined
+           timing isn't measurable this way. */
+        .nav-chevron {
+          display: inline-block;
+          width: 10px;
+          height: 10px;
+          margin-left: var(--spacing-xs);
+          vertical-align: middle;
+          background-color: var(--color-light);
+          mask: url('/img/glyphs/chevron.svg') center / contain no-repeat;
+          transform: rotate(90deg);
+          transition:
+            transform var(--duration-400) var(--ease-basic-butter),
+            background-color var(--duration-400) var(--ease-out);
+        }
       }
 
+      /* ref_nav_visual_parity_gaps memory: line-height was declared here too,
+         duplicating .main-nav-link above — but this selector matches EVERY
+         anchor inside .main-nav-item, including every link inside an open
+         .mega-menu panel (a real, measured leak: 80px line-height on a
+         vertically-stacked dropdown list). .main-nav-link already carries
+         this rule and is only ever applied to the top-level trigger link
+         itself (header-nav.js), so dropping the duplicate here scopes
+         line-height correctly with no loss for the trigger row. */
       .main-nav-item a {
         font-size: var(--body-font-size-s);
         font-weight: 600;
         letter-spacing: 0.01em;
-        line-height: var(--header-height);
         color: var(--color-light);
       }
 
-      &:hover .main-nav-item a {
+      /* Real bug found via real-browser hover verification (CDP
+         getMatchedStylesForNode, not just reasoning), 2026-09-21: these two
+         rules used to target a bare `a` inside `.main-nav-item`, the exact
+         same leak class this file already documents fixing once for
+         line-height above ("this selector matches EVERY anchor inside
+         .main-nav-item, including every link inside an open .mega-menu
+         panel"). `:hover` bubbles up through every ancestor, so hovering
+         ANY link inside an open mega-menu also makes `.main-nav-item:hover`
+         true — `&:hover .main-nav-item:hover a` (no `:hover` on the
+         trailing `a`) then matched every link in that panel, not just the
+         one literally under the pointer, at a HIGHER specificity than the
+         mega-menu-links-scoped rules below, silently winning every time and
+         making the whole sibling-dim pattern below a no-op. Scoping both to
+         `.main-nav-link` (the trigger anchor only, never present inside a
+         mega-menu panel) is exactly the same fix already applied to
+         line-height — these rules were only ever meant to dim/brighten the
+         top-level trigger row, not reach into an open panel's own link
+         list. */
+      &:hover .main-nav-link {
         color: var(--color-alpha-light-50);
+
+        .nav-chevron {
+          background-color: var(--color-alpha-light-50);
+        }
       }
 
-      &:hover .main-nav-item:hover a,
-      .main-nav-item a:hover {
+      &:hover .main-nav-item:hover .main-nav-link,
+      .main-nav-link:hover {
         color: var(--color-light);
+
+        .nav-chevron {
+          background-color: var(--color-light);
+        }
+      }
+
+      /* Headless synthetic :hover couldn't reliably capture production's
+         exact target hover color (a recurring limitation this session
+         against this site) — reusing this project's own already-working
+         "dim unhovered siblings, keep hovered one bright" pattern instead
+         (the .main-nav-link pair directly above, for the top-level nav
+         row), scoped to the whole panel rather than per-group: every real
+         mega-menu authored so far renders as one flat list of peer links,
+         so panel-wide dimming reads the same as per-group dimming would,
+         with a simpler selector.
+
+         Nested here under `.main-nav-section`, not inside the `.mega-menu-
+         links` rule above (where this logically lives) — real-browser
+         verification (headless mouse-move, not just reasoning) caught a
+         specificity MISCALCULATION here, not an actual tie: as the
+         `:has()` math below explains, its own specificity contribution is
+         its argument's specificity (`a:hover` — one type, one
+         pseudo-class), so `.mega-menu-links:has(a:hover) a` is (0,2,2),
+         not (0,2,1) — it already beat `.main-nav-item a`'s (0,2,1) outright
+         on the type-selector count, before the plain-color rule's later
+         position in the file ever came into play. `.main-nav-section
+         .mega-menu-links:has(a:hover) a` is (0,3,2) — still unambiguously
+         higher, just not because it was rescuing a genuine tie.
+
+         Second real bug, same verification pass: `:has()`'s own
+         specificity contribution is the specificity of ITS ARGUMENT
+         (`a:hover` — one pseudo-class, one type), added on top of the
+         rest of the selector — so `:has(a:hover) a` outscores a plain
+         `a:hover` on the SAME element by one type-selector's worth, and the
+         dim rule below was winning even on the literally-hovered link,
+         dimming it instead of brightening it. `:any-link` on the brighten
+         rule is a deliberate, real selector, not decorative — it's always
+         true for any anchor with an href, added purely to add one more
+         pseudo-class to this rule's own specificity count so it reliably
+         outranks the dim rule above on the one link that's actually
+         hovered. */
+      .mega-menu-links {
+        &:has(a:hover) a {
+          color: var(--color-alpha-light-50);
+        }
+
+        a:hover:any-link {
+          color: var(--color-light);
+        }
       }
 
       .menu,
@@ -268,6 +609,10 @@
       .is-open {
         .main-nav-link {
           border-bottom: 1px solid var(--color-alpha-light-10);
+
+          .nav-chevron {
+            transform: rotate(-90deg);
+          }
         }
 
         .menu,
@@ -291,6 +636,40 @@
         border-bottom: 1px solid var(--color-alpha-light-10);
       }
     }
+
+    /* Per CLAUDE.md/accessibility.md's prefers-reduced-motion convention —
+       matching the established pattern (faq.css's chevron, same shared
+       glyph): null the transition only, leave the end-state value changes
+       (rotate, opacity/visibility/transform) intact, so state still changes
+       instantly rather than removing the state change itself.
+
+       Real bug found via real-browser verification (2026-09-21,
+       page.emulateMediaFeatures + getComputedStyle, not just reasoning):
+       this override used to target a bare `.nav-chevron`, compiling to
+       `header .nav-chevron` (0,1,1) — the chevron's REAL transition lives
+       on `.main-nav-section .main-nav-link .nav-chevron` (0,3,1, see
+       above), so the shallow override lost the specificity tie and did
+       nothing; getComputedStyle confirmed the full animated transition
+       value survived unchanged even with reduced-motion active. Re-nested
+       to match the real rule's exact selector depth, mirroring how
+       faq.css's own override works (a genuine specificity tie with its own
+       base rule, resolved by this override appearing later in source) —
+       not "override the transition inside a prefers-reduced-motion block
+       at any depth," which is what the previous, non-functional version
+       assumed. The mega-menu's own override moved to the >=1240px block
+       below, next to its real transition rule (the `.mega-menu` rule
+       inside `.main-nav-section .main-nav-item`) — that rule only exists
+       at that breakpoint, and needs to appear after it in source order to
+       win the same way. */
+    @media (prefers-reduced-motion: reduce) {
+      .main-nav-section .main-nav-link .nav-chevron {
+        transition: none;
+      }
+
+      &::before {
+        transition: none;
+      }
+    }
   }
 
   @media (width >= 1240px) {
@@ -306,18 +685,147 @@
 
       .menu,
       .mega-menu {
-        background-color: var(--color-shaded);
         padding: var(--spacing-xl) 0;
         position: absolute;
         left: 0;
         right: 0;
+      }
+
+      /* ref_nav_visual_parity_gaps memory: production's real mega-menu
+         panel measures padding: 176px 0 106px — ours was measurably too
+         small at a flat 32px. Scoped to .mega-menu only (not .menu, the much
+         smaller language dropdown, which keeps the original padding above).
+         Expressed as multiples of this project's own --spacing-xxl token
+         rather than production's literal pixels, landing reasonably close
+         to its top-heavier proportions (144px/96px vs. production's
+         176px/106px) without hardcoding numbers that belong to another
+         site's design system.
+
+         Fix (2026-09-21 parity pass): the horizontal gutter now comes from
+         the middle value of THIS SAME rule's own 3-value physical `padding`
+         shorthand (top | right-and-left | bottom — not `padding-inline`,
+         which is a separate, logical-property declaration this rule never
+         actually used; corrected wording only, this project has no RTL
+         locale per its own real-locale-list memory so the two would render
+         identically here) on THIS SAME full-bleed box (still left:0; right:0;
+         no max-width — see the shared .menu, .mega-menu rule above) instead
+         of a max-width + margin: 0 auto that used to live on the grid rule
+         below. That old approach shrank the panel's own background along
+         with its content — measured: production's real panel background is
+         full-viewport-width (x:0, no max-width); only its content is
+         gutter-inset via a 12-col grid. The middle padding value here
+         resolves against this box's own 100% width (which is already
+         stretched to header's full width), so the resulting content width is
+         mathematically the same as the old max-width: var(--grid-container-
+         width) — just achieved without shrinking the box that also paints
+         the background.
+
+         Corrected fix (2026-09-21, second pass same day): `background-color:
+         transparent` above was wrong — it was built from feedback that said
+         "transparent" but, per the author's own follow-up correction after
+         seeing it live, meant "opaque frosted glass" (soft shapes/light
+         bleeding through, no legible text/images behind it), not a flat
+         see-through dim. A fresh real-browser measurement against
+         frame.io's own production panel found the actual mechanism is TWO
+         separate layers: (1) a bounded, content-sized glass panel directly
+         behind the open panel's own content — measured height 605px against
+         an ~864px available viewport, i.e. sized to its own content, not
+         stretched to fill the viewport — with background-color
+         rgba(13, 13, 24, 0.3) and, doing the real legibility-destroying
+         work, backdrop-filter: saturate(1.5) blur(125px); and (2) a separate,
+         much subtler full-viewport dim behind ordinary page content
+         (z-index: -1) — that second layer is what body::before below
+         already reproduces (same alpha, same fixed/full-viewport approach),
+         so it needed no change.
+
+         This project has no separate backdrop wrapper element for layer 1 —
+         .mega-menu itself has no height/inset/bottom rule anywhere (confirmed
+         by grep), so it is already sized to its own content by default;
+         giving IT the real background + blur directly reproduces layer 1
+         with no new element. Both values reuse exact existing precedent
+         rather than inventing new ones: `--color-alpha-dark-30`
+         (styles.css) is already declared as rgb(13 13 24 / 30%) — a literal
+         exact match for production's measured rgba(13, 13, 24, 0.3), not an
+         approximation — and header's own `&::before` (top of this file)
+         already pairs that same token with backdrop-filter: saturate(150%)
+         blur(125px), an exact match for production's measured blur radius
+         and saturate multiplier (1.5 = 150%). Reusing both real,
+         already-used values here rather than deriving new ones via
+         color-mix().
+
+         Earlier note here claimed an oversized decorative watermark heading
+         on /features/c2c stayed partially legible through this blur as an
+         inherent, accepted Gaussian-blur-math limitation. Re-tested after
+         the header::before fix above (2026-09-21): that heading is now
+         fully obscured at every scroll offset checked. The original
+         "limitation" was actually a symptom of the backdrop-filter-ancestor
+         bug fixed above — header's own backdrop-filter was crippling this
+         rule's real-world blur strength at the time, not a Gaussian-blur
+         ceiling. No known legibility gap remains. */
+
+      /* Seam fix (2026-09-22): this box used to start at its default,
+         auto-resolved `top` (the static position right below the ~80px nav
+         row — the box's own hypothetical in-flow position, since .mega-menu
+         is a descendant of the trigger link and has no top/bottom set here
+         historically). Explicit `top: 0` instead pins it flush with header's
+         own containing-block edge (header establishes the containing block
+         for this absolutely-positioned descendant via its own `position:
+         fixed`) — i.e. flush with the TOP of the nav row, not its bottom —
+         so this one box's background/blur now spans the nav row AND the
+         panel below it as a single continuous region, with no internal seam
+         (see the `.header::before` comment at the top of this file for the
+         full root-cause writeup). `padding-top` gains an extra
+         `var(--header-height)` on top of the original panel padding so the
+         panel's real CONTENT (the heading, below) still starts exactly
+         where it did before — only the background box grew, not the visible
+         content's position. Verified empirically (puppeteer, 1440x900):
+         box top lands at y=0 (header's own top), heading position unchanged
+         from before this fix. */
+      .mega-menu {
+        top: 0;
+        padding: calc(var(--spacing-xxl) * 3 + var(--header-height)) calc((100% - var(--grid-container-width)) / 2) calc(var(--spacing-xxl) * 2);
+        background-color: var(--color-alpha-dark-30);
+        backdrop-filter: saturate(150%) blur(125px);
+      }
+
+      /* Seam fix, part 2: while a menu is open, .mega-menu above is now the
+         SOLE continuous blur/tint source for the full nav-row+panel region
+         (its box already covers both, per the `top: 0` change above) — so
+         header's own `&::before` (top of this file) must go inert for that
+         same duration, or the top 80px would get blurred/tinted TWICE
+         (header::before AND the extended .mega-menu, stacked), landing
+         visibly darker/more opaque than the rest of the panel. header::before
+         keeps its normal, always-on frosted look the rest of the time (no
+         menu open) — this only fires while `.main-nav-item.is-open` exists
+         anywhere under header. Scoped to this >=1240px block because that's
+         the only place .mega-menu's box actually extends upward this way;
+         below this breakpoint the mobile accordion never reaches this state.
+         Verified (puppeteer, real-browser): no visible flash/flicker at open
+         or close — header::before's own `transition` (added alongside it,
+         top of file) crossfades this instead of an instant pop. */
+      &:has(.main-nav-item.is-open)::before {
+        background-color: transparent;
+        backdrop-filter: none;
+      }
+
+      /* Real-browser measurement gap (2026-09-21 parity pass, first version):
+         background-color used to be shared with .mega-menu too (`.menu,
+         .mega-menu { background-color: var(--color-shaded); ... }`). Split
+         apart because .menu (the small language dropdown) wants a flat
+         opaque fill with no blur, while .mega-menu (see above, corrected
+         same day) wants the real measured glass treatment — same alpha
+         family (--color-alpha-dark-30) but paired with backdrop-filter, not
+         --color-shaded's flat, unblurred fill. Kept as its own rule here —
+         already the only .menu-specific rule in the file, so the property
+         lives directly on it rather than in a second `.menu { }` block. */
+      .menu {
+        background-color: var(--color-shaded);
 
         &.language {
           display: none;
           max-width: initial;
           margin: 0;
           width: 180px;
-          background-color: var(--color-shaded);
           padding: var(--spacing-xl);
           position: absolute;
           left: auto;
@@ -350,6 +858,27 @@
           gap: var(--spacing-l);
         }
 
+        /* ref_nav_visual_parity_gaps memory: production's real sub-nav
+           links (typography_bodyLarge) measure 24px/400/31.2px line-height —
+           the base .main-nav-item a rule (14px/600) leaks into every link
+           inside an open .mega-menu, including these. .main-nav-link (the
+           trigger row) is untouched and already correct — out of scope.
+           --heading-font-size-m is the closest existing token to 24px
+           specifically as it resolves at this >=1240px breakpoint (25px) —
+           reuse over inventing a new token or hardcoding a pixel value.
+           Real-browser measurement (2026-09-21) caught a specificity bug on
+           the first attempt: nesting this directly under `header` (one
+           class, `.mega-menu a`) loses to the base rule's `.main-nav-section
+           .main-nav-item a` (two classes) regardless of source order —
+           equal-or-higher specificity is required, not just later position
+           in the file. Nesting here, under `.main-nav-section` too, ties
+           specificity so this later (media-query) declaration wins. */
+        .mega-menu a {
+          font-size: var(--heading-font-size-m);
+          font-weight: 400;
+          line-height: 1.25;
+        }
+
         .main-nav-item {
           border-bottom: initial;
 
@@ -358,22 +887,279 @@
             margin: initial;
           }
 
+          /* Real-browser measurement gap (2026-09-21 parity pass): opening
+             the panel was an instant, un-animated display:none<->block flip.
+             Production animates this open via a JS-driven library (measured
+             computed style is a generic `transition: all` at rest — not
+             something to reverse-engineer exact timing/easing from), so this
+             is a from-scratch design using this project's own tokens, not a
+             reproduction of a pinned production value.
+
+             No existing precedent anywhere in this repo animates a display
+             none<->block/grid toggle (confirmed via repo-wide grep — no
+             @starting-style/transition-behavior usage exists yet). Chose the
+             simpler, universally-supported path over @starting-style +
+             transition-behavior: allow-discrete: swap what "closed" means
+             for .mega-menu specifically from display:none to opacity/
+             visibility/pointer-events, keeping the ORIGINAL display:none
+             <->block toggle (.main-nav-section .menu, .mega-menu above,
+             untouched) fully intact below this >=1240px breakpoint, where
+             .mega-menu is still normal-flow content inside the mobile
+             accordion and must collapse to zero height when closed.
+             Scoped here, at >=1240px only, .mega-menu is already
+             `position: absolute` (see the shared `.menu, .mega-menu` rule
+             above) — overriding display:none to display:block for the
+             closed state costs nothing layout-wise, since an absolutely
+             positioned box never occupies space in normal flow regardless
+             of its own display value.
+
+             visibility is included alongside opacity/pointer-events
+             deliberately, not just for a11y-tree hygiene: per the CSS
+             Transitions spec, visibility is one of a small set of
+             "discrete" properties that IS transition-aware — its computed
+             value flips at the START of the transition when animating
+             toward "visible" and at the END when animating toward "hidden"
+             — so pairing it with opacity here doesn't fight the fade, it
+             keeps the panel out of the accessibility tree and unclickable
+             (pointer-events: none) for the entire duration it reads as
+             transparent, with no separate JS/aria-hidden wiring needed.
+
+             Specificity note: this closed-state rule is nested three classes
+             deep (.main-nav-section .main-nav-item .mega-menu) specifically
+             so it outranks the always-applying, non-media-query closed rule
+             above it in the file (.main-nav-section .mega-menu, two
+             classes) — otherwise display:none would win here and opacity
+             could never animate from a real starting box. --duration-300/
+             --ease-out are existing tokens (styles.css), not new values;
+             translateY(-8px) is a deliberately small, tasteful lift, not a
+             measured production number (see the file-level comment above
+             for why one isn't available here).
+
+             Bumped 2026-09-22 from --duration-200 to --duration-300 (its
+             pair, header::before's own crossfade above, must move with it —
+             see that rule's comment) — the user felt this open gesture read
+             as quicker than production. Production's own real panel timing
+             isn't independently measurable (JS-driven, generic
+             `transition: all` on its resting elements, not a static value
+             this project can copy), so this is a deliberate feel-based
+             adjustment, not a corrected measurement. */
+          .mega-menu {
+            display: block;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translateY(-8px);
+
+            /* `z-index: -1` (added 2026-09-22, seam fix): the shared-context,
+               small-local-integer tier of this project's z-index rules
+               (header already establishes its own stacking context) — this
+               element's box now extends up over the nav row too (see
+               .mega-menu's `top: 0` in the shared rule above), and must
+               paint behind header's own real content (brand logo, nav
+               trigger row, actions/CTA buttons) rather than covering it,
+               since .main-nav-section isn't the last DOM child of
+               .header-content. */
+            z-index: -1;
+
+            /* This opacity transition's duration/easing MUST stay matched to
+               header::before's own background-color/backdrop-filter
+               transition (base `header { }` rule, `&::before`, near the top
+               of this file) — the two crossfade together during the seam
+               fix's blur handoff (header::before fades out its own blur as
+               this element fades in, taking over as the sole blur source).
+               Real-browser sampling confirmed the two are quantitatively
+               complementary at every instant; changing one duration/easing
+               without the other desyncs the handoff (a visible double-blur
+               hump or a visible gap). Change both together. */
+            transition:
+              opacity var(--duration-300) var(--ease-out),
+              transform var(--duration-300) var(--ease-out),
+              visibility var(--duration-300) var(--ease-out);
+          }
+
+          /* Grow-on-open animation (2026-09-22, real-browser gap): the fade
+             above was the only motion on this panel — production visibly
+             grows it in height too, not just fades/slides it in. No existing
+             precedent in this repo animates a variable, content-driven
+             height (confirmed via repo-wide grep — no
+             @starting-style/transition-behavior usage exists), and JS
+             height-measurement would mean re-reading layout on every content
+             change. Standard CSS-only technique instead: `grid-template-rows:
+             0fr` -> `1fr` on an intrinsically-sized grid container resolves
+             AFTER layout to the item's own real (max-content) height, no JS
+             measurement needed.
+
+             Scoped to .mega-menu-links alone, not the whole .mega-menu panel
+             (including .mega-menu-heading) — tried first and rejected via
+             real-browser measurement: making .mega-menu itself the grid
+             container with heading+links as two EQUAL `1fr 1fr` row tracks
+             forces both rows toward the SAME final size (an intrinsically-
+             sized grid with multiple flexible tracks distributes by shared
+             flex fraction, sized to the LARGEST item's needs, not each
+             item's own independent content height) — confirmed empirically:
+             the heading's own rendered height nearly quadrupled (49px to
+             191px) to match the links list's height, a real visual
+             regression, not just an animation-timing nitpick. A single
+             flexible track has no such distribution problem, which is also
+             why the standard version of this technique always wraps ALL
+             collapsing content in one wrapper element rather than giving
+             multiple sibling items their own tracks. Effect: the heading
+             appears with the existing opacity fade above (a small, roughly
+             fixed-height row) while the links list grows in height below it
+             — still visibly reads as one continuous height-grow.
+
+             `overflow: hidden` + `min-height: 0` are both required for the
+             genuine 0fr collapse, and — real bug found via real-browser
+             measurement, not just reasoning — both must live on the grid
+             ITEM (.mega-menu-links's own direct children: a `.nav-subcategory`
+             wrapper or a bare `<ul>`, per header-subcategories.js's flatten),
+             not on .mega-menu-links itself (the grid CONTAINER). Grid items
+             default to `min-height: auto`, which floors THE ITEM at its own
+             min-content size regardless of its track's `fr` value — putting
+             the override on the container instead does nothing, since the
+             container was never the thing being floored. First attempt (both
+             properties on .mega-menu-links) measured a real, wrong result: a
+             closed height of 403.9px, not ~0 — confirmed via an isolated,
+             minimal repro (single grid + single wrapped child, properties on
+             the child) that the technique works correctly once scoped this
+             way. Verified on the real block after moving them (puppeteer,
+             mid-transition computed-style sampling): a real, smooth
+             grid-template-rows interpolation, not an instant snap.
+
+             Bumped 2026-09-22 from --duration-200 to --duration-300, matching
+             the panel's own opacity/transform bump above — the whole open
+             gesture (scrim handoff, panel fade, grow) should read as one
+             unhurried motion, not several pieces moving at different
+             speeds. */
+          .mega-menu-links {
+            display: grid;
+            grid-template-rows: 0fr;
+            grid-auto-rows: 0fr;
+            transition:
+              grid-template-rows var(--duration-300) var(--ease-out),
+              grid-auto-rows var(--duration-300) var(--ease-out);
+
+            /* Content-driven, not a hardcoded count
+               (ref_mega_menu_and_layer_order_findings memory) — auto-fit
+               collapses empty tracks automatically: 1 group fills the row,
+               2 groups make 2 columns, N groups make N, with no JS/column-
+               count coordination needed as content changes. Declared here
+               (not gated to .is-open) since .mega-menu-links must already be
+               `display: grid` in the closed state too, for the
+               grid-template-rows transition above to have a real starting
+               value to interpolate from — a display:block-to-grid jump
+               can't animate. */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+            /* Code-review finding (2026-09-22): every mega-menu authored so
+               far has few enough content groups to fit in one row at this
+               breakpoint's column width, so `grid-template-rows` (the
+               single EXPLICIT row) was the only track the open/close
+               animation drove — dormant, not yet hit by real content, but
+               if a future mega-menu ever has enough groups to overflow into
+               a second row, CSS Grid's default `grid-auto-flow: row` sizes
+               that IMPLICIT row via `grid-auto-rows` (defaults to `auto`
+               if unset), which wouldn't collapse on close since nothing
+               animated it. Mirroring the same 0fr/1fr pair onto
+               `grid-auto-rows` closes that gap the same way, for any
+               number of wrapped rows, not just the first. */
+
+            > * {
+              overflow: hidden;
+              min-height: 0;
+            }
+          }
+
           &.is-open {
             .main-nav-link {
               border-bottom: initial;
             }
 
             .mega-menu {
-              display: grid;
-              grid-template-columns: repeat(var(--mega-columns), 1fr);
-              max-width: var(--grid-container-width);
-              margin: 0 auto;
+              opacity: 1;
+              visibility: visible;
+              pointer-events: auto;
+              transform: translateY(0);
+            }
 
-              .section {
-                margin-block: initial;
+            /* Fix (2026-09-21 parity pass): retargeted from .mega-menu itself
+               onto .mega-menu-links (header-nav.js's dedicated wrapper for
+               the flattened content, sibling to .mega-menu-heading) — see
+               the .mega-menu padding comment above for why the grid/
+               max-width/centering can no longer live on the same element
+               that also paints the panel's full-bleed background. The
+               max-width: var(--grid-container-width); margin: 0 auto; this
+               rule used to carry is gone entirely: .mega-menu-links's own
+               width is already exactly var(--grid-container-width), via the
+               parent .mega-menu's padding-inline, so no further constraint
+               is needed here. */
+            .mega-menu-links {
+              grid-template-rows: 1fr;
+              grid-auto-rows: 1fr;
+
+              /* Single-group aesthetics (ref_mega_menu_and_layer_order_
+                 findings memory): with exactly one content unit, a 1-column
+                 grid would leave the links in one tall column spanning the
+                 full row width — CSS multicol instead, since list items
+                 just need to flow, not align across columns like a grid
+                 does. Code-review fix: the only child is a .nav-subcategory
+                 wrapper (heading+list) in every case authored so far, so
+                 "ul:only-child" never matched — but header-subcategories.js
+                 also flattens a bare heading-less <ul> directly (no
+                 wrapper), which IS the only child in that shape. Cover both:
+                 a <ul> that is itself the only child, or a <ul> nested one
+                 level inside it. Code-review regression fix: an `:is()`
+                 combined with the outer `>` requires whatever matches
+                 INSIDE `:is()` to itself be the direct child — that broke
+                 the wrapped shape, since its real `<ul>` is a GRANDCHILD
+                 (nested inside `.nav-subcategory`), not a direct child, so
+                 neither `:is()` branch could satisfy that outer `>` for it.
+                 Two independent branches instead: the first keeps its own
+                 `>` (bare <ul> IS the direct-child only-child); the second
+                 drops the inner `>` entirely (plain descendant combinator),
+                 so it matches a <ul> at any depth inside the only-child
+                 wrapper, not just as its direct child. */
+              &:has(> :only-child) {
+                > ul:only-child,
+                > :only-child ul {
+                  columns: 2 200px;
+                  column-gap: var(--spacing-l);
+                }
               }
             }
           }
+        }
+      }
+
+      /* Reduced-motion override for the mega-menu open/close transition
+         (paired with the .nav-chevron override in the base `header { }`
+         block, header.css:~582) — moved here, right after its real
+         transition rule (header.css:811-821, `.main-nav-section
+         .main-nav-item .mega-menu`, specificity (0,3,1)), rather than
+         living in that earlier, unconditional block. Two requirements,
+         both real bugs when missed (confirmed via real-browser
+         page.emulateMediaFeatures + getComputedStyle, 2026-09-21): this
+         override must be nested to the SAME selector depth as the real
+         rule (a shallow `header .mega-menu` override, (0,1,1), loses the
+         specificity tie and silently does nothing), and it must appear
+         AFTER the real rule in source order (specificity ties are broken
+         by source order, not by nesting location — an identically-scoped
+         override placed earlier in the file still loses). This media
+         query has no width condition of its own because it doesn't need
+         one: the real transition it neutralizes only exists at this
+         >=1240px breakpoint in the first place, so this rule is a no-op
+         everywhere else. */
+      @media (prefers-reduced-motion: reduce) {
+        .main-nav-section .main-nav-item .mega-menu {
+          transition: none;
+        }
+
+        /* Same requirement, separate selector: the grow-on-open
+           grid-template-rows transition (2026-09-22) lives on
+           .mega-menu-links, not .mega-menu itself — needs its own override
+           at the same matching selector depth for the same reason as above. */
+        .main-nav-section .main-nav-item .mega-menu-links {
+          transition: none;
         }
       }
 
@@ -411,6 +1197,41 @@
           height: initial;
         }
       }
+    }
+
+    /* Real-browser measurement gap (2026-09-21 parity pass): tried a
+       `header::before` scrim first and confirmed empirically (a red-fill
+       repro page, not just reasoning) that it does not work — header's own
+       `backdrop-filter` makes header itself the containing block for its
+       OWN position:fixed pseudo-element descendants, so `inset: 0` resolved
+       against header's own small nav-bar box, not the viewport (the red
+       fill only ever covered that ~80px strip in the repro, confirmed via
+       screenshot). The scrim has to live outside header's own box entirely
+       — body:has(...)::before, gated to this >=1240px breakpoint only,
+       since that's the one place the mega-menu genuinely floats over
+       unrelated page content: below this breakpoint .is-mobile-open already
+       turns header into a full-viewport overlay via its own blur, so
+       there's no "rest of the page" left to dim.
+
+       This pseudo-element is body-appended, not contained within header's
+       own stacking context, so the "small local integer" tier of this
+       project's z-index rules doesn't apply — var(--z-index-body-overlay)
+       is the correct global token here: it sits below header
+       (var(--z-index-nav), which contains the actual panel content) but
+       above ordinary, non-positioned page content, exactly the "non-modal
+       fixed/body-appended UI" case that token is for.
+
+       color-mix(in srgb, var(--color-dark) 60%, transparent) reproduces
+       production's measured rgba(0, 0, 0, 0.6) exactly (--color-dark is
+       pure rgb(0 0 0 / 100%)) while still satisfying this project's
+       stylelint color-token rule, which requires a var(--*) token rather
+       than a literal color value on any *-color property. */
+    body:has(header .main-nav-item.is-open)::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-index-body-overlay);
+      background-color: color-mix(in srgb, var(--color-dark) 60%, transparent);
     }
   }
 }

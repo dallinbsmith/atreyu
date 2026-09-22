@@ -1,7 +1,8 @@
-import { getMetadata } from '../../ak.js';
+import { getMetadata, loadArea, getConfig } from '../../ak.js';
 import { track, EVENTS } from './analytics.js';
 import { sanitizeMarkup } from '../security/sanitize.js';
 import { hasConsent } from './consent.js';
+import { redecorate } from '../lifecycle.js';
 
 const VISITOR_KEY = 'atreyu-visitor-id';
 
@@ -132,12 +133,78 @@ const resolveVariantIndex = (allVariants, experiment, visitorId, weights) => {
 };
 
 // Same extraction rationale as resolveVariantIndex above.
-const applyChallenger = async (isControl, variant, target) => {
+//
+// UC-02 fix (see ref_nav_architecture_research memory): a raw
+// target.replaceChildren() has no idea how to rebuild the block-specific
+// structure (nav classes, mega-menu wiring, footer section classification)
+// the swapped-in content needs — that knowledge belongs to whichever block
+// owns the selector, not to this file. `selector` is only set on the late
+// phase (UC-02, chrome-scoped swaps); the early/full-page-swap path (selector
+// undefined, target === <main>) already gets a real decoration pass from
+// scripts.js's own loadPage() calling loadArea() right after runExperiment()
+// returns, so redecorating here too would be redundant for that path.
+// loadArea({ area: target }) runs the generic section/block decoration pass
+// (wrapping raw rows into .section/.default-content, loading any blocks)
+// before redecorate() runs the block's own targeted decorator — same two-step
+// order adobe/aem-experimentation's own decorateFunction hook follows.
+//
+// Code-review fix (real bug, not hypothetical): these two calls run in a
+// SEPARATE try/catch from the fetch+swap above, not the same one. By the
+// time loadArea()/redecorate() can throw, applyVariant() has already
+// replaced target's children — there is no "control fallback" left to fail
+// open to, the original content is gone. loadArea() calls loadBlock(), a
+// real dynamic import() that can reject on a transient network failure, and
+// a registered redecorator can throw on an unexpected input shape. Silently
+// swallowing that here (the old shared catch's "control fallback" comment)
+// would leave undecorated challenger HTML on the page while claiming
+// nothing happened. Logged via getConfig().log(), matching this project's
+// existing promise-chain convention (ak.js's loadExperience/loadBlock
+// .catch() calls) — a real authoring/config mismatch (bad selector, missing
+// redecorator) should be loud, not invisible.
+//
+// Depth note (harmless today, flagged for future redecorators): loadArea()'s
+// decorateSections() treats `target`'s OWN direct <div> children as new
+// "sections" to decorate — it does not decorate `target` itself. When
+// `target` is already a decorated element (e.g. header.js's
+// '.main-nav-section', which is itself .section-classed), the swapped-in
+// content ends up one DOM level deeper than the original (an extra nested
+// .section wrapper) rather than replacing at the same depth. Confirmed
+// harmless for '.main-nav-section'/'.footer-content' because their
+// redecorators (decorateNavSection/decorateFooterContent) and the matching
+// CSS both use unscoped descendant selectors (querySelector, not `:scope >`
+// or a direct-child CSS selector) — but a future redecorator written with a
+// `:scope > .foo` selector, or CSS relying on `target > .foo`, would silently
+// stop matching after a swap. Verify against this depth shift before adding
+// one.
+const applyChallenger = async (isControl, variant, target, selector) => {
   if (isControl) return;
   try {
     const html = await fetchVariantContent(variant);
-    if (html) applyVariant(html, target);
-  } catch { /* control fallback — original content stays */ }
+    if (!html) return;
+    applyVariant(html, target);
+  } catch { return; } // fail-open — control/baseline content stays; nothing has been swapped yet
+
+  if (!selector) return;
+  try {
+    await loadArea({ area: target });
+    await redecorate(selector, target);
+  } catch (ex) {
+    // See the comment above this function — the swap already landed by this
+    // point, so this is a real failure to surface, not a fail-open no-op.
+    // No `el` arg: `target` is a live, already-swapped-in, visually correct
+    // nav/footer/actions section — error.js's dev-mode `el` path physically
+    // rewraps whatever `el` it's given into a `.has-error` box, which is the
+    // right move for a block that failed to render at all, not for content
+    // that rendered fine and only failed to *redecorate*. `getConfig().log(ex)`
+    // with no second arg still logs, just skips that DOM mutation — see
+    // linting.md's promise-chain guidance for this exact no-`el` case.
+    // Awaited (unlike most fire-and-forget `.catch((ex) => log(ex))` call
+    // sites elsewhere in this codebase): this is the tail of an async/await
+    // try/catch, not a promise chain with more work after it, so there is
+    // nothing lost by waiting for the (async, dynamic-import-backed) logger
+    // to actually finish before this function resolves.
+    await getConfig().log(ex);
+  }
 };
 
 // `phase` distinguishes WHERE in the page-load sequence this runs, not which
@@ -200,7 +267,7 @@ export const runExperiment = async (phase = 'early') => {
   const variant = allVariants[bucket];
   const isControl = bucket === 0;
 
-  await applyChallenger(isControl, variant, target);
+  await applyChallenger(isControl, variant, target, selector);
 
   // Schema reconciled 2026-08-28 to match pzn.js/P0-46's convention: always
   // 'a-b-split-test' here since this mechanism has no audience/segment

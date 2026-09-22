@@ -1,5 +1,6 @@
 import { expect } from '@esm-bundle/chai';
-import { setConfig } from '../../scripts/ak.js';
+import { setConfig, loadArea } from '../../scripts/ak.js';
+import { redecorate } from '../../scripts/utils/lifecycle.js';
 import decorate from '../../blocks/footer/footer.js';
 
 // footer.js fetches a fragment page (via loadFragmentWithFallback →
@@ -62,6 +63,33 @@ describe('footer', () => {
     expect(el.querySelector('.footer-content')).to.exist;
     expect(el.querySelector('.section-legal')).to.not.exist;
     expect(el.querySelector('.section-copyright')).to.not.exist;
+  });
+
+  it('UC-02: redecorates .footer-content via the real registered redecorator, keeping the wrapper class after a chrome-swap-style replacement', async () => {
+    restoreFetch = stubFetch(fragmentHtml([legalSection, copyrightSection]));
+    const el = block();
+    await decorate(el);
+
+    // Simulate experimentation.js's applyChallenger: replaceChildren() with
+    // raw, undecorated variant content shaped like a real fetched
+    // `.plain.html` response (two top-level <div> "sections"), then run the
+    // exact same loadArea() + redecorate() sequence applyChallenger runs for
+    // a selector-scoped (UC-02) swap.
+    const footerTarget = el.querySelector('.footer-content');
+    footerTarget.replaceChildren();
+    footerTarget.insertAdjacentHTML('beforeend', '<div><ul><li><a href="/new-privacy">New Privacy</a></li></ul></div>');
+    footerTarget.insertAdjacentHTML('beforeend', '<div><p>&copy; 2027 Frame.io. All rights reserved.</p></div>');
+
+    await loadArea({ area: footerTarget });
+    await redecorate('.footer-content', footerTarget);
+
+    // The wrapper's own box-layout class must survive — this is the real bug
+    // the Senior Software Engineer's review caught: a raw replaceChildren()
+    // swap has no way to know .footer-content's layout CSS depends on this
+    // class staying on the wrapper.
+    expect(footerTarget.classList.contains('footer-content')).to.be.true;
+    expect(footerTarget.querySelector('.section-legal a[href="/new-privacy"]')).to.exist;
+    expect(footerTarget.querySelector('.section-copyright')?.textContent).to.include('2027');
   });
 
   it('double-decorate does not duplicate content', async () => {

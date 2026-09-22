@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import auditPzn from '../../../scripts/utils/analytics/pzn-audit.js';
+import auditPzn, { auditExperimentCollision } from '../../../scripts/utils/analytics/pzn-audit.js';
 
 // pzn.js memoizes `variantsPromise` at module scope, and that promise is a
 // singleton shared across every importer — a statically-imported dependency
@@ -158,6 +158,141 @@ describe('scripts/utils/analytics/pzn-audit.js', () => {
 
     // Only one valid row survives → no collision, even though the raw sheet had
     // two differing selectors in the same placement+segment.
+    expect(warnCalls).to.have.length(0);
+  });
+});
+
+describe('scripts/utils/analytics/pzn-audit.js — auditExperimentCollision (ADR-003)', () => {
+  let warnCalls;
+  let originalWarn;
+
+  beforeEach(() => {
+    warnCalls = [];
+    originalWarn = console.warn;
+    // eslint-disable-next-line no-console -- capturing the warning IS the test
+    console.warn = (...args) => warnCalls.push(args);
+  });
+
+  afterEach(() => {
+    // eslint-disable-next-line no-console
+    console.warn = originalWarn;
+  });
+
+  const buildRoot = (html) => {
+    const root = document.createElement('div');
+    root.innerHTML = html;
+    return root;
+  };
+  const loadRows = (rows) => async () => rows;
+
+  it('warns when experiment-selector CONTAINS a pzn slot target (late chrome swap over a pzn slot)', async () => {
+    const root = buildRoot(`
+      <div class="main-nav-section">
+        <div data-pzn="nav-cta"><a class="cta-link">Default</a></div>
+      </div>`);
+    await auditExperimentCollision({
+      experimentSelector: '.main-nav-section',
+      root,
+      load: loadRows([variantRow({ placement: 'nav-cta', selector: '.cta-link' })]),
+    });
+
+    expect(warnCalls).to.have.length(1);
+    expect(warnCalls[0][0]).to.include('ADR-003');
+    expect(warnCalls[0][0]).to.include('nav-cta');
+    expect(warnCalls[0][0]).to.include('.main-nav-section');
+  });
+
+  it('warns when experiment-selector and a pzn selector resolve to the SAME element', async () => {
+    const root = buildRoot(`
+      <div class="chrome" data-pzn="hero">
+        <a class="shared cta-link">Default</a>
+      </div>`);
+    await auditExperimentCollision({
+      experimentSelector: '.shared',
+      root,
+      load: loadRows([variantRow({ placement: 'hero', selector: '.cta-link' })]),
+    });
+
+    expect(warnCalls).to.have.length(1);
+  });
+
+  it('does NOT warn when the experiment target and pzn target are disjoint', async () => {
+    const root = buildRoot(`
+      <div class="wrap">
+        <div class="main-nav-section"><a class="nav-link">nav</a></div>
+        <div data-pzn="body-cta"><a class="cta-link">cta</a></div>
+      </div>`);
+    await auditExperimentCollision({
+      experimentSelector: '.main-nav-section',
+      root,
+      load: loadRows([variantRow({ placement: 'body-cta', selector: '.cta-link' })]),
+    });
+
+    expect(warnCalls).to.have.length(0);
+  });
+
+  it('does NOT warn when the page has no experiment-selector (not a late-phase experiment)', async () => {
+    const root = buildRoot('<div data-pzn="hero"><a class="cta-link">x</a></div>');
+    await auditExperimentCollision({
+      experimentSelector: '',
+      root,
+      load: loadRows([variantRow({ placement: 'hero', selector: '.cta-link' })]),
+    });
+
+    expect(warnCalls).to.have.length(0);
+  });
+
+  it('does NOT warn when the experiment target is not present on this page', async () => {
+    const root = buildRoot('<div data-pzn="hero"><a class="cta-link">x</a></div>');
+    await auditExperimentCollision({
+      experimentSelector: '.not-on-this-page',
+      root,
+      load: loadRows([variantRow({ placement: 'hero', selector: '.cta-link' })]),
+    });
+
+    expect(warnCalls).to.have.length(0);
+  });
+
+  it('does NOT warn or throw on a malformed experiment-selector', async () => {
+    const root = buildRoot('<div data-pzn="hero"><a class="cta-link">x</a></div>');
+    let error = null;
+    await auditExperimentCollision({
+      experimentSelector: '::::',
+      root,
+      load: loadRows([variantRow({ placement: 'hero', selector: '.cta-link' })]),
+    }).catch((e) => { error = e; });
+
+    expect(error).to.equal(null);
+    expect(warnCalls).to.have.length(0);
+  });
+
+  it('does NOT warn when the [data-pzn] placement has no authored variant row', async () => {
+    const root = buildRoot(`
+      <div class="main-nav-section">
+        <div data-pzn="ghost"><a class="cta-link">x</a></div>
+      </div>`);
+    await auditExperimentCollision({
+      experimentSelector: '.main-nav-section',
+      root,
+      load: loadRows([variantRow({ placement: 'other-placement', selector: '.cta-link' })]),
+    });
+
+    expect(warnCalls).to.have.length(0);
+  });
+
+  it('ignores a malformed pzn selector without warning or throwing', async () => {
+    const root = buildRoot(`
+      <div class="main-nav-section">
+        <div data-pzn="nav-cta"><a class="cta-link">x</a></div>
+      </div>`);
+    let error = null;
+    await auditExperimentCollision({
+      experimentSelector: '.main-nav-section',
+      root,
+      load: loadRows([variantRow({ placement: 'nav-cta', selector: '::bad' })]),
+    }).catch((e) => { error = e; });
+
+    expect(error).to.equal(null);
     expect(warnCalls).to.have.length(0);
   });
 });

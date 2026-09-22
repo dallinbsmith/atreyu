@@ -1,4 +1,4 @@
-@layer reset, base, tokens, blocks, sections, utilities;
+@layer reset, base, tokens, sections, blocks, utilities;
 
 @layer tokens {
   /* stylelint-disable color-no-hex -- :root is the sole token-definition source; nothing outside :root may hardcode a hex color */
@@ -94,6 +94,13 @@
 
     /* font secondary */
     --font-secondary: montserrat, "Montserrat-fallback", "Courier New", monospace;
+
+    /* font tertiary — real production font "PP Neue Machina Inktrap"
+       (frame.io's own brand font, licensed for this migration project; see
+       styles/fonts.css for provenance/authorization). Single Regular weight
+       only. Currently used narrowly: mega-menu eyebrow labels + counter
+       numerals in blocks/header/header.css. */
+    --font-tertiary: neuemachinainktrap, "NeueMachinaInktrap-fallback", "Arial", sans-serif;
 
     /* z-index scale — GLOBAL tier only. A block's own internal layering
        (background-behind-text, decorative pseudo-elements) never belongs
