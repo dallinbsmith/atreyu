@@ -145,6 +145,19 @@ aem-sidekick {
       }
     }
   }
+
+  /* Personalization slot (scripts/utils/analytics/pzn.js). Reduced-motion
+     already covered globally above (`transition-duration: 0.01ms !important`
+     on `*`) — no separate override needed here. min-width/min-height and
+     display are set inline by reserveSpace() per swap, measured against real
+     content, not guessed here. */
+  .pzn-slot {
+    transition: opacity 200ms ease;
+  }
+
+  .pzn-slot.pzn-transitioning {
+    opacity: 0;
+  }
 }
 
 /* Error overlay */
