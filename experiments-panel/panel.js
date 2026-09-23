@@ -5,16 +5,19 @@ import {
   SHEETS, fetchText, isPagePath, fetchJson, pathExists, readPage, readSheet, sourceOf,
   waitForDaContext,
 } from './sources.js';
+import renderBuild from './form.js';
 
 const params = new URLSearchParams(window.location.search);
 // Page comes from Sidekick (?referrer=), a direct link (?page=), or the DA
-// editor sidebar (postMessage context). Top-level await: nothing renders first.
+// editor sidebar (postMessage context, which also brings the port used to
+// insert into the doc). Top-level await: nothing renders first.
 const resolvePage = async () => {
   const given = params.get('referrer') ?? params.get('page');
-  if (given || window.parent === window) return new URL(given ?? '/', window.location.origin);
-  return new URL((await waitForDaContext()) ?? '/', window.location.origin);
+  if (given || window.parent === window) return { url: new URL(given ?? '/', window.location.origin), port: null };
+  const da = await waitForDaContext();
+  return { url: new URL(da?.path ?? '/', window.location.origin), port: da?.port ?? null };
 };
-const pageUrl = await resolvePage();
+const { url: pageUrl, port: daPort } = await resolvePage();
 const pagePath = pageUrl.pathname;
 const view = document.querySelector('#view');
 
@@ -127,11 +130,18 @@ const renderSite = async () => {
   );
 };
 
+// A page that 404s in preview can still get a new test built for it.
+const renderBuildTab = async () => {
+  const pageHtml = await fetchText(pagePath).catch(() => null);
+  renderBuild({ view, pagePath, port: daPort, pageHtml });
+};
+const RENDER = { page: renderPage, site: renderSite, build: renderBuildTab };
+
 const show = async (name) => {
   for (const tab of document.querySelectorAll('[data-tab]')) tab.setAttribute('aria-selected', `${tab.dataset.tab === name}`);
   view.replaceChildren(h('p', {}, 'Loading...'));
   try {
-    await (name === 'site' ? renderSite() : renderPage());
+    await RENDER[name]();
   } catch (ex) {
     view.replaceChildren(h('p', { className: 'error' }, `Could not load: ${ex.message}`));
   }
@@ -142,4 +152,5 @@ document.querySelector('nav').addEventListener('click', ({ target }) => {
   if (tab) show(tab.dataset.tab);
 });
 document.querySelector('#refresh').addEventListener('click', () => show(document.querySelector('[aria-selected="true"]').dataset.tab));
-show(toClassName(params.get('view') ?? '') === 'site' ? 'site' : 'page');
+const initial = toClassName(params.get('view') ?? '');
+show(RENDER[initial] ? initial : 'page');
