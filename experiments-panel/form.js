@@ -86,7 +86,7 @@ export default ({ view, pagePath, port, pageHtml }) => {
   const refresh = () => {
     const unset = [...form.querySelectorAll('select')]
       .filter((el) => el.selectedIndex < 0 && !loadErrors.has(el.name))
-      .map((el) => ({ level: 'error', message: `Choose a ${el.name} option.` }));
+      .map((el) => ({ level: 'error', message: `Choose an option for ${el.name}.` }));
     const checks = check(values(), { pagePath, audiences: AUDIENCE_NAMES });
     const found = [...loadErrors.values(), ...unset, ...checks];
     issues.replaceChildren(...found.map(({ level, message }) => h('li', { className: level }, message)));
@@ -110,8 +110,7 @@ export default ({ view, pagePath, port, pageHtml }) => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     refresh();
-    // Enter in a text field submits implicitly (no submitter); only the button inserts.
-    if (!e.submitter || submit.disabled) return;
+    if (submit.disabled) return;
     sending = true;
     submit.disabled = true;
     const html = toTableHtml(values());
@@ -133,6 +132,10 @@ export default ({ view, pagePath, port, pageHtml }) => {
     } finally {
       setTimeout(done, 1000);
     }
+  });
+  // Enter in a text field would click Insert implicitly; only an explicit click inserts.
+  form.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target instanceof HTMLInputElement) e.preventDefault();
   });
   form.addEventListener('input', ({ target }) => {
     inputVersion += 1;
