@@ -3,10 +3,18 @@ import { statusOf, validate, toClassName } from '../scripts/utils/experiments/co
 import { AUDIENCE_NAMES } from '../scripts/utils/experiments/audiences.js';
 import {
   SHEETS, fetchText, isPagePath, fetchJson, pathExists, readPage, readSheet, sourceOf,
+  waitForDaContext,
 } from './sources.js';
 
 const params = new URLSearchParams(window.location.search);
-const pageUrl = new URL(params.get('referrer') ?? params.get('page') ?? '/', window.location.origin);
+// Page comes from Sidekick (?referrer=), a direct link (?page=), or the DA
+// editor sidebar (postMessage context). Top-level await: nothing renders first.
+const resolvePage = async () => {
+  const given = params.get('referrer') ?? params.get('page');
+  if (given || window.parent === window) return new URL(given ?? '/', window.location.origin);
+  return new URL((await waitForDaContext()) ?? '/', window.location.origin);
+};
+const pageUrl = await resolvePage();
 const pagePath = pageUrl.pathname;
 const view = document.querySelector('#view');
 

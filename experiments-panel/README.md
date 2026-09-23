@@ -28,11 +28,30 @@ plugin; `test/utils/experiments/config.test.js` checks this against the vendored
 Open it directly for local work: `/experiments-panel/index.html?page=/some/path` (add `&view=site`
 for the sitewide view).
 
-## Registering the Sidekick button
+## Registering it
+
+### Option A (recommended): DA editor sidebar, via DA Config
+
+Self-service in the UI, which is how the Library was registered (the admin API returns 403 on
+this org; see F-51/F-56 in `artifacts/research/eds-poc-findings.md`). Open
+`https://da.live/config#/dallinbsmith/atreyu/`, go to the `library` sheet, and add a row:
+
+| title | path | experience |
+|---|---|---|
+| Experiments | https://main--atreyu--dallinbsmith.aem.page/experiments-panel/index.html | inline |
+
+Use the absolute preview URL: DA resolves relative paths to `aem.live`, which would show published
+rather than preview content. Save the config, open any page doc in DA, and pick "Experiments" in
+the library panel. DA posts the doc path to the panel (verified in adobe/da-live
+`blocks/edit/da-library/da-library.js`), and the panel accepts that message only from
+`https://da.live`.
+
+### Option B: Sidekick button on preview/live pages
 
 Sidekick reads plugins from the persisted site config, not from this repo. Merge this entry into
 `sidekick.plugins` via the admin config service
-(https://www.aem.live/docs/config-service-setup#update-sidekick-configuration):
+(https://www.aem.live/docs/config-service-setup#update-sidekick-configuration). This needs admin
+API rights, which this org does not currently have.
 
 ```json
 {
@@ -46,12 +65,20 @@ Sidekick reads plugins from the persisted site config, not from this repo. Merge
 }
 ```
 
-## Dedicated experiments sheet
+## Where to author tests
 
-EDS only applies `/metadata-experiments.json` as bulk metadata once it is listed in the site
-config's metadata sources (admin `POST /config/{org}/sites/{site}/metadata.json` with
-`{"source": ["/metadata.json", "/metadata-experiments.json"]}`). Page metadata always beats bulk
-metadata, which is why the panel flags that override.
+Use the standard bulk metadata sheet, `/metadata.json` (a DA sheet named `metadata` at the site
+root). EDS applies it with no config change. Add `URL`, `Experiment`, `Experiment Variants` and,
+optionally, `Experiment Split` / `Experiment Audience` / `Experiment Start Date` /
+`Experiment End Date` / `Experiment Status` columns. Preview and publish the sheet after each change.
+
+- Create the sheet once in DA's UI and never move, copy or rename it. DA's move/copy drops the
+  sheet binding (F-57); in-place edits are safe.
+- A dedicated `/metadata-experiments.json` is supported by EDS, but only once it is listed in the
+  site config's metadata sources (admin `POST /config/{org}/sites/{site}/metadata.json` with
+  `{"source": ["/metadata.json", "/metadata-experiments.json"]}`), which needs admin API rights.
+  The panel already reads both sheets.
+- Page metadata always beats bulk metadata, which is why the panel flags that override.
 
 ## Notes
 

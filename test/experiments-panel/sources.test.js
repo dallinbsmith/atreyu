@@ -1,6 +1,6 @@
 import { expect } from '@esm-bundle/chai';
 import {
-  readPage, readSheet, sourceOf, isPagePath,
+  readPage, readSheet, sourceOf, isPagePath, pathFromDaContext, waitForDaContext,
 } from '../../experiments-panel/sources.js';
 
 const PAGE = `<html><head>
@@ -65,5 +65,22 @@ describe('experiments-panel/sources.js', () => {
     for (const bad of ['javascript:alert(1)', '//evil.example', '/\\evil.example', '\\evil', '/features/**', 'https://x.y/', '/a:b']) {
       expect(isPagePath(bad), bad).to.equal(false);
     }
+  });
+
+  it('maps a DA editor context path to the served page path', () => {
+    expect(pathFromDaContext({ path: '/pricing' })).to.equal('/pricing');
+    expect(pathFromDaContext({ path: '/index' })).to.equal('/');
+    expect(pathFromDaContext({ path: '/features/index' })).to.equal('/features/');
+    for (const bad of [undefined, {}, { path: 'pricing' }, { path: '//evil.example' }]) {
+      expect(pathFromDaContext(bad)).to.equal(null);
+    }
+  });
+
+  it('accepts the DA handshake only from da.live, and times out to null', async () => {
+    const pending = waitForDaContext(200);
+    window.dispatchEvent(new MessageEvent('message', { origin: 'https://evil.example', data: { ready: true, context: { path: '/evil' } } }));
+    window.dispatchEvent(new MessageEvent('message', { origin: 'https://da.live', data: { ready: true, context: { path: '/pricing' } } }));
+    expect(await pending).to.equal('/pricing');
+    expect(await waitForDaContext(50)).to.equal(null);
   });
 });

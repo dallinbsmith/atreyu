@@ -5,6 +5,7 @@ import { readExperiment, matchesPattern, toClassName } from '../scripts/utils/ex
 // (admin API) before EDS applies it; the panel reads it either way.
 export const SHEETS = ['/metadata.json', '/metadata-experiments.json'];
 const TIMEOUT_MS = 5000;
+export const DA_ORIGIN = 'https://da.live';
 
 const request = (url, init = {}) => fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(TIMEOUT_MS), ...init });
 
@@ -82,4 +83,29 @@ export const sourceOf = (test, rows, pagePath) => {
     label: 'Page metadata (page doc)',
     issue: `Overrides sheet row "${expected.cfg.id}" (${expected.source}, ${expected.pattern}): the page doc wins, so the sheet row is ignored here.`,
   };
+};
+
+// DA library plugin handshake (adobe/da-live blocks/edit/da-library): about
+// 750ms after load DA posts { ready, context: { org, repo, path } } to the
+// iframe. Only the path is used; the IMS token in the same message is ignored.
+// DA doc paths carry no extension, and an `index` doc serves its folder.
+export const pathFromDaContext = (context) => {
+  const path = context?.path;
+  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) return null;
+  return path.replace(/(^|\/)index$/, '$1') || '/';
+};
+
+export const waitForDaContext = (timeoutMs = 3000) => {
+  const { promise, resolve } = Promise.withResolvers();
+  const onMessage = (e) => {
+    if (e.origin !== DA_ORIGIN || !e.data?.ready) return;
+    const path = pathFromDaContext(e.data.context);
+    if (path) resolve(path);
+  };
+  window.addEventListener('message', onMessage);
+  const timer = setTimeout(() => resolve(null), timeoutMs);
+  return promise.finally(() => {
+    clearTimeout(timer);
+    window.removeEventListener('message', onMessage);
+  });
 };
