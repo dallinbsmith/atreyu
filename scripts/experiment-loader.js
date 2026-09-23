@@ -18,6 +18,7 @@ import { loadArea } from './ak.js';
 import { hasConsent } from './utils/analytics/consent.js';
 import { track, EVENTS } from './utils/analytics/analytics.js';
 import { getVisitorId } from './utils/analytics/visitor-id.js';
+import { AUDIENCES } from './utils/experiments/audiences.js';
 
 const ASSIGNMENTS_KEY = 'unified-decisioning-experiments';
 const PREVIEW_PARAMS = ['experiment', 'audience'];
@@ -25,10 +26,7 @@ const PREVIEW_PARAMS = ['experiment', 'audience'];
 export const config = {
   prodHost: 'frame.io',
   isProd: () => ENV === 'prod',
-  audiences: {
-    mobile: () => window.matchMedia('(width < 768px)').matches,
-    desktop: () => window.matchMedia('(width >= 768px)').matches,
-  },
+  audiences: AUDIENCES,
   // Plugin reads `decorateFunction` (its README says `decorationFunction`,
   // which is silently ignored). Only used for fragment-level manifest swaps.
   decorateFunction: (el) => loadArea({ area: el }),

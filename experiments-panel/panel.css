@@ -1,0 +1,107 @@
+/* Authoring tool UI (Sidekick palette), not site chrome: deliberately
+   standalone, no site tokens or layers. */
+:root {
+  color-scheme: light dark;
+  font: 14px/1.4 system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: Canvas;
+  color: CanvasText;
+}
+
+.bar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: Canvas;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
+}
+
+button {
+  padding: 4px 10px;
+  border: 1px solid color-mix(in srgb, CanvasText 25%, transparent);
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  &[aria-selected="true"] {
+    background: color-mix(in srgb, CanvasText 12%, transparent);
+    font-weight: 600;
+  }
+}
+
+main {
+  padding: 12px;
+}
+
+.card {
+  margin-block-end: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
+  border-radius: 8px;
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+}
+
+.meta,
+.path,
+.note {
+  margin: 4px 0;
+  opacity: 0.75;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+  background: color-mix(in srgb, CanvasText 12%, transparent);
+
+  &.running { background: color-mix(in srgb, green 30%, transparent); }
+  &.scheduled { background: color-mix(in srgb, royalblue 30%, transparent); }
+  &.ended { background: color-mix(in srgb, gray 30%, transparent); }
+  &.blocked { background: color-mix(in srgb, red 35%, transparent); }
+}
+
+table {
+  width: 100%;
+  margin-block: 8px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 4px 6px;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+  text-align: start;
+  vertical-align: top;
+}
+
+.issues {
+  margin: 4px 0;
+  padding-inline-start: 18px;
+
+  .error { color: color-mix(in srgb, red 80%, CanvasText); }
+  .warn { color: color-mix(in srgb, darkorange 85%, CanvasText); }
+}
+
+.ok { color: color-mix(in srgb, green 70%, CanvasText); }
+.serving { font-weight: 600; }
+.error { color: color-mix(in srgb, red 80%, CanvasText); }
