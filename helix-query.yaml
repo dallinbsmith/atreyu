@@ -7,8 +7,6 @@ indices:
       - /tools/**
       # A/B test variant pages (experiments-panel/README.md): never indexed or in the sitemap.
       - /v/**
-      # Authoring templates (DA library), not public pages.
-      - /library/**
     target: /query-index.json
     properties:
       title:
