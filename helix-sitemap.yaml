@@ -1,8 +1,12 @@
 # Built from the pages index (helix-query.yaml) rather than AEM's no-config
 # default, which lists every published page. That index excludes /system/,
 # /tools/ and the A/B variant pages under /v/ (experiments-panel/README.md).
+# origin: no cdn.prod.host is configured, so without it URLs render as
+# https://undefined/. Keeps the aem.live host the no-config sitemap used;
+# switch to https://frame.io at production cutover.
 sitemaps:
   default:
+    origin: https://main--atreyu--dallinbsmith.aem.live
     source: /query-index.json
     destination: /sitemap.xml
     lastmod: YYYY-MM-DD
