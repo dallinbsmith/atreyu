@@ -75,6 +75,40 @@ API rights, which this org does not currently have.
 
 ## Where to author tests
 
+### On one page: the Experiment table (recommended for business users)
+
+Insert "Experiment" from the DA library, or type a table whose header cell is `Experiment`,
+anywhere in the page doc:
+
+| Experiment | |
+|---|---|
+| Test Name | c2c-headline (required; becomes the test id in analytics and preview links) |
+| Variants | link(s) to the variant page(s), one per line |
+| Variant Names | readable names, comma-separated, in the same order |
+| Split | % of all visitors per variant, comma-separated (control gets the rest; blank = even split) |
+| Audience | `mobile` or `desktop` (blank = everyone) |
+| Start Date / End Date | e.g. 2026-10-01 (blank = open) |
+| Status | `active` or `inactive` |
+
+Blank rows are ignored. `scripts/utils/experiments/block.js` turns the table into the same head
+metadata the plugin reads and removes it before anything renders, so it never shows on the page.
+The table replaces all other whole-page experiment metadata on that page (page metadata and sheet
+rows); the panel warns when that happens. Only the first table on a page is used.
+
+Library setup (one-time, in DA):
+
+1. Create the doc `/system/library/blocks/experiment` containing the table above with example
+   values, then preview it.
+2. Add a row to the `/system/library/blocks` sheet in place: `name` = `experiment`,
+   `path` = `/system/library/blocks/experiment`. Edit the sheet in place; never move or copy it (F-57).
+   Preview it.
+3. Optional value suggestions (type `/` in a value cell): add an `options` tab to the same sheet
+   with columns `blocks`, `key`, `values`. For example: `experiment` | `Audience` | `mobile|desktop`,
+   and `experiment` | `Status` | `active|inactive`. Adding a tab turns the sheet's JSON into a
+   multi-sheet file, so reopen the library afterwards and check the Blocks list still loads.
+
+### Across many pages: the metadata sheet
+
 Use the standard bulk metadata sheet, `/metadata.json` (a DA sheet named `metadata` at the site
 root). EDS applies it with no config change. Add `URL`, `Experiment`, `Experiment Variants` and,
 optionally, `Experiment Split` / `Experiment Audience` / `Experiment Start Date` /

@@ -174,5 +174,41 @@ describe('scripts/experiment-loader.js', () => {
       expect(document.querySelector('#headline').textContent).to.equal('Control headline');
       expect(tracked.find((t) => t.event === 'experiment').props.variantName).to.equal('control');
     });
+
+    const pageWithTable = (split) => {
+      document.body.innerHTML = `<main><div><h1 id="headline">Control headline</h1></div>
+        <div><div class="experiment">
+          <div><div>Test Name</div><div>Table Test</div></div>
+          <div><div>Variants</div><div><a href="/variants/table-b">/variants/table-b</a></div></div>
+          <div><div>Split</div><div>${split}</div></div>
+        </div></div></main>`;
+    };
+
+    it('runs a whole-page test authored in the Experiment table', async () => {
+      setConsent({ analytics: true, personalization: true });
+      const requested = [];
+      window.fetch = async (url) => {
+        requested.push(`${url}`);
+        return new Response(
+          '<html><head></head><body><main><div><h1 id="headline">Challenger headline</h1></div></main></body></html>',
+          { status: 200, headers: { 'content-type': 'text/html' } },
+        );
+      };
+      pageWithTable('100');
+      await runExperimentation();
+      expect(requested.some((u) => u.includes('/variants/table-b'))).to.equal(true);
+      expect(document.querySelector('#headline').textContent).to.equal('Challenger headline');
+      expect(document.querySelector('.experiment')).to.equal(null);
+      expect(tracked.find((t) => t.event === 'experiment').props.variantId).to.equal('table-test:challenger-1');
+    });
+
+    it('without consent, still removes the Experiment table and serves control', async () => {
+      window.fetch = async () => { throw new Error('no fetch expected'); };
+      pageWithTable('100');
+      expect(await runExperimentation()).to.equal(null);
+      expect(document.querySelector('.experiment')).to.equal(null);
+      expect(document.querySelectorAll('main > div').length).to.equal(1);
+      expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+    });
   });
 });

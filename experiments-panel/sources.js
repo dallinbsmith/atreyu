@@ -1,4 +1,5 @@
 import { readExperiment, matchesPattern, toClassName } from '../scripts/utils/experiments/config.js';
+import { findExperimentBlocks, readExperimentBlock } from '../scripts/utils/experiments/block.js';
 
 // Bulk metadata sources, applied in this order (later wins). The dedicated
 // experiments sheet needs registering in the site config's metadata sources
@@ -50,7 +51,17 @@ export const readPage = (html, pagePath) => {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const tests = [];
   const page = readExperiment(headMeta(doc), pagePath);
-  if (page) tests.push({ scope: 'Whole page', cfg: page });
+  // Mirrors applyExperimentBlock: a table that names a test replaces all other
+  // whole-page experiment metadata (page metadata and sheets alike).
+  const [table, ...extra] = findExperimentBlocks(doc);
+  const tableMeta = table && Object.fromEntries(readExperimentBlock(table));
+  const fromTable = tableMeta && readExperiment(tableMeta, pagePath);
+  if (fromTable) {
+    const notes = [];
+    if (page) notes.push(`Replaces test "${page.id}" from page metadata or a sheet: the Experiment table wins.`);
+    if (extra.length) notes.push(`${extra.length + 1} Experiment tables on this page: only the first is used.`);
+    tests.push({ scope: 'Whole page', cfg: fromTable, from: 'table', notes });
+  } else if (page) tests.push({ scope: 'Whole page', cfg: page });
   const sections = [...doc.querySelectorAll('main > div')];
   for (const sm of doc.querySelectorAll('main .section-metadata')) {
     const rows = [...sm.children].filter((row) => row.children[1])
@@ -75,6 +86,7 @@ export const isPagePath = (value) => /^\/(?![/\\])[^*\\:]*$/.test(value);
 
 // Page metadata beats bulk metadata, and later sheet rows beat earlier ones.
 export const sourceOf = (test, rows, pagePath) => {
+  if (test.from === 'table') return { label: 'Experiment table (page doc)' };
   if (test.scope !== 'Whole page') return { label: 'Section metadata (page doc)' };
   const expected = rows.findLast((r) => matchesPattern(r.pattern, pagePath));
   if (!expected) return { label: 'Page metadata (page doc)' };

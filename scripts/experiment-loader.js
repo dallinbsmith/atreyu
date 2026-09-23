@@ -19,6 +19,7 @@ import { hasConsent } from './utils/analytics/consent.js';
 import { track, EVENTS } from './utils/analytics/analytics.js';
 import { getVisitorId } from './utils/analytics/visitor-id.js';
 import { AUDIENCES } from './utils/experiments/audiences.js';
+import { applyExperimentBlock } from './utils/experiments/block.js';
 
 const ASSIGNMENTS_KEY = 'unified-decisioning-experiments';
 const PREVIEW_PARAMS = ['experiment', 'audience'];
@@ -86,6 +87,8 @@ export const trackExposures = (experiments = []) => {
 };
 
 export const runExperimentation = async (doc = document) => {
+  // Always, even without consent: the Experiment table must never render.
+  applyExperimentBlock(doc);
   if (!isEnabled()) return null;
   if (!hasConsent('personalization') && !isPreview()) {
     clearAssignments();

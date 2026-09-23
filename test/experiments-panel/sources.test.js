@@ -34,6 +34,18 @@ describe('experiments-panel/sources.js', () => {
     expect(section.cfg.variants.map((v) => v.split)).to.deep.equal([50, 25, 25]);
   });
 
+  it('reads the Experiment table as the whole-page test and flags what it replaces', () => {
+    const table = '<div class="experiment"><div><div>Test Name</div><div>Table Test</div></div><div><div>Variants</div><div><a href="/v/t">t</a></div></div></div>';
+    const html = PAGE.replace('<div><h1>Hero</h1></div>', `<div><h1>Hero</h1></div><div>${table}${table}</div>`);
+    const [page, section] = readPage(html, '/pricing');
+    expect(page.cfg.id).to.equal('table-test');
+    expect(page.cfg.variants.map((v) => v.path)).to.deep.equal(['/pricing', '/v/t']);
+    expect(sourceOf(page, [], '/pricing').label).to.equal('Experiment table (page doc)');
+    expect(page.notes[0]).to.contain('Replaces test "page-test"');
+    expect(page.notes[1]).to.contain('2 Experiment tables');
+    expect(section.cfg.id).to.equal('hero-copy');
+  });
+
   it('returns no tests for a page without experiment metadata', () => {
     expect(readPage('<html><head></head><body><main><div></div></main></body></html>', '/')).to.deep.equal([]);
   });

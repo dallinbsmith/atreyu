@@ -70,10 +70,11 @@ const checkVariantPages = async (card, cfg) => {
   else card.querySelector('.ok')?.replaceWith(h('ul', { className: 'issues' }, item));
 };
 
-const testCard = ({ scope, cfg }, rows) => {
-  const source = sourceOf({ scope, cfg }, rows, pagePath);
+const testCard = (test, rows) => {
+  const { scope, cfg } = test;
+  const source = sourceOf(test, rows, pagePath);
   const issues = validate(cfg, { audiences: AUDIENCE_NAMES });
-  if (source.issue) issues.push({ level: 'warn', message: source.issue });
+  for (const message of [source.issue, ...(test.notes ?? [])].filter(Boolean)) issues.push({ level: 'warn', message });
   const serving = servingNow(cfg.id);
   const card = h(
     'article',
