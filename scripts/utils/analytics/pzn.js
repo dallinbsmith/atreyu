@@ -120,6 +120,63 @@ const config = {
   variantsMalformed: DEBUG_PARAMS_ALLOWED && params.has('variantsMalformed'),
 };
 
+// Message-match (client-side targeting axis — ADR-004/ADR-005, CRO first
+// slice). Derives an effective segment from the inbound campaign in the
+// visitor's own URL: no network round-trip, no vendor. Ships against the
+// existing flat placement/segment sheet via a namespaced `campaign:<value>`
+// segment token (cro-first-slice-spec.md B2), so it never collides with
+// firmographic segment values and needs no `conditions` column and no audit
+// change.
+const MSGMATCH_CACHE_KEY = 'pzn-msgmatch-segment-v1';
+
+// Lowercase, collapse anything outside [a-z0-9-] to a single dash, trim dashes,
+// cap length. The token is only ever string-compared against authored segment
+// cells and used as an analytics value and cache payload, never injected into
+// the DOM, but normalizing keeps matching predictable and the cache key safe.
+const normalizeToken = (raw) => {
+  const value = (raw ?? '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64);
+  return value || null;
+};
+
+// A live `utm_campaign` on the current page wins and (re)seeds the session; an
+// internal navigation that drops the param reuses the stored token so the axis
+// survives the rest of the session. The caller gates this on consent, so the
+// sessionStorage write never happens pre-consent (cro-first-slice-spec.md B6).
+const storeCampaign = (value) => {
+  try {
+    sessionStorage.setItem(MSGMATCH_CACHE_KEY, value);
+  } catch {
+    // storage blocked/full — non-fatal, the token still applies on this page
+  }
+};
+
+const readStoredCampaign = () => {
+  try {
+    return sessionStorage.getItem(MSGMATCH_CACHE_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const messageMatchSegment = () => {
+  const live = normalizeToken(params.get('utm_campaign'));
+  if (live) {
+    storeCampaign(live);
+    return `campaign:${live}`;
+  }
+  const stored = readStoredCampaign();
+  return stored ? `campaign:${stored}` : null;
+};
+
+// Which targeting axis produced a segment, for clean measurement splits in the
+// Segment -> Redshift -> Looker pipeline without parsing the segment string
+// downstream. Null for the pre-segment fallbacks (no variant authored, consent
+// denied) that never resolve one.
+const axisOf = (segment) => {
+  if (!segment) return null;
+  return segment.startsWith('campaign:') ? 'message-match' : 'firmographic';
+};
+
 export const readCookie = (name) => document.cookie
   .split('; ')
   .find((row) => row.startsWith(`${name}=`))
@@ -325,6 +382,7 @@ const applyVariant = (slot, target, row, preparedNodes) => {
     anonId: getVisitorId(),
     placement: row.placement,
     segment: row.segment,
+    decisionAxis: axisOf(row.segment),
     variantName: row.label || row.fragment,
     variantType: row.variantType,
     variantId: `${row.placement}:${row.segment}:${row.label || row.fragment}`,
@@ -343,6 +401,7 @@ const trackFallback = (placement, segment, reason) => {
     anonId: getVisitorId(),
     placement,
     segment,
+    decisionAxis: axisOf(segment),
     reason,
   });
 };
@@ -442,6 +501,21 @@ const decorateSection = async (section) => {
     const resolved = resolveTarget(section, variants, placementKey, config.previewSegment);
     await applyResolved(placementKey, resolved, config.previewSegment);
     return;
+  }
+
+  // Message-match tier (ADR-003 first-match order: preview > message-match >
+  // cookie > edge). Consent-gated and purely additive: when consent is absent
+  // or there is no campaign signal, this engages nothing and the existing
+  // cookie/edge tiers below run exactly as before. Not the rejected 7-tier
+  // ladder — one documented client-side axis insertion. See
+  // cro-first-slice-spec.md B3.
+  if (hasConsent('personalization')) {
+    const msgSegment = messageMatchSegment();
+    if (msgSegment) {
+      const resolved = resolveTarget(section, variants, placementKey, msgSegment);
+      await applyResolved(placementKey, resolved, msgSegment);
+      return;
+    }
   }
 
   const cachedSegment = readCookie(COOKIE_NAME);

@@ -423,4 +423,149 @@ describe('scripts/utils/analytics/pzn.js', () => {
       expect(tracked.some((e) => e.event === 'personalization_fallback')).to.be.false;
     });
   });
+
+  describe('message-match (?utm_campaign — client-side axis)', () => {
+    const MSGMATCH_KEY = 'pzn-msgmatch-segment-v1';
+    const campaignRow = (overrides = {}) => variantRow({
+      segment: 'campaign:developers', label: 'Developers CTA', href: '/developers', ...overrides,
+    });
+
+    it('resolves a namespaced campaign:<value> segment from utm_campaign (normalized), applies it, and tags decisionAxis', async () => {
+      const section = setupSection();
+      setConsent({ personalization: true, analytics: true });
+      let decisionCalled = false;
+      mockFetch([
+        [DECISION_URL, () => { decisionCalled = true; return { ok: true, json: async () => ({ segment: 'enterprise' }) }; }],
+        [FIXTURE_URL, () => variantsResponse([campaignRow()])],
+      ]);
+
+      // Mixed-case input proves normalization to lowercase.
+      const { decoratePznSlots } = await freshPzn('?utm_campaign=Developers');
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); });
+
+      expect(section.querySelector('.cta-link').textContent).to.equal('Developers CTA');
+      expect(decisionCalled).to.be.false;
+      expect(sessionStorage.getItem(MSGMATCH_KEY)).to.equal('developers');
+      // Select the message-match applied event specifically: this suite has a
+      // documented cross-test consent-listener leak (see the top-of-file note),
+      // and this test's own fixture has no 'enterprise' row, so any such event
+      // is leaked noise, not this code's output.
+      const applied = tracked.find((e) => e.event === 'personalization_applied' && e.segment === 'campaign:developers');
+      expect(applied, 'a message-match applied event was tracked').to.exist;
+      expect(applied.decisionAxis).to.equal('message-match');
+    });
+
+    it('preview (?segment=) still wins over a live utm_campaign (tier 1 > tier 2)', async () => {
+      const section = setupSection();
+      setConsent({ personalization: true, analytics: true });
+      mockFetch([[FIXTURE_URL, () => variantsResponse([
+        variantRow(), // segment: enterprise
+        campaignRow(),
+      ])]]);
+
+      const { decoratePznSlots } = await freshPzn('?segment=enterprise&utm_campaign=developers');
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); });
+
+      expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
+    });
+
+    it('a live utm_campaign wins over an existing segment cookie and never calls the decision endpoint (tier 2 > tier 3/4)', async () => {
+      const section = setupSection();
+      document.cookie = `${COOKIE_NAME}=enterprise; path=/`;
+      setConsent({ personalization: true, analytics: true });
+      let decisionCalled = false;
+      mockFetch([
+        [DECISION_URL, () => { decisionCalled = true; return { ok: true, json: async () => ({ segment: 'enterprise' }) }; }],
+        [FIXTURE_URL, () => variantsResponse([variantRow(), campaignRow()])],
+      ]);
+
+      const { decoratePznSlots } = await freshPzn('?utm_campaign=developers');
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); });
+
+      expect(section.querySelector('.cta-link').textContent).to.equal('Developers CTA');
+      expect(decisionCalled).to.be.false;
+    });
+
+    it('with no campaign signal and no stored token, falls through to the existing cold decision path unchanged', async () => {
+      const section = setupSection();
+      setConsent({ personalization: true, analytics: true });
+      let decisionCalled = false;
+      mockFetch([
+        [DECISION_URL, () => { decisionCalled = true; return { ok: true, json: async () => ({ segment: 'enterprise' }) }; }],
+        [FIXTURE_URL, () => variantsResponse([variantRow()])],
+      ]);
+
+      const { decoratePznSlots } = await freshPzn();
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 400); });
+
+      expect(decisionCalled).to.be.true;
+      expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
+    });
+
+    it('persists the token for the session: a later page with no param reuses it, and a live param overrides the stored one', async () => {
+      setConsent({ personalization: true, analytics: true });
+      mockFetch([[FIXTURE_URL, () => variantsResponse([
+        campaignRow(),
+        campaignRow({ segment: 'campaign:designers', label: 'Designers CTA', href: '/designers' }),
+      ])]]);
+
+      // Page 1: campaign in the URL seeds the session.
+      const s1 = setupSection();
+      const first = await freshPzn('?utm_campaign=developers');
+      const stop1 = first.decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); });
+      expect(s1.querySelector('.cta-link').textContent).to.equal('Developers CTA');
+      stop1?.();
+
+      // Page 2: no param — the stored token still applies.
+      const s2 = setupSection();
+      const second = await freshPzn();
+      const stop2 = second.decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); });
+      expect(s2.querySelector('.cta-link').textContent).to.equal('Developers CTA');
+      stop2?.();
+
+      // Page 3: a fresh campaign click re-seeds the session.
+      const s3 = setupSection();
+      const third = await freshPzn('?utm_campaign=designers');
+      stopPzn = third.decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); });
+      expect(s3.querySelector('.cta-link').textContent).to.equal('Designers CTA');
+      expect(sessionStorage.getItem(MSGMATCH_KEY)).to.equal('designers');
+    });
+
+    it('does not apply or persist without personalization consent, and logs consent_denied', async () => {
+      const section = setupSection();
+      setConsent({ analytics: true }); // personalization NOT granted
+      mockFetch([[FIXTURE_URL, () => variantsResponse([campaignRow()])]]);
+
+      const { decoratePznSlots } = await freshPzn('?utm_campaign=developers');
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 100); });
+
+      expect(section.querySelector('.cta-link').textContent).to.equal('Default CTA');
+      expect(sessionStorage.getItem(MSGMATCH_KEY)).to.equal(null);
+      expect(tracked.some((e) => e.reason === 'consent_denied')).to.be.true;
+    });
+
+    it('fails open under a message-match segment: a selector that matches nothing logs selector_not_found with the campaign segment and axis', async () => {
+      const section = setupSection();
+      setConsent({ personalization: true, analytics: true });
+      mockFetch([[FIXTURE_URL, () => variantsResponse([campaignRow({ selector: '.does-not-exist' })])]]);
+
+      const { decoratePznSlots } = await freshPzn('?utm_campaign=developers');
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 50); });
+
+      expect(section.querySelector('.cta-link').textContent).to.equal('Default CTA');
+      const fallback = tracked.find((e) => e.event === 'personalization_fallback' && e.segment === 'campaign:developers');
+      expect(fallback, 'a message-match fallback event was tracked').to.exist;
+      expect(fallback.reason).to.equal('selector_not_found');
+      expect(fallback.decisionAxis).to.equal('message-match');
+    });
+  });
 });

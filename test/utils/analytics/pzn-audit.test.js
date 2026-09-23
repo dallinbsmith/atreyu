@@ -112,6 +112,26 @@ describe('scripts/utils/analytics/pzn-audit.js', () => {
     expect(warnCalls).to.have.length(0);
   });
 
+  it('does NOT warn when a message-match segment (campaign:*) and a firmographic segment share a placement — distinct segments, distinct groups', async () => {
+    mockVariants([
+      variantRow({ segment: 'campaign:developers', selector: '.cta-link', label: 'Devs', href: '/devs' }),
+      variantRow({ segment: 'enterprise', selector: '.cta-other', label: 'Ent', href: '/ent' }),
+    ]);
+    await auditPzn(await freshLoadVariants());
+
+    expect(warnCalls).to.have.length(0);
+  });
+
+  it('still warns on a real collision within one message-match segment (two campaign:* rows, different selectors)', async () => {
+    mockVariants([
+      variantRow({ segment: 'campaign:developers', selector: '.cta-link', label: 'A', href: '/a' }),
+      variantRow({ segment: 'campaign:developers', selector: '.cta-other', label: 'B', href: '/b' }),
+    ]);
+    await auditPzn(await freshLoadVariants());
+
+    expect(warnCalls).to.have.length(1);
+  });
+
   it('warns once per colliding group when several groups collide independently', async () => {
     mockVariants([
       variantRow({ placement: 'hero-cta', segment: 'enterprise', selector: '.a1' }),
