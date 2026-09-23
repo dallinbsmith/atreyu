@@ -2,7 +2,8 @@
 
 Authoring view of `adobe/aem-experimentation` tests, opened from the DA editor's library or the
 AEM Sidekick. The page and sitewide views are read-only; Build test writes only when you click
-Insert. It shows what the plugin will actually do, using the same parsing rules as the plugin; `test/utils/experiments/config.test.js` checks this against the vendored plugin.
+Insert. It shows what the plugin will actually do, using the same parsing rules as the plugin;
+`test/utils/experiments/config.test.js` checks this against the vendored plugin.
 
 - **This page:**
   - every test on the current page: whole-page (head metadata) and section-level (section metadata);
@@ -21,7 +22,7 @@ Insert. It shows what the plugin will actually do, using the same parsing rules 
   - unknown audience or status;
   - bad or inverted dates;
   - a variant pointing at the control page;
-  - missing variant pages;
+  - missing variant pages, or variant pages outside `/v/`;
   - duplicate test ids across sheet rows;
   - page metadata silently overriding a sheet row.
 
@@ -84,6 +85,25 @@ API rights, which this org does not currently have.
 }
 ```
 
+## Variant pages: the `/v/` folder
+
+Visitors never see a variant's URL. The plugin fetches the variant page and swaps its content into
+the control page, so the address bar stays on e.g. `/features/c2c`. Put every variant page under
+`/v/` (e.g. `/v/c2c-headline`), preview it and publish it. The folder keeps variants out of sight:
+
+- **Production Worker** (`workers/website/handlers/variants.js`): serves `/v/` pages only to the
+  plugin's own same-origin `fetch()` (Fetch Metadata `Sec-Fetch-Dest: empty`), with
+  `X-Robots-Tag: noindex` and `Cache-Control: no-store`. Direct visits, shared links and crawlers
+  get a 404. Media under `/v/` is served normally. Browsers without Fetch Metadata (very old ones)
+  get the 404 too, so the plugin shows them control.
+- **Index and sitemap:** `helix-query.yaml` excludes `/v/**`, and `helix-sitemap.yaml` builds the
+  sitemap from that index. The default no-config sitemap lists every published page, variants
+  included.
+- **Panel:** warns about any variant page outside `/v/`.
+
+Only the production domain goes through the Worker. `aem.page`/`aem.live` URLs stay directly
+reachable for authors, and AEM already sends `noindex` on those hosts.
+
 ## Where to author tests
 
 ### On one page: the Experiment table (recommended for business users)
@@ -94,7 +114,7 @@ anywhere in the page doc:
 | Experiment | |
 |---|---|
 | Test Name | c2c-headline (required; becomes the test id in analytics and preview links) |
-| Variants | link(s) to the variant page(s), one per line |
+| Variants | link(s) to the variant page(s) under `/v/`, one per line |
 | Variant Names | readable names, comma-separated, in the same order |
 | Split | % of all visitors per variant, comma-separated (control gets the rest; blank = even split) |
 | Audience | `mobile` or `desktop` (blank = everyone) |

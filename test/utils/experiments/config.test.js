@@ -1,6 +1,6 @@
 import { expect } from '@esm-bundle/chai';
 import {
-  readExperiment, statusOf, validate, matchesPattern, toClassName, toList,
+  readExperiment, statusOf, validate, matchesPattern, toClassName, toList, VARIANT_ROOT,
 } from '../../../scripts/utils/experiments/config.js';
 // eslint-disable-next-line import/no-relative-packages -- parity check against the vendored plugin
 import * as plugin from '../../../plugins/experimentation/src/index.js';
@@ -92,6 +92,15 @@ describe('scripts/utils/experiments/config.js', () => {
 
     it('passes a well-formed test', () => {
       expect(issuesFor({ experiment: 'x', 'experiment-variants': '/v', 'experiment-split': '50' })).to.deep.equal([]);
+    });
+
+    it('warns about variant pages outside the variant root, only when asked', () => {
+      const cfg = readExperiment({ experiment: 'x', 'experiment-variants': '/v/ok, /experiments/b, /p' }, '/p');
+      const messages = validate(cfg, { variantRoot: VARIANT_ROOT }).map((i) => i.message);
+      expect(messages.filter((m) => m.startsWith('Variant page outside'))).to.deep.equal([
+        'Variant page outside /v/: visitors and search engines can open it directly. Move it under /v/: /experiments/b',
+      ]);
+      expect(validate(cfg).some((i) => i.message.startsWith('Variant page outside'))).to.equal(false);
     });
 
     it('flags every silent failure mode', () => {

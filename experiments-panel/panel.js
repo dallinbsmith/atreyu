@@ -1,5 +1,7 @@
 import { createElement as h } from '../scripts/utils/dom.js';
-import { statusOf, validate, toClassName } from '../scripts/utils/experiments/config.js';
+import {
+  statusOf, validate, toClassName, VARIANT_ROOT,
+} from '../scripts/utils/experiments/config.js';
 import { AUDIENCE_NAMES } from '../scripts/utils/experiments/audiences.js';
 import {
   SHEETS, fetchText, isPagePath, fetchJson, pathExists, readPage, readSheet, sourceOf,
@@ -76,7 +78,7 @@ const checkVariantPages = async (card, cfg) => {
 const testCard = (test, rows) => {
   const { scope, cfg } = test;
   const source = sourceOf(test, rows, pagePath);
-  const issues = validate(cfg, { audiences: AUDIENCE_NAMES });
+  const issues = validate(cfg, { audiences: AUDIENCE_NAMES, variantRoot: VARIANT_ROOT });
   for (const message of [source.issue, ...(test.notes ?? [])].filter(Boolean)) issues.push({ level: 'warn', message });
   const serving = servingNow(cfg.id);
   const card = h(
@@ -109,7 +111,7 @@ const renderSite = async () => {
   const rows = await loadRows();
   const ids = Map.groupBy(rows, (r) => r.cfg.id);
   const body = rows.map(({ pattern, source, cfg }) => {
-    const issues = validate(cfg, { audiences: AUDIENCE_NAMES });
+    const issues = validate(cfg, { audiences: AUDIENCE_NAMES, variantRoot: VARIANT_ROOT });
     const uses = ids.get(cfg.id).length;
     if (uses > 1) issues.push({ level: 'warn', message: `Test id "${cfg.id}" is used by ${uses} rows: results will be merged.` });
     return h(

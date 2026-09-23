@@ -12,7 +12,7 @@ const CHOICES = {
 };
 const HINTS = {
   'Test Name': 'Becomes the test id. Keep it the same for the life of the test.',
-  Variants: 'One page link per line, e.g. /experiments/c2c-headline',
+  Variants: 'One page link per line, under /v/, e.g. /v/c2c-headline',
   'Variant Names': 'Optional, comma-separated, same order as Variants.',
   Split: '% of all visitors per variant; control gets the rest. Blank = even split.',
   'Start Date': 'Blank = starts now. Dates switch at 00:00 UTC.',

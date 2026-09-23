@@ -14,8 +14,10 @@ import { fetchSchedule, fetchFromAem } from './handlers/aem.js';
 import fetchDaSc from './handlers/dasc.js';
 import fetchRedirect from './handlers/redirects.js';
 import { fetchFromExistingOrigin } from './handlers/existing-origin.js';
+import { isVariantPage, fetchVariant } from './handlers/variants.js';
 import { matchLocalePrefix, stripLocale } from './utils/locale.js';
 import { checkRequiredEnv } from './utils/env-guard.js';
+import { isMediaPath } from './utils/media.js';
 
 // Phase 1 cohort only (master-plan/implementation-plan.md, "Migration Cohort Phases").
 // Grows as each phase ships: Phase 2 adds /customers/ + /resources/, Phase 3 adds
@@ -74,6 +76,14 @@ const ROUTES = [
     handler: () => new Response('Not found - drafts are denied on production.', { status: 404 }),
     global: true,
   },
+  // A/B variant pages (/v/): only the experimentation plugin's same-origin
+  // fetch gets them; direct visits and crawlers get a 404 (handlers/variants.js).
+  {
+    match: isVariantPage,
+    handler: fetchVariant,
+    cache: true,
+    global: true,
+  },
   {
     match: (path) => path.startsWith('/langstore'),
     handler: () => new Response('Not found - langstore staging is denied on production.', { status: 404 }),
@@ -98,7 +108,7 @@ const getExtension = (path) => {
   return (basename === '' || pos < 1) ? '' : basename.slice(pos + 1);
 };
 
-const isMediaRequest = (url) => /\/media_[0-9a-f]{40,}[/a-zA-Z0-9_-]*\.[0-9a-z]+$/.test(url.pathname);
+const isMediaRequest = (url) => isMediaPath(url.pathname);
 const isRUMRequest = (url) => /\/\.(rum|optel)\/.*/.test(url.pathname);
 
 const getPortRedirect = (request, url) => {
