@@ -1,0 +1,111 @@
+import { readExperiment, matchesPattern, toClassName } from '../scripts/utils/experiments/config.js';
+
+// Bulk metadata sources, applied in this order (later wins). The dedicated
+// experiments sheet needs registering in the site config's metadata sources
+// (admin API) before EDS applies it; the panel reads it either way.
+export const SHEETS = ['/metadata.json', '/metadata-experiments.json'];
+const TIMEOUT_MS = 5000;
+export const DA_ORIGIN = 'https://da.live';
+
+const request = (url, init = {}) => fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(TIMEOUT_MS), ...init });
+
+export const fetchText = async (url) => {
+  const resp = await request(url);
+  if (!resp.ok) throw new Error(`${resp.status} loading ${url}`);
+  return resp.text();
+};
+
+export const fetchJson = async (url) => {
+  try {
+    const resp = await request(url);
+    return resp.ok ? await resp.json() : null;
+  } catch {
+    return null;
+  }
+};
+
+export const pathExists = async (path) => {
+  try {
+    return (await request(path, { method: 'HEAD' })).ok;
+  } catch {
+    return false;
+  }
+};
+
+// Same cell rules as the plugin's getAllSectionMeta: links, then paragraphs, then text.
+const cellValue = (col) => {
+  const links = [...col.querySelectorAll('a')];
+  if (links.length) return links.map((a) => a.getAttribute('href'));
+  const paragraphs = [...col.querySelectorAll('p')];
+  return paragraphs.length ? paragraphs.map((p) => p.textContent) : col.textContent;
+};
+
+const headMeta = (doc) => [...doc.head.querySelectorAll('meta[name^="experiment"]')]
+  .reduce((meta, { name, content }) => {
+    meta[name] = meta[name] ? `${meta[name]}, ${content}` : content;
+    return meta;
+  }, {});
+
+export const readPage = (html, pagePath) => {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const tests = [];
+  const page = readExperiment(headMeta(doc), pagePath);
+  if (page) tests.push({ scope: 'Whole page', cfg: page });
+  const sections = [...doc.querySelectorAll('main > div')];
+  for (const sm of doc.querySelectorAll('main .section-metadata')) {
+    const rows = [...sm.children].filter((row) => row.children[1])
+      .map((row) => [row.children[0].textContent.trim(), cellValue(row.children[1])]);
+    const cfg = readExperiment(Object.fromEntries(rows), pagePath);
+    if (cfg) tests.push({ scope: `Section ${sections.indexOf(sm.parentElement) + 1}`, cfg });
+  }
+  return tests;
+};
+
+export const readSheet = (json, source) => (json?.data ?? []).flatMap((row) => {
+  const entries = Object.entries(row);
+  const pattern = entries.find(([key]) => toClassName(key) === 'url')?.[1];
+  if (!pattern) return [];
+  const cfg = readExperiment(Object.fromEntries(entries.filter(([key]) => toClassName(key) !== 'url')), pattern);
+  return cfg ? [{ pattern, source, cfg }] : [];
+});
+
+// Sheet URL cells are free text: only link plain same-origin paths (no
+// patterns, protocol-relative, backslash, or scheme URLs such as javascript:).
+export const isPagePath = (value) => /^\/(?![/\\])[^*\\:]*$/.test(value);
+
+// Page metadata beats bulk metadata, and later sheet rows beat earlier ones.
+export const sourceOf = (test, rows, pagePath) => {
+  if (test.scope !== 'Whole page') return { label: 'Section metadata (page doc)' };
+  const expected = rows.findLast((r) => matchesPattern(r.pattern, pagePath));
+  if (!expected) return { label: 'Page metadata (page doc)' };
+  if (expected.cfg.id === test.cfg.id) return { label: `Sheet ${expected.source} (${expected.pattern})` };
+  return {
+    label: 'Page metadata (page doc)',
+    issue: `Overrides sheet row "${expected.cfg.id}" (${expected.source}, ${expected.pattern}): the page doc wins, so the sheet row is ignored here.`,
+  };
+};
+
+// DA library plugin handshake (adobe/da-live blocks/edit/da-library): about
+// 750ms after load DA posts { ready, context: { org, repo, path } } to the
+// iframe. Only the path is used; the IMS token in the same message is ignored.
+// DA doc paths carry no extension, and an `index` doc serves its folder.
+export const pathFromDaContext = (context) => {
+  const path = context?.path;
+  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) return null;
+  return path.replace(/(^|\/)index$/, '$1') || '/';
+};
+
+export const waitForDaContext = (timeoutMs = 3000) => {
+  const { promise, resolve } = Promise.withResolvers();
+  const onMessage = (e) => {
+    if (e.origin !== DA_ORIGIN || !e.data?.ready) return;
+    const path = pathFromDaContext(e.data.context);
+    if (path) resolve(path);
+  };
+  window.addEventListener('message', onMessage);
+  const timer = setTimeout(() => resolve(null), timeoutMs);
+  return promise.finally(() => {
+    clearTimeout(timer);
+    window.removeEventListener('message', onMessage);
+  });
+};

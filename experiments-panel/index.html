@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Experiments</title>
+  <link rel="stylesheet" href="./panel.css">
+  <script src="./panel.js" type="module"></script>
+</head>
+<body>
+  <header class="bar">
+    <nav aria-label="Experiments views">
+      <button type="button" data-tab="page" aria-selected="true">This page</button>
+      <button type="button" data-tab="site" aria-selected="false">Sitewide</button>
+    </nav>
+    <button type="button" id="refresh">Refresh</button>
+  </header>
+  <main id="view" aria-live="polite"></main>
+</body>
+</html>
