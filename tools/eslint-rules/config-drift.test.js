@@ -53,7 +53,7 @@ ruleTester.run('no-duplicate-locale-list', plugin.rules['no-duplicate-locale-lis
       code: "export const LOCALE_PREFIXES = ['/de-de', '/es-es', '/fr-fr', '/it-it', '/ja-jp', '/ko-kr', '/pt-br', '/ru-ru', '/zh-cn'];",
     },
     {
-      filename: 'scripts/scripts.js',
+      filename: 'scripts/locales.js',
       code: "const locales = { '': { lang: 'en' }, '/de-de': { lang: 'de' }, '/es-es': { lang: 'es' }, '/fr-fr': { lang: 'fr' } };",
     },
     // This rule's own hardcoded allowlist is the one sanctioned third copy

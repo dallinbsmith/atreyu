@@ -83,7 +83,7 @@ describe('experiments-panel/sources.js', () => {
     expect(pathFromDaContext({ path: '/pricing' })).to.equal('/pricing');
     expect(pathFromDaContext({ path: '/index' })).to.equal('/');
     expect(pathFromDaContext({ path: '/features/index' })).to.equal('/features/');
-    for (const bad of [undefined, {}, { path: 'pricing' }, { path: '//evil.example' }]) {
+    for (const bad of [undefined, {}, { path: 'pricing' }, { path: '//evil.example' }, { path: '/\\evil.example' }]) {
       expect(pathFromDaContext(bad)).to.equal(null);
     }
   });
@@ -91,7 +91,8 @@ describe('experiments-panel/sources.js', () => {
   it('accepts the DA handshake only from da.live, and times out to null', async () => {
     const pending = waitForDaContext(200);
     window.dispatchEvent(new MessageEvent('message', { origin: 'https://evil.example', data: { ready: true, context: { path: '/evil' } } }));
-    window.dispatchEvent(new MessageEvent('message', { origin: 'https://da.live', data: { ready: true, context: { path: '/pricing' } } }));
+    window.dispatchEvent(new MessageEvent('message', { origin: 'https://da.live', data: { ready: true, context: { path: '/other-frame' } } }));
+    window.dispatchEvent(new MessageEvent('message', { origin: 'https://da.live', source: window.parent, data: { ready: true, context: { path: '/pricing' } } }));
     expect(await pending).to.deep.equal({ path: '/pricing', port: null });
     expect(await waitForDaContext(50)).to.equal(null);
   });

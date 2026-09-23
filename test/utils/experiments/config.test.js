@@ -74,6 +74,20 @@ describe('scripts/utils/experiments/config.js', () => {
     it('returns null without an experiment name', () => {
       expect(readExperiment({ 'experiment-variants': '/v1' })).to.equal(null);
     });
+
+    it('matches plugin fallbacks for blank status, label, and empty variant name', () => {
+      const cfg = readExperiment({
+        experiment: 'Hero',
+        'experiment-variants': '/v/a',
+        'experiment-name': '',
+        'experiment-variant-names': 'Better',
+        'experiment-label': '',
+        'experiment-status': '',
+      }, '/p');
+      expect(cfg.status).to.equal('active');
+      expect(cfg.label).to.equal('Experiment Hero');
+      expect(cfg.variants[1].label).to.equal('Better');
+    });
   });
 
   describe('statusOf', () => {
@@ -95,10 +109,10 @@ describe('scripts/utils/experiments/config.js', () => {
     });
 
     it('warns about variant pages outside the variant root, only when asked', () => {
-      const cfg = readExperiment({ experiment: 'x', 'experiment-variants': '/v/ok, /experiments/b, /p' }, '/p');
+      const cfg = readExperiment({ experiment: 'x', 'experiment-variants': '/v/ok, /de-de/v/x, /en-gb/v/y, /v, /experiments/b, /p' }, '/p');
       const messages = validate(cfg, { variantRoot: VARIANT_ROOT }).map((i) => i.message);
       expect(messages.filter((m) => m.startsWith('Variant page outside'))).to.deep.equal([
-        'Variant page outside /v/: visitors and search engines can open it directly. Move it under /v/: /experiments/b',
+        'Variant page outside /v/: visitors and search engines can open it directly. Move it under /v/: /en-gb/v/y, /experiments/b',
       ]);
       expect(validate(cfg).some((i) => i.message.startsWith('Variant page outside'))).to.equal(false);
     });

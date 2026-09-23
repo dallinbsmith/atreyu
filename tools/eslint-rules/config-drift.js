@@ -13,7 +13,7 @@
  *    of the 10 real BCP47 locale codes (as keys OR values, one level into
  *    nested arrays, and through simple same-file spread chains) outside the
  *    two designated files: workers/website/utils/locale.js (Worker runtime)
- *    and scripts/scripts.js (browser runtime). The allowed-code list itself
+ *    and scripts/locales.js (browser runtime). The allowed-code list itself
  *    is hand-typed a third time in this file (see the comment on
  *    ALLOWED_LOCALE_CODES below for why it can't just import one of the
  *    other two), so this file is the one other place exempted from the rule.
@@ -84,8 +84,8 @@ import path from 'node:path';
 // package.json, name "website", built/deployed independently via wrangler)
 // and a relative import across that boundary is exactly what this repo's
 // `import/no-relative-packages` lint rule exists to forbid. It also can't be
-// imported from scripts/scripts.js — that module pulls in ak.js, which
-// touches browser globals at load time and isn't safe to import under Node.
+// imported from scripts/locales.js — ESLint loads this rule as a Node module
+// outside the browser code's module graph, and the rule should not depend on it.
 // So this list is hand-typed a third time, same as the other two keep each
 // other in sync: if the real locale list ever changes, update this array too.
 const ALLOWED_LOCALE_CODES = new Set([
@@ -97,7 +97,7 @@ const ENV_WORD_IN_PATTERN_RE = /\b(prod|production|stage|staging|dev|development
 const MIN_LOCALE_MATCHES = 3;
 
 // Posix-relative to the `site/` package root (where eslint.config.js lives).
-const LOCALE_SOURCE_FILES = ['workers/website/utils/locale.js', 'scripts/scripts.js'];
+const LOCALE_SOURCE_FILES = ['workers/website/utils/locale.js', 'scripts/locales.js'];
 const ENV_SOURCE_FILES = ['scripts/utils/env.js'];
 // This rule's own allowlist above is the one sanctioned exception to itself —
 // see the comment on ALLOWED_LOCALE_CODES for why it can't just import one of
@@ -209,7 +209,7 @@ const noDuplicateLocaleList = {
       message: `This literal contains ${count} real locale-code strings${viaSpread ? ' (some reached via a spread of a locally-tracked binding)' : ''} `
         + '— a second hand-maintained locale list. Import LOCALE_PREFIXES from '
         + 'workers/website/utils/locale.js (Worker runtime) or the `locales` config from '
-        + 'scripts/scripts.js (browser runtime) instead of hardcoding one here.',
+        + 'scripts/locales.js (browser runtime) instead of hardcoding one here.',
     });
 
     return {

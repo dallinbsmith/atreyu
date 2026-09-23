@@ -1,6 +1,7 @@
 import { expect } from '@esm-bundle/chai';
 import {
   FIELDS, isSafeHref, toDateInput, readValues, toMeta, check, toTableHtml,
+  normalizeChoice,
 } from '../../experiments-panel/table.js';
 
 const parse = (html) => new DOMParser().parseFromString(html, 'text/html').body;
@@ -64,5 +65,26 @@ describe('experiments panel table helpers', () => {
     expect(ok.filter((i) => i.level === 'error')).to.deep.equal([]);
     const bad = check({ 'Test Name': 'T', Variants: '/a', 'Start Date': '2026-10-02', 'End Date': '2026-10-01', Audience: 'tablet' }, OPTS);
     expect(bad.map((i) => i.message)).to.include.members(['Start Date is not before End Date.', 'Unknown audience(s) tablet: the experiment never runs.']);
+  });
+
+  it('normalizes loaded select values and metadata round-trips status synonyms and multi-audience values', () => {
+    expect(['Inactive', 'Off', 'Paused'].map((value) => normalizeChoice('Status', value).value))
+      .to.deep.equal(['inactive', 'inactive', 'inactive']);
+    expect(['on', 'true'].map((value) => normalizeChoice('Status', value).value))
+      .to.deep.equal(['active', 'active']);
+    // The plugin doesn't run "yes", so it must not load as active.
+    expect(normalizeChoice('Status', 'yes').value).to.equal('yes');
+    expect(normalizeChoice('Audience', 'Mobile, Desktop').value).to.equal('mobile, desktop');
+    expect(normalizeChoice('Audience', 'desktop, Mobile, mobile').value).to.equal('mobile, desktop');
+    expect(toMeta({
+      'Test Name': 'T', Variants: '/v/a', Status: 'Off', Audience: 'Mobile, Desktop',
+    })).to.deep.equal({
+      experiment: 'T', 'experiment-variants': '/v/a', 'experiment-audience': 'mobile, desktop', 'experiment-status': 'inactive',
+    });
+  });
+
+  it('does not read block variants such as Cards (Experiment)', () => {
+    const body = parse('<main><div><div class="cards experiment"><div><div>Experiment</div><div>Wrong</div></div></div></div></main>');
+    expect(readValues(body)).to.equal(null);
   });
 });

@@ -1,7 +1,10 @@
 // Pure helpers for the panel's "Build test" form: the Experiment table's rows,
 // reading them from a doc table, and writing the table DA inserts.
-import { metaName } from '../scripts/utils/experiments/block.js';
-import { readExperiment, validate, VARIANT_ROOT } from '../scripts/utils/experiments/config.js';
+import { cellValue, findExperimentBlocks, metaName } from '../scripts/utils/experiments/block.js';
+import {
+  readExperiment, toClassName, validate, VARIANT_ROOT,
+} from '../scripts/utils/experiments/config.js';
+import { AUDIENCE_NAMES } from '../scripts/utils/experiments/audiences.js';
 
 export const FIELDS = [
   { label: 'Test Name', type: 'text' },
@@ -26,11 +29,25 @@ export const toDateInput = (value) => {
   return date && !Number.isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : '';
 };
 
+export const normalizeChoice = (label, value) => {
+  const text = `${value ?? ''}`.trim();
+  const key = toClassName(text);
+  if (!text) return { value: '' };
+  if (label === 'Status') {
+    if (['active', 'on', 'true'].includes(key)) return { value: 'active' };
+    if (['inactive', 'off', 'false', 'no', 'paused'].includes(key)) return { value: 'inactive' };
+  }
+  if (label === 'Audience') {
+    const audiences = [...new Set(text.split(/[,\n]/).map(toClassName).filter(Boolean))];
+    const known = AUDIENCE_NAMES.filter((a) => audiences.includes(a));
+    const unknown = audiences.filter((a) => !AUDIENCE_NAMES.includes(a));
+    return { value: [...known, ...unknown].join(', ') };
+  }
+  return { value: text };
+};
+
 const cellText = (cell, field) => {
-  const links = [...cell.querySelectorAll('a')].map((a) => a.getAttribute('href')).filter(Boolean);
-  if (links.length) return links.join(field.type === 'links' ? '\n' : ', ');
-  const paragraphs = [...cell.querySelectorAll('p')].map((p) => p.textContent.trim()).filter(Boolean);
-  const text = paragraphs.length ? paragraphs.join(field.type === 'links' ? '\n' : ', ') : cell.textContent.trim();
+  const text = cellValue(cell, { join: field.type === 'links' ? '\n' : ', ' });
   return field.type === 'date' ? toDateInput(text) : text;
 };
 
@@ -41,7 +58,8 @@ const isExperimentTable = (table) => /^experiment$/i.test(headRow(table)?.textCo
 // (a table whose first row names the block). Returns { [label]: value } for
 // known rows, or null when there is no Experiment table.
 export const readValues = (root) => {
-  const block = root.querySelector('.experiment');
+  const blocks = findExperimentBlocks(root);
+  const [block] = blocks.length ? blocks : [...root.querySelectorAll('.experiment')].filter((el) => el.classList[0] === 'experiment');
   const table = block ? null : [...root.querySelectorAll('table')].find(isExperimentTable);
   if (!block && !table) return null;
   const rows = block ? [...block.children] : [...table.querySelectorAll('tr')].slice(1);
@@ -53,7 +71,7 @@ export const readValues = (root) => {
 };
 
 export const toMeta = (values) => Object.fromEntries(FIELDS
-  .map((f) => [f.meta, `${values[f.label] ?? ''}`.trim()])
+  .map((f) => [f.meta, normalizeChoice(f.label, values[f.label]).value])
   .filter(([, value]) => value)
   .map(([name, value]) => [name, value.split('\n').map((s) => s.trim()).filter(Boolean).join(', ')]));
 

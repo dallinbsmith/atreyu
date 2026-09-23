@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { metaName, applyExperimentBlock } from '../../../scripts/utils/experiments/block.js';
+import { metaName, applyExperimentBlock, findExperimentBlocks } from '../../../scripts/utils/experiments/block.js';
 import { readExperiment } from '../../../scripts/utils/experiments/config.js';
 
 const TABLE = `<div class="experiment">
@@ -77,5 +77,12 @@ describe('scripts/utils/experiments/block.js', () => {
     document.body.innerHTML = '<main><div><p>x</p></div></main>';
     expect(applyExperimentBlock()).to.equal(null);
     expect(document.querySelectorAll('main > div').length).to.equal(1);
+  });
+
+  it('does not mistake a block variant such as Cards (Experiment) for the Experiment table', () => {
+    document.body.innerHTML = '<main><div><div class="cards experiment"><div>Cards</div></div><div class="experiment"><div><div>Test Name</div><div>T</div></div></div></div></main>';
+    expect(findExperimentBlocks(document)).to.have.length(1);
+    applyExperimentBlock();
+    expect(document.querySelector('.cards.experiment')).not.to.equal(null);
   });
 });

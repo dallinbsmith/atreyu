@@ -15,11 +15,11 @@ export const metaName = (label) => {
 };
 
 // Same cell rules as the plugin's section metadata: links, then paragraphs, then text.
-const cellValue = (col) => {
+export const cellValue = (col, { join = ', ' } = {}) => {
   const links = [...col.querySelectorAll('a')];
-  if (links.length) return links.map((a) => a.getAttribute('href')).join(', ');
+  if (links.length) return links.map((a) => a.getAttribute('href')).filter(Boolean).join(join);
   const paragraphs = [...col.querySelectorAll('p')].map((p) => p.textContent.trim()).filter(Boolean);
-  return paragraphs.length ? paragraphs.join(', ') : col.textContent.trim();
+  return paragraphs.length ? paragraphs.join(join) : col.textContent.trim();
 };
 
 export const readExperimentBlock = (block) => [...block.children]
@@ -27,7 +27,8 @@ export const readExperimentBlock = (block) => [...block.children]
   .map((row) => [metaName(row.children[0].textContent), cellValue(row.children[1])])
   .filter(([name, value]) => name && value);
 
-export const findExperimentBlocks = (doc) => [...doc.querySelectorAll('main .experiment')];
+export const findExperimentBlocks = (doc) => [...doc.querySelectorAll('main .experiment')]
+  .filter((block) => block.classList[0] === 'experiment');
 
 // The first table wins; every table is removed so none ever renders. When the
 // table defines a test it replaces all other experiment metadata on the page.

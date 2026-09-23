@@ -1,5 +1,5 @@
 import { readExperiment, matchesPattern, toClassName } from '../scripts/utils/experiments/config.js';
-import { findExperimentBlocks, readExperimentBlock } from '../scripts/utils/experiments/block.js';
+import { cellValue, findExperimentBlocks, readExperimentBlock } from '../scripts/utils/experiments/block.js';
 
 // Bulk metadata sources, applied in this order (later wins). The dedicated
 // experiments sheet needs registering in the site config's metadata sources
@@ -33,14 +33,6 @@ export const pathExists = async (path) => {
   }
 };
 
-// Same cell rules as the plugin's getAllSectionMeta: links, then paragraphs, then text.
-const cellValue = (col) => {
-  const links = [...col.querySelectorAll('a')];
-  if (links.length) return links.map((a) => a.getAttribute('href'));
-  const paragraphs = [...col.querySelectorAll('p')];
-  return paragraphs.length ? paragraphs.map((p) => p.textContent) : col.textContent;
-};
-
 const headMeta = (doc) => [...doc.head.querySelectorAll('meta[name^="experiment"]')]
   .reduce((meta, { name, content }) => {
     meta[name] = meta[name] ? `${meta[name]}, ${content}` : content;
@@ -65,7 +57,7 @@ export const readPage = (html, pagePath) => {
   const sections = [...doc.querySelectorAll('main > div')];
   for (const sm of doc.querySelectorAll('main .section-metadata')) {
     const rows = [...sm.children].filter((row) => row.children[1])
-      .map((row) => [row.children[0].textContent.trim(), cellValue(row.children[1])]);
+      .map((row) => [row.children[0].textContent.trim(), cellValue(row.children[1], { join: '\n' })]);
     const cfg = readExperiment(Object.fromEntries(rows), pagePath);
     if (cfg) tests.push({ scope: `Section ${sections.indexOf(sm.parentElement) + 1}`, cfg });
   }
@@ -104,7 +96,7 @@ export const sourceOf = (test, rows, pagePath) => {
 // DA doc paths carry no extension, and an `index` doc serves its folder.
 export const pathFromDaContext = (context) => {
   const path = context?.path;
-  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) return null;
+  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//') || path.includes('\\')) return null;
   return path.replace(/(^|\/)index$/, '$1') || '/';
 };
 
@@ -112,7 +104,7 @@ export const pathFromDaContext = (context) => {
 export const waitForDaContext = (timeoutMs = 3000) => {
   const { promise, resolve } = Promise.withResolvers();
   const onMessage = (e) => {
-    if (e.origin !== DA_ORIGIN || !e.data?.ready) return;
+    if (e.origin !== DA_ORIGIN || e.source !== window.parent || !e.data?.ready) return;
     const path = pathFromDaContext(e.data.context);
     if (path) resolve({ path, port: e.ports?.[0] ?? null });
   };

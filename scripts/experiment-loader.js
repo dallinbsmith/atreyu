@@ -14,7 +14,7 @@
 //      that did not run (inactive, expired, audience/consent not met) as
 //      "control", which would pollute the control arm — so read config.run.
 import ENV from './utils/env.js';
-import { loadArea } from './ak.js';
+import { getConfig, loadArea } from './ak.js';
 import { hasConsent } from './utils/analytics/consent.js';
 import { track, EVENTS } from './utils/analytics/analytics.js';
 import { getVisitorId } from './utils/analytics/visitor-id.js';
@@ -22,6 +22,7 @@ import { AUDIENCES } from './utils/experiments/audiences.js';
 import { applyExperimentBlock } from './utils/experiments/block.js';
 
 const ASSIGNMENTS_KEY = 'unified-decisioning-experiments';
+const PLUGIN_CONSENT_KEY = 'experimentation-consented';
 const PREVIEW_PARAMS = ['experiment', 'audience'];
 
 export const config = {
@@ -53,6 +54,7 @@ export const restoreAssignments = () => {
 const clearAssignments = () => {
   try {
     localStorage.removeItem(ASSIGNMENTS_KEY);
+    localStorage.removeItem(PLUGIN_CONSENT_KEY);
     sessionStorage.removeItem(ASSIGNMENTS_KEY);
   } catch { /* storage unavailable */ }
 };
@@ -73,13 +75,16 @@ const isPreview = () => {
 export const trackExposures = (experiments = []) => {
   if (isPreview()) return;
   const anonId = getVisitorId();
-  for (const { type, config: exp } of experiments.filter((e) => e.config?.run)) {
+  for (const ns of experiments.filter((e) => e.config?.run)) {
+    const { type, config: exp, el, servedExperience } = ns;
+    const variant = el?.dataset?.variant
+      ?? (servedExperience || exp.selectedVariant === 'control' ? exp.selectedVariant : 'control');
     track(EVENTS.EXPERIMENT, {
       anonId,
       experiment: exp.id,
-      variantName: exp.selectedVariant,
+      variantName: variant,
       variantType: exp.resolvedAudiences?.length ? 'audience-experiment' : 'a-b-split-test',
-      variantId: `${exp.id}:${exp.selectedVariant}`,
+      variantId: `${exp.id}:${variant}`,
       renderType: `${type}-swap`,
       audiences: exp.resolvedAudiences ?? null,
     });
@@ -97,7 +102,7 @@ export const runExperimentation = async (doc = document) => {
   try {
     // eslint-disable-next-line import/no-relative-packages -- no bundler for bare specifiers
     const plugin = await import('../plugins/experimentation/src/index.js');
-    plugin.updateUserConsent(true);
+    plugin.updateUserConsent(hasConsent('personalization'));
     restoreAssignments();
     // Plugin publishes results on `window.aem || window.hlx || {}`; without a
     // real global they land on a throwaway object and nothing is measurable.
@@ -107,8 +112,7 @@ export const runExperimentation = async (doc = document) => {
     trackExposures((window.aem || window.hlx).experiments);
     return plugin;
   } catch (ex) {
-    // eslint-disable-next-line no-console -- fail open: control content stays
-    console.error('experimentation (eager) failed:', ex);
+    await getConfig().log(ex);
     return null;
   }
 };
@@ -119,5 +123,7 @@ export const runExperimentationLazy = async (doc = document) => {
     // eslint-disable-next-line import/no-relative-packages -- no bundler for bare specifiers
     const { loadLazy } = await import('../plugins/experimentation/src/index.js');
     await loadLazy(doc, config);
-  } catch { /* simulation panel is an authoring aid; never break the page */ }
+  } catch (ex) {
+    await getConfig().log(ex);
+  }
 };
