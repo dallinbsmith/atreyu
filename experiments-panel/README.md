@@ -36,9 +36,13 @@ Self-service in the UI, which is how the Library was registered (the admin API r
 this org; see F-51/F-56 in `artifacts/research/eds-poc-findings.md`). Open
 `https://da.live/config#/dallinbsmith/atreyu/`, go to the `library` sheet, and add a row:
 
-| title | path | experience |
-|---|---|---|
-| Experiments | https://main--atreyu--dallinbsmith.aem.page/experiments-panel/index.html | inline |
+| title | path | format | ref |
+|---|---|---|---|
+| Experiments | https://main--atreyu--dallinbsmith.aem.page/experiments-panel/index.html | | |
+
+Leave `format` and `ref` blank. A blank `ref` means `main`, which shows the entry to everyone.
+There's no `experience` column, and none is needed: rows without one open in the sidebar
+(`row.experience || 'inline'` in da-live `helpers.js`).
 
 Until #86, #87 and #88 are merged, `main` does not have the panel (404). For testing before then,
 use the branch preview `https://feat-experiments-panel--atreyu--dallinbsmith.aem.page/...` instead.
