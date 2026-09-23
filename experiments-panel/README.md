@@ -104,6 +104,14 @@ the control page, so the address bar stays on e.g. `/features/c2c`. Put every va
 Only the production domain goes through the Worker. `aem.page`/`aem.live` URLs stay directly
 reachable for authors, and AEM already sends `noindex` on those hosts.
 
+### Retiring a variant page
+
+With this org's DA permissions, AEM cannot unpublish a page, even after its source is deleted
+(findings F-71). To retire a variant: delete it in DA, add a `Source`/`Destination` row to the
+`/redirects.json` sheet pointing it at the control page, and preview and publish that sheet.
+Pages under `/v/` are never in the index. For any other path, also send
+`DELETE admin.hlx.page/index/{org}/{site}/main/{path}` so the page leaves the sitemap.
+
 ## Where to author tests
 
 ### On one page: the Experiment table (recommended for business users)
