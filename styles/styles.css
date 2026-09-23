@@ -623,6 +623,14 @@
   .section {
     display: block;
 
+    /* Re-assert the base-layer `div[data-status]` reveal gate here: `sections`
+       is a later layer than `base`, so the `display: block` above otherwise
+       wins regardless of specificity and shows a section before ak.js has
+       loaded its blocks/section CSS (flash of unstyled content + CLS). */
+    &[data-status] {
+      display: none;
+    }
+
     > .default-content {
       max-width: var(--grid-container-width);
       margin: 0 auto;

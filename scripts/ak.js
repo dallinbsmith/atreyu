@@ -398,7 +398,13 @@ const decorateSection = (section) => {
         if (id) section.id = id;
         return;
       }
-      section.dataset[key] = text;
+      // Keys become data-* attributes, so normalize to a valid dataset name:
+      // multi-word keys ("Experiment Variants", "Campaign: Launch") are
+      // required by adobe/aem-experimentation's section metadata and, raw,
+      // throw InvalidCharacterError here — aborting decoration of every
+      // remaining section.
+      const dataKey = toClassName(key).replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+      if (dataKey) section.dataset[dataKey] = text;
     });
     metaEl.remove();
   }

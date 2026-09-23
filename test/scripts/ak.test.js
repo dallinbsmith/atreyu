@@ -217,6 +217,19 @@ describe('ak.js decorateSection — author-set anchor id', () => {
     expect(section.id).to.equal('deals');
     expect(section.dataset.note).to.equal('internal'); // anchor never also becomes data-anchor
   });
+
+  it('multi-word metadata keys (aem-experimentation) become camelCase data attributes instead of throwing', async () => {
+    const area = anchorArea([
+      [['Experiment Variants', '/variant-b'], ['Campaign: Launch', '/launch']],
+      [['note', 'still decorated']],
+    ]);
+    await loadArea({ area });
+    const [first, second] = area.querySelectorAll('.section');
+    expect(first.dataset.experimentVariants).to.equal('/variant-b');
+    expect(first.dataset.campaignLaunch).to.equal('/launch');
+    // the throw used to abort decorateSections for every remaining section
+    expect(second.dataset.note).to.equal('still decorated');
+  });
 });
 
 describe('ak.js loadBlock — framework-level re-entrancy guard', () => {
