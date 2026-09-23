@@ -5,6 +5,12 @@
 const ACTIVE = ['active', 'on', 'true'];
 const KNOWN_STATUS = [...ACTIVE, 'inactive', 'off', 'false'];
 
+// Variant pages live here. The production Worker serves them only to the
+// plugin's fetch and 404s direct visits (workers/website/handlers/variants.js,
+// which has its own copy of this value); helix-query.yaml keeps them out of
+// the index and sitemap.
+export const VARIANT_ROOT = '/v/';
+
 export const toClassName = (name) => (typeof name === 'string'
   ? name.toLowerCase().replace(/[^0-9a-z]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
   : '');
@@ -85,13 +91,18 @@ const splitIssues = (cfg, add) => {
   if (control.split < 0) add('error', 'Splits add up to more than 100%.');
 };
 
-export const validate = (cfg, { audiences = [] } = {}) => {
+export const validate = (cfg, { audiences = [], variantRoot } = {}) => {
   const issues = [];
   const add = (level, message) => issues.push({ level, message });
   const [control, ...challengers] = cfg.variants;
   if (!challengers.length) add('error', 'No variants: set Experiment Variants.');
   splitIssues(cfg, add);
   if (challengers.some((v) => v.path === control.path)) add('warn', 'A variant points at the control page itself.');
+  const exposed = challengers
+    .filter((v) => variantRoot && v.path !== control.path && !v.path.startsWith(variantRoot));
+  if (exposed.length) {
+    add('warn', `Variant page outside ${variantRoot}: visitors and search engines can open it directly. Move it under ${variantRoot}: ${exposed.map((v) => v.path).join(', ')}`);
+  }
   if (!KNOWN_STATUS.includes(toClassName(cfg.status))) add('warn', `Unknown status "${cfg.status}": the experiment will not run.`);
   for (const [name, date] of [['Start Date', cfg.startDate], ['End Date', cfg.endDate]]) {
     if (date && Number.isNaN(date.getTime())) add('error', `${name} is not a valid date.`);

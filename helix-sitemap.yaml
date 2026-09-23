@@ -1,0 +1,8 @@
+# Built from the pages index (helix-query.yaml) rather than AEM's no-config
+# default, which lists every published page. That index excludes /system/,
+# /tools/ and the A/B variant pages under /v/ (experiments-panel/README.md).
+sitemaps:
+  default:
+    source: /query-index.json
+    destination: /sitemap.xml
+    lastmod: YYYY-MM-DD

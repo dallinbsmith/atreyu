@@ -1,7 +1,7 @@
 // Pure helpers for the panel's "Build test" form: the Experiment table's rows,
 // reading them from a doc table, and writing the table DA inserts.
 import { metaName } from '../scripts/utils/experiments/block.js';
-import { readExperiment, validate } from '../scripts/utils/experiments/config.js';
+import { readExperiment, validate, VARIANT_ROOT } from '../scripts/utils/experiments/config.js';
 
 export const FIELDS = [
   { label: 'Test Name', type: 'text' },
@@ -60,7 +60,7 @@ export const toMeta = (values) => Object.fromEntries(FIELDS
 export const check = (values, { pagePath, audiences }) => {
   const cfg = readExperiment(toMeta(values), pagePath);
   if (!cfg) return [{ level: 'error', message: 'Test Name is required.' }];
-  return validate(cfg, { audiences });
+  return validate(cfg, { audiences, variantRoot: VARIANT_ROOT });
 };
 
 const cell = (doc, field, value) => {

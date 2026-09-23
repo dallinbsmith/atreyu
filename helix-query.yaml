@@ -5,6 +5,8 @@ indices:
     exclude:
       - /system/**
       - /tools/**
+      # A/B test variant pages (experiments-panel/README.md): never indexed or in the sitemap.
+      - /v/**
     target: /query-index.json
     properties:
       title:
