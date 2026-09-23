@@ -1,12 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isVariantPage, isPluginFetch, fetchVariant } from '../handlers/variants.js';
+import {
+  VARIANT_ROOT, isVariantPage, isPluginFetch, fetchVariant,
+} from '../handlers/variants.js';
 
 const MEDIA = '/v/media_13ac7009c0e40d5527733d60267706f07177192ca.jpg';
 const pluginHeaders = { 'sec-fetch-dest': 'empty', 'sec-fetch-site': 'same-origin', 'sec-fetch-mode': 'cors' };
 const req = (headers = {}) => new Request('https://main--atreyu--dallinbsmith.aem.live/v/c2c-headline', { headers });
 
-test('isVariantPage matches /v pages, locale-prefixed too, but not media or look-alikes', () => {
+test('VARIANT_ROOT stays aligned with site-side experiments config', () => {
+  // Keep in sync with scripts/utils/experiments/config.js; Worker/browser modules are separate.
+  assert.equal(VARIANT_ROOT, '/v/');
+});
+
+test('isVariantPage matches /v pages, locale-prefixed too, excluding direct media and look-alikes', () => {
   for (const path of ['/v/c2c-headline', '/v/', '/v', '/de-de/v/x']) assert.equal(isVariantPage(path), true, path);
   for (const path of [MEDIA, '/video', '/vx/a', '/features/v/a', '/']) assert.equal(isVariantPage(path), false, path);
 });

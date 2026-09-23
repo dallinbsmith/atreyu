@@ -83,7 +83,7 @@ describe('experiments-panel/sources.js', () => {
     expect(pathFromDaContext({ path: '/pricing' })).to.equal('/pricing');
     expect(pathFromDaContext({ path: '/index' })).to.equal('/');
     expect(pathFromDaContext({ path: '/features/index' })).to.equal('/features/');
-    for (const bad of [undefined, {}, { path: 'pricing' }, { path: '//evil.example' }]) {
+    for (const bad of [undefined, {}, { path: 'pricing' }, { path: '//evil.example' }, { path: '/\\evil.example' }]) {
       expect(pathFromDaContext(bad)).to.equal(null);
     }
   });

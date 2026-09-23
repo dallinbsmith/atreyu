@@ -4,6 +4,7 @@
 // will actually do, including its silent split padding/truncation.
 const ACTIVE = ['active', 'on', 'true'];
 const KNOWN_STATUS = [...ACTIVE, 'inactive', 'off', 'false'];
+const LOCALE_PREFIX = /^\/[a-z]{2}-[a-z]{2}(?=\/|$)/;
 
 // Variant pages live here. The production Worker serves them only to the
 // plugin's fetch and 404s direct visits (workers/website/handlers/variants.js,
@@ -54,7 +55,9 @@ export const readExperiment = (meta, pagePath = '/') => {
   const shares = props.split
     ? pages.map((_, i) => splits[i] ?? 0)
     : pages.map(() => 100 / (pages.length + 1));
-  const labels = toList(props.name ?? props.variantNames ?? props.variantName);
+  const labels = [props.name, props.variantNames, props.variantName]
+    .map(toList)
+    .find((l) => l.length) ?? [];
   const challengers = pages.map((path, i) => ({
     name: `challenger-${i + 1}`, label: labels[i] ?? `Challenger ${i + 1}`, path, split: shares[i],
   }));
@@ -62,8 +65,8 @@ export const readExperiment = (meta, pagePath = '/') => {
   return {
     id,
     name: `${Array.isArray(props.value) ? props.value[0] : props.value}`.trim(),
-    label: props.label ?? `Experiment ${props.value}`,
-    status: props.status ?? 'active',
+    label: props.label || `Experiment ${props.value}`,
+    status: props.status || 'active',
     audiences: toList(props.audiences ?? props.audience).map(toClassName),
     startDate: toDate(props.startDate),
     endDate: toDate(props.endDate),
@@ -98,8 +101,12 @@ export const validate = (cfg, { audiences = [], variantRoot } = {}) => {
   if (!challengers.length) add('error', 'No variants: set Experiment Variants.');
   splitIssues(cfg, add);
   if (challengers.some((v) => v.path === control.path)) add('warn', 'A variant points at the control page itself.');
+  const inVariantRoot = (path) => {
+    const localized = path.replace(LOCALE_PREFIX, '') || '/';
+    return localized === variantRoot.slice(0, -1) || localized.startsWith(variantRoot);
+  };
   const exposed = challengers
-    .filter((v) => variantRoot && v.path !== control.path && !v.path.startsWith(variantRoot));
+    .filter((v) => variantRoot && v.path !== control.path && !inVariantRoot(v.path));
   if (exposed.length) {
     add('warn', `Variant page outside ${variantRoot}: visitors and search engines can open it directly. Move it under ${variantRoot}: ${exposed.map((v) => v.path).join(', ')}`);
   }

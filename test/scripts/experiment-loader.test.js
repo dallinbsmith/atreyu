@@ -6,11 +6,13 @@ import {
 } from '../../scripts/experiment-loader.js';
 
 const KEY = 'unified-decisioning-experiments';
+const PLUGIN_CONSENT_KEY = 'experimentation-consented';
 const realFetch = window.fetch;
 let tracked;
 
 const exp = (overrides = {}) => ({
   type: 'section',
+  servedExperience: '/v/hero-test',
   config: {
     id: 'hero-test', selectedVariant: 'challenger-1', run: true, resolvedAudiences: null, ...overrides,
   },
@@ -34,6 +36,7 @@ describe('scripts/experiment-loader.js', () => {
     resetConsent();
     sessionStorage.removeItem(KEY);
     localStorage.removeItem(KEY);
+    localStorage.removeItem(PLUGIN_CONSENT_KEY);
     document.head.querySelectorAll('meta[name^="experiment"]').forEach((m) => m.remove());
     document.body.innerHTML = '';
   });
@@ -92,6 +95,19 @@ describe('scripts/experiment-loader.js', () => {
       expect(tracked[0].props.audiences).to.deep.equal(['mobile']);
     });
 
+    it('reports control when a challenger was selected but not served', () => {
+      setConsent({ analytics: true });
+      trackExposures([{ ...exp({ selectedVariant: 'challenger-1' }), servedExperience: null }]);
+      expect(tracked[0].props.variantName).to.equal('control');
+      expect(tracked[0].props.variantId).to.equal('hero-test:control');
+    });
+
+    it('reports the challenger when the plugin marks it served', () => {
+      setConsent({ analytics: true });
+      trackExposures([{ ...exp(), servedExperience: '/v/hero' }]);
+      expect(tracked[0].props.variantName).to.equal('challenger-1');
+    });
+
     it('never tracks a forced ?experiment= preview', () => {
       setConsent({ analytics: true });
       window.history.replaceState({}, '', '?experiment=hero-test/challenger-1');
@@ -119,9 +135,11 @@ describe('scripts/experiment-loader.js', () => {
     it('without consent, never persists and clears any stored assignment', () => {
       localStorage.setItem(KEY, '{"hero-test":{"treatment":"control"}}');
       sessionStorage.setItem(KEY, '{"hero-test":{"treatment":"control"}}');
+      localStorage.setItem(PLUGIN_CONSENT_KEY, 'true');
       restoreAssignments();
       persistAssignments();
       expect(localStorage.getItem(KEY)).to.equal(null);
+      expect(localStorage.getItem(PLUGIN_CONSENT_KEY)).to.equal(null);
     });
   });
 
