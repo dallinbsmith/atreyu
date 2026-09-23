@@ -1,7 +1,7 @@
 import ENV from './utils/env.js';
 
 import { getConfig, loadStyle } from './ak.js';
-import { runExperiment } from './utils/analytics/experimentation.js';
+import { runExperimentationLazy } from './experiment-loader.js';
 
 const loadSidekick = async () => {
   const getSk = () => document.querySelector('aem-sidekick');
@@ -36,16 +36,11 @@ export default async () => {
   const { log } = getConfig();
   await import('./utils/page/footer.js').then(({ default: footer }) => footer()).catch((ex) => log(ex));
 
-  // UC-02 (ref_uc02_shared_fragment_scoped_testing memory): a page opted into
-  // a chrome-scoped experiment via `experiment-selector` metadata runs here,
-  // the 'late' phase, after header/footer actually exist — runExperiment()
-  // itself no-ops immediately if this page's experiment is main-scoped
-  // (UC-01) instead, which already ran in scripts.js's early phase.
-  try {
-    await runExperiment('late');
-  } catch (ex) {
-    log(ex);
-  }
+  // Spike (adobe/aem-experimentation v2): the plugin replaces experimentation.js
+  // — both read the same `experiment*` metadata keys, so they cannot coexist.
+  // Chrome-scoped swaps (UC-02) move to the plugin's fragment manifest; this
+  // call only loads its preview/simulation panel (never in prod).
+  await runExperimentationLazy();
 
   // P0-44 personalization, graduated out of site/spike/ on 2026-08-28. Gated
   // to non-production environments deliberately, not as a placeholder: the

@@ -9,3 +9,5 @@ tools/
 deps/
 node_modules/
 workers/
+plugins/experimentation/tests/
+plugins/experimentation/documentation/

@@ -1,7 +1,7 @@
 import {
   getConfig, loadArea, loadStyle, setConfig,
 } from './ak.js';
-import { runExperiment } from './utils/analytics/experimentation.js';
+import { runExperimentation } from './experiment-loader.js';
 
 // frame.io is the canonical production host (ARCHITECTURE-DECISIONS.md); www.frame.io
 // permanently redirects to it. Deliberately excludes blog/app/accounts.frame.io and
@@ -63,7 +63,7 @@ const loadFonts = () => {
 export const loadPage = async () => {
   setConfig({ hostnames, locales, linkBlocks, components, decorateArea });
   loadFonts();
-  await runExperiment();
+  await runExperimentation();
   await loadArea();
 };
 await loadPage();
