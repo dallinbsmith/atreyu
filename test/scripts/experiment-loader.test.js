@@ -145,8 +145,24 @@ describe('scripts/experiment-loader.js', () => {
       expect(localStorage.getItem(KEY)).to.contain('challenger-1');
     });
 
-    it('serves control with no fetch when the split sends everyone to control', async () => {
+    it('without personalization consent, never runs the plugin or writes storage', async () => {
       setConsent({ analytics: true });
+      sessionStorage.setItem(KEY, '{"stale":{}}');
+      let fetched = false;
+      window.fetch = async () => {
+        fetched = true;
+        return new Response('');
+      };
+      sectionWithExperiment('100');
+      expect(await runExperimentation()).to.equal(null);
+      expect(fetched).to.equal(false);
+      expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+      expect(tracked.find((t) => t.event === 'experiment')).to.equal(undefined);
+      expect(sessionStorage.getItem(KEY)).to.equal(null);
+    });
+
+    it('serves control with no fetch when the split sends everyone to control', async () => {
+      setConsent({ analytics: true, personalization: true });
       let fetched = false;
       window.fetch = async () => {
         fetched = true;

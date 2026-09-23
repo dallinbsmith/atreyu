@@ -1,8 +1,10 @@
 // Project glue for adobe/aem-experimentation v2 (vendored at
 // plugins/experimentation via git subtree — never hand-edit that folder).
 // Owns the three things the plugin leaves to the host project:
-//   1. consent: bridge consent.js's 'personalization' category into the
-//      plugin's own consent flag (`Experiment Requires Consent` metadata)
+//   1. consent: parity with the old experimentation.js/pzn.js gate — nothing
+//      runs (and no storage is written) without consent.js 'personalization',
+//      except author previews (?experiment= / ?audience=). A later grant takes
+//      effect on the next page load, never as a mid-read content swap.
 //   2. stickiness: the plugin hard-codes DEVICE randomization in sessionStorage
 //      (src/index.js randomizationUnit), so a new tab or a returning visitor is
 //      re-randomized. With consent, mirror its assignment key to localStorage.
@@ -13,13 +15,12 @@
 //      "control", which would pollute the control arm — so read config.run.
 import ENV from './utils/env.js';
 import { loadArea } from './ak.js';
-import { hasConsent, onConsentChange } from './utils/analytics/consent.js';
+import { hasConsent } from './utils/analytics/consent.js';
 import { track, EVENTS } from './utils/analytics/analytics.js';
-import { getVisitorId } from './utils/analytics/experimentation.js';
+import { getVisitorId } from './utils/analytics/visitor-id.js';
 
 const ASSIGNMENTS_KEY = 'unified-decisioning-experiments';
 const PREVIEW_PARAMS = ['experiment', 'audience'];
-let unbindConsent;
 
 export const config = {
   prodHost: 'frame.io',
@@ -50,12 +51,19 @@ export const restoreAssignments = () => {
   if (hasConsent('personalization')) copyKey(localStorage, sessionStorage);
 };
 
+const clearAssignments = () => {
+  try {
+    localStorage.removeItem(ASSIGNMENTS_KEY);
+    sessionStorage.removeItem(ASSIGNMENTS_KEY);
+  } catch { /* storage unavailable */ }
+};
+
 export const persistAssignments = () => {
   if (hasConsent('personalization')) {
     copyKey(sessionStorage, localStorage);
     return;
   }
-  try { localStorage.removeItem(ASSIGNMENTS_KEY); } catch { /* storage unavailable */ }
+  clearAssignments();
 };
 
 const isPreview = () => {
@@ -81,14 +89,14 @@ export const trackExposures = (experiments = []) => {
 
 export const runExperimentation = async (doc = document) => {
   if (!isEnabled()) return null;
+  if (!hasConsent('personalization') && !isPreview()) {
+    clearAssignments();
+    return null;
+  }
   try {
     // eslint-disable-next-line import/no-relative-packages -- no bundler for bare specifiers
     const plugin = await import('../plugins/experimentation/src/index.js');
-    plugin.updateUserConsent(hasConsent('personalization'));
-    unbindConsent?.();
-    unbindConsent = onConsentChange(({ detail }) => {
-      plugin.updateUserConsent(!!detail.personalization);
-    });
+    plugin.updateUserConsent(true);
     restoreAssignments();
     // Plugin publishes results on `window.aem || window.hlx || {}`; without a
     // real global they land on a throwaway object and nothing is measurable.

@@ -3,8 +3,9 @@ import { track, EVENTS } from './analytics.js';
 import { sanitizeMarkup } from '../security/sanitize.js';
 import { hasConsent } from './consent.js';
 import { redecorate } from '../lifecycle.js';
+import { getVisitorId } from './visitor-id.js';
 
-const VISITOR_KEY = 'atreyu-visitor-id';
+export { getVisitorId };
 
 // EXP-001 acceptance criteria ("preview... using only the CMS") needs a way
 // to force a specific treatment without waiting on a hash bucket — same
@@ -13,15 +14,6 @@ const VISITOR_KEY = 'atreyu-visitor-id';
 // would be.
 const params = new URLSearchParams(window.location.search);
 const previewVariant = params.get('experimentPreview');
-
-export const getVisitorId = () => {
-  let id = localStorage.getItem(VISITOR_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(VISITOR_KEY, id);
-  }
-  return id;
-};
 
 // Deterministic numeric hash — djb2-style using only arithmetic (no bitwise ops)
 const hash = (str) => {
