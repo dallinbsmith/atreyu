@@ -40,6 +40,10 @@ this org; see F-51/F-56 in `artifacts/research/eds-poc-findings.md`). Open
 |---|---|---|
 | Experiments | https://main--atreyu--dallinbsmith.aem.page/experiments-panel/index.html | inline |
 
+Until #86, #87 and #88 are merged, `main` does not have the panel (404). For testing before then,
+use the branch preview `https://feat-experiments-panel--atreyu--dallinbsmith.aem.page/...` instead.
+Its content is the same, and it runs the branch code.
+
 Use the absolute preview URL: DA resolves relative paths to `aem.live`, which would show published
 rather than preview content. Save the config, open any page doc in DA, and pick "Experiments" in
 the library panel. DA posts the doc path to the panel (verified in adobe/da-live
