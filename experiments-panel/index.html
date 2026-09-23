@@ -11,12 +11,12 @@
 <body>
   <header class="bar">
     <nav aria-label="Experiments views" role="tablist">
-      <button type="button" data-tab="page" role="tab" aria-controls="view" aria-selected="true">This page</button>
-      <button type="button" data-tab="site" role="tab" aria-controls="view" aria-selected="false">Sitewide</button>
-      <button type="button" data-tab="build" role="tab" aria-controls="view" aria-selected="false">Build test</button>
+      <button type="button" data-tab="page" id="tab-page" role="tab" aria-controls="view" aria-selected="true">This page</button>
+      <button type="button" data-tab="site" id="tab-site" role="tab" aria-controls="view" aria-selected="false">Sitewide</button>
+      <button type="button" data-tab="build" id="tab-build" role="tab" aria-controls="view" aria-selected="false">Build test</button>
     </nav>
     <button type="button" id="refresh">Refresh</button>
   </header>
-  <main id="view" role="tabpanel"></main>
+  <main id="view" role="tabpanel" aria-labelledby="tab-page" tabindex="0"></main>
 </body>
 </html>

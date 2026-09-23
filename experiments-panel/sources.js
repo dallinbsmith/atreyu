@@ -104,7 +104,7 @@ export const pathFromDaContext = (context) => {
 export const waitForDaContext = (timeoutMs = 3000) => {
   const { promise, resolve } = Promise.withResolvers();
   const onMessage = (e) => {
-    if (e.origin !== DA_ORIGIN || !e.data?.ready) return;
+    if (e.origin !== DA_ORIGIN || e.source !== window.parent || !e.data?.ready) return;
     const path = pathFromDaContext(e.data.context);
     if (path) resolve({ path, port: e.ports?.[0] ?? null });
   };

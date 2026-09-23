@@ -150,6 +150,7 @@ const show = async (name) => {
   const id = renderId;
   currentTab = name;
   activateTab(tabs, [], tabs.findIndex((tab) => tab.dataset.tab === name));
+  view.setAttribute('aria-labelledby', `tab-${name}`);
   view.replaceChildren(h('p', {}, 'Loading...'));
   try {
     const nodes = await RENDER[name]();

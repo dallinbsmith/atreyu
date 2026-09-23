@@ -64,28 +64,33 @@ export default ({ view, pagePath, port, pageHtml }) => {
   const submit = h('button', { type: 'submit', className: 'primary' }, port ? 'Insert table in doc' : 'Copy table');
   form.append(h('div', { className: 'actions' }, submit));
   const load = port ? h('button', { type: 'button', className: 'load' }, 'Load selected table') : null;
-  const loadErrors = [];
+  const loadErrors = new Map();
+  let sending = false;
   let pendingSelection;
   let inputVersion = 0;
 
-  const values = () => Object.fromEntries(
-    [...new FormData(form)].map(([key, value]) => [key, value]),
-  );
+  const values = () => Object.fromEntries(new FormData(form));
   const fill = (found) => {
-    loadErrors.length = 0;
+    loadErrors.clear();
+    // A blank Status runs as active in the plugin; only a brand-new test starts paused.
+    const blankStatus = Object.keys(found).length ? 'active' : 'inactive';
     for (const { label, type } of FIELDS) {
-      const value = found[label] ?? (label === 'Status' ? 'inactive' : '');
+      const value = found[label] || (label === 'Status' ? blankStatus : '');
       const normalized = type === 'select' ? normalizeChoice(label, value).value : value;
       form.elements[label].value = normalized;
       if (type === 'select' && normalized && form.elements[label].value !== normalized) {
-        loadErrors.push({ level: 'error', message: `Unsupported ${label} value "${value}". Choose one of the listed options.` });
+        loadErrors.set(label, { level: 'error', message: `Unsupported ${label} value "${value}". Choose one of the listed options.` });
       }
     }
   };
   const refresh = () => {
-    const found = [...loadErrors, ...check(values(), { pagePath, audiences: AUDIENCE_NAMES })];
+    const unset = [...form.querySelectorAll('select')]
+      .filter((el) => el.selectedIndex < 0 && !loadErrors.has(el.name))
+      .map((el) => ({ level: 'error', message: `Choose a ${el.name} option.` }));
+    const checks = check(values(), { pagePath, audiences: AUDIENCE_NAMES });
+    const found = [...loadErrors.values(), ...unset, ...checks];
     issues.replaceChildren(...found.map(({ level, message }) => h('li', { className: level }, message)));
-    submit.disabled = found.some((i) => i.level === 'error');
+    submit.disabled = sending || found.some((i) => i.level === 'error');
   };
 
   const loadSelection = async () => {
@@ -105,13 +110,19 @@ export default ({ view, pagePath, port, pageHtml }) => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     refresh();
-    if (submit.disabled) return;
+    // Enter in a text field submits implicitly (no submitter); only the button inserts.
+    if (!e.submitter || submit.disabled) return;
+    sending = true;
     submit.disabled = true;
     const html = toTableHtml(values());
+    const done = () => {
+      sending = false;
+      refresh();
+    };
     if (port) {
       port.postMessage({ action: 'sendHTML', details: html });
       status.textContent = 'Sent to DA. Delete any older Experiment table: only the first one is used.';
-      setTimeout(refresh, 1000);
+      setTimeout(done, 1000);
       return;
     }
     try {
@@ -120,12 +131,12 @@ export default ({ view, pagePath, port, pageHtml }) => {
     } catch {
       status.textContent = 'Copy failed. Check browser clipboard permissions and try again.';
     } finally {
-      setTimeout(refresh, 1000);
+      setTimeout(done, 1000);
     }
   });
-  form.addEventListener('input', () => {
+  form.addEventListener('input', ({ target }) => {
     inputVersion += 1;
-    loadErrors.length = 0;
+    loadErrors.delete(target.name);
     refresh();
   });
 

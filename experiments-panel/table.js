@@ -4,6 +4,7 @@ import { cellValue, findExperimentBlocks, metaName } from '../scripts/utils/expe
 import {
   readExperiment, toClassName, validate, VARIANT_ROOT,
 } from '../scripts/utils/experiments/config.js';
+import { AUDIENCE_NAMES } from '../scripts/utils/experiments/audiences.js';
 
 export const FIELDS = [
   { label: 'Test Name', type: 'text' },
@@ -33,13 +34,14 @@ export const normalizeChoice = (label, value) => {
   const key = toClassName(text);
   if (!text) return { value: '' };
   if (label === 'Status') {
-    if (['active', 'on', 'true', 'yes'].includes(key)) return { value: 'active' };
+    if (['active', 'on', 'true'].includes(key)) return { value: 'active' };
     if (['inactive', 'off', 'false', 'no', 'paused'].includes(key)) return { value: 'inactive' };
   }
   if (label === 'Audience') {
-    const audiences = text.split(/[,\n]/).map(toClassName).filter(Boolean);
-    const normalized = audiences.join(', ');
-    return { value: normalized };
+    const audiences = [...new Set(text.split(/[,\n]/).map(toClassName).filter(Boolean))];
+    const known = AUDIENCE_NAMES.filter((a) => audiences.includes(a));
+    const unknown = audiences.filter((a) => !AUDIENCE_NAMES.includes(a));
+    return { value: [...known, ...unknown].join(', ') };
   }
   return { value: text };
 };

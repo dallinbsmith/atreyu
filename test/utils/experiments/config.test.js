@@ -109,10 +109,10 @@ describe('scripts/utils/experiments/config.js', () => {
     });
 
     it('warns about variant pages outside the variant root, only when asked', () => {
-      const cfg = readExperiment({ experiment: 'x', 'experiment-variants': '/v/ok, /de-de/v/x, /v, /experiments/b, /p' }, '/p');
+      const cfg = readExperiment({ experiment: 'x', 'experiment-variants': '/v/ok, /de-de/v/x, /en-gb/v/y, /v, /experiments/b, /p' }, '/p');
       const messages = validate(cfg, { variantRoot: VARIANT_ROOT }).map((i) => i.message);
       expect(messages.filter((m) => m.startsWith('Variant page outside'))).to.deep.equal([
-        'Variant page outside /v/: visitors and search engines can open it directly. Move it under /v/: /experiments/b',
+        'Variant page outside /v/: visitors and search engines can open it directly. Move it under /v/: /en-gb/v/y, /experiments/b',
       ]);
       expect(validate(cfg).some((i) => i.message.startsWith('Variant page outside'))).to.equal(false);
     });

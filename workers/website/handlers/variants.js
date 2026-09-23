@@ -7,8 +7,8 @@ import { fetchFromAem } from './aem.js';
 // into the control page's URL. So only that same-origin subresource fetch
 // (Fetch Metadata: Sec-Fetch-Dest "empty") gets the page. Navigations, crawlers
 // and clients without Fetch Metadata get a 404, and the plugin then falls back to
-// control. Global media paths like /media_* are excluded; /v/media_* is still a
-// variant path and will not be served to direct navigations.
+// control. Media paths (including /v/media_*) are not gated here and follow the
+// normal media routing.
 export const VARIANT_ROOT = '/v/';
 
 export const isVariantPage = (pathname) => {

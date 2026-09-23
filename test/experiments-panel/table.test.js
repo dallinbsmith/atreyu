@@ -70,9 +70,12 @@ describe('experiments panel table helpers', () => {
   it('normalizes loaded select values and metadata round-trips status synonyms and multi-audience values', () => {
     expect(['Inactive', 'Off', 'Paused'].map((value) => normalizeChoice('Status', value).value))
       .to.deep.equal(['inactive', 'inactive', 'inactive']);
-    expect(['on', 'true', 'yes'].map((value) => normalizeChoice('Status', value).value))
-      .to.deep.equal(['active', 'active', 'active']);
+    expect(['on', 'true'].map((value) => normalizeChoice('Status', value).value))
+      .to.deep.equal(['active', 'active']);
+    // The plugin doesn't run "yes", so it must not load as active.
+    expect(normalizeChoice('Status', 'yes').value).to.equal('yes');
     expect(normalizeChoice('Audience', 'Mobile, Desktop').value).to.equal('mobile, desktop');
+    expect(normalizeChoice('Audience', 'desktop, Mobile, mobile').value).to.equal('mobile, desktop');
     expect(toMeta({
       'Test Name': 'T', Variants: '/v/a', Status: 'Off', Audience: 'Mobile, Desktop',
     })).to.deep.equal({

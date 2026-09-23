@@ -2,9 +2,10 @@
 // Mirrors the plugin's own parsing (plugins/experimentation/src/index.js
 // getExperimentConfig, v2.0.0) so the authoring panel shows what the plugin
 // will actually do, including its silent split padding/truncation.
+import locales from '../../locales.js';
+
 const ACTIVE = ['active', 'on', 'true'];
 const KNOWN_STATUS = [...ACTIVE, 'inactive', 'off', 'false'];
-const LOCALE_PREFIX = /^\/[a-z]{2}-[a-z]{2}(?=\/|$)/;
 
 // Variant pages live here. The production Worker serves them only to the
 // plugin's fetch and 404s direct visits (workers/website/handlers/variants.js,
@@ -102,7 +103,8 @@ export const validate = (cfg, { audiences = [], variantRoot } = {}) => {
   splitIssues(cfg, add);
   if (challengers.some((v) => v.path === control.path)) add('warn', 'A variant points at the control page itself.');
   const inVariantRoot = (path) => {
-    const localized = path.replace(LOCALE_PREFIX, '') || '/';
+    const prefix = Object.keys(locales).find((p) => p && (path === p || path.startsWith(`${p}/`)));
+    const localized = path.slice(prefix?.length ?? 0) || '/';
     return localized === variantRoot.slice(0, -1) || localized.startsWith(variantRoot);
   };
   const exposed = challengers
