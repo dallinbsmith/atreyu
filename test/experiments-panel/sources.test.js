@@ -92,7 +92,7 @@ describe('experiments-panel/sources.js', () => {
     const pending = waitForDaContext(200);
     window.dispatchEvent(new MessageEvent('message', { origin: 'https://evil.example', data: { ready: true, context: { path: '/evil' } } }));
     window.dispatchEvent(new MessageEvent('message', { origin: 'https://da.live', data: { ready: true, context: { path: '/pricing' } } }));
-    expect(await pending).to.equal('/pricing');
+    expect(await pending).to.deep.equal({ path: '/pricing', port: null });
     expect(await waitForDaContext(50)).to.equal(null);
   });
 });

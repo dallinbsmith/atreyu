@@ -97,9 +97,10 @@ export const sourceOf = (test, rows, pagePath) => {
   };
 };
 
-// DA library plugin handshake (adobe/da-live blocks/edit/da-library): about
-// 750ms after load DA posts { ready, context: { org, repo, path } } to the
-// iframe. Only the path is used; the IMS token in the same message is ignored.
+// DA library plugin handshake (adobe/da-live blocks/edit/da-library and
+// blocks/canvas/ew-panel-extensions): about 750ms after load DA posts
+// { ready, context: { org, repo, path } } to the iframe, with a MessagePort
+// for sendHTML/getSelection. The IMS token in the same message is ignored.
 // DA doc paths carry no extension, and an `index` doc serves its folder.
 export const pathFromDaContext = (context) => {
   const path = context?.path;
@@ -107,12 +108,13 @@ export const pathFromDaContext = (context) => {
   return path.replace(/(^|\/)index$/, '$1') || '/';
 };
 
+// Resolves { path, port } from DA, or null when DA never says hello.
 export const waitForDaContext = (timeoutMs = 3000) => {
   const { promise, resolve } = Promise.withResolvers();
   const onMessage = (e) => {
     if (e.origin !== DA_ORIGIN || !e.data?.ready) return;
     const path = pathFromDaContext(e.data.context);
-    if (path) resolve(path);
+    if (path) resolve({ path, port: e.ports?.[0] ?? null });
   };
   window.addEventListener('message', onMessage);
   const timer = setTimeout(() => resolve(null), timeoutMs);

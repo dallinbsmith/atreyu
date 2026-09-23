@@ -1,8 +1,8 @@
 # Experiments panel
 
-Read-only authoring view of `adobe/aem-experimentation` tests, opened from the AEM Sidekick as a
-floating palette. It shows what the plugin will actually do, using the same parsing rules as the
-plugin; `test/utils/experiments/config.test.js` checks this against the vendored plugin.
+Authoring view of `adobe/aem-experimentation` tests, opened from the DA editor's library or the
+AEM Sidekick. The page and sitewide views are read-only; Build test writes only when you click
+Insert. It shows what the plugin will actually do, using the same parsing rules as the plugin; `test/utils/experiments/config.test.js` checks this against the vendored plugin.
 
 - **This page:**
   - every test on the current page: whole-page (head metadata) and section-level (section metadata);
@@ -13,6 +13,8 @@ plugin; `test/utils/experiments/config.test.js` checks this against the vendored
 - **Sitewide:** every whole-page test defined in the bulk metadata sheets (`/metadata.json`,
   `/metadata-experiments.json`). Section tests live in page docs, so they only appear in the page
   view.
+- **Build test:** a form that writes the Experiment table into the DA doc (see
+  [the Build test tab](#the-build-test-tab-dropdowns-and-date-pickers)).
 - **Checks:** the silent failure modes of the plugin:
   - splits over 100%;
   - fewer split values than variants (the plugin gives the rest 0%);
@@ -26,7 +28,7 @@ plugin; `test/utils/experiments/config.test.js` checks this against the vendored
   A test with an error-level problem is shown as "Blocked".
 
 Open it directly for local work: `/experiments-panel/index.html?page=/some/path` (add `&view=site`
-for the sitewide view).
+for the sitewide view, or `&view=build` for the form).
 
 ## Registering it
 
@@ -44,9 +46,18 @@ Leave `format` and `ref` blank. A blank `ref` means `main`, which shows the entr
 There's no `experience` column, and none is needed: rows without one open in the sidebar
 (`row.experience || 'inline'` in da-live `helpers.js`).
 
-Until #86, #87 and #88 are merged, `main` does not have the panel (404). For testing before then,
-use the branch preview `https://feat-experiments-panel--atreyu--dallinbsmith.aem.page/...` instead.
-Its content is the same, and it runs the branch code.
+Two rules for DA Config that the new canvas editor enforces (checked against da-live
+`blocks/canvas/ew-panel-extensions/helpers.js`):
+
+- **Keep at least two tabs.** Canvas reads `conf.library.data`, which exists only in a multi-tab
+  config. A single-tab config shows no library in canvas; the classic editor still shows it.
+  The config has a `flags` tab containing a `_note` row for this reason. Don't delete that tab.
+  Only keys that start with `ew.` change editor behavior.
+- **Point library rows at `https://content.da.live/dallinbsmith/atreyu/...`** (e.g. the Blocks row
+  and every row of the blocks sheet). Canvas fetches these URLs directly, and `aem.page`/`aem.live`
+  send no CORS headers, so those fetches fail in canvas. `content.da.live` reads DA source, so
+  library docs do not need to be previewed. The Experiments row is different: it loads in an iframe,
+  so it stays on `aem.page`.
 
 Use the absolute preview URL: DA resolves relative paths to `aem.live`, which would show published
 rather than preview content. Save the config, open any page doc in DA, and pick "Experiments" in
@@ -98,14 +109,30 @@ rows); the panel warns when that happens. Only the first table on a page is used
 Library setup (one-time, in DA):
 
 1. Create the doc `/system/library/blocks/experiment` containing the table above with example
-   values, then preview it.
+   values. (Done: Status is `inactive` so an accidental insert does nothing.)
 2. Add a row to the `/system/library/blocks` sheet in place: `name` = `experiment`,
-   `path` = `/system/library/blocks/experiment`. Edit the sheet in place; never move or copy it (F-57).
-   Preview it.
-3. Optional value suggestions (type `/` in a value cell): add an `options` tab to the same sheet
-   with columns `blocks`, `key`, `values`. For example: `experiment` | `Audience` | `mobile|desktop`,
-   and `experiment` | `Status` | `active|inactive`. Adding a tab turns the sheet's JSON into a
-   multi-sheet file, so reopen the library afterwards and check the Blocks list still loads.
+   `path` = `https://content.da.live/dallinbsmith/atreyu/system/library/blocks/experiment`.
+   Edit the sheet in place; never move or copy it (F-57). (Done.)
+3. Value suggestions (type `/` in a value cell; both editors): an `options` tab on the same sheet
+   with columns `blocks`, `key`, `values`. Values are separated by `|`, and `Label=value` shows a
+   label but inserts the value. (Done: Status, Audience, Split and Variant Names.) The tab makes
+   the sheet multi-sheet; DA still reads the block list from its first tab, `blocks`.
+
+#### The "Build test" tab: dropdowns and date pickers
+
+DA tables only hold text, so the panel's **Build test** tab provides the form: dropdowns for
+Audience and Status, a suggestion list for Split, date pickers for Start and End Date, and the
+same checks as the page view (inserting is disabled while there's an error). It pre-fills from the
+page's previewed Experiment table.
+
+- **Insert table in doc** sends the whole table to DA at the cursor (`sendHTML`), with every row
+  present, so authors see every control.
+- **Edit an existing table:** select the whole table in the doc, click **Load selected table**,
+  change fields, then click Insert. The selection is still the table, so the table is replaced
+  in place (verified in the canvas editor).
+- Opened outside DA (Sidekick, `?page=`), the button becomes **Copy table**; paste it into the doc.
+- `table.js` holds the pure helpers (read, check, write). Values are only ever set as text, and
+  only same-site paths and `https://` URLs become links.
 
 ### Across many pages: the metadata sheet
 
