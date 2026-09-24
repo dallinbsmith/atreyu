@@ -57,6 +57,11 @@ describe('experiments panel table helpers', () => {
     expect(toDateInput('')).to.equal('');
   });
 
+  it('normalizes non-ISO dates with local getters, not UTC ISO output', () => {
+    const lateLocal = new Date(2026, 11, 31, 23, 30);
+    expect(toDateInput(lateLocal)).to.equal('2026-12-31');
+  });
+
   it('maps values to plugin metadata and validates like the panel', () => {
     expect(toMeta({ 'Test Name': 'T', Variants: '/a\n/b', Audience: '' }))
       .to.deep.equal({ experiment: 'T', 'experiment-variants': '/a, /b' });

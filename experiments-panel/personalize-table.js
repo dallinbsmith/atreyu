@@ -34,6 +34,15 @@ const isKnownAudience = (id) => (
   audienceChoices().some(([known]) => known === id) || CAMPAIGN_PATTERN.test(id)
 );
 
+const toEnd = (value) => {
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const valid = date.getFullYear() === year
+    && date.getMonth() === month - 1
+    && date.getDate() === day;
+  return valid ? new Date(year, month - 1, day + 1) : null;
+};
+
 const toPath = (cell) => {
   const raw = cell.querySelector('a')?.getAttribute('href') ?? cellValue(cell);
   try {
@@ -77,11 +86,6 @@ export const normalizeValues = (values = {}) => ({
   })).filter(({ audience, path }) => audience || path),
 });
 
-const endOfLocalDay = (value) => {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(year, month - 1, day, 23, 59, 59, 999);
-};
-
 export const check = (values, { now = new Date() } = {}) => {
   const v = normalizeValues(values);
   const rawEndDate = `${values['End Date'] ?? ''}`.trim();
@@ -95,12 +99,12 @@ export const check = (values, { now = new Date() } = {}) => {
   }
   if (!rawEndDate) add('error', 'End Date is required.');
   else if (!DATE_PATTERN.test(rawEndDate)) add('error', 'End Date must use YYYY-MM-DD.');
-  else if (!v['End Date']) add('error', 'End Date is not a valid date.');
   else {
-    const end = endOfLocalDay(v['End Date']);
+    const end = toEnd(v['End Date']);
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (end < today) add('error', 'End Date is in the past.');
-    if (end > new Date(today.getTime() + (180 * MS_PER_DAY))) add('error', 'End Date must be within 180 days.');
+    if (!end) add('error', 'End Date is not a valid date.');
+    else if (end <= today) add('error', 'End Date is in the past.');
+    else if (end > new Date(today.getTime() + ((180 + 1) * MS_PER_DAY))) add('error', 'End Date must be within 180 days.');
   }
   return issues;
 };

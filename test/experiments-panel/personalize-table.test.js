@@ -2,10 +2,27 @@ import { expect } from '@esm-bundle/chai';
 import {
   check, multiSectionWarnings, normalizeAudience, readValues, toTableHtml,
 } from '../../experiments-panel/personalize-table.js';
+import { applyPersonalizeTables } from '../../scripts/utils/experiments/personalize.js';
 
 const parse = (html) => new DOMParser().parseFromString(html, 'text/html').body;
 const now = new Date(2026, 0, 15, 12);
 const SCRIPT_URL = ['javascript', 'alert(1)'].join(':');
+
+const daTableToBlock = (html) => {
+  const table = parse(html).querySelector('table');
+  const block = document.createElement('div');
+  block.className = table.querySelector('td').textContent.trim().toLowerCase();
+  for (const row of [...table.querySelectorAll('tr')].slice(1)) {
+    const blockRow = document.createElement('div');
+    for (const tableCell of row.children) {
+      const cell = document.createElement('div');
+      cell.append(...[...tableCell.childNodes].map((child) => child.cloneNode(true)));
+      blockRow.append(cell);
+    }
+    block.append(blockRow);
+  }
+  return block.outerHTML;
+};
 
 describe('experiments-panel/personalize-table.js', () => {
   it('reads rendered and DA Personalize tables', () => {
@@ -39,6 +56,44 @@ describe('experiments-panel/personalize-table.js', () => {
     expect(body.textContent).to.include(SCRIPT_URL);
   });
 
+  it('writes tables that compile to plugin audience metadata', () => {
+    const values = {
+      Name: 'Homepage Personalization',
+      Status: '',
+      'End Date': '2026-03-01',
+      Owner: 'CRO',
+      rules: [
+        { audience: 'desktop', path: '/v/desktop-hero' },
+        { audience: 'mobile', path: '/v/mobile-hero' },
+        { audience: 'Campaign Spring Launch', path: '/v/spring-hero' },
+      ],
+    };
+    const doc = new DOMParser().parseFromString(
+      `<main><div><p>Control</p>${daTableToBlock(toTableHtml(values))}</div></main>`,
+      'text/html',
+    );
+    const plan = applyPersonalizeTables(doc, { prod: true, now, search: '' });
+    const rows = [...doc.querySelectorAll('.section-metadata > div')].map((row) => [
+      row.children[0].textContent,
+      row.children[1].querySelector('a')?.getAttribute('href'),
+    ]);
+    expect(plan.map(({ name, owner, rules }) => ({ name, owner, rules }))).to.deep.equal([{
+      name: 'Homepage Personalization',
+      owner: 'CRO',
+      rules: [
+        { id: 'mobile', path: '/v/mobile-hero' },
+        { id: 'desktop', path: '/v/desktop-hero' },
+        { id: 'campaign-spring-launch', path: '/v/spring-hero' },
+      ],
+    }]);
+    expect(rows).to.deep.equal([
+      ['Audience: mobile', '/v/mobile-hero'],
+      ['Audience: desktop', '/v/desktop-hero'],
+      ['Audience: campaign-spring-launch', '/v/spring-hero'],
+    ]);
+    expect(Boolean(doc.querySelector('.personalize'))).to.equal(false);
+  });
+
   it('writes End Date as YYYY-MM-DD and rejects other date formats', () => {
     const html = toTableHtml({
       'End Date': 'March 1, 2026',
@@ -66,6 +121,8 @@ describe('experiments-panel/personalize-table.js', () => {
     ]);
     expect(check({ 'End Date': '2026-01-14', rules: [{ audience: 'mobile', path: '/v/a' }] }, { now })[0].message)
       .to.equal('End Date is in the past.');
+    expect(check({ 'End Date': '2026-02-30', rules: [{ audience: 'mobile', path: '/v/a' }] }, { now })[0].message)
+      .to.equal('End Date is not a valid date.');
     expect(check({ rules: [{ audience: 'mobile', path: '/v/a' }] }, { now })[0].message)
       .to.equal('End Date is required.');
   });
