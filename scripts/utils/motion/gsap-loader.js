@@ -1,14 +1,24 @@
 import { shouldAnimate } from './motion.js';
 import loadScript from '../script.js';
 
-const CDN = 'https://cdn.jsdelivr.net/npm/gsap@3/dist';
+const CDN = 'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist';
+const INTEGRITY = {
+  'gsap.min.js': 'sha384-HOvlOYPIs/zjoIkWUGXkVmXsjr8GuZLV+Q+rcPwmJOVZVpvTSXQChiN4t9Euv9Vc',
+  'ScrollTrigger.min.js': 'sha384-P8VzCVnT9NBUkMrpcIZrJbA7EBjJvh/fJS6PmP+4nLIM284DtsImIv8D0fFjIkeh',
+};
 const pluginPromises = new Map();
 let corePromise = null;
 
+const loadGsapScript = (file) => {
+  const integrity = INTEGRITY[file];
+  if (!integrity) throw new Error(`Missing GSAP SRI for ${file}`);
+  return loadScript(`${CDN}/${file}`, { integrity, crossorigin: 'anonymous' });
+};
+
 const loadCore = () => {
   corePromise ??= (async () => {
-    await loadScript(`${CDN}/gsap.min.js`);
-    await loadScript(`${CDN}/ScrollTrigger.min.js`);
+    await loadGsapScript('gsap.min.js');
+    await loadGsapScript('ScrollTrigger.min.js');
     window.gsap.registerPlugin(window.ScrollTrigger);
     return { gsap: window.gsap, ScrollTrigger: window.ScrollTrigger };
   })();
@@ -38,7 +48,7 @@ export const loadGsap = async () => {
 const loadPlugin = (pluginName) => {
   if (!pluginPromises.has(pluginName)) {
     pluginPromises.set(pluginName, (async () => {
-      await loadScript(`${CDN}/${pluginName}.min.js`);
+      await loadGsapScript(`${pluginName}.min.js`);
       const plugin = window[pluginName];
       window.gsap.registerPlugin(plugin);
       return plugin;

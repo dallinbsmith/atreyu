@@ -3,6 +3,7 @@ import {
 } from './ak.js';
 import { runExperimentation } from './experiment-loader.js';
 import locales from './locales.js';
+import { isAuthoringPreviewAllowed } from './utils/security/preview-origin.js';
 
 // frame.io is the canonical production host (ARCHITECTURE-DECISIONS.md); www.frame.io
 // permanently redirects to it. Deliberately excludes blog/app/accounts.frame.io and
@@ -47,18 +48,25 @@ export const loadPage = async () => {
 };
 await loadPage();
 
-(() => {
-  const { searchParams } = new URL(window.location.href);
+export const loadAuthoringPreviews = ({
+  href = window.location.href,
+  host = window.location.host,
+  importer = null,
+} = {}) => {
+  if (!isAuthoringPreviewAllowed(host)) return;
+  const { searchParams } = new URL(href);
   const hasPreview = searchParams.has('dapreview');
   if (hasPreview) {
-    import('./da/da.js')
+    (importer ? importer('./da/da.js') : import('./da/da.js'))
       .then((mod) => mod.default(loadPage))
       .catch((ex) => getConfig().log(ex));
   }
   const hasQE = searchParams.has('quick-edit');
   if (hasQE) {
-    import('./quick-edit/quick-edit.js')
+    (importer ? importer('./quick-edit/quick-edit.js') : import('./quick-edit/quick-edit.js'))
       .then((mod) => mod.default())
       .catch((ex) => getConfig().log(ex));
   }
-})();
+};
+
+loadAuthoringPreviews();

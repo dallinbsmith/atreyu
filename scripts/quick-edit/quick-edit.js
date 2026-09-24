@@ -1,5 +1,5 @@
 import { loadPage } from '../scripts.js';
-import { resolvePreviewOrigin } from '../utils/security/preview-origin.js';
+import { isAuthoringPreviewAllowed, resolvePreviewOrigin } from '../utils/security/preview-origin.js';
 
 const importMap = {
   imports: {
@@ -32,7 +32,8 @@ const generateSidekickPayload = () => {
   };
 };
 
-const init = async (payload) => {
+const init = async (payload, { host = window.location.host, importer = null } = {}) => {
+  if (!isAuthoringPreviewAllowed(host)) return;
   const { search } = window.location;
   const ref = new URLSearchParams(search).get('quick-edit');
   const origin = resolvePreviewOrigin(ref, {
@@ -43,7 +44,10 @@ const init = async (payload) => {
   });
   if (!origin) return;
   addImportmap();
-  const { default: loadQuickEdit } = await import(`${origin}/nx/public/plugins/quick-edit/quick-edit.js`);
+  const url = `${origin}/nx/public/plugins/quick-edit/quick-edit.js`;
+  const { default: loadQuickEdit } = importer
+    ? await importer(url)
+    : await import(`${origin}/nx/public/plugins/quick-edit/quick-edit.js`);
   loadQuickEdit(payload || generateSidekickPayload(), loadPage);
 };
 
