@@ -12,6 +12,11 @@ const PAGE = `<html><head>
     <div><div>Experiment</div><div>Hero Copy</div></div>
     <div><div>Experiment Variants</div><div><p><a href="https://main--atreyu--dallinbsmith.aem.page/v/one">x</a></p><p><a href="/v/two">y</a></p></div></div>
     <div><div>Experiment Split</div><div>25, 25</div></div>
+    <div><div>Experiment End Date</div><div>2026-12-01</div></div>
+    <div><div>Experiment Start Date</div><div>2026-01-01</div></div>
+    <div><div>Experiment Requires Consent</div><div>true</div></div>
+    <div><div>Experiment Variant Names</div><div>Bold, Clear</div></div>
+    <div><div>Experiment Optimizing Target</div><div>signup</div></div>
   </div></div>
 </main></body></html>`;
 
@@ -26,12 +31,24 @@ const SHEET = {
 describe('experiments-panel/sources.js', () => {
   it('reads the page-level test from head meta and section tests from section metadata', () => {
     const [page, section] = readPage(PAGE, '/pricing');
+    expect(page.kind).to.equal('page');
     expect(page.scope).to.equal('Whole page');
     expect(page.cfg.id).to.equal('page-test');
+    expect(section.kind).to.equal('section');
     expect(section.scope).to.equal('Section 2');
     expect(section.cfg.id).to.equal('hero-copy');
     expect(section.cfg.variants.map((v) => v.path)).to.deep.equal(['/pricing', '/v/one', '/v/two']);
     expect(section.cfg.variants.map((v) => v.split)).to.deep.equal([50, 25, 25]);
+    expect(section.cfg.variants.map((v) => v.label)).to.deep.equal(['Control', 'Challenger 1', 'Challenger 2']);
+    expect(section.cfg.startDate).to.equal(null);
+    expect(section.cfg.endDate).to.equal(null);
+    expect(section.cfg.ignoredAtSection).to.deep.equal([
+      'End Date',
+      'Start Date',
+      'Requires Consent',
+      'Variant Names',
+      'Optimizing Target',
+    ]);
   });
 
   it('reads the Experiment table as the whole-page test and flags what it replaces', () => {
@@ -52,6 +69,7 @@ describe('experiments-panel/sources.js', () => {
 
   it('reads sheet rows that define a test and ignores other bulk metadata rows', () => {
     const rows = readSheet(SHEET, '/metadata-experiments.json');
+    expect(rows.map((r) => r.kind)).to.deep.equal(['sheet', 'sheet']);
     expect(rows.map((r) => r.pattern)).to.deep.equal(['/pricing', '/features/**']);
     expect(readSheet(null, '/metadata.json')).to.deep.equal([]);
   });

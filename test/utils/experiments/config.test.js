@@ -140,6 +140,93 @@ describe('scripts/utils/experiments/config.js', () => {
       expect(issues).to.contain('error:No variants');
       expect(issues).to.contain('error:End Date is not a valid date');
     });
+
+    const sectionIgnored = [
+      ['Experiment Start Date', 'Start Date', '2026-10-01'],
+      ['Experiment End Date', 'End Date', '2026-12-01'],
+      ['Experiment Requires Consent', 'Requires Consent', 'true'],
+      ['Experiment Variant Name', 'Variant Name', 'A'],
+      ['Experiment Variant Names', 'Variant Names', 'A, B'],
+      ['Experiment Optimizing Target', 'Optimizing Target', 'signup'],
+    ];
+
+    for (const [field, label, value] of sectionIgnored) {
+      it(`warns at section scope that ${label} is ignored by the plugin`, () => {
+        const cfg = readExperiment({
+          experiment: 'x',
+          'experiment-variants': '/v',
+          [field]: value,
+        }, '/p', { scope: 'section' });
+        const messages = validate(cfg, { scope: 'section' }).map((i) => i.message);
+        expect(messages).to.include(`${label} is ignored by plugin at section scope.`);
+      });
+
+      it(`does not warn at page scope that ${label} is ignored by the plugin`, () => {
+        const cfg = readExperiment({
+          experiment: 'x',
+          'experiment-variants': '/v',
+          [field]: value,
+        }, '/p');
+        const ignoredWarnings = validate(cfg)
+          .filter((i) => i.message.includes(' is ignored by plugin at section scope.'));
+        expect(ignoredWarnings).to.deep.equal([]);
+      });
+    }
+
+    it('does not emit section ignored-field warnings when validating as page scope', () => {
+      const cfg = readExperiment({
+        experiment: 'x',
+        'experiment-variants': '/v',
+        'experiment-end-date': '2026-12-01',
+      }, '/p', { scope: 'section' });
+      const ignoredWarnings = validate(cfg, { scope: 'page' })
+        .filter((i) => i.message.includes(' is ignored by plugin at section scope.'));
+      expect(ignoredWarnings).to.deep.equal([]);
+    });
+
+    it('matches plugin section scope by ignoring dates for status and validation', () => {
+      const cfg = readExperiment({
+        experiment: 'x',
+        'experiment-variants': '/v',
+        'experiment-start-date': '2099-01-01',
+        'experiment-end-date': '2020-01-01',
+      }, '/p', { scope: 'section' });
+      expect(cfg.startDate).to.equal(null);
+      expect(cfg.endDate).to.equal(null);
+      expect(statusOf(cfg)).to.equal('running');
+      expect(validate(cfg, { scope: 'section' }).map((i) => i.message)).not.to.include('Start Date is not before End Date.');
+    });
+
+    it('matches plugin section scope by ignoring invalid dates', () => {
+      const cfg = readExperiment({
+        experiment: 'x',
+        'experiment-variants': '/v',
+        'experiment-end-date': 'soon',
+      }, '/p', { scope: 'section' });
+      expect(cfg.endDate).to.equal(null);
+      expect(validate(cfg, { scope: 'section' }).filter((i) => i.level === 'error')).to.deep.equal([]);
+    });
+
+    it('matches plugin section scope by ignoring Variant Names labels', () => {
+      const cfg = readExperiment({
+        experiment: 'x',
+        'experiment-variants': '/v',
+        'experiment-variant-names': 'Bold',
+      }, '/p', { scope: 'section' });
+      expect(cfg.variants[1].label).to.equal('Challenger 1');
+    });
+
+    it('keeps page-scope dates and variant names unchanged', () => {
+      const cfg = readExperiment({
+        experiment: 'x',
+        'experiment-variants': '/v',
+        'experiment-end-date': '2020-01-01',
+        'experiment-variant-names': 'Bold',
+      }, '/p');
+      expect(statusOf(cfg)).to.equal('ended');
+      expect(cfg.variants[1].label).to.equal('Bold');
+      expect(cfg.ignoredAtSection).to.deep.equal([]);
+    });
   });
 
   describe('matchesPattern', () => {
