@@ -4,12 +4,13 @@
 // memoization pattern, e.g. fetch-data.js).
 const pending = new Map();
 
-export default async (src) => {
+export default async (src, attrs = {}) => {
   if (pending.has(src)) return pending.get(src);
   if (document.querySelector(`head > script[src="${src}"]`)) return null;
   const { promise, resolve, reject } = Promise.withResolvers();
   const script = document.createElement('script');
   script.src = src;
+  for (const [key, value] of Object.entries(attrs)) script.setAttribute(key, value);
   script.addEventListener('load', resolve);
   script.addEventListener('error', reject);
   document.head.append(script);

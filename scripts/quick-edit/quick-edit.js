@@ -1,5 +1,5 @@
 import { loadPage } from '../scripts.js';
-import { resolvePreviewOrigin } from '../utils/security/preview-origin.js';
+import { isAuthoringPreviewAllowed, resolvePreviewOrigin } from '../utils/security/preview-origin.js';
 
 const importMap = {
   imports: {
@@ -33,6 +33,7 @@ const generateSidekickPayload = () => {
 };
 
 const init = async (payload) => {
+  if (!isAuthoringPreviewAllowed()) return;
   const { search } = window.location;
   const ref = new URLSearchParams(search).get('quick-edit');
   const origin = resolvePreviewOrigin(ref, {

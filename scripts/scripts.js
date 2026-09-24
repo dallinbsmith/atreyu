@@ -3,6 +3,7 @@ import {
 } from './ak.js';
 import { runExperimentation } from './experiment-loader.js';
 import locales from './locales.js';
+import { isAuthoringPreviewAllowed } from './utils/security/preview-origin.js';
 
 // frame.io is the canonical production host (ARCHITECTURE-DECISIONS.md); www.frame.io
 // permanently redirects to it. Deliberately excludes blog/app/accounts.frame.io and
@@ -48,6 +49,7 @@ export const loadPage = async () => {
 await loadPage();
 
 (() => {
+  if (!isAuthoringPreviewAllowed()) return;
   const { searchParams } = new URL(window.location.href);
   const hasPreview = searchParams.has('dapreview');
   if (hasPreview) {

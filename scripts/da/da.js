@@ -1,6 +1,7 @@
-import { resolvePreviewOrigin } from '../utils/security/preview-origin.js';
+import { isAuthoringPreviewAllowed, resolvePreviewOrigin } from '../utils/security/preview-origin.js';
 
 const daPreview = async (loadPage) => {
+  if (!isAuthoringPreviewAllowed()) return;
   const { search } = window.location;
   const ref = new URLSearchParams(search).get('dapreview');
   if (!ref) return;
