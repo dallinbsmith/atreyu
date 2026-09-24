@@ -5,7 +5,7 @@ import { AUDIENCE_NAMES } from '../scripts/utils/experiments/audiences.js';
 import {
   FIELDS, readValues, check, toTableHtml, normalizeChoice,
 } from './table.js';
-import { DA_ORIGIN } from './sources.js';
+import { readSelection, sendHtml } from './da-port.js';
 
 const SPLITS = [['50', 'Half to one variant'], ['33, 33', 'Two variants, a third each'], ['25, 25, 25', 'Three variants, a quarter each'], ['10', '10% to one variant'], ['20', '20% to one variant']];
 const audienceChoices = AUDIENCE_NAMES.flatMap((name, i) => [
@@ -30,25 +30,6 @@ const input = (field) => {
   if (field.type === 'select') return h('select', { name }, CHOICES[name].map(([value, text]) => h('option', { value }, text)));
   if (field.type === 'links') return h('textarea', { name, rows: 3 });
   return h('input', { name, type: field.type, list: name === 'Split' ? 'xp-splits' : null, autocomplete: 'off' });
-};
-
-// Resolves the HTML of the author's current selection in DA, or null.
-const readSelection = (port, timeoutMs = 3000) => {
-  const { promise, resolve } = Promise.withResolvers();
-  const onMessage = (e) => {
-    if (e.origin === DA_ORIGIN && e.source === window.parent && e.data?.action === 'sendSelection') resolve(e.data.details);
-  };
-  const onPortMessage = (e) => (e.data?.action === 'error' ? resolve(null) : null);
-  window.addEventListener('message', onMessage);
-  port.addEventListener('message', onPortMessage);
-  port.start();
-  port.postMessage({ action: 'getSelection' });
-  const timer = setTimeout(() => resolve(null), timeoutMs);
-  return promise.finally(() => {
-    clearTimeout(timer);
-    window.removeEventListener('message', onMessage);
-    port.removeEventListener('message', onPortMessage);
-  });
 };
 
 export default ({ view, pagePath, port, pageHtml }) => {
@@ -119,7 +100,7 @@ export default ({ view, pagePath, port, pageHtml }) => {
       refresh();
     };
     if (port) {
-      port.postMessage({ action: 'sendHTML', details: html });
+      sendHtml(port, html);
       status.textContent = 'Sent to DA. Delete any older Experiment table: only the first one is used.';
       setTimeout(done, 1000);
       return;
