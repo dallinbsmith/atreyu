@@ -5,7 +5,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import worker, { isEdsPath, EDS_PATHS, EDS_ASSET_PATHS } from '../index.js';
-import { CACHE_TTL_BY_STATUS } from '../handlers/aem.js';
 
 const COHORT = ['/blog/', '/glossary/', '/integrations/'];
 const ASSETS = ['/blocks/', '/icons/', '/img/', '/plugins/', '/scripts/', '/styles/', '/system/', '/templates/'];
@@ -116,12 +115,49 @@ test('global routes never reach the existing origin, whatever the cohort', async
     assert.equal(target, undefined, `${path} must not be proxied`);
     t.mock.restoreAll();
   }
-  for (const path of ['/pricing/schedules/a.json', '/features/dasc/a.json']) {
+  const upstreams = [
+    ['/pricing/schedules/a.json', EDS_HOST, '/pricing/schedules/a.json'],
+    ['/features/dasc/a.json', 'da-sc.adobeaem.workers.dev', '/live/dallinbsmith/atreyu/features/dasc/a.json'],
+  ];
+  for (const [path, host, pathname] of upstreams) {
     // eslint-disable-next-line no-await-in-loop
     const { target } = await route(t, path);
-    assert.notEqual(target?.hostname, 'legacy.example', path);
+    assert.equal(target.hostname, host, path);
+    assert.equal(target.pathname, pathname, path);
     t.mock.restoreAll();
   }
+});
+
+test('encoded separators and case variants never reach EDS', async (t) => {
+  for (const p of ['/scripts/..%2Fdrafts%2Fx', '/scripts/..%2fdrafts', '/system/..%5Cdrafts', '/blog/a%2Fb']) {
+    assert.equal(isEdsPath(p), false, p);
+  }
+  const cases = [
+    // Encoded slashes stay encoded after URL parsing, so this falls through.
+    ['/scripts/..%2Fdrafts%2Fx', 'legacy'],
+    // %2e%2e is a dot segment: the URL parser resolves it to /drafts/x first.
+    ['/scripts/%2e%2e/drafts/x', 'drafts-deny'],
+    // Prefixes are case-sensitive, like the EDS origin.
+    ['/Scripts/a.js', 'legacy'],
+  ];
+  for (const [path, expected] of cases) {
+    // eslint-disable-next-line no-await-in-loop
+    const { resp, target } = await route(t, path);
+    if (expected === 'legacy') {
+      assert.equal(target.hostname, 'legacy.example', path);
+    } else {
+      assert.equal(resp.status, 404, path);
+      // eslint-disable-next-line no-await-in-loop
+      assert.match(await resp.text(), /drafts are denied/, path);
+      assert.equal(target, undefined, path);
+    }
+    t.mock.restoreAll();
+  }
+});
+
+test('exported path lists are frozen', () => {
+  assert.ok(Object.isFrozen(EDS_PATHS));
+  assert.ok(Object.isFrozen(EDS_ASSET_PATHS));
 });
 
 test('RUM beacons go to EDS, not the existing origin', async (t) => {
@@ -138,7 +174,7 @@ test('page and asset requests reach fetchFromAem with the negative-cache cap', a
     });
     // eslint-disable-next-line no-await-in-loop
     await worker.fetch(new Request(`https://frame.io${path}`), ENV);
-    const expected = { cacheEverything: true, cacheTtlByStatus: CACHE_TTL_BY_STATUS };
+    const expected = { cacheEverything: true, cacheTtlByStatus: { 404: 60, '500-599': -1 } };
     assert.deepEqual(inits.at(-1).cf, expected, path);
     t.mock.restoreAll();
   }

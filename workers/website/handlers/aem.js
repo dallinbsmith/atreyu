@@ -1,4 +1,5 @@
 import { generateNonce, addNonceToScripts } from '../utils/nonce.js';
+import { stripLocale } from '../utils/locale.js';
 
 // Bug-squash fix, 2026-08-28: never returned a value on its success path —
 // its job is the header mutation below, done in place on the same `resp`
@@ -49,22 +50,47 @@ const formatSchedule = async (response) => {
 // own proxy-Worker precedent (AbortController timeout with a fallback).
 const ORIGIN_FETCH_TIMEOUT_MS = 10_000;
 
-// Negative-cache cap. With x-byo-cdn-type set, AEM sends
-// `cdn-cache-control: max-age=172800` on 404s as well as 200s (checked
-// 2026-09-24), so cacheEverything would pin a 404 at the edge for 2 days. Push
-// invalidation is what normally purges it on publish, and that needs a
-// Cloudflare zone (a workers.dev deployment has none) and a working purge, so a
-// newly published page could otherwise keep 404ing. Decision:
-// - 404: cache at most 60 s. That's long enough to absorb a crawler burst on a
-//   missing URL, and short enough that a publish shows up within a minute
-//   without purge.
-// - 5xx: never cache (a negative TTL means "do not cache" per Cloudflare's
-//   `cacheTtlByStatus` docs; 0 would store and immediately expire).
-// - Any status not listed here (2xx, 3xx): these keep AEM's own
-//   cdn-cache-control. Per the docs, the override applies only when the status
-//   matches.
+// Negative-cache cap. AEM's CDN TTL depends on the request headers
+// formatRequest (index.js) sends (checked 2026-09-24 with curl against
+// aem.live). With `x-byo-cdn-type` alone, AEM sends
+// `cdn-cache-control: max-age=300`. With `x-push-invalidation: enabled`, which
+// the Worker sends unless PUSH_INVALIDATION is 'disabled', it sends
+// `max-age=172800` on every status, 200s and 404s alike, because it expects to
+// purge the CDN itself on publish. That purge needs a Cloudflare zone and
+// working purge credentials. Without them, a cached 404 for a page that is
+// later published would stay for 2 days (and a stale 200 too, which is why
+// wrangler.toml keeps PUSH_INVALIDATION disabled until the zone purge works).
+// Decision for error statuses, whatever the TTL source:
+// - 404: at most 60 s at the edge, which absorbs a crawler burst on a missing
+//   URL while a publish still shows up within a minute without a purge.
+// - 5xx: never cached. Cloudflare's `cacheTtlByStatus` docs say a negative
+//   value means "do not cache"; 0 would store and immediately expire.
+// - Statuses not listed (2xx, 3xx) keep AEM's own cdn-cache-control. Per the
+//   docs, the override applies only when the status matches.
 // Only applies when the route caches (cache: true); GET/HEAD only per the docs.
+// capErrorCaching below applies the same limits to downstream CDNs and browsers.
 export const CACHE_TTL_BY_STATUS = Object.freeze({ 404: 60, '500-599': -1 });
+
+// Downstream/browser half of the negative-cache cap above: cf.cacheTtlByStatus
+// only governs Cloudflare's own edge cache, so without this a browser or any
+// cache in front of the Worker would still keep AEM's error headers
+// (cache-control max-age=7200, cdn-cache-control up to 172800).
+const capErrorCaching = (resp) => {
+  if (resp.status === 404) {
+    resp.headers.set('cache-control', 'max-age=60');
+    resp.headers.delete('cdn-cache-control');
+  } else if (resp.status >= 500) {
+    resp.headers.set('cache-control', 'no-store');
+    resp.headers.delete('cdn-cache-control');
+  }
+};
+
+// /system/ holds site plumbing (nav/footer fragments, placeholders.json), not
+// pages. AEM marks it noindex, but the x-robots-tag delete below strips that
+// for every response, so re-add it here to keep fragments out of search on
+// frame.io. Locale-stripped, the same way isEdsPath matches /de-de/system/.
+const SYSTEM_ROOT = '/system/';
+const isSystemPath = (pathname) => stripLocale(pathname).startsWith(SYSTEM_ROOT);
 
 export const fetchFromAem = async ({ request, cache, savedSearch }) => {
   // Bug-squash fix, 2026-08-28: no try/catch existed around this fetch — an
@@ -99,6 +125,8 @@ export const fetchFromAem = async ({ request, cache, savedSearch }) => {
 
   resp.headers.delete('age');
   resp.headers.delete('x-robots-tag');
+  capErrorCaching(resp);
+  if (isSystemPath(new URL(request.url).pathname)) resp.headers.set('x-robots-tag', 'noindex');
 
   if (resp.headers.get('content-type')?.includes('text/html')) {
     const nonce = generateNonce();

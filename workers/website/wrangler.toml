@@ -3,10 +3,22 @@ main = "index.js"
 compatibility_date = "2025-02-14"
 keep_vars = true
 
-vars = { AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu" }
+# PUSH_INVALIDATION must be "disabled" in any environment without a working
+# Cloudflare zone purge. When it isn't "disabled", the Worker sends
+# `x-push-invalidation: enabled` (index.js formatRequest), and AEM then sends
+# `cdn-cache-control: max-age=172800` on every response. AEM expects to purge
+# the zone itself on publish, so without that purge, edits and newly published
+# pages stay stale at the edge for up to 2 days. With it disabled, AEM sends
+# max-age=300 instead. None of the environments below has a zone route yet
+# (all deploy to workers.dev, and the Cloudflare account is still in progress),
+# so all three are disabled. Enable it per environment only once that
+# environment has a zone route and AEM's push-invalidation purge credentials
+# are configured and verified (plan items P3.3/P3.4).
+
+vars = { AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu", PUSH_INVALIDATION = "disabled" }
 
 [env.staging]
-vars = { AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu" }
+vars = { AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu", PUSH_INVALIDATION = "disabled" }
 
 [env.production]
-vars = { AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu" }
+vars = { AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu", PUSH_INVALIDATION = "disabled" }

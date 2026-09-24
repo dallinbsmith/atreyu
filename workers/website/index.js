@@ -22,7 +22,7 @@ import { isMediaPath } from './utils/media.js';
 // Phase 1 cohort only (master-plan/implementation-plan.md, "Migration Cohort Phases").
 // Grows as each phase ships: Phase 2 adds /customers/ + /resources/, Phase 3 adds
 // / + /enterprise + /demo, Phase 4 adds /pricing. Do not pre-populate ahead of ship.
-export const EDS_PATHS = ['/blog/', '/glossary/', '/integrations/'];
+export const EDS_PATHS = Object.freeze(['/blog/', '/glossary/', '/integrations/']);
 
 // Which locales actually have confirmed, live, translated content on the EDS origin
 // right now — a second axis from EDS_PATHS (cohort), not a duplicate of it. Phase 1
@@ -49,9 +49,19 @@ const EDS_LOCALES = [];
 //   live frame.io 404s each of them. Re-check before adding a prefix here.
 // - No /fonts/: fonts live under /styles/fonts/. No /tools/, /widgets/ or
 //   /experiments-panel/: marker hrefs and authoring-only code, never fetched here.
-export const EDS_ASSET_PATHS = ['/blocks/', '/icons/', '/img/', '/plugins/', '/scripts/', '/styles/', '/system/', '/templates/'];
+export const EDS_ASSET_PATHS = Object.freeze([
+  '/blocks/', '/icons/', '/img/', '/plugins/', '/scripts/', '/styles/', '/system/', '/templates/',
+]);
+
+// Encoded slashes/backslashes: the URL parser resolves `..` and `%2e%2e`
+// segments before this runs, but it leaves `%2F`/`%5C` encoded, so a path
+// like /scripts/..%2Fdrafts%2Fx would match a prefix here while an origin
+// that decodes it could see a different path. No real EDS asset or page
+// needs one, so these stay on the existing origin rather than reach EDS.
+const ENCODED_SEPARATOR = /%2f|%5c/i;
 
 export const isEdsPath = (pathname) => {
+  if (ENCODED_SEPARATOR.test(pathname)) return false;
   const localePrefix = matchLocalePrefix(pathname);
   if (localePrefix && !EDS_LOCALES.includes(localePrefix)) return false;
 
