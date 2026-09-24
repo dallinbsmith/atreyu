@@ -70,6 +70,8 @@ const ORIGIN_FETCH_TIMEOUT_MS = 10_000;
 //   (HIT, REVALIDATED, HIT...). The edge stores the raw origin response and
 //   its validators, so rewriting headers in the Worker can't break the loop.
 //   The only fix is not to store 404s.
+// - 410: treated exactly like 404. AEM doesn't send it today, but a Gone page
+//   can be republished and would hit the same Last-Modified/304 trap.
 // - 5xx: never cached. Cloudflare's `cacheTtlByStatus` docs say a negative
 //   value means "do not cache"; 0 would store and immediately expire, which
 //   still keeps validators to revalidate against.
@@ -77,7 +79,7 @@ const ORIGIN_FETCH_TIMEOUT_MS = 10_000;
 //   docs, the override applies only when the status matches.
 // Only applies when the route caches (cache: true); GET/HEAD only per the docs.
 // capErrorCaching below handles downstream CDNs and browsers.
-export const CACHE_TTL_BY_STATUS = Object.freeze({ 404: -1, '500-599': -1 });
+export const CACHE_TTL_BY_STATUS = Object.freeze({ 404: -1, 410: -1, '500-599': -1 });
 
 // Downstream/browser half of the cap above: cf.cacheTtlByStatus only governs
 // Cloudflare's own edge cache, so without this a browser or any cache in front
@@ -92,10 +94,15 @@ export const CACHE_TTL_BY_STATUS = Object.freeze({ 404: -1, '500-599': -1 });
 // If-Modified-Since, so once the page is published AEM can't turn their
 // revalidation into a 304. 3xx responses, including 304, are left untouched
 // and keep their validators.
+// Other 4xx (400, 401, 403, 405...) aren't listed: they describe the request
+// or its credentials, not whether a document exists, so publishing can't flip
+// them to 200. They keep AEM's headers.
+const MISSING_STATUSES = [404, 410];
 const ERROR_VALIDATORS = ['last-modified', 'etag'];
 const capErrorCaching = (resp) => {
-  if (resp.status !== 404 && resp.status < 500) return;
-  resp.headers.set('cache-control', resp.status === 404 ? 'max-age=60' : 'no-store');
+  const missing = MISSING_STATUSES.includes(resp.status);
+  if (!missing && resp.status < 500) return;
+  resp.headers.set('cache-control', missing ? 'max-age=60' : 'no-store');
   resp.headers.delete('cdn-cache-control');
   ERROR_VALIDATORS.forEach((h) => resp.headers.delete(h));
 };

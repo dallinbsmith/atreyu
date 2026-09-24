@@ -194,8 +194,12 @@ const formatRequest = (env, request, url) => {
   // 200 has once published. After publish, aem.live answers that date with a
   // 304 (while the path still 404s, it answers 404). A browser holding the old
   // 404 would get the 304 and keep showing it, and a 304 skips
-  // capErrorCaching (handlers/aem.js). The cost is that browser revalidation
-  // of a stale page is a full 200 instead of a 304.
+  // capErrorCaching (handlers/aem.js).
+  // Trade-off: aem.live HTML and JSON carry Last-Modified but no ETag, and
+  // aem.live ignores If-None-Match even for code assets, whose 200s do carry
+  // an ETag. So after this, the origin never answers a browser with a 304:
+  // once max-age=7200 runs out, a stale page or asset is refetched in full.
+  // For small HTML and code that's acceptable, and better than a stuck 404.
   // If-None-Match stays: AEM sends no ETag on 404s (only code-bus 200s carry
   // one), so it can't renew a 404, and handlers/dasc.js forwards it for its
   // 304 path.
