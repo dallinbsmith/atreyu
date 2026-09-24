@@ -1,12 +1,15 @@
 import { cellValue } from '../scripts/utils/experiments/block.js';
 import { CATALOG } from '../scripts/utils/experiments/audiences.js';
 import { toClassName, VARIANT_ROOT } from '../scripts/utils/experiments/config.js';
-import { isSafeHref, toDateInput } from './table.js';
+import {
+  MAX_DAYS, MAX_RULES, toEnd,
+} from '../scripts/utils/experiments/personalize.js';
+import { isSafeHref, normalizeChoice, toDateInput } from './table.js';
 
-export const MAX_RULES = 3;
+export { MAX_RULES };
+
 const CAMPAIGN_PATTERN = /^campaign-[a-z0-9-]+$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export const FIELDS = [
   { label: 'Name', type: 'text' },
@@ -34,13 +37,14 @@ const isKnownAudience = (id) => (
   audienceChoices().some(([known]) => known === id) || CAMPAIGN_PATTERN.test(id)
 );
 
-const toEnd = (value) => {
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  const valid = date.getFullYear() === year
-    && date.getMonth() === month - 1
-    && date.getDate() === day;
-  return valid ? new Date(year, month - 1, day + 1) : null;
+const normalizeStatus = (value) => normalizeChoice('Status', value).value || 'active';
+
+const normalizedPath = (path) => {
+  try {
+    return new URL(path, window.location.origin).pathname;
+  } catch {
+    return `${path ?? ''}`.trim();
+  }
 };
 
 const toPath = (cell) => {
@@ -68,8 +72,8 @@ export const readValues = (root) => {
     const key = toClassName(label.textContent);
     if (key.startsWith('audience-')) values.rules.push({ audience: key.slice('audience-'.length), path: toPath(value) });
     else if (key === 'name') values.Name = cellValue(value);
-    else if (key === 'status') values.Status = cellValue(value);
-    else if (key === 'end-date') values['End Date'] = toDateInput(cellValue(value));
+    else if (key === 'status') values.Status = normalizeStatus(cellValue(value));
+    else if (key === 'end-date') values['End Date'] = cellValue(value);
     else if (key === 'owner') values.Owner = cellValue(value);
     return values;
   }, { Name: '', Status: 'active', 'End Date': '', Owner: '', rules: [] });
@@ -77,7 +81,7 @@ export const readValues = (root) => {
 
 export const normalizeValues = (values = {}) => ({
   Name: `${values.Name ?? ''}`.trim(),
-  Status: `${values.Status ?? 'active'}`.trim() || 'active',
+  Status: normalizeStatus(values.Status),
   'End Date': toDateInput(values['End Date'] ?? ''),
   Owner: `${values.Owner ?? ''}`.trim(),
   rules: (values.rules ?? []).map(({ audience, path }) => ({
@@ -86,36 +90,54 @@ export const normalizeValues = (values = {}) => ({
   })).filter(({ audience, path }) => audience || path),
 });
 
-export const check = (values, { now = new Date() } = {}) => {
-  const v = normalizeValues(values);
-  const rawEndDate = `${values['End Date'] ?? ''}`.trim();
+const ruleIssues = (rules, rawRules) => {
   const issues = [];
-  const add = (level, message) => issues.push({ level, message });
-  if (v.rules.length < 1) add('error', 'Add at least one audience rule.');
-  if (v.rules.length > MAX_RULES) add('error', `Use no more than ${MAX_RULES} audience rules.`);
-  for (const { audience, path } of v.rules) {
-    if (!isKnownAudience(audience)) add('error', `Unknown audience "${audience || '(blank)'}".`);
-    if (!path.startsWith(VARIANT_ROOT) || path === VARIANT_ROOT) add('error', `Variant path must be under ${VARIANT_ROOT}: ${path || '(blank)'}`);
-  }
-  if (!rawEndDate) add('error', 'End Date is required.');
-  else if (!DATE_PATTERN.test(rawEndDate)) add('error', 'End Date must use YYYY-MM-DD.');
-  else {
-    const end = toEnd(v['End Date']);
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (!end) add('error', 'End Date is not a valid date.');
-    else if (end <= today) add('error', 'End Date is in the past.');
-    else if (end > new Date(today.getTime() + ((180 + 1) * MS_PER_DAY))) add('error', 'End Date must be within 180 days.');
+  const seen = new Set();
+  for (const [i, { audience, path }] of rules.entries()) {
+    const normalized = normalizedPath(path);
+    const rawAudience = `${rawRules[i]?.audience ?? audience}`.trim();
+    if (!isKnownAudience(audience)) issues.push({ level: 'error', message: `Unknown audience "${rawAudience}".` });
+    else if (seen.has(audience)) issues.push({ level: 'error', message: `Duplicate audience "${audience}".` });
+    else seen.add(audience);
+    if (!normalized.startsWith(VARIANT_ROOT) || normalized === VARIANT_ROOT) {
+      issues.push({ level: 'error', message: `Variant path must be under ${VARIANT_ROOT}: ${path || '(blank)'}` });
+    }
   }
   return issues;
 };
 
+const dateIssues = (rawEndDate, endDate, now) => {
+  if (!rawEndDate) return [{ level: 'error', message: 'End Date is required.' }];
+  if (!DATE_PATTERN.test(rawEndDate)) return [{ level: 'error', message: 'End Date must use YYYY-MM-DD.' }];
+  const end = toEnd(endDate);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (!end) return [{ level: 'error', message: 'End Date is not a valid date.' }];
+  if (end <= today) return [{ level: 'error', message: 'End Date is in the past.' }];
+  const latest = new Date(today.getFullYear(), today.getMonth(), today.getDate() + MAX_DAYS + 1);
+  if (end <= latest) return [];
+  return [{ level: 'error', message: `End Date must be within ${MAX_DAYS} days.` }];
+};
+
+export const check = (values, { now = new Date() } = {}) => {
+  const v = normalizeValues(values);
+  const rawEndDate = `${values['End Date'] ?? ''}`.trim();
+  const rawRules = values.rules ?? [];
+  const issues = [];
+  const add = (level, message) => issues.push({ level, message });
+  if (v.rules.length < 1) add('error', 'Add at least one audience rule.');
+  if (v.rules.length > MAX_RULES) add('warn', `Only the first ${MAX_RULES} audience rules are kept.`);
+  return [...issues, ...ruleIssues(v.rules, rawRules), ...dateIssues(rawEndDate, v['End Date'], now)];
+};
+
 export const multiSectionWarnings = async (values, fetchText) => {
   const warnings = await Promise.all(normalizeValues(values).rules.map(async ({ path }) => {
+    const normalized = normalizedPath(path);
+    if (!normalized.startsWith(VARIANT_ROOT) || normalized === VARIANT_ROOT) return null;
     try {
-      const html = await fetchText(path);
+      const html = await fetchText(normalized);
       const doc = new DOMParser().parseFromString(html, 'text/html');
       return doc.querySelectorAll('main > div').length > 1
-        ? { level: 'warn', message: `${path} has more than one section; the plugin swaps only the first matching section.` }
+        ? { level: 'warn', message: `${normalized} has more than one section; the plugin swaps only the first matching section.` }
         : null;
     } catch {
       return null;

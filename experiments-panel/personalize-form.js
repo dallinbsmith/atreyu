@@ -54,13 +54,26 @@ const values = (form) => {
   };
 };
 
+const isVariantPath = (path) => {
+  try {
+    const normalized = new URL(path, window.location.origin).pathname;
+    return normalized.startsWith('/v/') && normalized !== '/v/';
+  } catch {
+    return false;
+  }
+};
+
 const fill = (form, source = {}) => {
   const v = normalizeValues(source);
-  for (const name of ['Name', 'Status', 'End Date', 'Owner']) form.elements[name].value = v[name] ?? '';
-  v.rules.forEach((rule, i) => {
-    form.elements[`audience-${i}`].value = rule.audience;
-    form.elements[`path-${i}`].value = rule.path;
-  });
+  form.elements.Name.value = v.Name ?? '';
+  form.elements.Status.value = v.Status ?? 'inactive';
+  form.elements['End Date'].value = /^\d{4}-\d{2}-\d{2}$/.test(`${source['End Date'] ?? ''}`.trim())
+    ? v['End Date'] : '';
+  form.elements.Owner.value = v.Owner ?? '';
+  for (let i = 0; i < MAX_RULES; i += 1) {
+    form.elements[`audience-${i}`].value = v.rules[i]?.audience ?? '';
+    form.elements[`path-${i}`].value = v.rules[i]?.path ?? '';
+  }
 };
 
 export default ({ view, port, pageHtml }) => {
@@ -96,34 +109,85 @@ export default ({ view, port, pageHtml }) => {
   const load = port ? h('button', { type: 'button', className: 'load' }, 'Load selected table') : null;
   form.append(h('div', { className: 'actions' }, submit));
   let sending = false;
-  let refreshId = 0;
+  let inputVersion = 0;
+  let pendingSelection;
+  let loadErrors = [];
+  let pathWarnings = [];
+  const pathCache = new Map();
+  let doneTimer;
+  const clearDone = () => {
+    if (doneTimer) clearTimeout(doneTimer);
+    doneTimer = null;
+  };
 
-  const refresh = async () => {
-    refreshId += 1;
-    const id = refreshId;
-    const current = values(form);
-    const found = [...check(current), ...await multiSectionWarnings(current, fetchText)];
-    if (id !== refreshId) return;
+  const renderIssues = (found) => {
     issues.replaceChildren(...found.map(({ level, message }) => h('li', { className: level }, message)));
     submit.disabled = sending || found.some((i) => i.level === 'error');
   };
+  const refresh = () => renderIssues([...loadErrors, ...check(values(form)), ...pathWarnings]);
+  const checkPaths = async () => {
+    const id = inputVersion;
+    const current = values(form);
+    const paths = normalizeValues(current).rules.map(({ path }) => path).filter(isVariantPath);
+    const warnings = await Promise.all(paths.map((path) => {
+      if (!pathCache.has(path)) {
+        pathCache.set(path, multiSectionWarnings({ rules: [{ path }] }, fetchText));
+      }
+      return pathCache.get(path);
+    }));
+    if (id === inputVersion) {
+      pathWarnings = warnings.flat();
+      refresh();
+    }
+  };
 
   const loadSelection = async () => {
-    const html = await readSelection(port);
+    const version = inputVersion;
+    loadErrors = [];
+    load.disabled = true;
+    let html = null;
+    try {
+      pendingSelection ??= Promise.resolve().then(() => readSelection(port))
+        .finally(() => { pendingSelection = null; });
+      html = await pendingSelection;
+    } catch {
+      status.textContent = 'Could not load the selected table. Try selecting it again.';
+    }
     const found = html && readValues(new DOMParser().parseFromString(html, 'text/html').body);
-    status.textContent = found ? 'Loaded the selected Personalize table.' : 'No Personalize table in the selection.';
-    if (found) fill(form, found);
+    if (found && version === inputVersion) {
+      fill(form, found);
+      const errors = check(found).filter(({ level }) => level === 'error');
+      loadErrors = errors.map(({ message }) => ({ level: 'warn', message: `Loaded table is inactive: ${message}` }));
+      if (normalizeValues(found).rules.length > MAX_RULES) {
+        loadErrors.push({ level: 'warn', message: `Only the first ${MAX_RULES} audience rules are kept.` });
+      }
+      status.textContent = 'Loaded the selected Personalize table.';
+    } else if (found) status.textContent = 'Loaded the selected table, but kept your edits because the form changed while loading.';
+    else if (html !== null) status.textContent = 'No Personalize table in the selection.';
+    load.disabled = false;
     refresh();
   };
 
-  form.addEventListener('input', refresh);
+  form.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target instanceof HTMLInputElement) e.preventDefault();
+  });
+  form.addEventListener('input', () => {
+    inputVersion += 1;
+    loadErrors = [];
+    refresh();
+  });
+  form.addEventListener('change', ({ target }) => {
+    if (target.name?.startsWith('path-')) checkPaths();
+  });
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    await refresh();
-    if (submit.disabled) return;
+    const snapshot = values(form);
+    const found = [...loadErrors, ...check(snapshot)];
+    renderIssues([...found, ...pathWarnings]);
+    if (found.some((i) => i.level === 'error')) return;
     sending = true;
     submit.disabled = true;
-    const html = toTableHtml(values(form));
+    const html = toTableHtml(snapshot);
     const done = () => {
       sending = false;
       refresh();
@@ -131,7 +195,8 @@ export default ({ view, port, pageHtml }) => {
     if (port) {
       sendHtml(port, html);
       status.textContent = 'Sent to DA. Keep one Personalize table per section.';
-      setTimeout(done, 1000);
+      clearDone();
+      doneTimer = setTimeout(done, 1000);
       return;
     }
     try {
@@ -140,7 +205,8 @@ export default ({ view, port, pageHtml }) => {
     } catch {
       status.textContent = 'Copy failed. Check browser clipboard permissions and try again.';
     } finally {
-      setTimeout(done, 1000);
+      clearDone();
+      doneTimer = setTimeout(done, 1000);
     }
   });
 
@@ -155,4 +221,6 @@ export default ({ view, port, pageHtml }) => {
     status,
   );
   load?.addEventListener('click', loadSelection);
+  new MutationObserver(() => { if (!form.isConnected) clearDone(); })
+    .observe(view, { childList: true });
 };

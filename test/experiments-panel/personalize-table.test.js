@@ -24,6 +24,14 @@ const daTableToBlock = (html) => {
   return block.outerHTML;
 };
 
+const tablePlan = (values, options = {}) => {
+  const doc = new DOMParser().parseFromString(
+    `<main><div><p>Control</p>${daTableToBlock(toTableHtml(values))}</div></main>`,
+    'text/html',
+  );
+  return applyPersonalizeTables(doc, { prod: true, now, search: '', ...options });
+};
+
 describe('experiments-panel/personalize-table.js', () => {
   it('reads rendered and DA Personalize tables', () => {
     const block = parse(`<main><div><div class="personalize">
@@ -35,7 +43,7 @@ describe('experiments-panel/personalize-table.js', () => {
     </div></div></main>`);
     expect(readValues(block)).to.deep.equal({
       Name: 'Hero Match',
-      Status: '',
+      Status: 'active',
       'End Date': '2026-03-01',
       Owner: 'CRO',
       rules: [{ audience: 'mobile', path: '/v/mobile-hero' }],
@@ -68,10 +76,7 @@ describe('experiments-panel/personalize-table.js', () => {
         { audience: 'Campaign Spring Launch', path: '/v/spring-hero' },
       ],
     };
-    const doc = new DOMParser().parseFromString(
-      `<main><div><p>Control</p>${daTableToBlock(toTableHtml(values))}</div></main>`,
-      'text/html',
-    );
+    const doc = new DOMParser().parseFromString(`<main><div><p>Control</p>${daTableToBlock(toTableHtml(values))}</div></main>`, 'text/html');
     const plan = applyPersonalizeTables(doc, { prod: true, now, search: '' });
     const rows = [...doc.querySelectorAll('.section-metadata > div')].map((row) => [
       row.children[0].textContent,
@@ -94,6 +99,17 @@ describe('experiments-panel/personalize-table.js', () => {
     expect(Boolean(doc.querySelector('.personalize'))).to.equal(false);
   });
 
+  it('normalizes loaded status values to the compiler active set', () => {
+    const active = tablePlan({ Status: '', 'End Date': '2026-03-01', rules: [{ audience: 'mobile', path: '/v/a' }] });
+    expect(active[0].rules).to.deep.equal([{ id: 'mobile', path: '/v/a' }]);
+    for (const Status of ['Inactive', 'Off', 'paused']) {
+      const inactive = tablePlan({ Status, 'End Date': '2026-03-01', rules: [{ audience: 'mobile', path: '/v/a' }] });
+      expect(inactive).to.deep.equal([]);
+      expect(readValues(parse(toTableHtml({ Status, 'End Date': '2026-03-01', rules: [{ audience: 'mobile', path: '/v/a' }] }))).Status)
+        .to.equal('inactive');
+    }
+  });
+
   it('writes End Date as YYYY-MM-DD and rejects other date formats', () => {
     const html = toTableHtml({
       'End Date': 'March 1, 2026',
@@ -114,10 +130,18 @@ describe('experiments-panel/personalize-table.js', () => {
       rules: [{ audience: 'tablet', path: '/bad' }, ...tooMany],
     }, { now }).map(({ message }) => message);
     expect(messages).to.include.members([
-      'Unknown audience "(blank)".',
+      'Unknown audience "tablet".',
       'Variant path must be under /v/: /bad',
-      'Use no more than 3 audience rules.',
+      'Only the first 3 audience rules are kept.',
       'End Date must be within 180 days.',
+    ]);
+    const stricter = check({
+      'End Date': '2026-03-01',
+      rules: [{ audience: 'mobile', path: '/v/a' }, { audience: 'mobile', path: '/v/../secret' }],
+    }, { now }).map(({ message }) => message);
+    expect(stricter).to.include.members([
+      'Duplicate audience "mobile".',
+      'Variant path must be under /v/: /v/../secret',
     ]);
     expect(check({ 'End Date': '2026-01-14', rules: [{ audience: 'mobile', path: '/v/a' }] }, { now })[0].message)
       .to.equal('End Date is in the past.');
@@ -125,6 +149,14 @@ describe('experiments-panel/personalize-table.js', () => {
       .to.equal('End Date is not a valid date.');
     expect(check({ rules: [{ audience: 'mobile', path: '/v/a' }] }, { now })[0].message)
       .to.equal('End Date is required.');
+  });
+
+  it('matches the compiler date boundary across the autumn clock change', () => {
+    const boundaryNow = new Date(2026, 8, 1, 12);
+    expect(check({ 'End Date': '2027-02-28', rules: [{ audience: 'mobile', path: '/v/a' }] }, { now: boundaryNow }))
+      .to.deep.equal([]);
+    expect(check({ 'End Date': '2027-03-01', rules: [{ audience: 'mobile', path: '/v/a' }] }, { now: boundaryNow })[0].message)
+      .to.equal('End Date must be within 180 days.');
   });
 
   it('warns when a variant page contains multiple sections', async () => {

@@ -11,9 +11,6 @@ import {
 import { renderBuildTab, renderPersonalizeTab } from './build-tabs.js';
 
 const params = new URLSearchParams(window.location.search);
-// Page comes from Sidekick (?referrer=), a direct link (?page=), or the DA
-// editor sidebar (postMessage context, which also brings the port used to
-// insert into the doc). Top-level await: nothing renders first.
 const resolvePage = async () => {
   const given = params.get('referrer') ?? params.get('page');
   if (given || window.parent === window) return { url: new URL(given ?? '/', window.location.origin), port: null };
@@ -30,8 +27,10 @@ let currentTab = 'page';
 let renderId = 0;
 
 const pct = (n) => (Number.isFinite(n) ? `${Math.round(n * 100) / 100}%` : 'invalid');
-const day = (d) => (d && !Number.isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : 'open');
-// An error-level issue means the plugin will not serve the test as authored.
+const two = (n) => `${n}`.padStart(2, '0');
+const day = (d) => (d && !Number.isNaN(d.getTime())
+  ? `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`
+  : 'open');
 const badge = (cfg, issues) => {
   const status = issues.some((i) => i.level === 'error') ? 'blocked' : statusOf(cfg);
   return h('span', { className: `badge ${status}` }, status);

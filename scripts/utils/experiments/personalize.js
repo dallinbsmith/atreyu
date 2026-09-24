@@ -28,7 +28,7 @@ import { cellValue } from './block.js';
 import { withCampaigns } from './audiences.js';
 import { findConfigBlocks, removeConfigBlock } from './guard.js';
 
-const MAX_RULES = 3;
+export const MAX_RULES = 3;
 export const MAX_DAYS = 180;
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 const FIELDS = new Map([['name', 'name'], ['owner', 'owner'], ['status', 'status'], ['end-date', 'endDate']]);
@@ -68,7 +68,7 @@ export const readPersonalizeTable = (block) => [...block.children].reduce((table
 
 // Exclusive end: local midnight after the End Date's day (DST-safe), or null.
 // The round-trip rejects impossible dates (2026-02-30) that Date rolls over.
-const toEnd = (value) => {
+export const toEnd = (value) => {
   const [, y, m, d] = value.match(DATE_ONLY)?.map(Number) ?? [];
   const day = new Date(y, m - 1, d);
   if (day.getFullYear() !== y || day.getMonth() !== m - 1 || day.getDate() !== d) return null;
