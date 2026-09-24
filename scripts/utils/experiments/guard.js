@@ -92,12 +92,27 @@ export const carryOverSectionMeta = (main = document.querySelector('main')) => {
 const hasAuthoredContent = (section) => [...section.children]
   .some((child) => !child.matches('.section-metadata'));
 
+const CONFIG_BLOCKS = ['personalize', 'experiment'];
+
+// Config tables are authoring input, never rendered blocks. Match on the
+// first class only, so a rendered block with a `personalize` variant class
+// is not mistaken for one.
+export const findConfigBlocks = (root, names = CONFIG_BLOCKS) => [
+  ...(root?.querySelectorAll(names.map((name) => `.${name}`).join(', ')) ?? []),
+].filter((block) => names.includes(block.classList[0]));
+
+// Removes one config table, and its section too when nothing but section
+// metadata is left. Returns true when the section was removed. Shared by
+// removeLeftoverConfigBlocks and the personalize compiler (personalize.js)
+// so both apply the same "leave no empty section" rule.
+export const removeConfigBlock = (block) => {
+  const section = block.closest('main > div');
+  block.remove();
+  if (!section || hasAuthoredContent(section)) return false;
+  section.remove();
+  return true;
+};
+
 export const removeLeftoverConfigBlocks = (main = document.querySelector('main')) => {
-  for (const block of [...(main?.querySelectorAll('.personalize, .experiment') ?? [])]) {
-    if (['personalize', 'experiment'].includes(block.classList[0])) {
-      const section = block.closest('main > div');
-      block.remove();
-      if (section && !hasAuthoredContent(section)) section.remove();
-    }
-  }
+  for (const block of findConfigBlocks(main)) removeConfigBlock(block);
 };

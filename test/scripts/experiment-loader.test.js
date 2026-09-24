@@ -403,6 +403,63 @@ describe('scripts/experiment-loader.js', () => {
       expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
     });
 
+    describe('personalize tables', () => {
+      const personalizeSection = (id, path) => `<main><div>
+        <h1 id="headline">Control headline</h1>
+        <div class="personalize">
+          <div><div>Name</div><div>Hero</div></div>
+          <div><div>Audience: ${id}</div><div><a href="${path}">${path}</a></div></div>
+          <div><div>End Date</div><div>2999-12-31</div></div>
+        </div>
+      </div></main>`;
+      const variant = (headline) => async (url) => new Response(
+        `<html><body><main><div><h1 id="headline">${headline} ${new URL(url, window.location.origin).pathname}</h1></div></main></body></html>`,
+        { status: 200, headers: { 'content-type': 'text/html' } },
+      );
+      const originalSearch = window.location.search;
+      afterEach(() => window.history.replaceState({}, '', `${window.location.pathname}${originalSearch}`));
+
+      it('compiles the table before the plugin runs and serves the matching variant', async () => {
+        setConsent({ analytics: true, personalization: true });
+        document.body.innerHTML = personalizeSection('mobile', '/v/p/home/mobile');
+        window.fetch = variant('Served');
+        await runExperimentation();
+        expect(document.querySelector('#headline').textContent).to.equal('Served /v/p/home/mobile');
+        expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+        expect(window.hlx.audiences[0].config.selectedAudience).to.equal('mobile');
+      });
+
+      it('passes a fresh audience map per run, so campaign audiences from the table resolve', async () => {
+        setConsent({ analytics: true, personalization: true });
+        window.history.replaceState({}, '', `${window.location.pathname}?utm_campaign=Launch`);
+        document.body.innerHTML = personalizeSection('campaign-launch', '/v/p/home/launch');
+        window.fetch = variant('Served');
+        await runExperimentation();
+        expect(document.querySelector('#headline').textContent).to.equal('Served /v/p/home/launch');
+
+        // Next run (a dapreview re-render): a different campaign, no stale entry.
+        window.history.replaceState({}, '', `${window.location.pathname}?utm_campaign=Other`);
+        document.body.innerHTML = personalizeSection('campaign-launch', '/v/p/home/launch');
+        await runExperimentation();
+        expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+        expect(document.body.dataset.audiences).to.equal('mobile,desktop,campaign-launch');
+      });
+
+      it('without consent, still compiles and removes the table but never runs the plugin', async () => {
+        document.body.innerHTML = personalizeSection('mobile', '/v/p/home/mobile');
+        const calls = [];
+        window.fetch = async (url) => {
+          calls.push(new URL(url, window.location.origin).pathname);
+          return new Response('');
+        };
+        expect(await runExperimentation()).to.equal(null);
+        expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+        expect(document.querySelector('.section-metadata').textContent).to.contain('Audience: mobile');
+        expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+        expect(calls.filter((path) => path.startsWith('/v/'))).to.deep.equal([]);
+      });
+    });
+
     it('removes leftover config blocks before the page is decorated', async () => {
       document.body.innerHTML = `<main>
         <div><div class="experiment"><div>Invalid</div></div></div>

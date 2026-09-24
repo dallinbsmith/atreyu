@@ -20,6 +20,7 @@ import { track, EVENTS } from './utils/analytics/analytics.js';
 import { getVisitorId } from './utils/analytics/visitor-id.js';
 import { AUDIENCES } from './utils/experiments/audiences.js';
 import { applyExperimentBlock } from './utils/experiments/block.js';
+import { applyPersonalizeTables, planAudiences } from './utils/experiments/personalize.js';
 import {
   carryOverSectionMeta,
   removeLeftoverConfigBlocks,
@@ -96,9 +97,22 @@ export const trackExposures = (experiments = []) => {
   }
 };
 
+// A compiler bug must not stop the page: log it and fall through to the
+// removeLeftoverConfigBlocks safety net so the table still never renders.
+// Synchronous on purpose: no extra async hop before the plugin starts.
+const compilePersonalizeTables = (doc) => {
+  try {
+    return applyPersonalizeTables(doc, { prod: config.isProd() });
+  } catch (ex) {
+    getConfig().log(ex);
+    return [];
+  }
+};
+
 export const runExperimentation = async (doc = document) => {
-  // Always, even without consent: the Experiment table must never render.
+  // Always, even without consent: config tables must never render.
   applyExperimentBlock(doc);
+  const plan = compilePersonalizeTables(doc);
   removeLeftoverConfigBlocks(doc.querySelector('main'));
   if (!isEnabled()) return null;
   if (!hasConsent('personalization') && !isPreview()) {
@@ -116,7 +130,10 @@ export const runExperimentation = async (doc = document) => {
     const main = doc.querySelector('main');
     const carryOver = carryOverSectionMeta(main);
     try {
-      await withVariantTimeout(() => plugin.loadEager(doc, config));
+      // A fresh audience map per run (campaign audiences from this page's
+      // tables), so a dapreview re-render never reuses a previous page's.
+      const options = { ...config, audiences: planAudiences(plan) };
+      await withVariantTimeout(() => plugin.loadEager(doc, options));
     } finally {
       carryOver();
       removeLeftoverConfigBlocks(main);
