@@ -21,9 +21,15 @@ describe('preview-origin security gates', () => {
   });
 
   it('gates authoring imports on prod but allows page/live/local environments', () => {
-    expect(isAuthoringPreviewAllowed('prod')).to.equal(false);
-    expect(isAuthoringPreviewAllowed('stage')).to.equal(true);
-    expect(isAuthoringPreviewAllowed('dev')).to.equal(true);
+    expect(isAuthoringPreviewAllowed('frame.io')).to.equal(false);
+    expect(isAuthoringPreviewAllowed('www.frame.io')).to.equal(false);
+    expect(isAuthoringPreviewAllowed('localization.frame.io')).to.equal(false);
+    expect(isAuthoringPreviewAllowed('preview--site.frame.io')).to.equal(false);
+    expect(isAuthoringPreviewAllowed('demo-local.example.workers.dev')).to.equal(false);
+    expect(isAuthoringPreviewAllowed('main--atreyu--dallinbsmith.aem.live')).to.equal(true);
+    expect(isAuthoringPreviewAllowed('feature--atreyu--dallinbsmith.aem.page')).to.equal(true);
+    expect(isAuthoringPreviewAllowed('localhost')).to.equal(true);
+    expect(isAuthoringPreviewAllowed('localhost:3000')).to.equal(true);
   });
 
   it('resolves only trusted preview origins', () => {

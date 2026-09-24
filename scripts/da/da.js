@@ -1,7 +1,10 @@
 import { isAuthoringPreviewAllowed, resolvePreviewOrigin } from '../utils/security/preview-origin.js';
 
-const daPreview = async (loadPage) => {
-  if (!isAuthoringPreviewAllowed()) return;
+const daPreview = async (loadPage, {
+  host = window.location.host,
+  importer = null,
+} = {}) => {
+  if (!isAuthoringPreviewAllowed(host)) return;
   const { search } = window.location;
   const ref = new URLSearchParams(search).get('dapreview');
   if (!ref) return;
@@ -11,7 +14,8 @@ const daPreview = async (loadPage) => {
     branchHost: 'da-live--adobe.aem.live',
   });
   if (!origin) return;
-  const mod = await import(`${origin}/scripts/dapreview.js`);
+  const url = `${origin}/scripts/dapreview.js`;
+  const mod = importer ? await importer(url) : await import(`${origin}/scripts/dapreview.js`);
   mod.default(loadPage);
 };
 

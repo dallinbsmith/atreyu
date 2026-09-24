@@ -48,19 +48,25 @@ export const loadPage = async () => {
 };
 await loadPage();
 
-(() => {
-  if (!isAuthoringPreviewAllowed()) return;
-  const { searchParams } = new URL(window.location.href);
+export const loadAuthoringPreviews = ({
+  href = window.location.href,
+  host = window.location.host,
+  importer = null,
+} = {}) => {
+  if (!isAuthoringPreviewAllowed(host)) return;
+  const { searchParams } = new URL(href);
   const hasPreview = searchParams.has('dapreview');
   if (hasPreview) {
-    import('./da/da.js')
+    (importer ? importer('./da/da.js') : import('./da/da.js'))
       .then((mod) => mod.default(loadPage))
       .catch((ex) => getConfig().log(ex));
   }
   const hasQE = searchParams.has('quick-edit');
   if (hasQE) {
-    import('./quick-edit/quick-edit.js')
+    (importer ? importer('./quick-edit/quick-edit.js') : import('./quick-edit/quick-edit.js'))
       .then((mod) => mod.default())
       .catch((ex) => getConfig().log(ex));
   }
-})();
+};
+
+loadAuthoringPreviews();

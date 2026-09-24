@@ -1,5 +1,3 @@
-import ENV, { isProdEnv } from '../env.js';
-
 // Shared by scripts/da/da.js and scripts/quick-edit/quick-edit.js: both parse
 // a `ref` from a URL query param (?dapreview=/?quick-edit=) and build a
 // preview-deployment origin from it, which is then dynamically imported.
@@ -18,8 +16,12 @@ import ENV, { isProdEnv } from '../env.js';
 // lint rule is trusting when it allows callers to pass the result straight
 // into `import()`.
 const REF_PATTERN = /^[a-z0-9-]+$/i;
+const AEM_AUTHORING_HOST_PATTERN = /^[a-z0-9-]+--[a-z0-9-]+--[a-z0-9-]+\.aem\.(page|live)$/i;
+const LOCALHOST_PATTERN = /^localhost(?::\d+)?$/i;
 
-export const isAuthoringPreviewAllowed = (env = ENV) => !isProdEnv(env);
+export const isAuthoringPreviewAllowed = (host = window.location.host) => (
+  LOCALHOST_PATTERN.test(host) || AEM_AUTHORING_HOST_PATTERN.test(host)
+);
 
 export const resolvePreviewOrigin = (ref, {
   onOrigin, localOrigin, branchHost, treatEmptyAsOn = false,
