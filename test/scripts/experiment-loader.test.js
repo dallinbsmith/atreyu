@@ -41,7 +41,7 @@ describe('scripts/experiment-loader.js', () => {
     sessionStorage.removeItem(KEY);
     localStorage.removeItem(KEY);
     localStorage.removeItem(PLUGIN_CONSENT_KEY);
-    document.head.querySelectorAll('meta[name^="experiment"]').forEach((m) => m.remove());
+    document.head.querySelectorAll('meta[name^="experiment"],meta[name^="audience"],meta[name^="campaign"],meta[property^="audience:"],meta[property^="campaign:"]').forEach((m) => m.remove());
     document.body.innerHTML = '';
     window.matchMedia = (query) => ({ matches: query.includes('< 768px') });
     setConfig({ locales: { '': {} }, linkBlocks: [], components: [], decorateArea: () => {} });
@@ -239,7 +239,7 @@ describe('scripts/experiment-loader.js', () => {
     });
 
     it('times out a hanging /v/ variant fetch and keeps original content', async () => {
-      clock = sinon.useFakeTimers({ toFake: ['setTimeout'] });
+      clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
       setConsent({ analytics: true, personalization: true });
       document.body.innerHTML = `<main><div>
         <h1 id="headline">Control headline</h1>
@@ -254,6 +254,10 @@ describe('scripts/experiment-loader.js', () => {
           hasSignal: Boolean(init.signal),
         });
         return new Promise((resolve, reject) => {
+          if (init.signal?.aborted) {
+            reject(new DOMException('aborted', 'AbortError'));
+            return;
+          }
           init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
         });
       };
@@ -271,6 +275,50 @@ describe('scripts/experiment-loader.js', () => {
       expect(calls).to.deep.equal([{ path: '/v/hang', hasSignal: true }]);
       expect(document.querySelector('#headline').textContent).to.equal('Control headline');
       expect(window.fetch).to.equal(hangingFetch);
+    });
+
+    it('fails fast when a section /v/ fetch starts after a page-level audience timeout', async () => {
+      clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      setConsent({ analytics: true, personalization: true });
+      const meta = document.createElement('meta');
+      meta.name = 'audience-mobile';
+      meta.content = '/v/page-hang';
+      document.head.append(meta);
+      document.body.innerHTML = `<main><div>
+        <h1 id="headline">Control headline</h1>
+        <div class="section-metadata">
+          <div><div>Audience: mobile</div><div><a href="/v/section-hang">/v/section-hang</a></div></div>
+        </div>
+      </div></main>`;
+      const calls = [];
+      window.fetch = (url, init = {}) => {
+        calls.push({
+          path: new URL(url, window.location.origin).pathname,
+          hasSignal: Boolean(init.signal),
+          abortedAtCall: Boolean(init.signal?.aborted),
+        });
+        return new Promise((resolve, reject) => {
+          if (init.signal?.aborted) {
+            reject(new DOMException('aborted', 'AbortError'));
+            return;
+          }
+          init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        });
+      };
+
+      let completed = false;
+      const pending = runExperimentation().finally(() => {
+        completed = true;
+      });
+      await clock.tickAsync(1000);
+      await pending;
+
+      expect(completed).to.equal(true);
+      expect(calls).to.deep.equal([
+        { path: '/v/page-hang', hasSignal: true, abortedAtCall: false },
+        { path: '/v/section-hang', hasSignal: true, abortedAtCall: true },
+      ]);
+      expect(document.querySelector('#headline').textContent).to.equal('Control headline');
     });
 
     it('carries Style and Anchor through a section swap before loadArea decorates sections', async () => {
@@ -331,6 +379,28 @@ describe('scripts/experiment-loader.js', () => {
       expect(section.classList.contains('light')).to.equal(true);
       expect(section.classList.contains('dark')).to.equal(false);
       expect(section.id).to.equal('variant-hero');
+    });
+
+    it('removes config blocks left behind inside variant content', async () => {
+      setConsent({ analytics: true, personalization: true });
+      document.body.innerHTML = `<main><div>
+        <h1 id="headline">Control headline</h1>
+        <div class="section-metadata">
+          <div><div>Audience: mobile</div><div><a href="/v/mobile">/v/mobile</a></div></div>
+        </div>
+      </div></main>`;
+      window.fetch = async () => new Response(
+        `<html><body><main><div>
+          <h1 id="headline">Mobile headline</h1>
+          <div class="personalize"><div>Leftover config</div></div>
+        </div></main></body></html>`,
+        { status: 200, headers: { 'content-type': 'text/html' } },
+      );
+
+      await runExperimentation();
+
+      expect(document.querySelector('#headline').textContent).to.equal('Mobile headline');
+      expect(document.querySelector('.personalize')).to.equal(null);
     });
 
     it('removes leftover config blocks before the page is decorated', async () => {

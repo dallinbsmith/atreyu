@@ -1,6 +1,11 @@
 import { VARIANT_ROOT } from './config.js';
 
 let wrappedFetch;
+let activeGuards = 0;
+let activeDeadline;
+let activeControllers;
+let activeExpired = false;
+let activeRealFetch;
 
 const requestUrl = (input) => new URL(input.url ?? input, window.location.href);
 const requestMethod = (input, init) => init.method ?? input.method ?? 'GET';
@@ -15,35 +20,43 @@ const shouldGuard = (input, init = {}) => {
 };
 
 export const withVariantTimeout = async (run, { ms = 1000 } = {}) => {
-  if (window.fetch === wrappedFetch) return run();
-  const realFetch = window.fetch;
-  const controllers = new Set();
-  let expired = false;
-  const restore = () => {
-    if (window.fetch === wrappedFetch) window.fetch = realFetch;
-    wrappedFetch = null;
+  const release = (wrapper) => {
+    activeGuards -= 1;
+    if (activeGuards) return;
+    clearTimeout(activeDeadline);
+    activeControllers.clear();
+    if (window.fetch === wrapper) window.fetch = activeRealFetch;
+    if (wrappedFetch === wrapper) wrappedFetch = null;
+    activeDeadline = null;
+    activeControllers = null;
+    activeExpired = false;
+    activeRealFetch = null;
   };
-  const abortAll = () => {
-    expired = true;
-    for (const controller of controllers) controller.abort();
-    restore();
-  };
-  const deadline = setTimeout(abortAll, ms);
-  wrappedFetch = async (input, initArg) => {
-    const init = initArg ?? {};
-    if (!shouldGuard(input, init)) return realFetch(input, init);
-    const controller = new AbortController();
-    controllers.add(controller);
-    if (expired) controller.abort();
-    return realFetch(input, { ...init, signal: controller.signal });
-  };
-  window.fetch = wrappedFetch;
+  if (window.fetch !== wrappedFetch) {
+    activeRealFetch = window.fetch;
+    activeControllers = new Set();
+    activeExpired = false;
+    const wrapper = async (input, initArg) => {
+      const init = initArg ?? {};
+      if (!shouldGuard(input, init)) return activeRealFetch(input, init);
+      const controller = new AbortController();
+      activeControllers.add(controller);
+      if (activeExpired) controller.abort();
+      return activeRealFetch(input, { ...init, signal: controller.signal });
+    };
+    activeDeadline = setTimeout(() => {
+      activeExpired = true;
+      for (const controller of activeControllers) controller.abort();
+    }, ms);
+    wrappedFetch = wrapper;
+    window.fetch = wrapper;
+  }
+  const wrapper = wrappedFetch;
+  activeGuards += 1;
   try {
     return await run();
   } finally {
-    clearTimeout(deadline);
-    controllers.clear();
-    restore();
+    release(wrapper);
   }
 };
 
@@ -72,15 +85,15 @@ export const carryOverSectionMeta = (main = document.querySelector('main')) => {
   };
 };
 
-const hasVisibleContent = (section) => section.textContent.trim()
-  || section.querySelector('img,picture,video,svg,iframe,canvas,input,button,a');
+const hasAuthoredContent = (section) => [...section.children]
+  .some((child) => !child.matches('.section-metadata'));
 
 export const removeLeftoverConfigBlocks = (main = document.querySelector('main')) => {
   for (const block of [...(main?.querySelectorAll('.personalize, .experiment') ?? [])]) {
     if (['personalize', 'experiment'].includes(block.classList[0])) {
       const section = block.closest('main > div');
       block.remove();
-      if (section && !hasVisibleContent(section)) section.remove();
+      if (section && !hasAuthoredContent(section)) section.remove();
     }
   }
 };

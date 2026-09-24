@@ -26,6 +26,10 @@ describe('scripts/utils/experiments/guard.js', () => {
         hasSignal: Boolean(init.signal),
       });
       return new Promise((resolve, reject) => {
+        if (init.signal.aborted) {
+          reject(new DOMException('aborted', 'AbortError'));
+          return;
+        }
         init.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
       });
     };
@@ -104,16 +108,75 @@ describe('scripts/utils/experiments/guard.js', () => {
     expect(calls[3].signal).to.equal(caller.signal);
   });
 
-  it('restores fetch after the deadline even if run never settles', async () => {
+  it('rejects a /v/ fetch issued after the deadline immediately', async () => {
     clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    window.fetch = async () => new Response('');
+    let release;
+    window.fetch = (url, init = {}) => new Promise((resolve, reject) => {
+      if (init.signal?.aborted) {
+        reject(new DOMException('aborted', 'AbortError'));
+        return;
+      }
+      init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    });
     const stub = window.fetch;
 
-    withVariantTimeout(() => new Promise(() => {}), { ms: 1000 });
+    const pending = withVariantTimeout(() => new Promise((resolve) => {
+      release = resolve;
+    }), { ms: 1000 });
     expect(window.fetch).not.to.equal(stub);
     await clock.tickAsync(1000);
 
+    await fetch('/v/late').then(
+      () => expect.fail('Expected late fetch to reject'),
+      (ex) => expect(ex.name).to.equal('AbortError'),
+    );
+    expect(window.fetch).not.to.equal(stub);
+    release();
+    await pending;
     expect(window.fetch).to.equal(stub);
+  });
+
+  it('does not clobber a fetch patch installed by another script mid-run', async () => {
+    let release;
+    window.fetch = async () => new Response('');
+    const otherFetch = async () => new Response('other');
+
+    const pending = withVariantTimeout(() => new Promise((resolve) => {
+      release = resolve;
+    }));
+    window.fetch = otherFetch;
+    release();
+    await pending;
+
+    expect(window.fetch).to.equal(otherFetch);
+  });
+
+  it('keeps the wrapper installed until overlapping runs all settle', async () => {
+    const calls = [];
+    let finishA;
+    let finishB;
+    window.fetch = async (url, init = {}) => {
+      calls.push(Boolean(init.signal));
+      return new Response('');
+    };
+
+    const a = withVariantTimeout(() => new Promise((resolve) => {
+      finishA = resolve;
+    }));
+    const wrapper = window.fetch;
+    const b = withVariantTimeout(() => new Promise((resolve) => {
+      finishB = resolve;
+    }));
+
+    finishA();
+    await a;
+    expect(window.fetch).to.equal(wrapper);
+    await fetch('/v/still-guarded');
+    finishB();
+    await b;
+
+    expect(calls).to.deep.equal([true]);
+    expect(window.fetch).not.to.equal(wrapper);
   });
 
   it('restores fetch after the wrapped callback throws', async () => {
@@ -194,5 +257,18 @@ describe('scripts/utils/experiments/guard.js', () => {
     expect(document.querySelector('.columns.experiment')).to.not.equal(null);
     expect([...document.querySelectorAll('main > div')].map((section) => section.textContent.trim()))
       .to.deep.equal(['Keep', 'authored option']);
+  });
+
+  it('removes a section left with only metadata after removing a config block', () => {
+    document.body.innerHTML = `<main>
+      <div>
+        <div class="personalize"><div>bad</div></div>
+        <div class="section-metadata"><div><div>Style</div><div>dark</div></div></div>
+      </div>
+    </main>`;
+
+    removeLeftoverConfigBlocks(document.querySelector('main'));
+
+    expect(document.querySelector('main > div')).to.equal(null);
   });
 });
