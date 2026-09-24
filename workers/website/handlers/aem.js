@@ -61,28 +61,50 @@ const ORIGIN_FETCH_TIMEOUT_MS = 10_000;
 // later published would stay for 2 days (and a stale 200 too, which is why
 // wrangler.toml keeps PUSH_INVALIDATION disabled until the zone purge works).
 // Decision for error statuses, whatever the TTL source:
-// - 404: at most 60 s at the edge, which absorbs a crawler burst on a missing
-//   URL while a publish still shows up within a minute without a purge.
+// - 404: never cached at the edge (-1). An earlier 60 s cap (PR #105) didn't
+//   work, because of a revalidation trap (reproduced on the POC 2026-09-24).
+//   AEM's 404 for a not-yet-published page carries a `Last-Modified` (the same
+//   value the published 200 later has). When the cached 404 goes stale,
+//   Cloudflare revalidates with If-Modified-Since, aem.live answers
+//   304 Not Modified, and the edge keeps serving the stored 404 indefinitely
+//   (HIT, REVALIDATED, HIT...). The edge stores the raw origin response and
+//   its validators, so rewriting headers in the Worker can't break the loop.
+//   The only fix is not to store 404s.
+// - 410: treated exactly like 404. AEM doesn't send it today, but a Gone page
+//   can be republished and would hit the same Last-Modified/304 trap.
 // - 5xx: never cached. Cloudflare's `cacheTtlByStatus` docs say a negative
-//   value means "do not cache"; 0 would store and immediately expire.
+//   value means "do not cache"; 0 would store and immediately expire, which
+//   still keeps validators to revalidate against.
 // - Statuses not listed (2xx, 3xx) keep AEM's own cdn-cache-control. Per the
 //   docs, the override applies only when the status matches.
 // Only applies when the route caches (cache: true); GET/HEAD only per the docs.
-// capErrorCaching below applies the same limits to downstream CDNs and browsers.
-export const CACHE_TTL_BY_STATUS = Object.freeze({ 404: 60, '500-599': -1 });
+// capErrorCaching below handles downstream CDNs and browsers.
+export const CACHE_TTL_BY_STATUS = Object.freeze({ 404: -1, 410: -1, '500-599': -1 });
 
-// Downstream/browser half of the negative-cache cap above: cf.cacheTtlByStatus
-// only governs Cloudflare's own edge cache, so without this a browser or any
-// cache in front of the Worker would still keep AEM's error headers
-// (cache-control max-age=7200, cdn-cache-control up to 172800).
+// Downstream/browser half of the cap above: cf.cacheTtlByStatus only governs
+// Cloudflare's own edge cache, so without this a browser or any cache in front
+// of the Worker would keep AEM's error headers (cache-control max-age=7200,
+// cdn-cache-control up to 172800).
+// 404 keeps a short `max-age=60`, which saves a refetch when a page requests the
+// same missing asset repeatedly. `last-modified` and `etag` are dropped from
+// 404 and 5xx responses, so a browser or downstream cache that stores one from
+// now on holds no validator and does a full refetch once it goes stale.
+// Browsers that stored a 404 *with* a validator before this shipped are
+// covered separately: formatRequest (index.js) doesn't forward
+// If-Modified-Since, so once the page is published AEM can't turn their
+// revalidation into a 304. 3xx responses, including 304, are left untouched
+// and keep their validators.
+// Other 4xx (400, 401, 403, 405...) aren't listed: they describe the request
+// or its credentials, not whether a document exists, so publishing can't flip
+// them to 200. They keep AEM's headers.
+const MISSING_STATUSES = [404, 410];
+const ERROR_VALIDATORS = ['last-modified', 'etag'];
 const capErrorCaching = (resp) => {
-  if (resp.status === 404) {
-    resp.headers.set('cache-control', 'max-age=60');
-    resp.headers.delete('cdn-cache-control');
-  } else if (resp.status >= 500) {
-    resp.headers.set('cache-control', 'no-store');
-    resp.headers.delete('cdn-cache-control');
-  }
+  const missing = MISSING_STATUSES.includes(resp.status);
+  if (!missing && resp.status < 500) return;
+  resp.headers.set('cache-control', missing ? 'max-age=60' : 'no-store');
+  resp.headers.delete('cdn-cache-control');
+  ERROR_VALIDATORS.forEach((h) => resp.headers.delete(h));
 };
 
 // /system/ holds site plumbing (nav/footer fragments, placeholders.json), not

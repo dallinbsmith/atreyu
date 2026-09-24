@@ -10,6 +10,9 @@ const AEM_HEADERS = {
   'cache-control': 'max-age=7200, must-revalidate',
   'cdn-cache-control': 'max-age=172800, must-revalidate',
   'x-robots-tag': 'noindex, nofollow',
+  // AEM sends the document's Last-Modified even on a not-yet-published 404.
+  'last-modified': 'Wed, 23 Sep 2026 19:13:41 GMT',
+  etag: '"abc123"',
 };
 
 const capture = (t, status = 200) => {
@@ -21,12 +24,11 @@ const capture = (t, status = 200) => {
   return calls;
 };
 
-test('CACHE_TTL_BY_STATUS caps 404 at 60 s, never caches 5xx, and leaves 2xx/3xx to the origin', () => {
-  assert.deepEqual({ ...CACHE_TTL_BY_STATUS }, { 404: 60, '500-599': -1 });
-  for (const k of Object.keys(CACHE_TTL_BY_STATUS)) {
-    const [from] = k.split('-').map(Number);
-    assert.ok(from >= 400, `${k} must not override a success or redirect status`);
-  }
+test('CACHE_TTL_BY_STATUS never edge-caches 404, 410 or 5xx and lists nothing else', () => {
+  // 404/410 must be negative, not a short TTL: a stored 404 revalidates via
+  // If-Modified-Since into a 304 and never clears (see handlers/aem.js).
+  // Pinned to a literal so any added status (e.g. a 2xx override) fails here.
+  assert.deepEqual({ ...CACHE_TTL_BY_STATUS }, { 404: -1, 410: -1, '500-599': -1 });
   assert.ok(Object.isFrozen(CACHE_TTL_BY_STATUS));
 });
 
@@ -34,7 +36,7 @@ test('cached routes send cacheEverything with the negative-cache cap', async (t)
   const calls = capture(t, 404);
   const resp = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
   assert.equal(resp.status, 404);
-  assert.deepEqual(calls[0].cf, { cacheEverything: true, cacheTtlByStatus: { 404: 60, '500-599': -1 } });
+  assert.deepEqual(calls[0].cf, { cacheEverything: true, cacheTtlByStatus: { 404: -1, 410: -1, '500-599': -1 } });
 });
 
 test('uncached routes (schedules) send neither cacheEverything nor a status TTL', async (t) => {
@@ -48,22 +50,44 @@ test('does not strip origin cdn-cache-control on 2xx', async (t) => {
   const resp = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
   assert.equal(resp.headers.get('cdn-cache-control'), 'max-age=172800, must-revalidate');
   assert.equal(resp.headers.get('cache-control'), 'max-age=7200, must-revalidate');
+  assert.equal(resp.headers.get('last-modified'), 'Wed, 23 Sep 2026 19:13:41 GMT');
+  assert.equal(resp.headers.get('etag'), '"abc123"');
 });
 
-test('404 caps browser/downstream caching at 60 s and drops cdn-cache-control', async (t) => {
-  capture(t, 404);
-  const resp = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
-  assert.equal(resp.headers.get('cache-control'), 'max-age=60');
-  assert.equal(resp.headers.has('cdn-cache-control'), false);
+test('404 and 410 cap browser/downstream caching at 60 s and drop cdn-cache-control and validators', async (t) => {
+  for (const status of [404, 410]) {
+    capture(t, status);
+    // eslint-disable-next-line no-await-in-loop
+    const resp = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
+    assert.equal(resp.headers.get('cache-control'), 'max-age=60', String(status));
+    assert.equal(resp.headers.has('cdn-cache-control'), false, String(status));
+    // No validator means a browser can't revalidate the 404 into a 304.
+    assert.equal(resp.headers.has('last-modified'), false, String(status));
+    assert.equal(resp.headers.has('etag'), false, String(status));
+    t.mock.restoreAll();
+  }
 });
 
-test('5xx is no-store with no cdn-cache-control', async (t) => {
+test('other 4xx keep origin cache headers and validators', async (t) => {
+  for (const status of [400, 401, 403]) {
+    capture(t, status);
+    // eslint-disable-next-line no-await-in-loop
+    const resp = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
+    assert.equal(resp.headers.get('cache-control'), 'max-age=7200, must-revalidate', String(status));
+    assert.equal(resp.headers.get('last-modified'), 'Wed, 23 Sep 2026 19:13:41 GMT', String(status));
+    t.mock.restoreAll();
+  }
+});
+
+test('5xx is no-store and drops cdn-cache-control and validators', async (t) => {
   for (const status of [500, 502, 503, 599]) {
     capture(t, status);
     // eslint-disable-next-line no-await-in-loop
     const resp = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
     assert.equal(resp.headers.get('cache-control'), 'no-store', String(status));
     assert.equal(resp.headers.has('cdn-cache-control'), false, String(status));
+    assert.equal(resp.headers.has('last-modified'), false, String(status));
+    assert.equal(resp.headers.has('etag'), false, String(status));
     t.mock.restoreAll();
   }
 });
@@ -82,6 +106,19 @@ test('/system/ responses are noindex; other paths have AEM x-robots-tag stripped
     // eslint-disable-next-line no-await-in-loop
     const resp = await fetchFromAem({ request: req(path), cache: true, savedSearch: '' });
     assert.equal(resp.headers.get('x-robots-tag'), expected, path);
+    t.mock.restoreAll();
+  }
+});
+
+test('3xx and 304 responses keep their validators and origin cache headers', async (t) => {
+  for (const status of [301, 302, 304]) {
+    t.mock.method(globalThis, 'fetch', async () => new Response(null, { status, headers: AEM_HEADERS }));
+    // eslint-disable-next-line no-await-in-loop
+    const resp = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
+    assert.equal(resp.status, status);
+    assert.equal(resp.headers.get('last-modified'), 'Wed, 23 Sep 2026 19:13:41 GMT', String(status));
+    assert.equal(resp.headers.get('etag'), '"abc123"', String(status));
+    assert.equal(resp.headers.get('cdn-cache-control'), 'max-age=172800, must-revalidate', String(status));
     t.mock.restoreAll();
   }
 });
