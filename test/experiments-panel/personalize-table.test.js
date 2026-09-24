@@ -39,6 +39,18 @@ describe('experiments-panel/personalize-table.js', () => {
     expect(body.textContent).to.include(SCRIPT_URL);
   });
 
+  it('writes End Date as YYYY-MM-DD and rejects other date formats', () => {
+    const html = toTableHtml({
+      'End Date': 'March 1, 2026',
+      rules: [{ audience: 'mobile', path: '/v/mobile' }],
+    });
+    expect(readValues(parse(html))['End Date']).to.equal('2026-03-01');
+    expect(check({
+      'End Date': 'March 1, 2026',
+      rules: [{ audience: 'mobile', path: '/v/mobile' }],
+    }, { now })[0].message).to.equal('End Date must use YYYY-MM-DD.');
+  });
+
   it('validates audience, path, rule count, and end date limits', () => {
     expect(normalizeAudience('Campaign Spring 2026')).to.equal('campaign-spring-2026');
     const tooMany = Array.from({ length: 4 }, (_, i) => ({ audience: 'mobile', path: `/v/${i}` }));

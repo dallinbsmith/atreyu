@@ -5,6 +5,7 @@ import { isSafeHref, toDateInput } from './table.js';
 
 export const MAX_RULES = 3;
 const CAMPAIGN_PATTERN = /^campaign-[a-z0-9-]+$/;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export const FIELDS = [
@@ -83,6 +84,7 @@ const endOfLocalDay = (value) => {
 
 export const check = (values, { now = new Date() } = {}) => {
   const v = normalizeValues(values);
+  const rawEndDate = `${values['End Date'] ?? ''}`.trim();
   const issues = [];
   const add = (level, message) => issues.push({ level, message });
   if (v.rules.length < 1) add('error', 'Add at least one audience rule.');
@@ -91,7 +93,9 @@ export const check = (values, { now = new Date() } = {}) => {
     if (!isKnownAudience(audience)) add('error', `Unknown audience "${audience || '(blank)'}".`);
     if (!path.startsWith(VARIANT_ROOT) || path === VARIANT_ROOT) add('error', `Variant path must be under ${VARIANT_ROOT}: ${path || '(blank)'}`);
   }
-  if (!v['End Date']) add('error', 'End Date is required.');
+  if (!rawEndDate) add('error', 'End Date is required.');
+  else if (!DATE_PATTERN.test(rawEndDate)) add('error', 'End Date must use YYYY-MM-DD.');
+  else if (!v['End Date']) add('error', 'End Date is not a valid date.');
   else {
     const end = endOfLocalDay(v['End Date']);
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
