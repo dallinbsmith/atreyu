@@ -22,13 +22,18 @@ const install = (ms) => {
     released: false,
     count: 0,
   };
+  // Call the saved fetch with `this` = window: `guard.realFetch(...)` would
+  // run native fetch with `this` = guard, which browsers reject ("Illegal
+  // invocation"), failing every variant fetch. Unit tests stubbing fetch
+  // with a plain function can't see that; the native-fetch test does.
+  const callFetch = (...args) => guard.realFetch.apply(window, args);
   guard.wrapper = async (input, initArg) => {
     const init = initArg ?? {};
-    if (guard.released || !shouldGuard(input, init)) return guard.realFetch(input, init);
+    if (guard.released || !shouldGuard(input, init)) return callFetch(input, init);
     const controller = new AbortController();
     guard.controllers.add(controller);
     if (guard.expired) controller.abort();
-    return guard.realFetch(input, { ...init, signal: controller.signal });
+    return callFetch(input, { ...init, signal: controller.signal });
   };
   guard.deadline = setTimeout(() => {
     guard.expired = true;
