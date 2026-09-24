@@ -3,6 +3,7 @@
 // the plugin, turns the rows into the same head <meta> tags page metadata
 // produces, and removes the table, so the plugin sees nothing new.
 import { toClassName } from './config.js';
+import { removeConfigBlock } from './guard.js';
 
 const ID_KEYS = new Set(['experiment', 'name', 'test', 'test-name', 'id', 'test-id']);
 
@@ -36,11 +37,7 @@ export const applyExperimentBlock = (doc = document) => {
   const [block, ...extra] = findExperimentBlocks(doc);
   if (!block) return null;
   const entries = readExperimentBlock(block);
-  for (const el of [block, ...extra]) {
-    const section = el.parentElement;
-    el.remove();
-    if (section?.parentElement?.matches('main') && ![...section.children].some((c) => !c.matches('.section-metadata'))) section.remove();
-  }
+  for (const el of [block, ...extra]) removeConfigBlock(el);
   if (!entries.some(([name]) => name === 'experiment')) return null;
   doc.head.querySelectorAll('meta[name^="experiment"]').forEach((m) => m.remove());
   for (const [name, content] of entries) {

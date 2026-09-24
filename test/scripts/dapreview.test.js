@@ -24,11 +24,13 @@ describe('dapreview', () => {
   });
 
   it('re-running loadPage (dapreview re-decoration) compiles a Personalize table idempotently', async () => {
+    // Within the 180-day End Date cap, as a local YYYY-MM-DD.
+    const soon = new Date(Date.now() + 30 * 864e5).toLocaleDateString('sv-SE');
     const raw = `<div>
       <p id="pzn-control">Control</p>
       <div class="personalize">
         <div><div>Audience: mobile</div><div><a href="/v/p/home/mobile">/v/p/home/mobile</a></div></div>
-        <div><div>End Date</div><div>2999-12-31</div></div>
+        <div><div>End Date</div><div>${soon}</div></div>
       </div>
     </div>`;
     const main = document.querySelector('main') ?? document.body.appendChild(document.createElement('main'));

@@ -1,29 +1,25 @@
-// The authoring "Personalize" table (P1.3). Like the Experiment table
-// (block.js), it is never rendered: it runs before the plugin and compiles to
-// the same `Audience: <id>` section-metadata rows an author could write by
-// hand, so the plugin sees nothing new.
-//
-// Table rows: Name, Audience: <id> -> /v/... (1 to 3), Status (active |
-// inactive, default active like the Experiment table), End Date (required),
-// Owner.
-//
-// Decisions:
-// - Precedence: the plugin serves the first matching audience in the
-//   section's authored row order (getResolvedAudiences keeps page order,
-//   getAudienceConfig takes [0]; pinned by plugin-contract.test.js case 1).
-//   Rows are therefore written in CATALOG order (audiences.js), which is what
-//   gives catalog precedence. The order an author typed rows in the table
-//   does not matter. Hand-written metadata keeps authored-order precedence.
-// - A section's first table owns its audience config: raw `Audience*` rows
-//   already in that section's metadata are removed even if the table's own
-//   rules are then dropped (inactive, ended), so Status can't be bypassed by
-//   leftover rows. Later tables in the same section are removed and ignored.
-// - Every table is removed from the DOM, and a section left with only
-//   metadata is removed too (guard.js removeConfigBlock). Such a section had
-//   no content to personalize, so it compiles to nothing.
-// - Inactive tables are kept only for previews: non-prod with ?audience=.
-//   Ended tables and a missing or invalid End Date are dropped everywhere.
-// - Built with DOM APIs only; author text never reaches innerHTML.
+// The authoring "Personalize" table (P1.3). Never rendered: it compiles,
+// before the plugin runs, to the `Audience: <id>` section-metadata rows an
+// author could write by hand.
+// Rows: Name, Audience: <id> -> /v/... (1-3), Status (active | inactive;
+// missing or empty = active, like block.js readExperimentBlock), End Date
+// (required), Owner.
+// - Precedence: the plugin serves the first match in the section's authored
+//   row order (getAudienceConfig takes [0]; plugin-contract.test.js case 1),
+//   so rules are written in CATALOG order (audiences.js). That is what gives
+//   catalog precedence; the table's own row order doesn't matter.
+// - A section's first table owns its audiences: raw `Audience*` rows in that
+//   section's metadata are removed even if the rules are dropped, so Status
+//   can't be bypassed. Later tables in the section are ignored.
+// - Every table is removed; a section left with only metadata goes too
+//   (guard.js removeConfigBlock) and compiles to nothing.
+// - Inactive is kept only for non-prod ?audience= previews. Ended, missing
+//   or invalid End Dates are dropped everywhere.
+// - End Date runs through the end of its day, visitor-local. It must be a
+//   calendar date naming its year (serial "46022" would never end; "December
+//   31" parses as 2001) and at most MAX_DAYS away, like the panel's limit.
+// - Locale-prefixed /de/v/... paths are dropped (localization follow-up).
+// - DOM APIs only; author text never reaches innerHTML.
 import ENV from '../env.js';
 import { statusOf, toClassName, VARIANT_ROOT } from './config.js';
 import { cellValue } from './block.js';
@@ -31,20 +27,24 @@ import { withCampaigns } from './audiences.js';
 import { findConfigBlocks, removeConfigBlock } from './guard.js';
 
 const MAX_RULES = 3;
+export const MAX_DAYS = 180;
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+const YEAR = /(?<!\d)\d{4}(?!\d)/;
 const FIELDS = new Map([['name', 'name'], ['owner', 'owner'], ['status', 'status'], ['end-date', 'endDate']]);
 
-const warn = (prod, message) => {
+const warn = (prod, table, message) => {
   // eslint-disable-next-line no-console -- author-facing diagnostics, non-prod only
-  if (!prod) console.warn(`Personalize table: ${message}`);
+  if (!prod) console.warn(`Personalize table: ${table.name || 'unnamed'}: ${message}`);
 };
 
 const isAudienceKey = (key) => key === 'audience' || key.startsWith('audience-');
 
-// First link wins (the plugin would get an array for several links and
-// break); otherwise the cell text. Only the pathname is kept: the plugin
-// fetches `new URL(url, origin).pathname` on this origin whatever the host.
+// First link (several would reach the plugin as an array), else the first
+// paragraph, else the cell. Pathname only: the plugin fetches it on this
+// origin whatever the host.
 const toPath = (col) => {
-  const raw = col.querySelector('a')?.getAttribute('href') ?? col.textContent.trim();
+  const raw = col.querySelector('a')?.getAttribute('href')
+    ?? (col.querySelector('p') ?? col).textContent.trim();
   try {
     return new URL(raw, window.location.origin).pathname;
   } catch {
@@ -57,13 +57,45 @@ export const readPersonalizeTable = (block) => [...block.children].reduce((table
   if (!col) return table;
   const key = toClassName(label.textContent);
   if (key.startsWith('audience-')) table.rows.push({ id: key.slice('audience-'.length), path: toPath(col) });
-  else if (FIELDS.has(key)) table[FIELDS.get(key)] = cellValue(col);
+  else if (FIELDS.has(key)) {
+    const value = cellValue(col);
+    if (value) table[FIELDS.get(key)] = value;
+  }
   return table;
 }, { name: '', owner: '', status: 'active', endDate: '', rows: [] });
 
+const isCalendarDay = (date, y, m, d) => date.getFullYear() === y
+  && date.getMonth() === m && date.getDate() === d;
+
+// The End Date's local calendar day, or null when it isn't a plausible date.
+const toDay = (value) => {
+  const text = value.trim();
+  const iso = text.match(DATE_ONLY);
+  if (iso) {
+    const [y, m, d] = iso.slice(1).map(Number);
+    const day = new Date(y, m - 1, d);
+    return isCalendarDay(day, y, m - 1, d) ? day : null;
+  }
+  const year = text.match(YEAR)?.[0];
+  // All digits (46022, "2026") is never a date; the year check alone passes
+  // "2026" east of UTC.
+  if (!year || /^\d+$/.test(text)) return null;
+  const parsed = new Date(text);
+  return parsed.getFullYear() === Number(year) ? parsed : null;
+};
+
+// Exclusive end: local midnight after the End Date's day.
+const dayAfter = (date, days = 1) => new Date(
+  date.getFullYear(),
+  date.getMonth(),
+  date.getDate() + days,
+);
+
 const dropReason = ({ status, endDate }, { now, preview }) => {
-  const end = new Date(endDate);
-  if (!endDate || Number.isNaN(end.getTime())) return 'End Date is missing or invalid';
+  const day = endDate && toDay(endDate);
+  if (!day) return `End Date "${endDate}" is missing or not a calendar date with a year`;
+  const end = dayAfter(day);
+  if (end > dayAfter(new Date(now), MAX_DAYS + 1)) return `End Date is more than ${MAX_DAYS} days away`;
   const state = statusOf({ status, endDate: end }, now);
   if (state === 'ended') return 'End Date has passed';
   if (state === 'inactive' && !preview) return `Status "${status}" is not active`;
@@ -74,15 +106,16 @@ const campaignIds = (ids) => ids.filter((id) => id.startsWith('campaign-'));
 
 const toRules = (table, order, prod) => {
   const seen = new Set();
+  // Only valid rows count as seen: a broken row can't block its correction.
   const valid = table.rows.filter(({ id, path }) => {
     const reason = (!order.includes(id) && `unknown audience "${id}"`)
       || ((!path.startsWith(VARIANT_ROOT) || path === VARIANT_ROOT) && `"${path}" is not under ${VARIANT_ROOT}`)
       || (seen.has(id) && `duplicate audience "${id}"`);
-    seen.add(id);
-    if (reason) warn(prod, `${table.name || 'unnamed'}: dropped row, ${reason}.`);
+    if (!reason) seen.add(id);
+    if (reason) warn(prod, table, `dropped row, ${reason}.`);
     return !reason;
   }).sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
-  if (valid.length > MAX_RULES) warn(prod, `${table.name || 'unnamed'}: only the first ${MAX_RULES} audiences (catalog order) are kept.`);
+  if (valid.length > MAX_RULES) warn(prod, table, `only the first ${MAX_RULES} audiences (catalog order) are kept.`);
   return valid.slice(0, MAX_RULES);
 };
 
@@ -128,7 +161,7 @@ export const applyPersonalizeTables = (doc = document, {
   for (const block of findConfigBlocks(doc.querySelector('main'), ['personalize'])) {
     const section = block.closest('main > div');
     const table = readPersonalizeTable(block);
-    if (section && owners.has(section)) warn(prod, `${table.name || 'unnamed'}: a section's first table wins; this one is ignored.`);
+    if (section && owners.has(section)) warn(prod, table, 'a later table in this section is ignored.');
     else if (section) owners.set(section, table);
     removeConfigBlock(block);
   }
@@ -137,7 +170,7 @@ export const applyPersonalizeTables = (doc = document, {
   const order = Object.keys(withCampaigns(campaignIds(tableIds)));
   return live.flatMap(([section, table]) => {
     const reason = dropReason(table, { now, preview });
-    if (reason) warn(prod, `${table.name || 'unnamed'}: rules dropped, ${reason}.`);
+    if (reason) warn(prod, table, `rules dropped, ${reason}.`);
     const rules = reason ? [] : toRules(table, order, prod);
     writeRules(section, rules);
     return rules.length ? [{ section, name: table.name, owner: table.owner, rules }] : [];

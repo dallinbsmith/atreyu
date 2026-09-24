@@ -4,7 +4,7 @@ import { setConsent, resetConsent } from '../../scripts/utils/analytics/consent.
 import { setAnalyticsProvider } from '../../scripts/utils/analytics/analytics.js';
 import { loadArea, setConfig } from '../../scripts/ak.js';
 import {
-  isEnabled, trackExposures, restoreAssignments, persistAssignments, runExperimentation,
+  config, isEnabled, trackExposures, restoreAssignments, persistAssignments, runExperimentation,
 } from '../../scripts/experiment-loader.js';
 
 const KEY = 'unified-decisioning-experiments';
@@ -404,12 +404,14 @@ describe('scripts/experiment-loader.js', () => {
     });
 
     describe('personalize tables', () => {
-      const personalizeSection = (id, path) => `<main><div>
+      // Within the 180-day End Date cap, as a local YYYY-MM-DD.
+      const soon = new Date(Date.now() + 30 * 864e5).toLocaleDateString('sv-SE');
+      const personalizeSection = (id, path, extra = '') => `<main><div>
         <h1 id="headline">Control headline</h1>
         <div class="personalize">
           <div><div>Name</div><div>Hero</div></div>
           <div><div>Audience: ${id}</div><div><a href="${path}">${path}</a></div></div>
-          <div><div>End Date</div><div>2999-12-31</div></div>
+          <div><div>End Date</div><div>${soon}</div></div>${extra}
         </div>
       </div></main>`;
       const variant = (headline) => async (url) => new Response(
@@ -457,6 +459,54 @@ describe('scripts/experiment-loader.js', () => {
         expect(document.querySelector('.section-metadata').textContent).to.contain('Audience: mobile');
         expect(document.querySelector('#headline').textContent).to.equal('Control headline');
         expect(calls.filter((path) => path.startsWith('/v/'))).to.deep.equal([]);
+      });
+
+      it('a compile error is only logged: the table is removed and the page still renders', async () => {
+        const log = sinon.spy();
+        setConfig({
+          locales: { '': {} }, linkBlocks: [], components: [], decorateArea: () => {}, log,
+        });
+        const isProd = sinon.stub(config, 'isProd').throws(new Error('compile boom'));
+        try {
+          document.body.innerHTML = personalizeSection('mobile', '/v/p/home/mobile');
+          expect(await runExperimentation()).to.equal(null);
+          expect(log.calledWithMatch(sinon.match.has('message', 'compile boom'))).to.equal(true);
+          expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+          expect(Boolean(document.querySelector('.section-metadata'))).to.equal(false);
+          await loadArea();
+          expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+        } finally {
+          isProd.restore();
+        }
+      });
+
+      // ?audience= is a preview param, so the plugin runs without consent;
+      // fetch is stubbed (an unstubbed /v/ fetch hits the WTR dev server).
+      [
+        { prod: true, headline: 'Control headline', warned: false },
+        { prod: false, headline: 'Served /v/p/home/mobile', warned: true },
+      ].forEach(({ prod, headline, warned }) => {
+        it(`passes the prod flag (${prod}): inactive ?audience= preview ${prod ? 'off, no warnings' : 'on, warnings'}`, async () => {
+          const isProd = sinon.stub(config, 'isProd').returns(prod);
+          const warn = sinon.stub(console, 'warn');
+          try {
+            window.history.replaceState({}, '', `${window.location.pathname}?audience=mobile`);
+            window.fetch = variant('Served');
+            document.body.innerHTML = personalizeSection(
+              'mobile',
+              '/v/p/home/mobile',
+              `<div><div>Status</div><div>Inactive</div></div>
+              <div><div>Audience: nope</div><div>/v/p/home/nope</div></div>`,
+            );
+            await runExperimentation();
+            expect(document.querySelector('#headline').textContent).to.equal(headline);
+            expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+            expect(warn.calledWithMatch(/unknown audience "nope"/)).to.equal(warned);
+          } finally {
+            warn.restore();
+            isProd.restore();
+          }
+        });
       });
     });
 

@@ -8,6 +8,7 @@ import {
   planAudiences,
   readPersonalizeTable,
 } from '../../../scripts/utils/experiments/personalize.js';
+import { loadArea, setConfig } from '../../../scripts/ak.js';
 import { responseMap } from './fixtures/plugin-contract.js';
 
 const NOW = Date.parse('2026-09-24T12:00:00Z');
@@ -76,11 +77,24 @@ describe('scripts/utils/experiments/personalize.js', () => {
     });
   });
 
+  it('treats an empty cell like a missing row (empty Status means active)', () => {
+    document.body.innerHTML = table([row('Status', ''), row('Name', '<p></p>'), row('End Date', FUTURE)]);
+    const parsed = readPersonalizeTable(document.querySelector('.personalize'));
+    expect(parsed.status).to.equal('active');
+    expect(parsed.name).to.equal('');
+  });
+
+  it('takes the first paragraph of a path cell without a link, not all paragraphs joined', () => {
+    document.body.innerHTML = table([row('Audience: mobile', '<p>/v/p/home/mobile</p><p>see brief</p>')]);
+    expect(readPersonalizeTable(document.querySelector('.personalize')).rows)
+      .to.deep.equal([{ id: 'mobile', path: '/v/p/home/mobile' }]);
+  });
+
   it('compiles to Audience rows, removes the table and returns the plan', () => {
     setMain(section(content, table(baseRows())));
     const plan = compile();
     const target = document.querySelector('main > div');
-    expect(document.querySelector('.personalize')).to.equal(null);
+    expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
     expect(audienceRows()).to.deep.equal([['Audience: mobile', '/v/p/home/mobile']]);
     expect(plan).to.deep.equal([{
       section: target, name: 'Home hero', owner: 'dallin', rules: [{ id: 'mobile', path: '/v/p/home/mobile' }],
@@ -163,6 +177,18 @@ describe('scripts/utils/experiments/personalize.js', () => {
       expect(warn.callCount).to.equal(4);
     });
 
+    it('drops a bare /v/ first row for an id', () => {
+      expect(rulesFor(baseRows({ audiences: [['mobile', '/v/']] }))).to.deep.equal({ plan: [], rows: [] });
+    });
+
+    it('keeps a corrected row after a broken row for the same id', () => {
+      const { rows } = rulesFor(baseRows({
+        audiences: [['mobile', '/v/'], ['mobile', '/v/p/home/mobile-fixed']],
+      }));
+      expect(rows).to.deep.equal([['Audience: mobile', '/v/p/home/mobile-fixed']]);
+      expect(warn.callCount).to.equal(1);
+    });
+
     it('keeps at most three rules, the first three in catalog order', () => {
       const { rows } = rulesFor(baseRows({
         audiences: [
@@ -173,13 +199,69 @@ describe('scripts/utils/experiments/personalize.js', () => {
     });
   });
 
+  describe('End Date', () => {
+    const local = (y, m, d, h = 0, min = 0, s = 0) => new Date(y, m - 1, d, h, min, s).getTime();
+    const ymd = (ms) => {
+      const d = new Date(ms);
+      return `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, '0')}-${`${d.getDate()}`.padStart(2, '0')}`;
+    };
+    const live = (endDate, now) => {
+      setMain(section(content, table(baseRows({ endDate }))));
+      return compile({ now }).length === 1;
+    };
+
+    it('a date-only value runs through the end of that day in local time', () => {
+      expect(live('2026-09-24', local(2026, 9, 24, 23, 59, 59))).to.equal(true);
+      expect(live('2026-09-24', local(2026, 9, 25))).to.equal(false);
+    });
+
+    it('other parseable formats also run through the end of that local day', () => {
+      expect(live('09/24/2026', local(2026, 9, 24, 23, 59, 59))).to.equal(true);
+      expect(live('Sep 24, 2026', local(2026, 9, 24, 23, 59, 59))).to.equal(true);
+      expect(live('September 24, 2026', local(2026, 9, 25))).to.equal(false);
+    });
+
+    it('rejects values that are not a calendar date with a year', () => {
+      const now = local(2026, 9, 24, 12);
+      for (const endDate of ['46022', '2026', 'December 31', '2026-02-30', '2026-13-01', 'soon']) {
+        expect(live(endDate, now), endDate).to.equal(false);
+      }
+      expect(warn.calledWithMatch(/"46022" is missing or not a calendar date/)).to.equal(true);
+    });
+
+    it('caps the End Date at 180 days after today', () => {
+      const now = local(2026, 9, 24, 12);
+      expect(live(ymd(local(2026, 9, 24 + 180)), now)).to.equal(true);
+      expect(live(ymd(local(2026, 9, 24 + 181)), now)).to.equal(false);
+      expect(warn.calledWithMatch(/more than 180 days away/)).to.equal(true);
+
+      warn.resetHistory();
+      setMain(section(content, table(baseRows({ endDate: ymd(local(2026, 9, 24 + 181)) }))));
+      expect(compile({ now, prod: true })).to.deep.equal([]);
+      expect(warn.called).to.equal(false);
+    });
+  });
+
+  it('compiles each section\'s own table (first table wins per section, not per page)', () => {
+    setMain(
+      section('<p>One</p>', table(baseRows())),
+      section('<p>Two</p>', table(baseRows({ audiences: [['desktop', '/v/p/home/desktop']] }))),
+    );
+    const plan = compile();
+    const [one, two] = document.querySelectorAll('main > div');
+    expect(plan.map(({ rules }) => rules[0].id)).to.deep.equal(['mobile', 'desktop']);
+    expect(plan[0].section === one && plan[1].section === two).to.equal(true);
+    expect(audienceRows(one)).to.deep.equal([['Audience: mobile', '/v/p/home/mobile']]);
+    expect(audienceRows(two)).to.deep.equal([['Audience: desktop', '/v/p/home/desktop']]);
+  });
+
   it('first table in a section wins; later tables are removed and warned about off prod only', () => {
     const second = table(baseRows({ audiences: [['desktop', '/v/p/home/desktop']] }));
     setMain(section(content, table(baseRows()), second));
     compile();
     expect(document.querySelectorAll('.personalize')).to.have.length(0);
     expect(audienceRows()).to.deep.equal([['Audience: mobile', '/v/p/home/mobile']]);
-    expect(warn.calledWithMatch(/first table wins/)).to.equal(true);
+    expect(warn.calledWithMatch(/a later table in this section is ignored/)).to.equal(true);
 
     warn.resetHistory();
     setMain(section(content, table(baseRows()), second));
@@ -212,7 +294,7 @@ describe('scripts/utils/experiments/personalize.js', () => {
       row('End Date', FUTURE),
     ])));
     compile();
-    expect(document.querySelector('main img')).to.equal(null);
+    expect(Boolean(document.querySelector('main img'))).to.equal(false);
     expect(audienceRows()).to.deep.equal([['Audience: mobile', '/v/x%3Cimg%20src=x%20onerror=alert(1)%3E']]);
   });
 
@@ -220,7 +302,7 @@ describe('scripts/utils/experiments/personalize.js', () => {
     const plan = [{ rules: [{ id: 'campaign-launch' }, { id: 'mobile' }] }];
     const first = planAudiences(plan);
     expect(Object.keys(first)).to.deep.equal(['mobile', 'desktop', 'campaign-launch']);
-    expect(planAudiences(plan)).not.to.equal(first);
+    expect(planAudiences(plan) === first).to.equal(false);
     expect(Object.keys(planAudiences([]))).to.deep.equal(['mobile', 'desktop']);
   });
 
@@ -244,7 +326,10 @@ describe('scripts/utils/experiments/personalize.js', () => {
       };
     };
 
-    beforeEach(() => { Math.random = () => 0.5; });
+    beforeEach(() => {
+      Math.random = () => 0.5;
+      setConfig({ locales: { '': {} }, linkBlocks: [], components: [], decorateArea: () => {} });
+    });
 
     it('a compiled table swaps exactly like hand-written Audience metadata', async () => {
       const compiled = await serve(`<main><div>${content}${table(baseRows())}</div></main>`);
@@ -273,8 +358,47 @@ describe('scripts/utils/experiments/personalize.js', () => {
       const compiled = await serve(`<main><div>${content}${table(baseRows({
         audiences: [['mobile', '/v/p/home/mobile'], ['desktop', '/v/p/home/desktop']],
       }))}</div></main>`);
+      const handWritten = await serve(`<main><div>${content}${meta([
+        row('Audience: mobile', link('/v/p/home/mobile')),
+        row('Audience: desktop', link('/v/p/home/desktop')),
+      ])}</div></main>`);
       expect(compiled.calls).to.deep.equal(['/v/p/home/desktop']);
       expect(compiled.selected).to.deep.equal(['desktop']);
+      expect(compiled).to.deep.equal(handWritten);
+    });
+
+    it('no match: the compiled metadata stays put and decorates exactly like hand-written', async () => {
+      window.matchMedia = (query) => ({ matches: query.includes('>= 768px') });
+      const decorated = async (html) => {
+        const result = await serve(html);
+        await loadArea();
+        return { ...result, decorated: document.querySelector('main').outerHTML };
+      };
+      const compiled = await decorated(`<main><div>${content}${table(baseRows())}</div></main>`);
+      const compiledSection = document.querySelector('main > div');
+      const data = { ...compiledSection.dataset };
+      const handWritten = await decorated(`<main><div>${content}${meta([row('Audience: mobile', link('/v/p/home/mobile'))])}</div></main>`);
+      expect(compiled.calls).to.deep.equal([]);
+      expect(data.audienceMobile).to.equal('/v/p/home/mobile');
+      expect(document.querySelector('#control').textContent).to.equal('Control');
+      expect(compiled).to.deep.equal(handWritten);
+    });
+
+    it('DA-shaped content (absolute aem.page links, <p> cells, "Audience: Mobile") matches hand-written', async () => {
+      const href = 'https://main--atreyu--dallinbsmith.aem.page/v/p/home/mobile';
+      const pRow = (key, value) => `<div><div><p>${key}</p></div><div><p>${value}</p></div></div>`;
+      const compiled = await serve(`<main><div>${content}<div class="personalize">${[
+        pRow('Name', 'Home hero'),
+        pRow('Audience: Mobile', `<a href="${href}">${href}</a>`),
+        pRow('Status', 'Active'),
+        pRow('End Date', FUTURE),
+      ].join('')}</div></div></main>`);
+      const handWritten = await serve(`<main><div>${content}<div class="section-metadata">${
+        pRow('Audience: Mobile', `<a href="${href}">${href}</a>`)
+      }</div></div></main>`);
+      expect(compiled.calls).to.deep.equal(['/v/p/home/mobile']);
+      expect(compiled.selected).to.deep.equal(['mobile']);
+      expect(compiled).to.deep.equal(handWritten);
     });
   });
 });
