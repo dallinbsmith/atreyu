@@ -22,7 +22,7 @@ import { isMediaPath } from './utils/media.js';
 // Phase 1 cohort only (master-plan/implementation-plan.md, "Migration Cohort Phases").
 // Grows as each phase ships: Phase 2 adds /customers/ + /resources/, Phase 3 adds
 // / + /enterprise + /demo, Phase 4 adds /pricing. Do not pre-populate ahead of ship.
-const EDS_PATHS = ['/blog/', '/glossary/', '/integrations/'];
+export const EDS_PATHS = ['/blog/', '/glossary/', '/integrations/'];
 
 // Which locales actually have confirmed, live, translated content on the EDS origin
 // right now — a second axis from EDS_PATHS (cohort), not a duplicate of it. Phase 1
@@ -32,13 +32,33 @@ const EDS_PATHS = ['/blog/', '/glossary/', '/integrations/'];
 // the existing origin. This is a subset of LOCALE_PREFIXES by construction (every
 // entry here must also appear there); it never gets ahead of what's actually shipped.
 const EDS_LOCALES = [];
+
+// EDS code and shared-content prefixes (F-76). An EDS page served through this
+// Worker loads its code from its own origin: head.html's /scripts/ and /styles/,
+// ak.js's /blocks/ and /templates/ (codeBase), /plugins/experimentation/, icons.js's
+// /icons/, CSS masks and favicons under /img/, and /system/ (placeholders.json,
+// nav/footer fragments). Without these the strangler sent them to the existing
+// origin, which 404s every one. Decision record:
+// - Not cohort-gated: these are site-wide, not pages, so they don't grow per phase.
+// - Prefix-only (no bare '/scripts' match, unlike EDS_PATHS): they are folders.
+// - Same EDS_LOCALES gate as pages, so /de-de/system/placeholders.json follows
+//   /de-de pages once that locale ships and stays on the existing origin until then.
+// - Collision check (2026-09-24): Falkor (origin/develop) serves /_next/, /api/,
+//   favicon.*, icon-*.png, manifest.json, robots.txt, sitemap.xml, and CMS slugs via
+//   [lang]/[[...slug]]. frame.io's sitemap has no page under any prefix below, and
+//   live frame.io 404s each of them. Re-check before adding a prefix here.
+// - No /fonts/: fonts live under /styles/fonts/. No /tools/, /widgets/ or
+//   /experiments-panel/: marker hrefs and authoring-only code, never fetched here.
+export const EDS_ASSET_PATHS = ['/blocks/', '/icons/', '/img/', '/plugins/', '/scripts/', '/styles/', '/system/', '/templates/'];
+
 export const isEdsPath = (pathname) => {
   const localePrefix = matchLocalePrefix(pathname);
   if (localePrefix && !EDS_LOCALES.includes(localePrefix)) return false;
 
   const path = stripLocale(pathname);
   return EDS_PATHS.some((p) => path.startsWith(p))
-    || EDS_PATHS.map((p) => p.slice(0, -1)).includes(path);
+    || EDS_PATHS.map((p) => p.slice(0, -1)).includes(path)
+    || EDS_ASSET_PATHS.some((p) => path.startsWith(p));
 };
 
 // `global: true` marks a ROUTES entry as Worker-owned regardless of cohort status
