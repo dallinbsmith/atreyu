@@ -8,7 +8,7 @@ import {
   SHEETS, fetchText, isPagePath, fetchJson, pathExists, readPage, readSheet, sourceOf,
   waitForDaContext,
 } from './sources.js';
-import renderBuild from './form.js';
+import { renderBuildTab, renderPersonalizeTab } from './build-tabs.js';
 
 const params = new URLSearchParams(window.location.search);
 // Page comes from Sidekick (?referrer=), a direct link (?page=), or the DA
@@ -139,15 +139,11 @@ const renderSite = async () => {
   ];
 };
 
-// A page that 404s in preview can still get a new test built for it.
-const renderBuildTab = async () => {
-  if (pageError) return [h('p', { className: 'error' }, pageError)];
-  const pageHtml = await fetchText(pagePath).catch(() => null);
-  const scratch = h('div');
-  renderBuild({ view: scratch, pagePath, port: daPort, pageHtml });
-  return [...scratch.childNodes];
+const renderBuild = () => renderBuildTab({ pageError, pagePath, port: daPort });
+const renderPersonalize = () => renderPersonalizeTab({ pageError, pagePath, port: daPort });
+const RENDER = {
+  page: renderPage, site: renderSite, build: renderBuild, personalize: renderPersonalize,
 };
-const RENDER = { page: renderPage, site: renderSite, build: renderBuildTab };
 
 const show = async (name) => {
   renderId += 1;

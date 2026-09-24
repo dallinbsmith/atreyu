@@ -143,6 +143,12 @@ textarea {
   font: inherit;
 }
 
+.rule {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 6px;
+}
+
 .actions {
   display: flex;
   gap: 8px;
