@@ -5,6 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import worker, { isEdsPath, EDS_PATHS, EDS_ASSET_PATHS } from '../index.js';
+import { CACHE_TTL_BY_STATUS } from '../handlers/aem.js';
 
 const COHORT = ['/blog/', '/glossary/', '/integrations/'];
 const ASSETS = ['/blocks/', '/icons/', '/img/', '/plugins/', '/scripts/', '/styles/', '/system/', '/templates/'];
@@ -126,4 +127,19 @@ test('global routes never reach the existing origin, whatever the cohort', async
 test('RUM beacons go to EDS, not the existing origin', async (t) => {
   const { target } = await route(t, '/.rum/1', { method: 'POST', body: '{}' });
   assert.equal(target.hostname, EDS_HOST);
+});
+
+test('page and asset requests reach fetchFromAem with the negative-cache cap', async (t) => {
+  for (const path of ['/blog/x', '/scripts/scripts.js']) {
+    const inits = [];
+    t.mock.method(globalThis, 'fetch', async (input, init) => {
+      if (new URL(input.url ?? input).pathname !== '/redirects.json') inits.push(init);
+      return new Response('{"data":[]}', { headers: { 'content-type': 'application/json' } });
+    });
+    // eslint-disable-next-line no-await-in-loop
+    await worker.fetch(new Request(`https://frame.io${path}`), ENV);
+    const expected = { cacheEverything: true, cacheTtlByStatus: CACHE_TTL_BY_STATUS };
+    assert.deepEqual(inits.at(-1).cf, expected, path);
+    t.mock.restoreAll();
+  }
 });

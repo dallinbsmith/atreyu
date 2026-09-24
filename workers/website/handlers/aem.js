@@ -49,6 +49,23 @@ const formatSchedule = async (response) => {
 // own proxy-Worker precedent (AbortController timeout with a fallback).
 const ORIGIN_FETCH_TIMEOUT_MS = 10_000;
 
+// Negative-cache cap. With x-byo-cdn-type set, AEM sends
+// `cdn-cache-control: max-age=172800` on 404s as well as 200s (checked
+// 2026-09-24), so cacheEverything would pin a 404 at the edge for 2 days. Push
+// invalidation is what normally purges it on publish, and that needs a
+// Cloudflare zone (a workers.dev deployment has none) and a working purge, so a
+// newly published page could otherwise keep 404ing. Decision:
+// - 404: cache at most 60 s. That's long enough to absorb a crawler burst on a
+//   missing URL, and short enough that a publish shows up within a minute
+//   without purge.
+// - 5xx: never cache (a negative TTL means "do not cache" per Cloudflare's
+//   `cacheTtlByStatus` docs; 0 would store and immediately expire).
+// - Any status not listed here (2xx, 3xx): these keep AEM's own
+//   cdn-cache-control. Per the docs, the override applies only when the status
+//   matches.
+// Only applies when the route caches (cache: true); GET/HEAD only per the docs.
+export const CACHE_TTL_BY_STATUS = Object.freeze({ 404: 60, '500-599': -1 });
+
 export const fetchFromAem = async ({ request, cache, savedSearch }) => {
   // Bug-squash fix, 2026-08-28: no try/catch existed around this fetch — an
   // origin DNS/network failure propagated as an unhandled exception through
@@ -62,7 +79,9 @@ export const fetchFromAem = async ({ request, cache, savedSearch }) => {
   try {
     resp = await fetch(request, {
       method: request.method,
-      cf: { cacheEverything: cache },
+      cf: cache
+        ? { cacheEverything: true, cacheTtlByStatus: CACHE_TTL_BY_STATUS }
+        : { cacheEverything: false },
       signal: controller.signal,
     });
   } catch {
