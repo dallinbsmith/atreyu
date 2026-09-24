@@ -2,6 +2,8 @@ import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import {
   carryOverSectionMeta,
+  findConfigBlocks,
+  removeConfigBlock,
   removeLeftoverConfigBlocks,
   withVariantTimeout,
 } from '../../../scripts/utils/experiments/guard.js';
@@ -325,6 +327,17 @@ describe('scripts/utils/experiments/guard.js', () => {
     expect(Boolean(document.querySelector('.columns.experiment'))).to.equal(true);
     expect([...document.querySelectorAll('main > div')].map((section) => section.textContent.trim()))
       .to.deep.equal(['Keep', 'authored option']);
+  });
+
+  it('removeConfigBlock reports whether it removed the section too', () => {
+    document.body.innerHTML = `<main>
+      <div><p>Keep</p><div class="personalize"><div>a</div></div></div>
+      <div><div class="personalize"><div>b</div></div><div class="section-metadata"></div></div>
+    </main>`;
+    const [kept, alone] = findConfigBlocks(document.querySelector('main'), ['personalize']);
+    expect(removeConfigBlock(kept)).to.equal(false);
+    expect(removeConfigBlock(alone)).to.equal(true);
+    expect([...document.querySelectorAll('main > div')].map((s) => s.textContent)).to.deep.equal(['Keep']);
   });
 
   it('removes a section left with only metadata after removing a config block', () => {

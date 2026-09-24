@@ -4,7 +4,7 @@ import { setConsent, resetConsent } from '../../scripts/utils/analytics/consent.
 import { setAnalyticsProvider } from '../../scripts/utils/analytics/analytics.js';
 import { loadArea, setConfig } from '../../scripts/ak.js';
 import {
-  isEnabled, trackExposures, restoreAssignments, persistAssignments, runExperimentation,
+  config, isEnabled, trackExposures, restoreAssignments, persistAssignments, runExperimentation,
 } from '../../scripts/experiment-loader.js';
 
 const KEY = 'unified-decisioning-experiments';
@@ -401,6 +401,114 @@ describe('scripts/experiment-loader.js', () => {
 
       expect(document.querySelector('#headline')?.textContent).to.equal('Mobile headline');
       expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+    });
+
+    describe('personalize tables', () => {
+      // End Date is YYYY-MM-DD only; 30 days out stays within the 180-day cap.
+      const soon = ((d) => [d.getFullYear(), d.getMonth() + 1, d.getDate()]
+        .map((n) => `${n}`.padStart(2, '0')).join('-'))(new Date(Date.now() + 30 * 864e5));
+      const personalizeSection = (id, path, extra = '') => `<main><div>
+        <h1 id="headline">Control headline</h1>
+        <div class="personalize">
+          <div><div>Name</div><div>Hero</div></div>
+          <div><div>Audience: ${id}</div><div><a href="${path}">${path}</a></div></div>
+          <div><div>End Date</div><div>${soon}</div></div>${extra}
+        </div>
+      </div></main>`;
+      const variant = (headline) => async (url) => new Response(
+        `<html><body><main><div><h1 id="headline">${headline} ${new URL(url, window.location.origin).pathname}</h1></div></main></body></html>`,
+        { status: 200, headers: { 'content-type': 'text/html' } },
+      );
+      const originalSearch = window.location.search;
+      afterEach(() => window.history.replaceState({}, '', `${window.location.pathname}${originalSearch}`));
+
+      it('compiles the table before the plugin runs and serves the matching variant', async () => {
+        setConsent({ analytics: true, personalization: true });
+        document.body.innerHTML = personalizeSection('mobile', '/v/p/home/mobile');
+        window.fetch = variant('Served');
+        await runExperimentation();
+        expect(document.querySelector('#headline').textContent).to.equal('Served /v/p/home/mobile');
+        expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+        expect(window.hlx.audiences[0].config.selectedAudience).to.equal('mobile');
+      });
+
+      it('passes a fresh audience map per run, so campaign audiences from the table resolve', async () => {
+        setConsent({ analytics: true, personalization: true });
+        window.history.replaceState({}, '', `${window.location.pathname}?utm_campaign=Launch`);
+        document.body.innerHTML = personalizeSection('campaign-launch', '/v/p/home/launch');
+        window.fetch = variant('Served');
+        await runExperimentation();
+        expect(document.querySelector('#headline').textContent).to.equal('Served /v/p/home/launch');
+
+        // Next run (a dapreview re-render): a different campaign, no stale entry.
+        window.history.replaceState({}, '', `${window.location.pathname}?utm_campaign=Other`);
+        document.body.innerHTML = personalizeSection('campaign-launch', '/v/p/home/launch');
+        await runExperimentation();
+        expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+        expect(document.body.dataset.audiences).to.equal('mobile,desktop,campaign-launch');
+      });
+
+      it('without consent, still compiles and removes the table but never runs the plugin', async () => {
+        document.body.innerHTML = personalizeSection('mobile', '/v/p/home/mobile');
+        const calls = [];
+        window.fetch = async (url) => {
+          calls.push(new URL(url, window.location.origin).pathname);
+          return new Response('');
+        };
+        expect(await runExperimentation()).to.equal(null);
+        expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+        expect(document.querySelector('.section-metadata').textContent).to.contain('Audience: mobile');
+        expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+        expect(calls.filter((path) => path.startsWith('/v/'))).to.deep.equal([]);
+      });
+
+      it('a compile error is only logged: the table is removed and the page still renders', async () => {
+        const log = sinon.spy();
+        setConfig({
+          locales: { '': {} }, linkBlocks: [], components: [], decorateArea: () => {}, log,
+        });
+        const isProd = sinon.stub(config, 'isProd').throws(new Error('compile boom'));
+        try {
+          document.body.innerHTML = personalizeSection('mobile', '/v/p/home/mobile');
+          expect(await runExperimentation()).to.equal(null);
+          expect(log.calledWithMatch(sinon.match.has('message', 'compile boom'))).to.equal(true);
+          expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+          expect(Boolean(document.querySelector('.section-metadata'))).to.equal(false);
+          await loadArea();
+          expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+        } finally {
+          isProd.restore();
+        }
+      });
+
+      // ?audience= is a preview param, so the plugin runs without consent;
+      // fetch is stubbed (an unstubbed /v/ fetch hits the WTR dev server).
+      [
+        { prod: true, headline: 'Control headline', warned: false },
+        { prod: false, headline: 'Served /v/p/home/mobile', warned: true },
+      ].forEach(({ prod, headline, warned }) => {
+        it(`passes the prod flag (${prod}): inactive ?audience= preview ${prod ? 'off, no warnings' : 'on, warnings'}`, async () => {
+          const isProd = sinon.stub(config, 'isProd').returns(prod);
+          const warn = sinon.stub(console, 'warn');
+          try {
+            window.history.replaceState({}, '', `${window.location.pathname}?audience=mobile`);
+            window.fetch = variant('Served');
+            document.body.innerHTML = personalizeSection(
+              'mobile',
+              '/v/p/home/mobile',
+              `<div><div>Status</div><div>Inactive</div></div>
+              <div><div>Audience: nope</div><div>/v/p/home/nope</div></div>`,
+            );
+            await runExperimentation();
+            expect(document.querySelector('#headline').textContent).to.equal(headline);
+            expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+            expect(warn.calledWithMatch(/unknown audience "nope"/)).to.equal(warned);
+          } finally {
+            warn.restore();
+            isProd.restore();
+          }
+        });
+      });
     });
 
     it('removes leftover config blocks before the page is decorated', async () => {

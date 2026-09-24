@@ -102,6 +102,15 @@ jobs:
         name: Run tests
         run: npm test
 
+      # Personalize End Date logic is visitor-local time. The runner is UTC, where
+      # a UTC-parsed date looks correct, so re-run in a US zone (DST included).
+      # personalize.test.js logs "End Date tests time zone: ..." to confirm.
+      - if: steps.changes.outputs.run == 'true'
+        name: Run experiment tests (TZ=America/Los_Angeles)
+        env:
+          TZ: America/Los_Angeles
+        run: npx wtr "test/utils/experiments/*.test.js" --node-resolve --port=2001 --concurrent-browsers 4
+
       - if: steps.changes.outputs.run == 'true'
         name: Run Worker tests (website)
         run: node --test workers/website/test/*.test.js
