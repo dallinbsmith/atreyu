@@ -80,7 +80,11 @@ const missingVariantIssues = async (cfg) => {
 const testCard = async (test, rows) => {
   const { scope, cfg } = test;
   const source = sourceOf(test, rows, pagePath);
-  const issues = validate(cfg, { audiences: AUDIENCE_NAMES, variantRoot: VARIANT_ROOT });
+  const issues = validate(cfg, {
+    audiences: AUDIENCE_NAMES,
+    variantRoot: VARIANT_ROOT,
+    scope: test.kind === 'section' ? 'section' : 'page',
+  });
   for (const message of [source.issue, ...(test.notes ?? [])].filter(Boolean)) issues.push({ level: 'warn', message });
   issues.push(...await missingVariantIssues(cfg));
   const serving = servingNow(cfg.id);
