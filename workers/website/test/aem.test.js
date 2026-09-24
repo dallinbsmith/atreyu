@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   fetchFromAem, CACHE_TTL_BY_STATUS, CONSENT_ANALYTICS_CSP, buildCsp,
 } from '../handlers/aem.js';
+import { generateNonce } from '../utils/nonce.js';
 
 const EDS = 'https://main--atreyu--dallinbsmith.aem.live';
 const req = (path = '/blog/x') => new Request(`${EDS}${path}`);
@@ -126,32 +127,55 @@ test('3xx and 304 responses keep their validators and origin cache headers', asy
 });
 
 // CSP (P3.2). Hosts pinned as literals, from the frame.io + EDS network capture.
-const directives = (csp) => Object.fromEntries(csp.split('; ').map((d) => {
-  const [name, ...values] = d.split(' ');
-  return [name, values];
-}));
+// Returns [name, values] pairs in header order; fails on a repeated directive,
+// which browsers resolve by ignoring the later one (so a duplicate could
+// silently undo a pinned value).
+const directives = (csp) => {
+  const pairs = csp.split('; ').map((d) => {
+    const [name, ...values] = d.split(' ');
+    return [name, values];
+  });
+  const names = pairs.map(([name]) => name);
+  assert.deepEqual(names, [...new Set(names)], `duplicate CSP directive in: ${csp}`);
+  return pairs;
+};
 
-test('CSP allows the captured OneTrust and Segment hosts in connect-src and img-src only', () => {
-  const d = directives(buildCsp('abc'));
-  assert.deepEqual(d['connect-src'], [
-    "'self'", 'https://*.aem.live', 'https://*.aem.page', 'https://*.hlx.live', 'https://*.hlx.page',
-    'https://cdn.cookielaw.org', 'https://geolocation.onetrust.com', 'https://privacyportal.onetrust.com',
-    'https://cdn.segment.com', 'https://api.segment.io',
+test('CSP is exactly the pinned directive list, in order', () => {
+  const EDS_HOSTS = ['https://*.aem.live', 'https://*.aem.page', 'https://*.hlx.live', 'https://*.hlx.page'];
+  assert.deepEqual(directives(buildCsp('abc')), [
+    ['default-src', ["'self'"]],
+    ['script-src', ["'nonce-abc'", "'strict-dynamic'", 'https://assets.calendly.com']],
+    // Unchanged by P3.2: OneTrust's CSS arrives via fetch and is injected inline.
+    ['style-src', ["'self'", "'unsafe-inline'"]],
+    ['img-src', ["'self'", 'data:', ...EDS_HOSTS, 'https://cdn.cookielaw.org']],
+    ['font-src', ["'self'"]],
+    ['connect-src', [
+      "'self'", ...EDS_HOSTS,
+      'https://cdn.cookielaw.org', 'https://geolocation.onetrust.com', 'https://privacyportal.onetrust.com',
+      'https://cdn.segment.com', 'https://api.segment.io', 'https://sstats.adobe.com',
+    ]],
+    ['frame-src', ["'self'", 'https://www.youtube-nocookie.com', 'https://www.youtube.com', 'https://calendly.com']],
+    ['media-src', ["'self'", 'https://*.youtube.com', 'https://*.ytimg.com']],
+    ['object-src', ["'none'"]],
+    ['frame-ancestors', ["'self'"]],
+    ['base-uri', ["'self'"]],
+    ['form-action', ["'self'"]],
   ]);
-  assert.deepEqual(d['img-src'], [
-    "'self'", 'data:', 'https://*.aem.live', 'https://*.aem.page', 'https://*.hlx.live', 'https://*.hlx.page',
-    'https://cdn.cookielaw.org',
-  ]);
-  // Unchanged by P3.2: OneTrust's CSS arrives via fetch and is injected inline.
-  assert.deepEqual(d['style-src'], ["'self'", "'unsafe-inline'"]);
-  assert.deepEqual(d['font-src'], ["'self'"]);
-  assert.deepEqual(d['frame-src'], ["'self'", 'https://www.youtube-nocookie.com', 'https://www.youtube.com', 'https://calendly.com']);
-  assert.deepEqual(d['default-src'], ["'self'"]);
 });
 
-test('CSP script-src keeps nonce + strict-dynamic with no vendor hosts or unsafe keywords', () => {
-  const d = directives(buildCsp('abc'));
-  assert.deepEqual(d['script-src'], ["'nonce-abc'", "'strict-dynamic'", 'https://assets.calendly.com']);
+test('CSP script-src is only nonce, strict-dynamic and Calendly: no consent/analytics hosts, no unsafe-*', () => {
+  const [, scriptSrc] = directives(buildCsp('abc')).find(([name]) => name === 'script-src');
+  assert.deepEqual(scriptSrc, ["'nonce-abc'", "'strict-dynamic'", 'https://assets.calendly.com']);
+  assert.doesNotMatch(scriptSrc.join(' '), /unsafe-|cookielaw|onetrust|segment|adobe\.com/);
+});
+
+test('buildCsp rejects a nonce outside the base64 alphabet and accepts generateNonce output', () => {
+  for (const bad of ['', "abc' 'unsafe-inline", 'abc; script-src *', 'a b', 'abc\n', undefined, null, 123]) {
+    assert.throws(() => buildCsp(bad), TypeError, String(bad));
+  }
+  const nonce = generateNonce();
+  assert.match(buildCsp(nonce), new RegExp(`'nonce-${nonce.replace(/[+/]/g, '\\$&')}'`));
+  assert.doesNotThrow(() => buildCsp('AAECAwQFBgcICQoLDA0ODw=='));
 });
 
 test('CSP adds no vendor wildcards and none of the out-of-scope destination hosts', () => {

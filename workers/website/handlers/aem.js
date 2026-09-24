@@ -145,37 +145,54 @@ const isSystemPath = (pathname) => stripLocale(pathname).startsWith(SYSTEM_ROOT)
 //   widget — a real third-party script + iframe, not a static library
 //   (unlike gsap, this can't be vendored locally; it talks to
 //   Calendly's own backend). Single-host, no wildcard subdomains.
-// - OneTrust + Segment (P3.2, 2026-09-24): hosts come from a real network
-//   capture, not guesses. Falkor's chain on frame.io (origin/develop,
-//   web/src/components/atoms/Analytics/scripts/Segment.tsx) was captured in
-//   headless Chrome with consent shown+accepted, shown+rejected (geo faked
-//   to DE) and US (no banner); then the same chain was loaded on a
-//   Worker-served EDS page and every securitypolicyviolation recorded.
+// - OneTrust + Segment (P3.2, 2026-09-24): hosts come from network captures
+//   plus a read of the vendor code, not guesses. Falkor's chain (origin/
+//   develop, web/src/components/atoms/Analytics/scripts/Segment.tsx) was
+//   captured on frame.io in headless Chrome (EU accept, EU reject, US), and
+//   the same chain was re-run on a Worker-served EDS page with every
+//   securitypolicyviolation recorded. The first capture was NOT complete:
+//   it opened the preference center with OneTrust.ToggleInfoDisplay() and
+//   clicked OneTrust's buttons, bypassing privacy-standalone's own entry
+//   points, so it never saw privacy-standalone's consent telemetry (below).
+//   Re-captured through adobePrivacy.showPreferenceCenter() with real
+//   clicks on frame.io and on EDS (EU accept and EU reject). Treat this
+//   list as "every host seen for this chain so far, plus every host
+//   literal in privacy-standalone.js (only cdn.cookielaw.org, geo2 and
+//   sstats.adobe.com)", not as proven complete; OneTrust and Segment
+//   builds were not source-audited. Re-capture when vendor scripts change.
 //   * Scripts need NO host entries: privacy-standalone.js (www.adobe.com),
 //     its geo2.adobe.com JSONP, otSDKStub/otBannerSdk (cdn.cookielaw.org)
 //     and Segment's analytics.js + integrations (cdn.segment.com) are all
-//     inserted by a script that is already trusted (nonce'd loader), which
-//     'strict-dynamic' propagates to. Listing them would only widen the
-//     policy for CSP2-only browsers.
+//     inserted by an already-trusted script, which 'strict-dynamic'
+//     propagates to. That trusted loader is the nonce'd EDS script that
+//     P4.1 adds; until it lands nothing on EDS loads this chain. Listing
+//     the hosts would only widen the policy for CSP2-only browsers.
 //   * connect-src: OneTrust fetches its consent config and fetches its CSS
 //     as text (cdn.cookielaw.org), looks up geo (geolocation.onetrust.com)
 //     and POSTs a consent receipt on every accept/reject
-//     (privacyportal.onetrust.com). Segment fetches settings
-//     (cdn.segment.com) and sends events and metrics (api.segment.io).
-//     profiles.segment.com is left out on purpose: it only appeared when
-//     the settings fetch was CSP-blocked and the snippet fell back to
-//     analytics.classic.js; with settings reachable it runs analytics-next
-//     (same as Falkor) and never calls it.
+//     (privacyportal.onetrust.com). privacy-standalone.js XHR-POSTs each
+//     consent interaction to sstats.adobe.com/ee/v1/interact: per its
+//     source showBanner, show/close modal and choice enable/disable/custom;
+//     observed showModal, choice/enable and choice/disable. Segment fetches
+//     settings (cdn.segment.com) and sends events and metrics
+//     (api.segment.io). profiles.segment.com is left out on purpose: it
+//     only appeared when the settings fetch was CSP-blocked and the snippet
+//     fell back to analytics.classic.js; with settings reachable it runs
+//     analytics-next (same as Falkor) and never calls it.
 //   * img-src: only cdn.cookielaw.org (preference-center logos).
 //   * style-src/font-src/frame-src: nothing. OneTrust injects the CSS it
 //     fetched as an inline <style>, already allowed by 'unsafe-inline'.
 //   * NOT allowed here, deliberately: the Segment device-mode destinations
 //     (gtag/GA4, Google Ads, Facebook Pixel, the GTM container and what it
 //     loads: LinkedIn, Clearbit, 6sense, MNTN, Contentsquare) and Adobe
-//     Launch (www.adobe.com/marketingtech -> assets.adobedtm.com). Their
-//     scripts still load via 'strict-dynamic' but their beacons are
-//     blocked. Whether EDS should run those at all is a consent/marketing
-//     decision (PLAN.md P4.1), not something to widen the CSP for silently.
+//     Launch (www.adobe.com/marketingtech -> assets.adobedtm.com and its
+//     own sstats.adobe.com calls, which the connect-src entry above now
+//     also permits). Their scripts still load via 'strict-dynamic' but
+//     their other beacons are blocked. Whether EDS should run those at all
+//     is a consent/marketing decision (PLAN.md P4.1), not something to
+//     widen the CSP for silently.
+// - object-src 'none': no plugin content is used; default-src 'self' would
+//   otherwise allow same-origin <object>/<embed>.
 export const CONSENT_ANALYTICS_CSP = Object.freeze({
   connect: Object.freeze([
     'https://cdn.cookielaw.org',
@@ -183,25 +200,35 @@ export const CONSENT_ANALYTICS_CSP = Object.freeze({
     'https://privacyportal.onetrust.com',
     'https://cdn.segment.com',
     'https://api.segment.io',
+    'https://sstats.adobe.com',
   ]),
   img: Object.freeze(['https://cdn.cookielaw.org']),
 });
 
 // Pure: the nonce is generated per request by the caller; nothing here is
-// per-request state held at module scope.
-export const buildCsp = (nonce) => [
-  "default-src 'self'",
-  `script-src 'nonce-${nonce}' 'strict-dynamic' https://assets.calendly.com`,
-  "style-src 'self' 'unsafe-inline'",
-  ["img-src 'self' data: https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page", ...CONSENT_ANALYTICS_CSP.img].join(' '),
-  "font-src 'self'",
-  ["connect-src 'self' https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page", ...CONSENT_ANALYTICS_CSP.connect].join(' '),
-  "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://calendly.com",
-  "media-src 'self' https://*.youtube.com https://*.ytimg.com",
-  "frame-ancestors 'self'",
-  "base-uri 'self'",
-  "form-action 'self'",
-].join('; ');
+// per-request state held at module scope. The nonce is interpolated into a
+// header, so anything outside the base64 alphabet (a quote, ';', space)
+// would let a caller rewrite the policy; reject it instead.
+const NONCE_PATTERN = /^[A-Za-z0-9+/=]+$/;
+export const buildCsp = (nonce) => {
+  if (typeof nonce !== 'string' || !NONCE_PATTERN.test(nonce)) {
+    throw new TypeError('buildCsp: nonce must be a non-empty base64 string');
+  }
+  return [
+    "default-src 'self'",
+    `script-src 'nonce-${nonce}' 'strict-dynamic' https://assets.calendly.com`,
+    "style-src 'self' 'unsafe-inline'",
+    ["img-src 'self' data: https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page", ...CONSENT_ANALYTICS_CSP.img].join(' '),
+    "font-src 'self'",
+    ["connect-src 'self' https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page", ...CONSENT_ANALYTICS_CSP.connect].join(' '),
+    "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://calendly.com",
+    "media-src 'self' https://*.youtube.com https://*.ytimg.com",
+    "object-src 'none'",
+    "frame-ancestors 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ');
+};
 
 export const fetchFromAem = async ({ request, cache, savedSearch }) => {
   // Bug-squash fix, 2026-08-28: no try/catch existed around this fetch — an
