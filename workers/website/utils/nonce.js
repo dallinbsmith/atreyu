@@ -18,6 +18,9 @@
  *   script that carries some other nonce value: it won't match the policy,
  *   so it doesn't run. Scripts that trusted code inserts at runtime are
  *   covered by 'strict-dynamic', not by this rewrite.
+ * - The marker is public, not a secret. The protection comes from the
+ *   EDS/html2md pipeline, which never renders authored scripts or nonce
+ *   attributes, so only this repo's head.html / 404.html can carry it.
  * - Without the Worker (aem.page/aem.live with no CSP configured, `aem up`)
  *   the marker is left literal and, with no policy, has no effect.
  * - If the AEM origin is ever given its own nonce CSP (headers.json), AEM

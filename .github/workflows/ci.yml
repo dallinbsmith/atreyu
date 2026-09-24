@@ -23,6 +23,7 @@ on:
       - 'helix-*.yaml'
       - '.github/workflows/ci.yml'
       - 'head.html'
+      - '404.html'
       - 'eslint.config.js'
       - '.stylelintrc.json'
       - 'package.json'
@@ -53,7 +54,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
-          LINT_TEST_PATHS: '^(blocks|scripts|styles|test|tools|plugins|workers|experiments-panel)/|^helix-[^/]*\.yaml$|^\.github/workflows/ci\.yml$|^(head\.html|eslint\.config\.js|\.stylelintrc\.json|package\.json|package-lock\.json)$'
+          LINT_TEST_PATHS: '^(blocks|scripts|styles|test|tools|plugins|workers|experiments-panel)/|^helix-[^/]*\.yaml$|^\.github/workflows/ci\.yml$|^(head\.html|404\.html|eslint\.config\.js|\.stylelintrc\.json|package\.json|package-lock\.json)$'
         run: |
           if [ "$EVENT" != "pull_request" ] || ! changed="$(git diff --name-only "$BASE...$HEAD")" || echo "$changed" | grep -qE "$LINT_TEST_PATHS"; then
             echo "run=true" >> "$GITHUB_OUTPUT"
