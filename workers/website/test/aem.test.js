@@ -144,7 +144,7 @@ test('CSP is exactly the pinned directive list, in order', () => {
   const EDS_HOSTS = ['https://*.aem.live', 'https://*.aem.page', 'https://*.hlx.live', 'https://*.hlx.page'];
   assert.deepEqual(directives(buildCsp('abc')), [
     ['default-src', ["'self'"]],
-    ['script-src', ["'nonce-abc'", "'strict-dynamic'", 'https://assets.calendly.com']],
+    ['script-src', ["'nonce-abc'", "'strict-dynamic'"]],
     // Unchanged by P3.2: OneTrust's CSS arrives via fetch and is injected inline.
     ['style-src', ["'self'", "'unsafe-inline'"]],
     ['img-src', ["'self'", 'data:', ...EDS_HOSTS, 'https://cdn.cookielaw.org']],
@@ -163,10 +163,10 @@ test('CSP is exactly the pinned directive list, in order', () => {
   ]);
 });
 
-test('CSP script-src is only nonce, strict-dynamic and Calendly: no consent/analytics hosts, no unsafe-*', () => {
+test('CSP script-src is only nonce and strict-dynamic: no host sources (ignored under strict-dynamic), no unsafe-*', () => {
   const [, scriptSrc] = directives(buildCsp('abc')).find(([name]) => name === 'script-src');
-  assert.deepEqual(scriptSrc, ["'nonce-abc'", "'strict-dynamic'", 'https://assets.calendly.com']);
-  assert.doesNotMatch(scriptSrc.join(' '), /unsafe-|cookielaw|onetrust|segment|adobe\.com/);
+  assert.deepEqual(scriptSrc, ["'nonce-abc'", "'strict-dynamic'"]);
+  assert.doesNotMatch(scriptSrc.join(' '), /unsafe-|https?:|calendly|cookielaw|onetrust|segment|adobe\.com/);
 });
 
 test('buildCsp rejects a nonce outside the base64 alphabet and accepts generateNonce output', () => {

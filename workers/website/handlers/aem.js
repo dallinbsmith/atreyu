@@ -140,11 +140,19 @@ const isSystemPath = (pathname) => stripLocale(pathname).startsWith(SYSTEM_ROOT)
 // - connect-src/img-src's *.aem.live/*.aem.page wildcard is kept as-is:
 //   da.js's real fetch() calls during ?dapreview authoring are a
 //   genuine, narrow dependency here, unlike script-src/frame-ancestors.
-// - script-src/frame-src's calendly.com entries (2026-09-17): the
-//   hero-calendly block embeds a live, inline Calendly scheduling
-//   widget — a real third-party script + iframe, not a static library
-//   (unlike gsap, this can't be vendored locally; it talks to
-//   Calendly's own backend). Single-host, no wildcard subdomains.
+// - frame-src's calendly.com entry (2026-09-17): the hero-calendly block
+//   embeds a live, inline Calendly scheduling widget, a real third-party
+//   script + iframe rather than a static library (unlike gsap, it can't
+//   be vendored locally; it talks to Calendly's own backend). Single host,
+//   no wildcard subdomains.
+// - script-src has no Calendly host (Q-E F3, 2026-09-24). Under
+//   'strict-dynamic', CSP3 browsers ignore host-source entries in
+//   script-src. widget.js is loaded by the block through
+//   scripts/utils/script.js, i.e. created by already-trusted code, so
+//   'strict-dynamic' is what allows it. The host entry granted nothing and
+//   read like an allowlist that wasn't in force. Verified in headless
+//   Chrome: the widget loads and renders its calendly.com iframe with zero
+//   violations after removal.
 // - OneTrust + Segment (P3.2, 2026-09-24): hosts come from network captures
 //   plus a read of the vendor code, not guesses. Falkor's chain (origin/
 //   develop, web/src/components/atoms/Analytics/scripts/Segment.tsx) was
@@ -216,7 +224,7 @@ export const buildCsp = (nonce) => {
   }
   return [
     "default-src 'self'",
-    `script-src 'nonce-${nonce}' 'strict-dynamic' https://assets.calendly.com`,
+    `script-src 'nonce-${nonce}' 'strict-dynamic'`,
     "style-src 'self' 'unsafe-inline'",
     ["img-src 'self' data: https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page", ...CONSENT_ANALYTICS_CSP.img].join(' '),
     "font-src 'self'",
