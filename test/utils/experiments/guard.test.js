@@ -17,6 +17,17 @@ describe('scripts/utils/experiments/guard.js', () => {
     document.body.innerHTML = '';
   });
 
+  it('calls the browser\'s native fetch with a valid receiver (no Illegal invocation)', async () => {
+    window.fetch = realFetch;
+    const [guarded, passthrough] = await withVariantTimeout(() => Promise.all([
+      window.fetch('/v/p/guard-native-fetch-probe'),
+      window.fetch('/guard-native-fetch-probe'),
+    ]));
+    expect(guarded).to.be.instanceOf(Response);
+    expect(passthrough).to.be.instanceOf(Response);
+    expect(window.fetch).to.equal(realFetch);
+  });
+
   it('aborts same-origin /v/ GET fetches without caller signals', async () => {
     clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const calls = [];
