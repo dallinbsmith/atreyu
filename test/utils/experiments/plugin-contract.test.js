@@ -274,6 +274,7 @@ describe('vendored aem-experimentation plugin contract', () => {
 
   it('documents: section swaps drop Style and Anchor metadata', async () => {
     // replaceInner() replaces section innerHTML, dropping original Style/Anchor rows.
+    // Loader coverage asserts P1.2 carries these rows before loadArea decoration.
     setMain([section(controlSection, [
       linkRow('Audience: mobile', '/v/mobile'),
       sectionMetaRow('Style', 'dark'),
@@ -293,7 +294,8 @@ describe('vendored aem-experimentation plugin contract', () => {
   it('documents: hanging variant fetch keeps loadEager pending', async () => {
     // replaceInner() awaits fetch(path) without passing an AbortSignal;
     // loadEager() therefore never resolves while the fetch remains pending.
-    clock = sinon.useFakeTimers({ toFake: ['setTimeout'] });
+    // Loader coverage asserts P1.2 aborts this fetch and keeps original content.
+    clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     setMain([section(controlSection, [linkRow('Audience: mobile', '/v/mobile')])]);
     const calls = [];
     const fetched = Promise.withResolvers();
