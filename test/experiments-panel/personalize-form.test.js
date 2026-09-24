@@ -34,6 +34,15 @@ const portWithSelection = (html) => ({
     })));
   },
 });
+const errorPort = () => {
+  let listener;
+  return {
+    addEventListener: (event, cb) => { listener = cb; },
+    removeEventListener: () => {},
+    start: () => {},
+    postMessage: () => listener({ data: { action: 'error' } }),
+  };
+};
 
 describe('experiments-panel/personalize-form.js', () => {
   const realFetch = window.fetch;
@@ -105,6 +114,7 @@ describe('experiments-panel/personalize-form.js', () => {
       ])),
       pageHtml: '',
     });
+
     view.querySelector('[name="audience-2"]').value = 'desktop';
     view.querySelector('[name="path-2"]').value = '/v/stale';
     view.querySelector('button.load').click();
@@ -113,6 +123,31 @@ describe('experiments-panel/personalize-form.js', () => {
     expect(view.querySelector('[name="audience-0"]').value).to.equal('mobile');
     expect(view.querySelector('[name="path-2"]').value).to.equal('/v/sale');
     expect(view.textContent).to.include('Only the first 3 audience rules are kept.');
+  });
+
+  it('loads the same valid rules the compiler serves', async () => {
+    const view = document.createElement('main');
+    renderPersonalize({
+      view,
+      port: portWithSelection(table([
+        ['Audience: foo', '<a href="/v/foo">/v/foo</a>'],
+        ['Audience: returning-visitor', '<a href="/v/returning">/v/returning</a>'],
+        ['Audience: desktop', '<a href="/v/desktop">/v/desktop</a>'],
+        ['Audience: mobile', '<a href="/v/mobile">/v/mobile</a>'],
+        ['End Date', dateAfter(30)],
+      ])),
+      pageHtml: '',
+    });
+    view.querySelector('button.load').click();
+    await waitFor(() => view.textContent.includes('Loaded the selected Personalize table.'));
+
+    expect([
+      view.querySelector('[name="audience-0"]').value,
+      view.querySelector('[name="audience-1"]').value,
+      view.querySelector('[name="audience-2"]').value,
+    ]).to.deep.equal(['mobile', 'desktop', '']);
+    expect(view.textContent).to.include('row dropped, unknown audience "foo".');
+    expect(view.textContent).to.include('row dropped, unknown audience "returning-visitor".');
   });
 
   it('clears fields that are absent from the loaded table', async () => {
@@ -139,18 +174,13 @@ describe('experiments-panel/personalize-form.js', () => {
   });
 
   it('does not show loaded after a failed load', async () => {
-    const port = {
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      start: () => {},
-      postMessage: () => { throw new Error('port failed'); },
-    };
     const view = document.createElement('main');
-    renderPersonalize({ view, port, pageHtml: '' });
+    renderPersonalize({ view, port: errorPort(), pageHtml: '' });
     view.querySelector('button.load').click();
     await waitFor(() => !view.querySelector('button.load').disabled);
 
     expect(view.textContent).to.not.include('Loaded the selected Personalize table.');
+    expect(view.textContent).to.include('No Personalize table in the selection.');
   });
 
   it('warns when the loaded table is inactive because the compiler would reject it', async () => {
@@ -164,6 +194,21 @@ describe('experiments-panel/personalize-form.js', () => {
     await waitFor(() => view.textContent.includes('Loaded table is inactive'));
 
     expect(view.querySelector('[name="End Date"]').value).to.equal('');
+    expect(view.textContent).to.include('End Date must use YYYY-MM-DD.');
+  });
+
+  it('shows load warnings when starting from page HTML', async () => {
+    const pageHtml = `<main><div><div class="personalize">
+      <div><div>Status</div><div>draft</div></div>
+      <div><div>Audience: foo</div><div>/v/foo</div></div>
+      <div><div>End Date</div><div>March 1, 2026</div></div>
+    </div></div></main>`;
+    const view = document.createElement('main');
+    renderPersonalize({ view, pageHtml });
+    await wait();
+
+    expect(view.textContent).to.include("Unsupported Status 'draft', treated as inactive.");
+    expect(view.textContent).to.include('row dropped, unknown audience "foo".');
     expect(view.textContent).to.include('End Date must use YYYY-MM-DD.');
   });
 
@@ -203,5 +248,27 @@ describe('experiments-panel/personalize-form.js', () => {
     view.querySelector('[name="path-0"]').dispatchEvent(new Event('change', { bubbles: true }));
     await wait();
     expect(fetches).to.equal(1);
+  });
+
+  it('checks page-start variant paths and clears stale path warnings', async () => {
+    window.fetch = async (path) => new Response(path.endsWith('/multi')
+      ? '<main><div>one</div><div>two</div></main>'
+      : '<main><div>one</div></main>');
+    const pageHtml = `<main><div><div class="personalize">
+      <div><div>Audience: mobile</div><div>/v/multi</div></div>
+      <div><div>End Date</div><div>${dateAfter(30)}</div></div>
+    </div></div></main>`;
+    const view = document.createElement('main');
+    renderPersonalize({ view, pageHtml });
+    await waitFor(() => view.textContent.includes('/v/multi has more than one section'));
+
+    view.querySelector('[name="path-0"]').value = '/v/single';
+    view.querySelector('[name="path-0"]').dispatchEvent(new Event('input', { bubbles: true }));
+    view.querySelector('[name="path-0"]').dispatchEvent(new Event('change', { bubbles: true }));
+    view.querySelector('[name="Name"]').value = 'Typing should not stale warnings';
+    view.querySelector('[name="Name"]').dispatchEvent(new Event('input', { bubbles: true }));
+    await waitFor(() => !view.textContent.includes('/v/multi has more than one section'));
+
+    expect(view.textContent).to.not.include('/v/single has more than one section');
   });
 });

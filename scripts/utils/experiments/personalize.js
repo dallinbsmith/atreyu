@@ -30,7 +30,7 @@ import { findConfigBlocks, removeConfigBlock } from './guard.js';
 
 export const MAX_RULES = 3;
 export const MAX_DAYS = 180;
-const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+export const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 const FIELDS = new Map([['name', 'name'], ['owner', 'owner'], ['status', 'status'], ['end-date', 'endDate']]);
 
 const warn = (prod, table, message) => {
@@ -88,21 +88,30 @@ const dropReason = ({ status, endDate }, { now, preview }) => {
   return null;
 };
 
-const campaignIds = (ids) => ids.filter((id) => id.startsWith('campaign-'));
+export const campaignIds = (ids) => ids.filter((id) => id.startsWith('campaign-'));
 
-const toRules = (table, order, prod) => {
+export const resolveTableRules = (table, order = Object.keys(withCampaigns(
+  campaignIds(table.rows.map(({ id }) => id)),
+))) => {
   const seen = new Set();
+  const warnings = [];
   // Only valid rows count as seen: a broken row can't block its correction.
   const valid = table.rows.filter(({ id, path }) => {
     const reason = (!order.includes(id) && `unknown audience "${id}"`)
       || ((!path.startsWith(VARIANT_ROOT) || path === VARIANT_ROOT) && `"${path}" is not under ${VARIANT_ROOT}`)
       || (seen.has(id) && `duplicate audience "${id}"`);
     if (!reason) seen.add(id);
-    if (reason) warn(prod, table, `dropped row, ${reason}.`);
+    if (reason) warnings.push(`dropped row, ${reason}.`);
     return !reason;
   }).sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
-  if (valid.length > MAX_RULES) warn(prod, table, `only the first ${MAX_RULES} audiences (catalog order) are kept.`);
-  return valid.slice(0, MAX_RULES);
+  if (valid.length > MAX_RULES) warnings.push(`only the first ${MAX_RULES} audiences (catalog order) are kept.`);
+  return { rules: valid.slice(0, MAX_RULES), warnings };
+};
+
+const toRules = (table, order, prod) => {
+  const { rules, warnings } = resolveTableRules(table, order);
+  for (const message of warnings) warn(prod, table, message);
+  return rules;
 };
 
 const metadataOf = (section) => {

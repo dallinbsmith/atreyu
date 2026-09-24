@@ -3,19 +3,24 @@ import { readSelection, sendHtml } from './da-port.js';
 import { fetchText } from './sources.js';
 import {
   FIELDS,
+  MAX_DAYS,
   MAX_RULES,
   audienceChoices,
   check,
+  compileTableRules,
   multiSectionWarnings,
   normalizeValues,
+  normalizedPath,
   readValues,
   toTableHtml,
+  unsupportedStatus,
+  VARIANT_ROOT,
 } from './personalize-table.js';
 
 const HINTS = {
   Name: 'Label for authors and analytics. Keep it stable for this personalization.',
   Audience: 'Choose a catalog audience or type campaign-<name>.',
-  'End Date': 'Required. Runs through the end of this local day, max 180 days out.',
+  'End Date': `Required. Runs through the end of this local day, max ${MAX_DAYS} days out.`,
   Owner: 'Team or person responsible for cleanup.',
 };
 
@@ -54,17 +59,10 @@ const values = (form) => {
   };
 };
 
-const isVariantPath = (path) => {
-  try {
-    const normalized = new URL(path, window.location.origin).pathname;
-    return normalized.startsWith('/v/') && normalized !== '/v/';
-  } catch {
-    return false;
-  }
-};
-
 const fill = (form, source = {}) => {
-  const v = normalizeValues(source);
+  const kept = compileTableRules(source).rules
+    .map(({ id, path }) => ({ audience: id, path }));
+  const v = normalizeValues({ ...source, rules: kept });
   form.elements.Name.value = v.Name ?? '';
   form.elements.Status.value = v.Status ?? 'inactive';
   form.elements['End Date'].value = /^\d{4}-\d{2}-\d{2}$/.test(`${source['End Date'] ?? ''}`.trim())
@@ -74,6 +72,24 @@ const fill = (form, source = {}) => {
     form.elements[`audience-${i}`].value = v.rules[i]?.audience ?? '';
     form.elements[`path-${i}`].value = v.rules[i]?.path ?? '';
   }
+};
+
+const warning = (message, fields = []) => ({ level: 'warn', message, fields });
+
+const loadWarningsFor = (source = {}) => {
+  const warnings = [];
+  const status = unsupportedStatus(source.StatusRaw ?? source.Status);
+  if (status) warnings.push(warning(`Loaded table is inactive: Unsupported Status '${status}', treated as inactive.`, ['Status']));
+  const date = check(source).find(({ message }) => message.startsWith('End Date'));
+  if (date) warnings.push(warning(`Loaded table is inactive: ${date.message}`, ['End Date']));
+  const compiled = compileTableRules(source);
+  warnings.push(...compiled.warnings.map((message) => warning(
+    message
+      .replace(/^dropped row/, 'row dropped')
+      .replace(/^only the first .*/, `Only the first ${MAX_RULES} audience rules are kept.`),
+    Array.from({ length: MAX_RULES }, (_, i) => [`audience-${i}`, `path-${i}`]).flat(),
+  )));
+  return warnings;
 };
 
 export default ({ view, port, pageHtml }) => {
@@ -120,22 +136,39 @@ export default ({ view, port, pageHtml }) => {
     doneTimer = null;
   };
 
+  const visible = (found) => found.map(({ level, message }) => ({ level, message }));
   const renderIssues = (found) => {
-    issues.replaceChildren(...found.map(({ level, message }) => h('li', { className: level }, message)));
+    issues.replaceChildren(...visible(found).map(({ level, message }) => h('li', { className: level }, message)));
     submit.disabled = sending || found.some((i) => i.level === 'error');
   };
   const refresh = () => renderIssues([...loadErrors, ...check(values(form)), ...pathWarnings]);
   const checkPaths = async () => {
-    const id = inputVersion;
+    const isVariantPath = (path) => path.startsWith(VARIANT_ROOT) && path !== VARIANT_ROOT;
     const current = values(form);
-    const paths = normalizeValues(current).rules.map(({ path }) => path).filter(isVariantPath);
+    const paths = normalizeValues(current).rules
+      .map(({ path }) => normalizedPath(path))
+      .filter(isVariantPath);
+    const key = paths.join('\n');
     const warnings = await Promise.all(paths.map((path) => {
       if (!pathCache.has(path)) {
-        pathCache.set(path, multiSectionWarnings({ rules: [{ path }] }, fetchText));
+        const pending = multiSectionWarnings({ rules: [{ path }] }, fetchText)
+          .then((found) => {
+            if (found.length) pathCache.set(path, Promise.resolve(found));
+            else pathCache.delete(path);
+            return found;
+          }, (ex) => {
+            pathCache.delete(path);
+            throw ex;
+          });
+        pathCache.set(path, pending);
       }
       return pathCache.get(path);
     }));
-    if (id === inputVersion) {
+    const latest = normalizeValues(values(form)).rules
+      .map(({ path }) => normalizedPath(path))
+      .filter(isVariantPath)
+      .join('\n');
+    if (key === latest) {
       pathWarnings = warnings.flat();
       refresh();
     }
@@ -144,6 +177,7 @@ export default ({ view, port, pageHtml }) => {
   const loadSelection = async () => {
     const version = inputVersion;
     loadErrors = [];
+    pathWarnings = [];
     load.disabled = true;
     let html = null;
     try {
@@ -151,19 +185,16 @@ export default ({ view, port, pageHtml }) => {
         .finally(() => { pendingSelection = null; });
       html = await pendingSelection;
     } catch {
-      status.textContent = 'Could not load the selected table. Try selecting it again.';
+      status.textContent = 'Could not read selection. Try selecting it again.';
     }
     const found = html && readValues(new DOMParser().parseFromString(html, 'text/html').body);
     if (found && version === inputVersion) {
+      loadErrors = loadWarningsFor(found);
       fill(form, found);
-      const errors = check(found).filter(({ level }) => level === 'error');
-      loadErrors = errors.map(({ message }) => ({ level: 'warn', message: `Loaded table is inactive: ${message}` }));
-      if (normalizeValues(found).rules.length > MAX_RULES) {
-        loadErrors.push({ level: 'warn', message: `Only the first ${MAX_RULES} audience rules are kept.` });
-      }
       status.textContent = 'Loaded the selected Personalize table.';
+      checkPaths();
     } else if (found) status.textContent = 'Loaded the selected table, but kept your edits because the form changed while loading.';
-    else if (html !== null) status.textContent = 'No Personalize table in the selection.';
+    else status.textContent = 'No Personalize table in the selection.';
     load.disabled = false;
     refresh();
   };
@@ -171,9 +202,10 @@ export default ({ view, port, pageHtml }) => {
   form.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.target instanceof HTMLInputElement) e.preventDefault();
   });
-  form.addEventListener('input', () => {
+  form.addEventListener('input', ({ target }) => {
     inputVersion += 1;
-    loadErrors = [];
+    loadErrors = loadErrors.filter(({ fields = [] }) => !fields.includes(target.name));
+    if (target.name?.startsWith('path-')) pathWarnings = [];
     refresh();
   });
   form.addEventListener('change', ({ target }) => {
@@ -189,6 +221,7 @@ export default ({ view, port, pageHtml }) => {
     submit.disabled = true;
     const html = toTableHtml(snapshot);
     const done = () => {
+      if (!form.isConnected) return;
       sending = false;
       refresh();
     };
@@ -211,8 +244,10 @@ export default ({ view, port, pageHtml }) => {
   });
 
   const current = pageHtml && readValues(new DOMParser().parseFromString(pageHtml, 'text/html').body);
+  loadErrors = current ? loadWarningsFor(current) : [];
   fill(form, current ?? { Status: 'inactive' });
   refresh();
+  checkPaths();
   view.replaceChildren(
     h('p', { className: 'note' }, current ? 'Started from this page\'s Personalize table.' : 'Create 1–3 audience rules, then insert the table into the target section.'),
     load,
@@ -221,6 +256,4 @@ export default ({ view, port, pageHtml }) => {
     status,
   );
   load?.addEventListener('click', loadSelection);
-  new MutationObserver(() => { if (!form.isConnected) clearDone(); })
-    .observe(view, { childList: true });
 };

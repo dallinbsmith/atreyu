@@ -1,15 +1,17 @@
 import { cellValue } from '../scripts/utils/experiments/block.js';
 import { CATALOG } from '../scripts/utils/experiments/audiences.js';
-import { toClassName, VARIANT_ROOT } from '../scripts/utils/experiments/config.js';
 import {
-  MAX_DAYS, MAX_RULES, toEnd,
+  ACTIVE, toClassName, VARIANT_ROOT,
+} from '../scripts/utils/experiments/config.js';
+import {
+  DATE_ONLY, MAX_DAYS, MAX_RULES, resolveTableRules, toEnd,
 } from '../scripts/utils/experiments/personalize.js';
-import { isSafeHref, normalizeChoice, toDateInput } from './table.js';
+import { isSafeHref, toDateInput } from './table.js';
 
-export { MAX_RULES };
+export { MAX_DAYS, MAX_RULES, VARIANT_ROOT };
 
 const CAMPAIGN_PATTERN = /^campaign-[a-z0-9-]+$/;
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const SUPPORTED_INACTIVE = ['inactive', 'off', 'false', 'no', 'paused'];
 
 export const FIELDS = [
   { label: 'Name', type: 'text' },
@@ -23,6 +25,18 @@ export const audienceChoices = () => CATALOG
   .filter(({ id }) => id !== 'campaign-*')
   .map(({ id, label }) => [id, label]);
 
+export const normalizeStatus = (value) => {
+  const raw = `${value ?? ''}`.trim();
+  if (!raw) return 'active';
+  return ACTIVE.includes(toClassName(raw)) ? 'active' : 'inactive';
+};
+
+export const unsupportedStatus = (value) => {
+  const raw = `${value ?? ''}`.trim();
+  const key = toClassName(raw);
+  return raw && !ACTIVE.includes(key) && !SUPPORTED_INACTIVE.includes(key) ? raw : '';
+};
+
 const campaignId = (value) => {
   const normalized = toClassName(value);
   return normalized.startsWith('campaign-') ? normalized : '';
@@ -30,16 +44,14 @@ const campaignId = (value) => {
 
 export const normalizeAudience = (value) => {
   const id = toClassName(value);
-  return audienceChoices().some(([known]) => known === id) ? id : campaignId(id);
+  return audienceChoices().some(([known]) => known === id) ? id : (campaignId(id) || id);
 };
 
 const isKnownAudience = (id) => (
   audienceChoices().some(([known]) => known === id) || CAMPAIGN_PATTERN.test(id)
 );
 
-const normalizeStatus = (value) => normalizeChoice('Status', value).value || 'active';
-
-const normalizedPath = (path) => {
+export const normalizedPath = (path) => {
   try {
     return new URL(path, window.location.origin).pathname;
   } catch {
@@ -72,8 +84,11 @@ export const readValues = (root) => {
     const key = toClassName(label.textContent);
     if (key.startsWith('audience-')) values.rules.push({ audience: key.slice('audience-'.length), path: toPath(value) });
     else if (key === 'name') values.Name = cellValue(value);
-    else if (key === 'status') values.Status = normalizeStatus(cellValue(value));
-    else if (key === 'end-date') values['End Date'] = cellValue(value);
+    else if (key === 'status') {
+      const raw = cellValue(value);
+      if (raw) values.StatusRaw = raw;
+      values.Status = normalizeStatus(raw);
+    } else if (key === 'end-date') values['End Date'] = cellValue(value);
     else if (key === 'owner') values.Owner = cellValue(value);
     return values;
   }, { Name: '', Status: 'active', 'End Date': '', Owner: '', rules: [] });
@@ -81,7 +96,7 @@ export const readValues = (root) => {
 
 export const normalizeValues = (values = {}) => ({
   Name: `${values.Name ?? ''}`.trim(),
-  Status: normalizeStatus(values.Status),
+  Status: normalizeStatus(values.StatusRaw ?? values.Status),
   'End Date': toDateInput(values['End Date'] ?? ''),
   Owner: `${values.Owner ?? ''}`.trim(),
   rules: (values.rules ?? []).map(({ audience, path }) => ({
@@ -90,12 +105,17 @@ export const normalizeValues = (values = {}) => ({
   })).filter(({ audience, path }) => audience || path),
 });
 
-const ruleIssues = (rules, rawRules) => {
+const normalizedRules = (rules = []) => rules.map(({ audience, path }) => ({
+  audience: normalizeAudience(audience),
+  rawAudience: `${audience ?? ''}`.trim() || '(blank)',
+  path: `${path ?? ''}`.trim(),
+})).filter(({ audience, path }) => audience || path);
+
+const ruleIssues = (rules) => {
   const issues = [];
   const seen = new Set();
-  for (const [i, { audience, path }] of rules.entries()) {
+  for (const { audience, rawAudience, path } of rules) {
     const normalized = normalizedPath(path);
-    const rawAudience = `${rawRules[i]?.audience ?? audience}`.trim();
     if (!isKnownAudience(audience)) issues.push({ level: 'error', message: `Unknown audience "${rawAudience}".` });
     else if (seen.has(audience)) issues.push({ level: 'error', message: `Duplicate audience "${audience}".` });
     else seen.add(audience);
@@ -108,7 +128,7 @@ const ruleIssues = (rules, rawRules) => {
 
 const dateIssues = (rawEndDate, endDate, now) => {
   if (!rawEndDate) return [{ level: 'error', message: 'End Date is required.' }];
-  if (!DATE_PATTERN.test(rawEndDate)) return [{ level: 'error', message: 'End Date must use YYYY-MM-DD.' }];
+  if (!DATE_ONLY.test(rawEndDate)) return [{ level: 'error', message: 'End Date must use YYYY-MM-DD.' }];
   const end = toEnd(endDate);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   if (!end) return [{ level: 'error', message: 'End Date is not a valid date.' }];
@@ -121,13 +141,20 @@ const dateIssues = (rawEndDate, endDate, now) => {
 export const check = (values, { now = new Date() } = {}) => {
   const v = normalizeValues(values);
   const rawEndDate = `${values['End Date'] ?? ''}`.trim();
-  const rawRules = values.rules ?? [];
+  const rules = normalizedRules(values.rules);
   const issues = [];
   const add = (level, message) => issues.push({ level, message });
   if (v.rules.length < 1) add('error', 'Add at least one audience rule.');
   if (v.rules.length > MAX_RULES) add('warn', `Only the first ${MAX_RULES} audience rules are kept.`);
-  return [...issues, ...ruleIssues(v.rules, rawRules), ...dateIssues(rawEndDate, v['End Date'], now)];
+  return [...issues, ...ruleIssues(rules), ...dateIssues(rawEndDate, v['End Date'], now)];
 };
+
+export const compileTableRules = (values = {}) => resolveTableRules({
+  rows: normalizeValues(values).rules.map(({ audience, path }) => ({
+    id: audience,
+    path: normalizedPath(path),
+  })),
+});
 
 export const multiSectionWarnings = async (values, fetchText) => {
   const warnings = await Promise.all(normalizeValues(values).rules.map(async ({ path }) => {

@@ -99,14 +99,17 @@ describe('experiments-panel/personalize-table.js', () => {
     expect(Boolean(doc.querySelector('.personalize'))).to.equal(false);
   });
 
-  it('normalizes loaded status values to the compiler active set', () => {
+  it('normalizes status values to the compiler active set', () => {
     const active = tablePlan({ Status: '', 'End Date': '2026-03-01', rules: [{ audience: 'mobile', path: '/v/a' }] });
     expect(active[0].rules).to.deep.equal([{ id: 'mobile', path: '/v/a' }]);
-    for (const Status of ['Inactive', 'Off', 'paused']) {
-      const inactive = tablePlan({ Status, 'End Date': '2026-03-01', rules: [{ audience: 'mobile', path: '/v/a' }] });
-      expect(inactive).to.deep.equal([]);
-      expect(readValues(parse(toTableHtml({ Status, 'End Date': '2026-03-01', rules: [{ audience: 'mobile', path: '/v/a' }] }))).Status)
-        .to.equal('inactive');
+    for (const Status of ['active', 'on', 'true']) {
+      expect(tablePlan({ Status, 'End Date': '2026-03-01', rules: [{ audience: 'mobile', path: '/v/a' }] })[0].rules)
+        .to.deep.equal([{ id: 'mobile', path: '/v/a' }]);
+    }
+    for (const Status of ['Inactive', 'Off', 'paused', 'draft', 'disabled', 'hold', 'yes', 'enabled']) {
+      const values = { Status, 'End Date': '2026-03-01', rules: [{ audience: 'mobile', path: '/v/a' }] };
+      expect(tablePlan(values)).to.deep.equal([]);
+      expect(readValues(parse(toTableHtml(values))).Status).to.equal('inactive');
     }
   });
 
@@ -143,6 +146,12 @@ describe('experiments-panel/personalize-table.js', () => {
       'Duplicate audience "mobile".',
       'Variant path must be under /v/: /v/../secret',
     ]);
+    expect(check({ 'End Date': '2026-03-01', rules: [{ audience: 'foo', path: '' }, { audience: 'bar', path: '/v/x' }] }, { now })
+      .map(({ message }) => message)).to.include('Unknown audience "bar".');
+    expect(check({ 'End Date': '2026-03-01', rules: [{ audience: 'foo', path: '' }] }, { now })
+      .map(({ message }) => message)).to.include('Unknown audience "foo".');
+    expect(check({ 'End Date': '2026-03-01', rules: [{ audience: '', path: '/v/x' }] }, { now })
+      .map(({ message }) => message)).to.include('Unknown audience "(blank)".');
     expect(check({ 'End Date': '2026-01-14', rules: [{ audience: 'mobile', path: '/v/a' }] }, { now })[0].message)
       .to.equal('End Date is in the past.');
     expect(check({ 'End Date': '2026-02-30', rules: [{ audience: 'mobile', path: '/v/a' }] }, { now })[0].message)

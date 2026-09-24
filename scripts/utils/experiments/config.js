@@ -4,7 +4,7 @@
 // will actually do, including its silent split padding/truncation.
 import locales from '../../locales.js';
 
-const ACTIVE = ['active', 'on', 'true'];
+export const ACTIVE = ['active', 'on', 'true'];
 const KNOWN_STATUS = [...ACTIVE, 'inactive', 'off', 'false'];
 const SECTION_IGNORED_FIELDS = new Map([
   ['start-date', 'Start Date'],
