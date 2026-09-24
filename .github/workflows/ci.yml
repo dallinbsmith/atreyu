@@ -93,6 +93,13 @@ jobs:
         name: Run tests
         run: npm test
 
+      # nonce.test.js runs utils/nonce.js in real workerd (lol-html) via the
+      # Miniflare pinned in workers/website; the selector is the security
+      # property, so it isn't tested against a fake HTMLRewriter alone.
+      - if: steps.changes.outputs.run == 'true'
+        name: Install Worker dependencies (website)
+        run: npm ci --prefix workers/website
+
       - if: steps.changes.outputs.run == 'true'
         name: Run Worker tests (website)
         run: node --test workers/website/test/*.test.js
