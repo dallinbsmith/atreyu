@@ -84,11 +84,14 @@ export const CACHE_TTL_BY_STATUS = Object.freeze({ 404: -1, '500-599': -1 });
 // of the Worker would keep AEM's error headers (cache-control max-age=7200,
 // cdn-cache-control up to 172800).
 // 404 keeps a short `max-age=60`, which saves a refetch when a page requests the
-// same missing asset repeatedly. The same 304 trap applies to browsers: the
-// Worker forwards the browser's If-Modified-Since to aem.live, which would
-// answer 304 and extend the stored 404. So `last-modified` and `etag` are
-// dropped from 404s as well. Without a validator, a browser or downstream
-// cache can't revalidate; once the 60 s are up it has to do a full refetch.
+// same missing asset repeatedly. `last-modified` and `etag` are dropped from
+// 404 and 5xx responses, so a browser or downstream cache that stores one from
+// now on holds no validator and does a full refetch once it goes stale.
+// Browsers that stored a 404 *with* a validator before this shipped are
+// covered separately: formatRequest (index.js) doesn't forward
+// If-Modified-Since, so once the page is published AEM can't turn their
+// revalidation into a 304. 3xx responses, including 304, are left untouched
+// and keep their validators.
 const ERROR_VALIDATORS = ['last-modified', 'etag'];
 const capErrorCaching = (resp) => {
   if (resp.status !== 404 && resp.status < 500) return;

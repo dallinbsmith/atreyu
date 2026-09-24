@@ -179,3 +179,42 @@ test('page and asset requests reach fetchFromAem with the negative-cache cap', a
     t.mock.restoreAll();
   }
 });
+
+// Records the full outbound Request for each non-redirects.json fetch.
+const outbound = async (t, path, headers, respond) => {
+  const reqs = [];
+  t.mock.method(globalThis, 'fetch', async (input) => {
+    if (new URL(input.url).pathname === '/redirects.json') return new Response('{"data":[]}');
+    reqs.push(input);
+    return respond(input);
+  });
+  const resp = await worker.fetch(new Request(`https://frame.io${path}`, { headers }), ENV);
+  return { resp, sent: reqs.at(-1) };
+};
+
+test('the AEM origin request drops if-modified-since but keeps if-none-match', async (t) => {
+  const headers = {
+    'if-modified-since': 'Wed, 23 Sep 2026 19:13:41 GMT',
+    'if-none-match': '"d3d08eb418623136dee54ebfc9e90c79"',
+  };
+  for (const path of ['/blog/x', '/scripts/scripts.js', '/system/placeholders.json']) {
+    // eslint-disable-next-line no-await-in-loop
+    const { sent } = await outbound(t, path, headers, () => new Response('ok'));
+    assert.equal(sent.headers.has('if-modified-since'), false, path);
+    assert.equal(sent.headers.get('if-none-match'), '"d3d08eb418623136dee54ebfc9e90c79"', path);
+    t.mock.restoreAll();
+  }
+});
+
+test('dasc still forwards if-none-match and passes a 304 through with its validators', async (t) => {
+  const headers = { 'if-none-match': '"list-v1"', 'if-modified-since': 'Wed, 23 Sep 2026 19:13:41 GMT' };
+  const { resp, sent } = await outbound(t, '/features/dasc/a.json', headers, () => new Response(null, {
+    status: 304,
+    headers: { etag: '"list-v1"', 'last-modified': 'Wed, 23 Sep 2026 19:13:41 GMT' },
+  }));
+  assert.equal(new URL(sent.url).hostname, 'da-sc.adobeaem.workers.dev');
+  assert.equal(sent.headers.get('if-none-match'), '"list-v1"');
+  assert.equal(sent.headers.has('if-modified-since'), false);
+  assert.equal(resp.status, 304);
+  assert.equal(resp.headers.get('etag'), '"list-v1"');
+});

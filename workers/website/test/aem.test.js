@@ -97,3 +97,16 @@ test('/system/ responses are noindex; other paths have AEM x-robots-tag stripped
     t.mock.restoreAll();
   }
 });
+
+test('3xx and 304 responses keep their validators and origin cache headers', async (t) => {
+  for (const status of [301, 302, 304]) {
+    t.mock.method(globalThis, 'fetch', async () => new Response(null, { status, headers: AEM_HEADERS }));
+    // eslint-disable-next-line no-await-in-loop
+    const resp = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
+    assert.equal(resp.status, status);
+    assert.equal(resp.headers.get('last-modified'), 'Wed, 23 Sep 2026 19:13:41 GMT', String(status));
+    assert.equal(resp.headers.get('etag'), '"abc123"', String(status));
+    assert.equal(resp.headers.get('cdn-cache-control'), 'max-age=172800, must-revalidate', String(status));
+    t.mock.restoreAll();
+  }
+});
