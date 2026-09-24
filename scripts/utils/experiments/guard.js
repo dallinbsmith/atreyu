@@ -1,11 +1,6 @@
 import { VARIANT_ROOT } from './config.js';
 
-let wrappedFetch;
-let activeGuards = 0;
-let activeDeadline;
-let activeControllers;
-let activeExpired = false;
-let activeRealFetch;
+let activeGuard;
 
 const requestUrl = (input) => new URL(input.url ?? input, window.location.href);
 const requestMethod = (input, init) => init.method ?? input.method ?? 'GET';
@@ -19,44 +14,48 @@ const shouldGuard = (input, init = {}) => {
     && !hasSignal(input, init);
 };
 
-export const withVariantTimeout = async (run, { ms = 1000 } = {}) => {
-  const release = (wrapper) => {
-    activeGuards -= 1;
-    if (activeGuards) return;
-    clearTimeout(activeDeadline);
-    activeControllers.clear();
-    if (window.fetch === wrapper) window.fetch = activeRealFetch;
-    if (wrappedFetch === wrapper) wrappedFetch = null;
-    activeDeadline = null;
-    activeControllers = null;
-    activeExpired = false;
-    activeRealFetch = null;
+const install = (ms) => {
+  const guard = {
+    realFetch: window.fetch,
+    controllers: new Set(),
+    expired: false,
+    released: false,
+    count: 0,
   };
-  if (window.fetch !== wrappedFetch) {
-    activeRealFetch = window.fetch;
-    activeControllers = new Set();
-    activeExpired = false;
-    const wrapper = async (input, initArg) => {
-      const init = initArg ?? {};
-      if (!shouldGuard(input, init)) return activeRealFetch(input, init);
-      const controller = new AbortController();
-      activeControllers.add(controller);
-      if (activeExpired) controller.abort();
-      return activeRealFetch(input, { ...init, signal: controller.signal });
-    };
-    activeDeadline = setTimeout(() => {
-      activeExpired = true;
-      for (const controller of activeControllers) controller.abort();
-    }, ms);
-    wrappedFetch = wrapper;
-    window.fetch = wrapper;
-  }
-  const wrapper = wrappedFetch;
-  activeGuards += 1;
+  guard.wrapper = async (input, initArg) => {
+    const init = initArg ?? {};
+    if (guard.released || !shouldGuard(input, init)) return guard.realFetch(input, init);
+    const controller = new AbortController();
+    guard.controllers.add(controller);
+    if (guard.expired) controller.abort();
+    return guard.realFetch(input, { ...init, signal: controller.signal });
+  };
+  guard.deadline = setTimeout(() => {
+    guard.expired = true;
+    for (const controller of guard.controllers) controller.abort();
+  }, ms);
+  window.fetch = guard.wrapper;
+  return guard;
+};
+
+const release = (guard) => {
+  guard.count -= 1;
+  if (guard.count) return;
+  guard.released = true;
+  clearTimeout(guard.deadline);
+  guard.controllers.clear();
+  if (window.fetch === guard.wrapper) window.fetch = guard.realFetch;
+  if (activeGuard === guard) activeGuard = null;
+};
+
+export const withVariantTimeout = async (run, { ms = 1000 } = {}) => {
+  activeGuard ??= install(ms);
+  const guard = activeGuard;
+  guard.count += 1;
   try {
     return await run();
   } finally {
-    release(wrapper);
+    release(guard);
   }
 };
 

@@ -399,7 +399,7 @@ describe('scripts/experiment-loader.js', () => {
 
       await runExperimentation();
 
-      expect(document.querySelector('#headline').textContent).to.equal('Mobile headline');
+      expect(document.querySelector('#headline')?.textContent).to.equal('Mobile headline');
       expect(document.querySelector('.personalize')).to.equal(null);
     });
 

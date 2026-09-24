@@ -149,6 +149,63 @@ describe('scripts/utils/experiments/guard.js', () => {
     await pending;
 
     expect(window.fetch).to.equal(otherFetch);
+    expect(await (await fetch('/api/x')).text()).to.equal('other');
+    expect(await (await fetch('/v/x')).text()).to.equal('other');
+  });
+
+  it('survives overlapping runs when another script wraps fetch over the guard', async () => {
+    clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const errors = [];
+    const onError = (event) => errors.push(event.error ?? event.message);
+    const onRejection = (event) => errors.push(event.reason);
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onRejection);
+    const calls = [];
+    let finishA;
+    let finishB;
+    window.fetch = (url, init = {}) => {
+      calls.push({
+        path: new URL(url, window.location.origin).pathname,
+        hasSignal: Boolean(init.signal),
+        abortedAtCall: Boolean(init.signal?.aborted),
+      });
+      return init.signal?.aborted
+        ? Promise.reject(new DOMException('aborted', 'AbortError'))
+        : Promise.resolve(new Response('ok'));
+    };
+
+    try {
+      const a = withVariantTimeout(() => new Promise((resolve) => {
+        finishA = resolve;
+      }), { ms: 1000 });
+      const guardFetch = window.fetch;
+      const foreignFetch = (...args) => guardFetch(...args);
+      window.fetch = foreignFetch;
+      const b = withVariantTimeout(() => new Promise((resolve) => {
+        finishB = resolve;
+      }), { ms: 1000 });
+
+      finishA();
+      await a;
+      await clock.tickAsync(1000);
+      await fetch('/v/expired').then(
+        () => expect.fail('Expected expired guarded fetch to reject'),
+        (ex) => expect(ex.name).to.equal('AbortError'),
+      );
+      finishB();
+      await b;
+      expect(window.fetch).to.equal(foreignFetch);
+      expect(await (await fetch('/v/released')).text()).to.equal('ok');
+    } finally {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onRejection);
+    }
+
+    expect(calls).to.deep.equal([
+      { path: '/v/expired', hasSignal: true, abortedAtCall: true },
+      { path: '/v/released', hasSignal: false, abortedAtCall: false },
+    ]);
+    expect(errors).to.deep.equal([]);
   });
 
   it('keeps the wrapper installed until overlapping runs all settle', async () => {
