@@ -15,9 +15,11 @@
 //   (guard.js removeConfigBlock) and compiles to nothing.
 // - Inactive is kept only for non-prod ?audience= previews. Ended, missing
 //   or invalid End Dates are dropped everywhere.
-// - End Date runs through the end of its day, visitor-local. It must be a
-//   calendar date naming its year (serial "46022" would never end; "December
-//   31" parses as 2001) and at most MAX_DAYS away, like the panel's limit.
+// - End Date is YYYY-MM-DD only, what the panel's date picker writes
+//   (toDateInput). Anything else drops the rules: free-form Date parsing was
+//   ambiguous (M/D vs D/M, UTC vs local, a serial 46022 = year 46022). It
+//   runs through the end of that day, visitor-local, and may be at most
+//   MAX_DAYS away, like the panel's limit.
 // - Locale-prefixed /de/v/... paths are dropped (localization follow-up).
 // - DOM APIs only; author text never reaches innerHTML.
 import ENV from '../env.js';
@@ -29,8 +31,6 @@ import { findConfigBlocks, removeConfigBlock } from './guard.js';
 const MAX_RULES = 3;
 export const MAX_DAYS = 180;
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
-const US_DATE = /^(\d{1,2})([/.])(\d{1,2})\2(\d{4})$/;
-const YEAR = /(?<!\d)\d{4}(?!\d)/;
 const FIELDS = new Map([['name', 'name'], ['owner', 'owner'], ['status', 'status'], ['end-date', 'endDate']]);
 
 const warn = (prod, table, message) => {
@@ -66,40 +66,22 @@ export const readPersonalizeTable = (block) => [...block.children].reduce((table
   return table;
 }, { name: '', owner: '', status: 'active', endDate: '', rows: [] });
 
-const localDay = (y, m, d) => {
+// Exclusive end: local midnight after the End Date's day (DST-safe), or null.
+// The round-trip rejects impossible dates (2026-02-30) that Date rolls over.
+const toEnd = (value) => {
+  const [, y, m, d] = value.match(DATE_ONLY)?.map(Number) ?? [];
   const day = new Date(y, m - 1, d);
-  return day.getFullYear() === y && day.getMonth() === m - 1 && day.getDate() === d ? day : null;
+  if (day.getFullYear() !== y || day.getMonth() !== m - 1 || day.getDate() !== d) return null;
+  return new Date(y, m - 1, d + 1);
 };
-
-// The End Date's local calendar day, or null when it isn't a plausible date.
-// Numeric forms are built as local dates and must round-trip, so 02/30/2026
-// is rejected rather than rolled over to March by Date.
-const toDay = (value) => {
-  const text = value.trim();
-  const iso = text.match(DATE_ONLY);
-  if (iso) return localDay(+iso[1], +iso[2], +iso[3]);
-  const us = text.match(US_DATE);
-  if (us) return localDay(+us[4], +us[1], +us[3]);
-  const year = text.match(YEAR)?.[0];
-  // All digits (46022, "2027") is never a date; the year check alone passes
-  // "2027" at or east of UTC, where it parses as Jan 1 local.
-  if (!year || /^\d+$/.test(text)) return null;
-  const parsed = new Date(text);
-  return parsed.getFullYear() === Number(year) ? parsed : null;
-};
-
-// Exclusive end: local midnight after the End Date's day.
-const dayAfter = (date, days = 1) => new Date(
-  date.getFullYear(),
-  date.getMonth(),
-  date.getDate() + days,
-);
 
 const dropReason = ({ status, endDate }, { now, preview }) => {
-  const day = endDate && toDay(endDate);
-  if (!day) return `End Date "${endDate}" is missing or not a calendar date with a year`;
-  const end = dayAfter(day);
-  if (end > dayAfter(new Date(now), MAX_DAYS + 1)) return `End Date is more than ${MAX_DAYS} days away`;
+  const end = toEnd(endDate);
+  if (!end) return `End Date "${endDate}" must be YYYY-MM-DD`;
+  const today = new Date(now);
+  if (end > new Date(today.getFullYear(), today.getMonth(), today.getDate() + MAX_DAYS + 1)) {
+    return `End Date is more than ${MAX_DAYS} days away`;
+  }
   const state = statusOf({ status, endDate: end }, now);
   if (state === 'ended') return 'End Date has passed';
   if (state === 'inactive' && !preview) return `Status "${status}" is not active`;

@@ -231,25 +231,12 @@ describe('scripts/utils/experiments/personalize.js', () => {
       expect(live('2026-09-24', local(2026, 9, 25))).to.equal(false);
     });
 
-    it('other parseable formats also run through the end of that local day', () => {
-      expect(live('09/24/2026', local(2026, 9, 24, 23, 59, 59))).to.equal(true);
-      expect(live('Sep 24, 2026', local(2026, 9, 24, 23, 59, 59))).to.equal(true);
-      expect(live('September 24, 2026', local(2026, 9, 25))).to.equal(false);
-      expect(live('9.24.2026', local(2026, 9, 24, 23, 59, 59))).to.equal(true);
-      expect(live('9.24.2026', local(2026, 9, 25))).to.equal(false);
-    });
-
-    it('extends a value with a time to the end of its day', () => {
-      expect(live('2026-09-24T23:59', local(2026, 9, 24, 23, 59, 30))).to.equal(true);
-      expect(live('2026-09-24T23:59', local(2026, 9, 25))).to.equal(false);
-    });
-
-    it('rejects impossible numeric M/D/YYYY and M.D.YYYY dates instead of rolling over', () => {
+    it('rejects impossible YYYY-MM-DD dates instead of rolling over', () => {
       const now = local(2026, 9, 24, 12);
-      for (const endDate of ['02/30/2027', '2.30.2027', '13/01/2027']) {
+      for (const endDate of ['2027-02-30', '2026-13-01', '2026-00-10', '2026-12-32']) {
         expect(live(endDate, now), endDate).to.equal(false);
       }
-      expect(live('02/28/2027', now)).to.equal(true);
+      expect(live('2027-02-28', now)).to.equal(true);
     });
 
     // Across the US DST change (Nov 1 2026 is 25 hours long in US zones), the
@@ -262,12 +249,22 @@ describe('scripts/utils/experiments/personalize.js', () => {
       expect(live('2026-11-01', local(2026, 11, 2))).to.equal(false);
     });
 
-    it('rejects values that are not a calendar date with a year', () => {
+    // ISO-only: each of these would otherwise be a live, in-range date (or,
+    // for 46022, never end), so the format rule alone must reject it.
+    it('rejects anything that is not YYYY-MM-DD, naming the expected format', () => {
       const now = local(2026, 9, 24, 12);
-      for (const endDate of ['46022', '2027', 'December 31', '2026-02-30', '2026-13-01', 'soon']) {
+      for (const endDate of [
+        '12/31/2026', 'Dec 31, 2026', '2026-12-31T23:59', '46022', '2027', 'December 31', '2026-1-5', '',
+      ]) {
+        warn.resetHistory();
         expect(live(endDate, now), endDate).to.equal(false);
+        expect(warn.calledWithMatch(`End Date "${endDate}" must be YYYY-MM-DD`), endDate).to.equal(true);
       }
-      expect(warn.calledWithMatch(/"46022" is missing or not a calendar date/)).to.equal(true);
+    });
+
+    // cellValue (block.js) trims the cell; toEnd relies on that.
+    it('trims the cell before matching', () => {
+      expect(live(' 2026-12-31 ', local(2026, 9, 24, 12))).to.equal(true);
     });
 
     it('caps the End Date at 180 days after today', () => {

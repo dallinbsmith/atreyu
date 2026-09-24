@@ -404,8 +404,9 @@ describe('scripts/experiment-loader.js', () => {
     });
 
     describe('personalize tables', () => {
-      // Within the 180-day End Date cap, as a local YYYY-MM-DD.
-      const soon = new Date(Date.now() + 30 * 864e5).toLocaleDateString('sv-SE');
+      // End Date is YYYY-MM-DD only; 30 days out stays within the 180-day cap.
+      const soon = ((d) => [d.getFullYear(), d.getMonth() + 1, d.getDate()]
+        .map((n) => `${n}`.padStart(2, '0')).join('-'))(new Date(Date.now() + 30 * 864e5));
       const personalizeSection = (id, path, extra = '') => `<main><div>
         <h1 id="headline">Control headline</h1>
         <div class="personalize">
