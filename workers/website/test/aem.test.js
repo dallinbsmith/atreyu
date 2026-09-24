@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchFromAem, CACHE_TTL_BY_STATUS } from '../handlers/aem.js';
+import {
+  fetchFromAem, CACHE_TTL_BY_STATUS, CONSENT_ANALYTICS_CSP, buildCsp,
+} from '../handlers/aem.js';
 
 const EDS = 'https://main--atreyu--dallinbsmith.aem.live';
 const req = (path = '/blog/x') => new Request(`${EDS}${path}`);
@@ -121,4 +123,65 @@ test('3xx and 304 responses keep their validators and origin cache headers', asy
     assert.equal(resp.headers.get('cdn-cache-control'), 'max-age=172800, must-revalidate', String(status));
     t.mock.restoreAll();
   }
+});
+
+// CSP (P3.2). Hosts pinned as literals, from the frame.io + EDS network capture.
+const directives = (csp) => Object.fromEntries(csp.split('; ').map((d) => {
+  const [name, ...values] = d.split(' ');
+  return [name, values];
+}));
+
+test('CSP allows the captured OneTrust and Segment hosts in connect-src and img-src only', () => {
+  const d = directives(buildCsp('abc'));
+  assert.deepEqual(d['connect-src'], [
+    "'self'", 'https://*.aem.live', 'https://*.aem.page', 'https://*.hlx.live', 'https://*.hlx.page',
+    'https://cdn.cookielaw.org', 'https://geolocation.onetrust.com', 'https://privacyportal.onetrust.com',
+    'https://cdn.segment.com', 'https://api.segment.io',
+  ]);
+  assert.deepEqual(d['img-src'], [
+    "'self'", 'data:', 'https://*.aem.live', 'https://*.aem.page', 'https://*.hlx.live', 'https://*.hlx.page',
+    'https://cdn.cookielaw.org',
+  ]);
+  // Unchanged by P3.2: OneTrust's CSS arrives via fetch and is injected inline.
+  assert.deepEqual(d['style-src'], ["'self'", "'unsafe-inline'"]);
+  assert.deepEqual(d['font-src'], ["'self'"]);
+  assert.deepEqual(d['frame-src'], ["'self'", 'https://www.youtube-nocookie.com', 'https://www.youtube.com', 'https://calendly.com']);
+  assert.deepEqual(d['default-src'], ["'self'"]);
+});
+
+test('CSP script-src keeps nonce + strict-dynamic with no vendor hosts or unsafe keywords', () => {
+  const d = directives(buildCsp('abc'));
+  assert.deepEqual(d['script-src'], ["'nonce-abc'", "'strict-dynamic'", 'https://assets.calendly.com']);
+});
+
+test('CSP adds no vendor wildcards and none of the out-of-scope destination hosts', () => {
+  const csp = buildCsp('abc');
+  assert.doesNotMatch(csp, /\*\.(cookielaw|onetrust|segment)\./);
+  assert.doesNotMatch(csp, /googletagmanager|doubleclick|google-analytics|analytics\.google|facebook|adobedtm|marketingtech|profiles\.segment/);
+  assert.ok(Object.isFrozen(CONSENT_ANALYTICS_CSP));
+  assert.ok(Object.isFrozen(CONSENT_ANALYTICS_CSP.connect));
+  assert.ok(Object.isFrozen(CONSENT_ANALYTICS_CSP.img));
+});
+
+test('HTML responses get buildCsp with a fresh per-request nonce; non-HTML get no CSP', async (t) => {
+  // HTMLRewriter only exists in workerd; a pass-through stub is enough here.
+  globalThis.HTMLRewriter = class {
+    on = () => this;
+
+    transform = (r) => r;
+  };
+  t.after(() => { delete globalThis.HTMLRewriter; });
+  t.mock.method(globalThis, 'fetch', async () => new Response('<html></html>', {
+    status: 200, headers: { 'content-type': 'text/html; charset=utf-8' },
+  }));
+  const a = (await fetchFromAem({ request: req(), cache: true, savedSearch: '' })).headers.get('content-security-policy');
+  const b = (await fetchFromAem({ request: req(), cache: true, savedSearch: '' })).headers.get('content-security-policy');
+  const nonceOf = (csp) => csp.match(/'nonce-([^']+)'/)[1];
+  assert.equal(a, buildCsp(nonceOf(a)));
+  assert.notEqual(nonceOf(a), nonceOf(b));
+  t.mock.restoreAll();
+
+  capture(t, 200);
+  const plain = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
+  assert.equal(plain.headers.has('content-security-policy'), false);
 });

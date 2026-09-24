@@ -114,6 +114,95 @@ const capErrorCaching = (resp) => {
 const SYSTEM_ROOT = '/system/';
 const isSystemPath = (pathname) => stripLocale(pathname).startsWith(SYSTEM_ROOT);
 
+// Content-Security-Policy for EDS HTML responses.
+//
+// Bug-squash fixes, 2026-08-28, verified against this codebase's real
+// dependencies (not assumed) before narrowing anything:
+// - script-src/frame-ancestors previously trusted Adobe's SHARED,
+//   multi-tenant *.aem.live/*.aem.page hosting domains — any other
+//   Adobe EDS customer's site lives under those wildcards, so in a
+//   browser without strict-dynamic support the host list becomes the
+//   effective policy, and frame-ancestors let any other EDS tenant
+//   iframe this site. Checked directly: scripts here are always
+//   same-origin (this Worker proxies to the AEM origin server-side,
+//   `formatRequest` in index.js — the browser never loads a <script> straight
+//   from *.aem.live), and da.js/quick-edit.js (the only real dependency
+//   on that domain) are authoring-only, loaded via a same-origin
+//   relative import behind ?dapreview, never via a cross-origin script
+//   tag. No legitimate need found for either wildcard — dropped both.
+// - connect-src was missing *.hlx.page entirely (only had hlx.live) —
+//   scripts/vendor/rum.js's real beacon call is
+//   `navigator.sendBeacon(url, ...)` to rum.hlx.page, which CSP governs
+//   via connect-src, not img-src (where hlx.page WAS already present).
+//   RUM was likely being silently blocked by this CSP in any
+//   CSP-enforcing browser — a second, independent way RUM delivery
+//   could break, on top of the earlier F-61 .hlxignore bug. Added.
+// - connect-src/img-src's *.aem.live/*.aem.page wildcard is kept as-is:
+//   da.js's real fetch() calls during ?dapreview authoring are a
+//   genuine, narrow dependency here, unlike script-src/frame-ancestors.
+// - script-src/frame-src's calendly.com entries (2026-09-17): the
+//   hero-calendly block embeds a live, inline Calendly scheduling
+//   widget — a real third-party script + iframe, not a static library
+//   (unlike gsap, this can't be vendored locally; it talks to
+//   Calendly's own backend). Single-host, no wildcard subdomains.
+// - OneTrust + Segment (P3.2, 2026-09-24): hosts come from a real network
+//   capture, not guesses. Falkor's chain on frame.io (origin/develop,
+//   web/src/components/atoms/Analytics/scripts/Segment.tsx) was captured in
+//   headless Chrome with consent shown+accepted, shown+rejected (geo faked
+//   to DE) and US (no banner); then the same chain was loaded on a
+//   Worker-served EDS page and every securitypolicyviolation recorded.
+//   * Scripts need NO host entries: privacy-standalone.js (www.adobe.com),
+//     its geo2.adobe.com JSONP, otSDKStub/otBannerSdk (cdn.cookielaw.org)
+//     and Segment's analytics.js + integrations (cdn.segment.com) are all
+//     inserted by a script that is already trusted (nonce'd loader), which
+//     'strict-dynamic' propagates to. Listing them would only widen the
+//     policy for CSP2-only browsers.
+//   * connect-src: OneTrust fetches its consent config and fetches its CSS
+//     as text (cdn.cookielaw.org), looks up geo (geolocation.onetrust.com)
+//     and POSTs a consent receipt on every accept/reject
+//     (privacyportal.onetrust.com). Segment fetches settings
+//     (cdn.segment.com) and sends events and metrics (api.segment.io).
+//     profiles.segment.com is left out on purpose: it only appeared when
+//     the settings fetch was CSP-blocked and the snippet fell back to
+//     analytics.classic.js; with settings reachable it runs analytics-next
+//     (same as Falkor) and never calls it.
+//   * img-src: only cdn.cookielaw.org (preference-center logos).
+//   * style-src/font-src/frame-src: nothing. OneTrust injects the CSS it
+//     fetched as an inline <style>, already allowed by 'unsafe-inline'.
+//   * NOT allowed here, deliberately: the Segment device-mode destinations
+//     (gtag/GA4, Google Ads, Facebook Pixel, the GTM container and what it
+//     loads: LinkedIn, Clearbit, 6sense, MNTN, Contentsquare) and Adobe
+//     Launch (www.adobe.com/marketingtech -> assets.adobedtm.com). Their
+//     scripts still load via 'strict-dynamic' but their beacons are
+//     blocked. Whether EDS should run those at all is a consent/marketing
+//     decision (PLAN.md P4.1), not something to widen the CSP for silently.
+export const CONSENT_ANALYTICS_CSP = Object.freeze({
+  connect: Object.freeze([
+    'https://cdn.cookielaw.org',
+    'https://geolocation.onetrust.com',
+    'https://privacyportal.onetrust.com',
+    'https://cdn.segment.com',
+    'https://api.segment.io',
+  ]),
+  img: Object.freeze(['https://cdn.cookielaw.org']),
+});
+
+// Pure: the nonce is generated per request by the caller; nothing here is
+// per-request state held at module scope.
+export const buildCsp = (nonce) => [
+  "default-src 'self'",
+  `script-src 'nonce-${nonce}' 'strict-dynamic' https://assets.calendly.com`,
+  "style-src 'self' 'unsafe-inline'",
+  ["img-src 'self' data: https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page", ...CONSENT_ANALYTICS_CSP.img].join(' '),
+  "font-src 'self'",
+  ["connect-src 'self' https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page", ...CONSENT_ANALYTICS_CSP.connect].join(' '),
+  "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://calendly.com",
+  "media-src 'self' https://*.youtube.com https://*.ytimg.com",
+  "frame-ancestors 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+
 export const fetchFromAem = async ({ request, cache, savedSearch }) => {
   // Bug-squash fix, 2026-08-28: no try/catch existed around this fetch — an
   // origin DNS/network failure propagated as an unhandled exception through
@@ -153,48 +242,7 @@ export const fetchFromAem = async ({ request, cache, savedSearch }) => {
   if (resp.headers.get('content-type')?.includes('text/html')) {
     const nonce = generateNonce();
 
-    // Bug-squash fixes, 2026-08-28, verified against this codebase's real
-    // dependencies (not assumed) before narrowing anything:
-    // - script-src/frame-ancestors previously trusted Adobe's SHARED,
-    //   multi-tenant *.aem.live/*.aem.page hosting domains — any other
-    //   Adobe EDS customer's site lives under those wildcards, so in a
-    //   browser without strict-dynamic support the host list becomes the
-    //   effective policy, and frame-ancestors let any other EDS tenant
-    //   iframe this site. Checked directly: scripts here are always
-    //   same-origin (this Worker proxies to the AEM origin server-side,
-    //   `formatRequest` above — the browser never loads a <script> straight
-    //   from *.aem.live), and da.js/quick-edit.js (the only real dependency
-    //   on that domain) are authoring-only, loaded via a same-origin
-    //   relative import behind ?dapreview, never via a cross-origin script
-    //   tag. No legitimate need found for either wildcard — dropped both.
-    // - connect-src was missing *.hlx.page entirely (only had hlx.live) —
-    //   scripts/vendor/rum.js's real beacon call is
-    //   `navigator.sendBeacon(url, ...)` to rum.hlx.page, which CSP governs
-    //   via connect-src, not img-src (where hlx.page WAS already present).
-    //   RUM was likely being silently blocked by this CSP in any
-    //   CSP-enforcing browser — a second, independent way RUM delivery
-    //   could break, on top of the earlier F-61 .hlxignore bug. Added.
-    // - connect-src/img-src's *.aem.live/*.aem.page wildcard is kept as-is:
-    //   da.js's real fetch() calls during ?dapreview authoring are a
-    //   genuine, narrow dependency here, unlike script-src/frame-ancestors.
-    // - script-src/frame-src's calendly.com entries (2026-09-17): the
-    //   hero-calendly block embeds a live, inline Calendly scheduling
-    //   widget — a real third-party script + iframe, not a static library
-    //   (unlike gsap, this can't be vendored locally; it talks to
-    //   Calendly's own backend). Single-host, no wildcard subdomains.
-    resp.headers.set('Content-Security-Policy', [
-      "default-src 'self'",
-      `script-src 'nonce-${nonce}' 'strict-dynamic' https://assets.calendly.com`,
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page",
-      "font-src 'self'",
-      "connect-src 'self' https://*.aem.live https://*.aem.page https://*.hlx.live https://*.hlx.page",
-      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://calendly.com",
-      "media-src 'self' https://*.youtube.com https://*.ytimg.com",
-      "frame-ancestors 'self'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join('; '));
+    resp.headers.set('Content-Security-Policy', buildCsp(nonce));
     resp.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
     resp.headers.set('X-Content-Type-Options', 'nosniff');
     resp.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
