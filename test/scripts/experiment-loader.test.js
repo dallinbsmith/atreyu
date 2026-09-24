@@ -225,7 +225,7 @@ describe('scripts/experiment-loader.js', () => {
       await runExperimentation();
       expect(requested.some((u) => u.includes('/variants/table-b'))).to.equal(true);
       expect(document.querySelector('#headline').textContent).to.equal('Challenger headline');
-      expect(document.querySelector('.experiment')).to.equal(null);
+      expect(Boolean(document.querySelector('.experiment'))).to.equal(false);
       expect(tracked.find((t) => t.event === 'experiment').props.variantId).to.equal('table-test:challenger-1');
     });
 
@@ -233,7 +233,7 @@ describe('scripts/experiment-loader.js', () => {
       window.fetch = async () => { throw new Error('no fetch expected'); };
       pageWithTable('100');
       expect(await runExperimentation()).to.equal(null);
-      expect(document.querySelector('.experiment')).to.equal(null);
+      expect(Boolean(document.querySelector('.experiment'))).to.equal(false);
       expect(document.querySelectorAll('main > div').length).to.equal(1);
       expect(document.querySelector('#headline').textContent).to.equal('Control headline');
     });
@@ -345,7 +345,7 @@ describe('scripts/experiment-loader.js', () => {
 
       expect(document.querySelector('main > div').classList.contains('dark')).to.equal(true);
       expect(document.querySelector('main > div').id).to.equal('hero');
-      expect(document.querySelector('.section-metadata')).to.equal(null);
+      expect(Boolean(document.querySelector('.section-metadata'))).to.equal(false);
     });
 
     it('does not duplicate Style and Anchor when the variant has its own metadata', async () => {
@@ -400,7 +400,7 @@ describe('scripts/experiment-loader.js', () => {
       await runExperimentation();
 
       expect(document.querySelector('#headline')?.textContent).to.equal('Mobile headline');
-      expect(document.querySelector('.personalize')).to.equal(null);
+      expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
     });
 
     it('removes leftover config blocks before the page is decorated', async () => {
@@ -411,8 +411,8 @@ describe('scripts/experiment-loader.js', () => {
 
       expect(await runExperimentation()).to.equal(null);
 
-      expect(document.querySelector('.experiment')).to.equal(null);
-      expect(document.querySelector('.personalize')).to.equal(null);
+      expect(Boolean(document.querySelector('.experiment'))).to.equal(false);
+      expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
       expect([...document.querySelectorAll('main > div')].map((section) => section.textContent.trim()))
         .to.deep.equal(['Keep']);
     });

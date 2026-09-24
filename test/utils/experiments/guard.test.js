@@ -309,9 +309,9 @@ describe('scripts/utils/experiments/guard.js', () => {
 
     removeLeftoverConfigBlocks(document.querySelector('main'));
 
-    expect(document.querySelector('main > div > .experiment:not(.columns)')).to.equal(null);
-    expect(document.querySelector('.personalize')).to.equal(null);
-    expect(document.querySelector('.columns.experiment')).to.not.equal(null);
+    expect(Boolean(document.querySelector('main > div > .experiment:not(.columns)'))).to.equal(false);
+    expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+    expect(Boolean(document.querySelector('.columns.experiment'))).to.equal(true);
     expect([...document.querySelectorAll('main > div')].map((section) => section.textContent.trim()))
       .to.deep.equal(['Keep', 'authored option']);
   });
@@ -326,6 +326,6 @@ describe('scripts/utils/experiments/guard.js', () => {
 
     removeLeftoverConfigBlocks(document.querySelector('main'));
 
-    expect(document.querySelector('main > div')).to.equal(null);
+    expect(Boolean(document.querySelector('main > div'))).to.equal(false);
   });
 });
