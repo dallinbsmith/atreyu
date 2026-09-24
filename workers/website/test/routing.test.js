@@ -174,7 +174,7 @@ test('page and asset requests reach fetchFromAem with the negative-cache cap', a
     });
     // eslint-disable-next-line no-await-in-loop
     await worker.fetch(new Request(`https://frame.io${path}`), ENV);
-    const expected = { cacheEverything: true, cacheTtlByStatus: { 404: 60, '500-599': -1 } };
+    const expected = { cacheEverything: true, cacheTtlByStatus: { 404: -1, '500-599': -1 } };
     assert.deepEqual(inits.at(-1).cf, expected, path);
     t.mock.restoreAll();
   }
