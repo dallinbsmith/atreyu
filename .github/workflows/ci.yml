@@ -109,7 +109,7 @@ jobs:
         name: Run experiment tests (TZ=America/Los_Angeles)
         env:
           TZ: America/Los_Angeles
-        run: npx wtr "test/utils/experiments/*.test.js" --node-resolve --port=2001 --concurrent-browsers 4
+        run: npx wtr "test/utils/experiments/*.test.js" "test/experiments-panel/*.test.js" --node-resolve --port=2001 --concurrent-browsers 4
 
       - if: steps.changes.outputs.run == 'true'
         name: Run Worker tests (website)

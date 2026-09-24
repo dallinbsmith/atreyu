@@ -26,7 +26,11 @@ export const isSafeHref = (value) => /^\/(?![/\\])/.test(value) || /^https:\/\//
 export const toDateInput = (value) => {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const date = value ? new Date(value) : null;
-  return date && !Number.isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : '';
+  if (!date || Number.isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export const normalizeChoice = (label, value) => {
