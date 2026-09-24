@@ -20,6 +20,11 @@ import { track, EVENTS } from './utils/analytics/analytics.js';
 import { getVisitorId } from './utils/analytics/visitor-id.js';
 import { AUDIENCES } from './utils/experiments/audiences.js';
 import { applyExperimentBlock } from './utils/experiments/block.js';
+import {
+  carryOverSectionMeta,
+  removeLeftoverConfigBlocks,
+  withVariantTimeout,
+} from './utils/experiments/guard.js';
 
 const ASSIGNMENTS_KEY = 'unified-decisioning-experiments';
 const PLUGIN_CONSENT_KEY = 'experimentation-consented';
@@ -94,6 +99,7 @@ export const trackExposures = (experiments = []) => {
 export const runExperimentation = async (doc = document) => {
   // Always, even without consent: the Experiment table must never render.
   applyExperimentBlock(doc);
+  removeLeftoverConfigBlocks(doc.querySelector('main'));
   if (!isEnabled()) return null;
   if (!hasConsent('personalization') && !isPreview()) {
     clearAssignments();
@@ -107,7 +113,14 @@ export const runExperimentation = async (doc = document) => {
     // Plugin publishes results on `window.aem || window.hlx || {}`; without a
     // real global they land on a throwaway object and nothing is measurable.
     window.hlx ??= {};
-    await plugin.loadEager(doc, config);
+    const main = doc.querySelector('main');
+    const carryOver = carryOverSectionMeta(main);
+    try {
+      await withVariantTimeout(() => plugin.loadEager(doc, config));
+    } finally {
+      carryOver();
+      removeLeftoverConfigBlocks(main);
+    }
     persistAssignments();
     trackExposures((window.aem || window.hlx).experiments);
     return plugin;

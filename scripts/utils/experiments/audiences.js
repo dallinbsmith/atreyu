@@ -76,16 +76,19 @@ const resolveAll = async (ids, audiences) => {
   return results.every(Boolean);
 };
 
+const validateEntry = (entry, byId) => {
+  if (entry.all && !Array.isArray(entry.all)) throw new Error(`Audience "${entry.id}" all must be an array.`);
+  if (entry.all && entry.test) throw new Error(`Audience "${entry.id}" cannot define both all and test.`);
+  for (const part of entry.all ?? []) {
+    if (part === entry.id) throw new Error(`Audience "${entry.id}" cannot reference itself.`);
+    if (!byId.has(part)) throw new Error(`Audience "${entry.id}" references unknown audience "${part}".`);
+  }
+};
+
 const validateCatalog = (catalog) => {
   const entries = catalog.filter(({ id }) => id !== CAMPAIGN_SLOT);
   const byId = new Map(entries.map((entry) => [entry.id, entry]));
-  for (const entry of entries) {
-    if (entry.all && entry.test) throw new Error(`Audience "${entry.id}" cannot define both all and test.`);
-    for (const part of entry.all ?? []) {
-      if (part === entry.id) throw new Error(`Audience "${entry.id}" cannot reference itself.`);
-      if (!byId.has(part)) throw new Error(`Audience "${entry.id}" references unknown audience "${part}".`);
-    }
-  }
+  for (const entry of entries) validateEntry(entry, byId);
   const visit = (id, stack = []) => {
     if (stack.includes(id)) throw new Error(`Audience cycle detected: ${[...stack, id].join(' -> ')}.`);
     for (const part of byId.get(id)?.all ?? []) visit(part, [...stack, id]);

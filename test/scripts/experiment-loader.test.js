@@ -1,6 +1,8 @@
 import { expect } from '@esm-bundle/chai';
+import sinon from 'sinon';
 import { setConsent, resetConsent } from '../../scripts/utils/analytics/consent.js';
 import { setAnalyticsProvider } from '../../scripts/utils/analytics/analytics.js';
+import { loadArea, setConfig } from '../../scripts/ak.js';
 import {
   isEnabled, trackExposures, restoreAssignments, persistAssignments, runExperimentation,
 } from '../../scripts/experiment-loader.js';
@@ -8,7 +10,9 @@ import {
 const KEY = 'unified-decisioning-experiments';
 const PLUGIN_CONSENT_KEY = 'experimentation-consented';
 const realFetch = window.fetch;
+const realMatchMedia = window.matchMedia;
 let tracked;
+let clock;
 
 const exp = (overrides = {}) => ({
   type: 'section',
@@ -37,12 +41,17 @@ describe('scripts/experiment-loader.js', () => {
     sessionStorage.removeItem(KEY);
     localStorage.removeItem(KEY);
     localStorage.removeItem(PLUGIN_CONSENT_KEY);
-    document.head.querySelectorAll('meta[name^="experiment"]').forEach((m) => m.remove());
+    document.head.querySelectorAll('meta[name^="experiment"],meta[name^="audience"],meta[name^="campaign"],meta[property^="audience:"],meta[property^="campaign:"]').forEach((m) => m.remove());
     document.body.innerHTML = '';
+    window.matchMedia = (query) => ({ matches: query.includes('< 768px') });
+    setConfig({ locales: { '': {} }, linkBlocks: [], components: [], decorateArea: () => {} });
   });
 
   afterEach(() => {
     window.fetch = realFetch;
+    window.matchMedia = realMatchMedia;
+    clock?.restore();
+    clock = null;
   });
 
   describe('isEnabled', () => {
@@ -216,7 +225,7 @@ describe('scripts/experiment-loader.js', () => {
       await runExperimentation();
       expect(requested.some((u) => u.includes('/variants/table-b'))).to.equal(true);
       expect(document.querySelector('#headline').textContent).to.equal('Challenger headline');
-      expect(document.querySelector('.experiment')).to.equal(null);
+      expect(Boolean(document.querySelector('.experiment'))).to.equal(false);
       expect(tracked.find((t) => t.event === 'experiment').props.variantId).to.equal('table-test:challenger-1');
     });
 
@@ -224,9 +233,188 @@ describe('scripts/experiment-loader.js', () => {
       window.fetch = async () => { throw new Error('no fetch expected'); };
       pageWithTable('100');
       expect(await runExperimentation()).to.equal(null);
-      expect(document.querySelector('.experiment')).to.equal(null);
+      expect(Boolean(document.querySelector('.experiment'))).to.equal(false);
       expect(document.querySelectorAll('main > div').length).to.equal(1);
       expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+    });
+
+    it('times out a hanging /v/ variant fetch and keeps original content', async () => {
+      clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      setConsent({ analytics: true, personalization: true });
+      document.body.innerHTML = `<main><div>
+        <h1 id="headline">Control headline</h1>
+        <div class="section-metadata">
+          <div><div>Audience: mobile</div><div><a href="/v/hang">/v/hang</a></div></div>
+        </div>
+      </div></main>`;
+      const calls = [];
+      window.fetch = (url, init = {}) => {
+        calls.push({
+          path: new URL(url, window.location.origin).pathname,
+          hasSignal: Boolean(init.signal),
+        });
+        return new Promise((resolve, reject) => {
+          if (init.signal?.aborted) {
+            reject(new DOMException('aborted', 'AbortError'));
+            return;
+          }
+          init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        });
+      };
+      const hangingFetch = window.fetch;
+
+      let completed = false;
+      const pending = runExperimentation().finally(() => {
+        completed = true;
+      });
+      await clock.tickAsync(1000);
+      await Promise.resolve();
+
+      expect(completed).to.equal(true);
+      await pending;
+      expect(calls).to.deep.equal([{ path: '/v/hang', hasSignal: true }]);
+      expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+      expect(window.fetch).to.equal(hangingFetch);
+    });
+
+    it('fails fast when a section /v/ fetch starts after a page-level audience timeout', async () => {
+      clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      setConsent({ analytics: true, personalization: true });
+      const meta = document.createElement('meta');
+      meta.name = 'audience-mobile';
+      meta.content = '/v/page-hang';
+      document.head.append(meta);
+      document.body.innerHTML = `<main><div>
+        <h1 id="headline">Control headline</h1>
+        <div class="section-metadata">
+          <div><div>Audience: mobile</div><div><a href="/v/section-hang">/v/section-hang</a></div></div>
+        </div>
+      </div></main>`;
+      const calls = [];
+      window.fetch = (url, init = {}) => {
+        calls.push({
+          path: new URL(url, window.location.origin).pathname,
+          hasSignal: Boolean(init.signal),
+          abortedAtCall: Boolean(init.signal?.aborted),
+        });
+        return new Promise((resolve, reject) => {
+          if (init.signal?.aborted) {
+            reject(new DOMException('aborted', 'AbortError'));
+            return;
+          }
+          init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        });
+      };
+
+      let completed = false;
+      const pending = runExperimentation().finally(() => {
+        completed = true;
+      });
+      await clock.tickAsync(1000);
+      await pending;
+
+      expect(completed).to.equal(true);
+      expect(calls).to.deep.equal([
+        { path: '/v/page-hang', hasSignal: true, abortedAtCall: false },
+        { path: '/v/section-hang', hasSignal: true, abortedAtCall: true },
+      ]);
+      expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+    });
+
+    it('carries Style and Anchor through a section swap before loadArea decorates sections', async () => {
+      setConsent({ analytics: true, personalization: true });
+      document.body.innerHTML = `<main><div>
+        <h1 id="headline">Control headline</h1>
+        <div class="section-metadata">
+          <div><div>Audience: mobile</div><div><a href="/v/mobile">/v/mobile</a></div></div>
+          <div><div>Style</div><div>dark</div></div>
+          <div><div>Anchor</div><div>Hero</div></div>
+        </div>
+      </div></main>`;
+      window.fetch = async () => new Response(
+        '<html><body><main><div><h1 id="headline">Mobile headline</h1></div></main></body></html>',
+        { status: 200, headers: { 'content-type': 'text/html' } },
+      );
+
+      await runExperimentation();
+      expect(document.querySelector('#headline').textContent).to.equal('Mobile headline');
+      expect(document.querySelector('.section-metadata').textContent).to.contain('dark');
+      expect(document.querySelector('main > div').classList.contains('dark')).to.equal(false);
+
+      await loadArea();
+
+      expect(document.querySelector('main > div').classList.contains('dark')).to.equal(true);
+      expect(document.querySelector('main > div').id).to.equal('hero');
+      expect(Boolean(document.querySelector('.section-metadata'))).to.equal(false);
+    });
+
+    it('does not duplicate Style and Anchor when the variant has its own metadata', async () => {
+      setConsent({ analytics: true, personalization: true });
+      document.body.innerHTML = `<main><div>
+        <h1 id="headline">Control headline</h1>
+        <div class="section-metadata">
+          <div><div>Audience: mobile</div><div><a href="/v/mobile">/v/mobile</a></div></div>
+          <div><div>Style</div><div>dark</div></div>
+          <div><div>Anchor</div><div>Hero</div></div>
+        </div>
+      </div></main>`;
+      window.fetch = async () => new Response(
+        `<html><body><main><div><h1 id="headline">Mobile headline</h1>
+          <div class="section-metadata">
+            <div><div>Style</div><div>light</div></div>
+            <div><div>Anchor</div><div>Variant Hero</div></div>
+          </div>
+        </div></main></body></html>`,
+        { status: 200, headers: { 'content-type': 'text/html' } },
+      );
+
+      await runExperimentation();
+      expect(document.querySelectorAll('.section-metadata')).to.have.length(1);
+      expect(document.querySelector('.section-metadata').textContent).to.contain('light');
+      expect(document.querySelector('.section-metadata').textContent).not.to.contain('dark');
+
+      await loadArea();
+
+      const section = document.querySelector('main > div');
+      expect(section.classList.contains('light')).to.equal(true);
+      expect(section.classList.contains('dark')).to.equal(false);
+      expect(section.id).to.equal('variant-hero');
+    });
+
+    it('removes config blocks left behind inside variant content', async () => {
+      setConsent({ analytics: true, personalization: true });
+      document.body.innerHTML = `<main><div>
+        <h1 id="headline">Control headline</h1>
+        <div class="section-metadata">
+          <div><div>Audience: mobile</div><div><a href="/v/mobile">/v/mobile</a></div></div>
+        </div>
+      </div></main>`;
+      window.fetch = async () => new Response(
+        `<html><body><main><div>
+          <h1 id="headline">Mobile headline</h1>
+          <div class="personalize"><div>Leftover config</div></div>
+        </div></main></body></html>`,
+        { status: 200, headers: { 'content-type': 'text/html' } },
+      );
+
+      await runExperimentation();
+
+      expect(document.querySelector('#headline')?.textContent).to.equal('Mobile headline');
+      expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+    });
+
+    it('removes leftover config blocks before the page is decorated', async () => {
+      document.body.innerHTML = `<main>
+        <div><div class="experiment"><div>Invalid</div></div></div>
+        <div><p id="keep">Keep</p><div class="personalize"><div>Invalid</div></div></div>
+      </main>`;
+
+      expect(await runExperimentation()).to.equal(null);
+
+      expect(Boolean(document.querySelector('.experiment'))).to.equal(false);
+      expect(Boolean(document.querySelector('.personalize'))).to.equal(false);
+      expect([...document.querySelectorAll('main > div')].map((section) => section.textContent.trim()))
+        .to.deep.equal(['Keep']);
     });
   });
 });

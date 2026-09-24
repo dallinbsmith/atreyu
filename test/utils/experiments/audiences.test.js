@@ -47,11 +47,13 @@ describe('scripts/utils/experiments/audiences.js', () => {
     const before = Object.keys(AUDIENCES);
     const first = withCampaigns(['one']);
     const second = withCampaigns(['one']);
+    const noCampaigns = withCampaigns(null);
 
     expect(Object.keys(AUDIENCES)).to.deep.equal(before);
     expect(second).not.to.equal(first);
     expect(Object.keys(second)).to.deep.equal(['mobile', 'desktop', 'campaign-one']);
     expect(Object.keys(first)).to.deep.equal(['mobile', 'desktop', 'campaign-one']);
+    expect(Object.keys(noCampaigns)).to.deep.equal(['mobile', 'desktop']);
   });
 
   it('normalizes campaign ids with plugin toClassName parity', () => {
@@ -156,6 +158,7 @@ describe('scripts/utils/experiments/audiences.js', () => {
       const audiences = toAudienceMap([
         catalogEntry('ok', () => true),
         catalogEntry('throws', () => { throw new Error('boom'); }),
+        catalogEntry('rejects', () => Promise.reject(new Error('edge'))),
         {
           id: 'empty',
           label: 'Empty',
@@ -168,13 +171,14 @@ describe('scripts/utils/experiments/audiences.js', () => {
           label: 'With throw',
           description: 'Throwing part.',
           consent: 'contextual',
-          all: ['ok', 'throws'],
+          all: ['ok', 'throws', 'rejects'],
         },
       ]);
 
       expect(await audiences.empty()).to.equal(false);
       expect(await audiences['with-throw']()).to.equal(false);
       expect(warnings[0][0]).to.contain('Audience "throws" failed');
+      expect(warnings[1][0]).to.contain('Audience "rejects" failed');
     } finally {
       console.warn = realWarn;
     }
@@ -203,5 +207,9 @@ describe('scripts/utils/experiments/audiences.js', () => {
       },
       catalogEntry('a', () => true),
     ])).to.throw('cannot define both all and test');
+    expect(() => toAudienceMap([
+      { id: 'bad-all', label: 'Bad all', description: 'Bad all', consent: 'contextual', all: 'a' },
+      catalogEntry('a', () => true),
+    ])).to.throw('all must be an array');
   });
 });
