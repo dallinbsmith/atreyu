@@ -11,6 +11,10 @@ import {
 import { loadArea, setConfig } from '../../../scripts/ak.js';
 import { responseMap } from './fixtures/plugin-contract.js';
 
+// CI re-runs this file with TZ=America/Los_Angeles (End Date is local-time
+// logic); logged first so the job log shows which zone the browser used.
+console.log(`End Date tests time zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+
 const NOW = Date.parse('2026-09-24T12:00:00Z');
 const FUTURE = '2026-12-31';
 const PAST = '2026-09-01';
@@ -88,6 +92,18 @@ describe('scripts/utils/experiments/personalize.js', () => {
     document.body.innerHTML = table([row('Audience: mobile', '<p>/v/p/home/mobile</p><p>see brief</p>')]);
     expect(readPersonalizeTable(document.querySelector('.personalize')).rows)
       .to.deep.equal([{ id: 'mobile', path: '/v/p/home/mobile' }]);
+  });
+
+  it('skips blank paragraphs (whitespace, &nbsp;) in a path cell without a link', () => {
+    document.body.innerHTML = table([row('Audience: mobile', '<p> </p><p>&nbsp;</p><p> /v/p/home/mobile </p><p>brief</p>')]);
+    expect(readPersonalizeTable(document.querySelector('.personalize')).rows)
+      .to.deep.equal([{ id: 'mobile', path: '/v/p/home/mobile' }]);
+  });
+
+  it('uses a link\'s href, not its text, inside a paragraph', () => {
+    document.body.innerHTML = table([row('Audience: mobile', '<p><a href="/v/x">Mobile hero</a></p>')]);
+    expect(readPersonalizeTable(document.querySelector('.personalize')).rows)
+      .to.deep.equal([{ id: 'mobile', path: '/v/x' }]);
   });
 
   it('compiles to Audience rows, removes the table and returns the plan', () => {
@@ -219,11 +235,36 @@ describe('scripts/utils/experiments/personalize.js', () => {
       expect(live('09/24/2026', local(2026, 9, 24, 23, 59, 59))).to.equal(true);
       expect(live('Sep 24, 2026', local(2026, 9, 24, 23, 59, 59))).to.equal(true);
       expect(live('September 24, 2026', local(2026, 9, 25))).to.equal(false);
+      expect(live('9.24.2026', local(2026, 9, 24, 23, 59, 59))).to.equal(true);
+      expect(live('9.24.2026', local(2026, 9, 25))).to.equal(false);
+    });
+
+    it('extends a value with a time to the end of its day', () => {
+      expect(live('2026-09-24T23:59', local(2026, 9, 24, 23, 59, 30))).to.equal(true);
+      expect(live('2026-09-24T23:59', local(2026, 9, 25))).to.equal(false);
+    });
+
+    it('rejects impossible numeric M/D/YYYY and M.D.YYYY dates instead of rolling over', () => {
+      const now = local(2026, 9, 24, 12);
+      for (const endDate of ['02/30/2027', '2.30.2027', '13/01/2027']) {
+        expect(live(endDate, now), endDate).to.equal(false);
+      }
+      expect(live('02/28/2027', now)).to.equal(true);
+    });
+
+    // Across the US DST change (Nov 1 2026 is 25 hours long in US zones), the
+    // end is local midnight Nov 2, not End Date + 24h (Nov 1 23:00 local).
+    it('ends at local midnight after the End Date across a DST change', () => {
+      const now = local(2026, 10, 30, 12);
+      expect(live('2026-11-01', now)).to.equal(true);
+      expect(live('2026-11-01', local(2026, 11, 1, 23, 30))).to.equal(true);
+      expect(live('2026-11-01', local(2026, 11, 2) - 1000)).to.equal(true);
+      expect(live('2026-11-01', local(2026, 11, 2))).to.equal(false);
     });
 
     it('rejects values that are not a calendar date with a year', () => {
       const now = local(2026, 9, 24, 12);
-      for (const endDate of ['46022', '2026', 'December 31', '2026-02-30', '2026-13-01', 'soon']) {
+      for (const endDate of ['46022', '2027', 'December 31', '2026-02-30', '2026-13-01', 'soon']) {
         expect(live(endDate, now), endDate).to.equal(false);
       }
       expect(warn.calledWithMatch(/"46022" is missing or not a calendar date/)).to.equal(true);

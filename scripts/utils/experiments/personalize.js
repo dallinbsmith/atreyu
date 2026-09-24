@@ -29,6 +29,7 @@ import { findConfigBlocks, removeConfigBlock } from './guard.js';
 const MAX_RULES = 3;
 export const MAX_DAYS = 180;
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+const US_DATE = /^(\d{1,2})([/.])(\d{1,2})\2(\d{4})$/;
 const YEAR = /(?<!\d)\d{4}(?!\d)/;
 const FIELDS = new Map([['name', 'name'], ['owner', 'owner'], ['status', 'status'], ['end-date', 'endDate']]);
 
@@ -40,11 +41,12 @@ const warn = (prod, table, message) => {
 const isAudienceKey = (key) => key === 'audience' || key.startsWith('audience-');
 
 // First link (several would reach the plugin as an array), else the first
-// paragraph, else the cell. Pathname only: the plugin fetches it on this
-// origin whatever the host.
+// non-blank paragraph (trim() also strips &nbsp;), else the cell. Pathname
+// only: the plugin fetches it on this origin whatever the host.
 const toPath = (col) => {
   const raw = col.querySelector('a')?.getAttribute('href')
-    ?? (col.querySelector('p') ?? col).textContent.trim();
+    ?? ([...col.querySelectorAll('p')].map((p) => p.textContent.trim()).find(Boolean)
+    || col.textContent.trim());
   try {
     return new URL(raw, window.location.origin).pathname;
   } catch {
@@ -64,21 +66,23 @@ export const readPersonalizeTable = (block) => [...block.children].reduce((table
   return table;
 }, { name: '', owner: '', status: 'active', endDate: '', rows: [] });
 
-const isCalendarDay = (date, y, m, d) => date.getFullYear() === y
-  && date.getMonth() === m && date.getDate() === d;
+const localDay = (y, m, d) => {
+  const day = new Date(y, m - 1, d);
+  return day.getFullYear() === y && day.getMonth() === m - 1 && day.getDate() === d ? day : null;
+};
 
 // The End Date's local calendar day, or null when it isn't a plausible date.
+// Numeric forms are built as local dates and must round-trip, so 02/30/2026
+// is rejected rather than rolled over to March by Date.
 const toDay = (value) => {
   const text = value.trim();
   const iso = text.match(DATE_ONLY);
-  if (iso) {
-    const [y, m, d] = iso.slice(1).map(Number);
-    const day = new Date(y, m - 1, d);
-    return isCalendarDay(day, y, m - 1, d) ? day : null;
-  }
+  if (iso) return localDay(+iso[1], +iso[2], +iso[3]);
+  const us = text.match(US_DATE);
+  if (us) return localDay(+us[4], +us[1], +us[3]);
   const year = text.match(YEAR)?.[0];
-  // All digits (46022, "2026") is never a date; the year check alone passes
-  // "2026" east of UTC.
+  // All digits (46022, "2027") is never a date; the year check alone passes
+  // "2027" at or east of UTC, where it parses as Jan 1 local.
   if (!year || /^\d+$/.test(text)) return null;
   const parsed = new Date(text);
   return parsed.getFullYear() === Number(year) ? parsed : null;
