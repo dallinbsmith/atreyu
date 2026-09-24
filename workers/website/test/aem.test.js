@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchFromAem, CACHE_TTL_BY_STATUS } from '../handlers/aem.js';
+import {
+  fetchFromAem, CACHE_TTL_BY_STATUS, CONSENT_ANALYTICS_CSP, buildCsp,
+} from '../handlers/aem.js';
+import { generateNonce } from '../utils/nonce.js';
 
 const EDS = 'https://main--atreyu--dallinbsmith.aem.live';
 const req = (path = '/blog/x') => new Request(`${EDS}${path}`);
@@ -121,4 +124,88 @@ test('3xx and 304 responses keep their validators and origin cache headers', asy
     assert.equal(resp.headers.get('cdn-cache-control'), 'max-age=172800, must-revalidate', String(status));
     t.mock.restoreAll();
   }
+});
+
+// CSP (P3.2). Hosts pinned as literals, from the frame.io + EDS network capture.
+// Returns [name, values] pairs in header order; fails on a repeated directive,
+// which browsers resolve by ignoring the later one (so a duplicate could
+// silently undo a pinned value).
+const directives = (csp) => {
+  const pairs = csp.split('; ').map((d) => {
+    const [name, ...values] = d.split(' ');
+    return [name, values];
+  });
+  const names = pairs.map(([name]) => name);
+  assert.deepEqual(names, [...new Set(names)], `duplicate CSP directive in: ${csp}`);
+  return pairs;
+};
+
+test('CSP is exactly the pinned directive list, in order', () => {
+  const EDS_HOSTS = ['https://*.aem.live', 'https://*.aem.page', 'https://*.hlx.live', 'https://*.hlx.page'];
+  assert.deepEqual(directives(buildCsp('abc')), [
+    ['default-src', ["'self'"]],
+    ['script-src', ["'nonce-abc'", "'strict-dynamic'"]],
+    // Unchanged by P3.2: OneTrust's CSS arrives via fetch and is injected inline.
+    ['style-src', ["'self'", "'unsafe-inline'"]],
+    ['img-src', ["'self'", 'data:', ...EDS_HOSTS, 'https://cdn.cookielaw.org']],
+    ['font-src', ["'self'"]],
+    ['connect-src', [
+      "'self'", ...EDS_HOSTS,
+      'https://cdn.cookielaw.org', 'https://geolocation.onetrust.com', 'https://privacyportal.onetrust.com',
+      'https://cdn.segment.com', 'https://api.segment.io', 'https://sstats.adobe.com',
+    ]],
+    ['frame-src', ["'self'", 'https://www.youtube-nocookie.com', 'https://www.youtube.com', 'https://calendly.com']],
+    ['media-src', ["'self'", 'https://*.youtube.com', 'https://*.ytimg.com']],
+    ['object-src', ["'none'"]],
+    ['frame-ancestors', ["'self'"]],
+    ['base-uri', ["'self'"]],
+    ['form-action', ["'self'"]],
+  ]);
+});
+
+test('CSP script-src is only nonce and strict-dynamic: no host sources (ignored under strict-dynamic), no unsafe-*', () => {
+  const [, scriptSrc] = directives(buildCsp('abc')).find(([name]) => name === 'script-src');
+  assert.deepEqual(scriptSrc, ["'nonce-abc'", "'strict-dynamic'"]);
+  assert.doesNotMatch(scriptSrc.join(' '), /unsafe-|https?:|calendly|cookielaw|onetrust|segment|adobe\.com/);
+});
+
+test('buildCsp rejects a nonce outside the base64 alphabet and accepts generateNonce output', () => {
+  for (const bad of ['', "abc' 'unsafe-inline", 'abc; script-src *', 'a b', 'abc\n', undefined, null, 123]) {
+    assert.throws(() => buildCsp(bad), TypeError, String(bad));
+  }
+  const nonce = generateNonce();
+  assert.match(buildCsp(nonce), new RegExp(`'nonce-${nonce.replace(/[+/]/g, '\\$&')}'`));
+  assert.doesNotThrow(() => buildCsp('AAECAwQFBgcICQoLDA0ODw=='));
+});
+
+test('CSP adds no vendor wildcards and none of the out-of-scope destination hosts', () => {
+  const csp = buildCsp('abc');
+  assert.doesNotMatch(csp, /\*\.(cookielaw|onetrust|segment)\./);
+  assert.doesNotMatch(csp, /googletagmanager|doubleclick|google-analytics|analytics\.google|facebook|adobedtm|marketingtech|profiles\.segment/);
+  assert.ok(Object.isFrozen(CONSENT_ANALYTICS_CSP));
+  assert.ok(Object.isFrozen(CONSENT_ANALYTICS_CSP.connect));
+  assert.ok(Object.isFrozen(CONSENT_ANALYTICS_CSP.img));
+});
+
+test('HTML responses get buildCsp with a fresh per-request nonce; non-HTML get no CSP', async (t) => {
+  // HTMLRewriter only exists in workerd; a pass-through stub is enough here.
+  globalThis.HTMLRewriter = class {
+    on = () => this;
+
+    transform = (r) => r;
+  };
+  t.after(() => { delete globalThis.HTMLRewriter; });
+  t.mock.method(globalThis, 'fetch', async () => new Response('<html></html>', {
+    status: 200, headers: { 'content-type': 'text/html; charset=utf-8' },
+  }));
+  const a = (await fetchFromAem({ request: req(), cache: true, savedSearch: '' })).headers.get('content-security-policy');
+  const b = (await fetchFromAem({ request: req(), cache: true, savedSearch: '' })).headers.get('content-security-policy');
+  const nonceOf = (csp) => csp.match(/'nonce-([^']+)'/)[1];
+  assert.equal(a, buildCsp(nonceOf(a)));
+  assert.notEqual(nonceOf(a), nonceOf(b));
+  t.mock.restoreAll();
+
+  capture(t, 200);
+  const plain = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
+  assert.equal(plain.headers.has('content-security-policy'), false);
 });
