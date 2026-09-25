@@ -218,7 +218,7 @@ describe('ak.js decorateSection — author-set anchor id', () => {
     expect(section.dataset.note).to.equal('internal'); // anchor never also becomes data-anchor
   });
 
-  it('multi-word metadata keys (aem-experimentation) become camelCase data attributes instead of throwing', async () => {
+  it('multi-word metadata keys (aem-experimentation) become server-shaped (toMetaName) data attributes instead of throwing', async () => {
     const area = anchorArea([
       [['Experiment Variants', '/variant-b'], ['Campaign: Launch', '/launch']],
       [['note', 'still decorated']],
@@ -226,7 +226,8 @@ describe('ak.js decorateSection — author-set anchor id', () => {
     await loadArea({ area });
     const [first, second] = area.querySelectorAll('.section');
     expect(first.dataset.experimentVariants).to.equal('/variant-b');
-    expect(first.dataset.campaignLaunch).to.equal('/launch');
+    // B2: same attribute name the server writes (each invalid character → '-')
+    expect(first.getAttribute('data-campaign:-launch')).to.equal('/launch');
     // the throw used to abort decorateSections for every remaining section
     expect(second.dataset.note).to.equal('still decorated');
   });

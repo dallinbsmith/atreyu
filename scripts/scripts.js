@@ -1,5 +1,5 @@
 import {
-  getConfig, loadArea, loadStyle, setConfig,
+  getConfig, loadArea, loadStyle, setConfig, slugifyUnique,
 } from './ak.js';
 import { runExperimentation } from './experiment-loader.js';
 import locales from './locales.js';
@@ -19,7 +19,23 @@ const linkBlocks = [
 
 const components = ['fragment', 'schedule'];
 
+// EDS flattens an authored `Anchor` section-metadata row to data-anchor on the
+// server. Promote it to a de-duplicated, lowercase slug id, unless the section
+// already has one (from an authored `Id` row), and drop the attribute. Runs
+// before ak.js decorates sections, so the id exists before lazyhash scrolls.
+// Same section selector as ak.js decorateSections.
+export const promoteAnchors = (area = document) => {
+  const selector = area === document ? 'main > div[data-anchor]' : ':scope > div[data-anchor]';
+  for (const section of area.querySelectorAll(selector)) {
+    const id = !section.id && slugifyUnique(section.dataset.anchor, section.getRootNode());
+    if (id) section.id = id;
+    delete section.dataset.anchor;
+  }
+};
+
 const decorateArea = ({ area = document }) => {
+  promoteAnchors(area);
+
   const eagerLoad = (parent, selector) => {
     const img = parent.querySelector(selector);
     if (!img) return;

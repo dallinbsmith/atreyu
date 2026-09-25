@@ -14,7 +14,7 @@
 // sessionStorage-cached fetch). Runs from lazy.js once every section has
 // decorated (same call site as testid-audit).
 import { getMetadata } from '../../ak.js';
-import { loadVariants } from './pzn.js';
+import { loadVariants, toPlacement } from './pzn.js';
 
 // `load` defaults to pzn.js's memoized loadVariants so lazy.js's zero-arg
 // `auditPzn()` shares that one in-flight fetch (zero extra network cost). It's
@@ -25,12 +25,12 @@ import { loadVariants } from './pzn.js';
 // there is no other way to give each test an isolated variants dataset.
 export default async (load = loadVariants) => {
   const variants = await load();
-  // Group on a NUL-delimited key so grouping matches the runtime's exact
-  // per-field equality (rowsFor filters on placement === / segment ===). A
+  // Group on a NUL-delimited key so grouping matches the runtime's
+  // comparison (rowsFor: toPlacement(placement) === / segment ===). A
   // printable delimiter like ':' could merge two genuinely-distinct groups if
   // an authored placement/segment value contained it; NUL cannot appear in a
   // DA sheet cell, so the audit can never disagree with the runtime it audits.
-  const groups = Map.groupBy(variants, (row) => `${row.placement}\u0000${row.segment}`);
+  const groups = Map.groupBy(variants, (row) => `${toPlacement(row.placement)}\u0000${row.segment}`);
   groups.forEach((rows) => {
     const selectors = [...new Set(rows.map((row) => row.selector))];
     if (selectors.length < 2) return; // one selector = intentional A/B split, not a collision
@@ -77,9 +77,9 @@ export const auditExperimentCollision = async ({
 
   const variants = await load();
   [...root.querySelectorAll('[data-pzn]')].forEach((section) => {
-    const placement = section.dataset.pzn;
+    const placement = section.dataset.pzn; // as authored, for the message
     const collidingRow = variants
-      .filter((row) => row.placement === placement)
+      .filter((row) => toPlacement(row.placement) === toPlacement(placement))
       .find((row) => {
         let pznTarget;
         try {

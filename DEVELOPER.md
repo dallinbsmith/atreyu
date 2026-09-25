@@ -118,6 +118,9 @@ Sections are `<div>` children of `<main>`, separated by `---` in the authored do
 | `gap` / `spacing` | Spacing tokens (`xs`, `s`, `m`, `l`, `xl`, `xxl`) |
 | `container` | Content width constraint (2, 4, or 6) |
 | `layout` | `bento` for asymmetric grid |
+| `anchor` | De-duplicated slug `id` for deep links (an `id` row wins) |
+
+EDS applies the table on the server and removes it before any JS runs. `style` becomes classes. `id` is special: it sets the section `id` (lowercased, invalid characters to `-`). Every other key becomes a `data-*` attribute whose value keeps the author's case: comma-separated tokens are trimmed and joined with `,`, and a link or image becomes its absolute URL. Some keys are reserved for the experimentation plugin: the list is under "Keys you must not use in Section Metadata" in `tools/sidekick/blocks.md`, and the Experiments panel checks for them (`experiments-panel/sources.js`, `sectionKeyIssues`).
 
 For the full architecture, see [CLAUDE.md](../CLAUDE.md).
 

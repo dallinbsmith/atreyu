@@ -43,7 +43,9 @@ describe('dapreview', () => {
     await loadPage();
     const first = snapshot();
     expect(first.personalize).to.equal(0);
-    expect(first.data.audienceMobile).to.equal('/v/p/home/mobile');
+    // B2: the server's attribute name (toMetaName) and value (absolute href)
+    expect(document.querySelector('main > div').getAttribute('data-audience:-mobile'))
+      .to.equal(new URL('/v/p/home/mobile', window.location.href).href);
 
     // Re-run over the already-decorated DOM, then over a fresh re-render.
     await loadPage();

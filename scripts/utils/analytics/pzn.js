@@ -31,11 +31,12 @@
 //     reserveSpace below): a real probe node, not a fixed CSS number eyeballed
 //     against one label at one moment in time.
 //
-// Real slot-marker mechanism (verified against scripts/ak.js's decorateSection(),
-// not assumed): a `pzn: <placement>` Section Metadata row becomes
-// `section.dataset.pzn` on the SECTION, not on the element you actually want to
-// swap. `selector` (P0-45's mapping-sheet column, added 2026-08-27) narrows that
-// down to the actual swappable element within the section.
+// Real slot-marker mechanism: a `pzn: <placement>` Section Metadata row is
+// written by the EDS server as `data-pzn` on the SECTION (value as authored;
+// ak.js's client parser does the same for tables built in the browser), not
+// on the element you actually want to swap. `selector` (P0-45's mapping-sheet
+// column, added 2026-08-27) narrows that down to the actual swappable element
+// within the section.
 //
 // 2026-08-27 update: the hardcoded PLACEMENTS stand-in is replaced with a real
 // fetch/parse of the real DA-authored sheet (created at /system/personalization/
@@ -163,10 +164,16 @@ const fetchDecision = () => {
   return decisionPromise;
 };
 
+// Placements are compared trimmed and lowercase on both sides: section metadata
+// keeps the authored case (`Pzn: Hero-CTA`, B2) and so does the sheet. Only the
+// comparison is normalised; analytics report both values as typed. Shared with
+// pzn-audit.js.
+export const toPlacement = (value) => `${value ?? ''}`.trim().toLowerCase();
+
 // A row is only usable if it has everything its own `type` needs — one bad
 // row (a typo'd weight, an empty selector) must never take down its siblings.
 const isValidRow = (row) => {
-  if (!row.placement || !row.segment || !row.selector) return false;
+  if (!toPlacement(row.placement) || !row.segment || !row.selector) return false;
   if (!Number.isFinite(Number(row.weight)) || Number(row.weight) <= 0) return false;
   // Bug-squash fix, 2026-08-28: `commit_until` (P0-46's peeking-problem
   // guardrail — the one protection this bridge design has, since real
@@ -193,26 +200,41 @@ const buildVariantsUrl = () => {
 // the same session read the mapping synchronously, same spirit as the cookie
 // making the DECISION synchronous on warm visits — see file header note.
 let variantsPromise;
+
+// Re-filtering through `isValidRow` means a stale cache from before a column
+// was added gets re-validated, not trusted blindly.
+const usableRows = (rows) => rows.filter((row) => row && typeof row === 'object' && isValidRow(row));
+
+// Storage is best-effort, in the consent.js shape: a corrupt, blocked or
+// over-quota sessionStorage never skips the fetch or discards a good one.
+const readCache = () => {
+  try {
+    const rows = JSON.parse(sessionStorage.getItem(VARIANTS_CACHE_KEY));
+    return Array.isArray(rows) ? rows : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCache = (rows) => {
+  try {
+    sessionStorage.setItem(VARIANTS_CACHE_KEY, JSON.stringify(rows));
+  } catch { /* quota or blocked storage */ }
+};
+
 // Exported so the dev-mode-only pzn-audit.js can reuse this exact memoized,
 // isValidRow-filtered promise and issue zero extra network fetch (the audit
 // and decoratePznSlots share one in-flight load per tab session).
 export const loadVariants = () => {
   variantsPromise ??= (async () => {
-    // Bug-squash fix, 2026-08-28: the cache-read branch used to sit outside
-    // this try/catch, so a corrupted or shape-incompatible cached value (a
-    // manual edit, or a schema change making old cached rows incompatible)
-    // threw here — an unhandled rejection from a `.forEach()` caller with no
-    // catch — directly contradicting this file's own fail-open guarantee.
-    // Re-filtering through `isValidRow` also means a stale cache from before
-    // a column was added gets re-validated, not trusted blindly.
+    const cached = readCache();
+    if (cached) return usableRows(cached);
     try {
-      const cached = sessionStorage.getItem(VARIANTS_CACHE_KEY);
-      if (cached) return JSON.parse(cached).filter(isValidRow);
       const res = await fetch(buildVariantsUrl());
       if (!res.ok) return [];
       const { data } = await res.json();
-      const rows = (data ?? []).filter(isValidRow);
-      sessionStorage.setItem(VARIANTS_CACHE_KEY, JSON.stringify(rows));
+      const rows = usableRows(Array.isArray(data) ? data : []);
+      writeCache(rows);
       return rows;
     } catch {
       return []; // fail-open — no variants sheet, baseline stands everywhere
@@ -247,7 +269,7 @@ const weightedPick = (rows, seedKey) => {
 };
 
 const rowsFor = (variants, placementKey, segment) => variants
-  .filter((row) => row.placement === placementKey && row.segment === segment);
+  .filter((row) => toPlacement(row.placement) === placementKey && row.segment === segment);
 
 // Wrap the resolved target in a reserved-space box once, on first use, so the
 // element the CLS measurement cares about is stable across repeated calls.
@@ -419,35 +441,37 @@ const resolveTarget = (section, variants, placementKey, segment) => {
 // silently drop the failure with no tracked reason at all (its return value
 // was discarded) — a real EXP-014 gap this same refactor closes, not a
 // separate change.
-const applyResolved = async (placementKey, resolved, segment) => {
+const applyResolved = async (placement, resolved, segment) => {
   if (!resolved.target) {
-    trackFallback(placementKey, segment, resolved.reason);
+    trackFallback(placement, segment, resolved.reason);
     return;
   }
   const slot = getOrCreateSlot(resolved.target);
   const applied = await crossFadeApply(slot, resolved.target, resolved.row);
-  if (!applied) trackFallback(placementKey, segment, 'fragment_fetch_failed');
+  if (!applied) trackFallback(placement, segment, 'fragment_fetch_failed');
 };
 
 const decorateSection = async (section) => {
-  const placementKey = section.dataset.pzn;
+  // `placement` as authored, for analytics; `placementKey` for matching.
+  const placement = section.dataset.pzn;
+  const placementKey = toPlacement(placement);
   const variants = await loadVariants();
   // nothing authored for this slot
-  if (!variants.some((row) => row.placement === placementKey)) {
-    trackFallback(placementKey, null, 'no_variant_authored');
+  if (!variants.some((row) => toPlacement(row.placement) === placementKey)) {
+    trackFallback(placement, null, 'no_variant_authored');
     return;
   }
 
   if (config.previewSegment) {
     const resolved = resolveTarget(section, variants, placementKey, config.previewSegment);
-    await applyResolved(placementKey, resolved, config.previewSegment);
+    await applyResolved(placement, resolved, config.previewSegment);
     return;
   }
 
   const cachedSegment = readCookie(COOKIE_NAME);
   if (cachedSegment) {
     const resolved = resolveTarget(section, variants, placementKey, cachedSegment);
-    await applyResolved(placementKey, resolved, cachedSegment);
+    await applyResolved(placement, resolved, cachedSegment);
     return;
   }
 
@@ -455,19 +479,19 @@ const decorateSection = async (section) => {
   // The decision call itself must be consent-gated, not just its analytics
   // wrapper (P0-44's Intuit-asymmetry note) — check before firing.
   if (!hasConsent('personalization')) {
-    trackFallback(placementKey, null, 'consent_denied');
+    trackFallback(placement, null, 'consent_denied');
     return;
   }
 
   const segment = await fetchDecision();
   if (!segment) {
-    trackFallback(placementKey, null, 'decision_failed');
+    trackFallback(placement, null, 'decision_failed');
     return; // fail-open on timeout/error — baseline stands
   }
   writeCookie(COOKIE_NAME, segment);
 
   const resolved = resolveTarget(section, variants, placementKey, segment);
-  await applyResolved(placementKey, resolved, segment);
+  await applyResolved(placement, resolved, segment);
 };
 
 // CRITICAL: this must never be awaited by whatever decorates the section it's

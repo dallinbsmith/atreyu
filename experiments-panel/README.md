@@ -24,7 +24,9 @@ Insert. It shows what the plugin will actually do, using the same parsing rules 
   - a variant pointing at the control page;
   - missing variant pages, or variant pages outside `/v/`;
   - duplicate test ids across sheet rows;
-  - page metadata silently overriding a sheet row.
+  - page metadata silently overriding a sheet row;
+  - section metadata keys reserved for the plugin (the rule and list: "Keys you must not use in
+    Section Metadata" in `tools/sidekick/blocks.md`; the check: `sectionKeyIssues` in `sources.js`).
 
   A test with an error-level problem is shown as "Blocked".
 

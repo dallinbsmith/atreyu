@@ -64,6 +64,20 @@ export const readPage = (html, pagePath) => {
   return tests;
 };
 
+// Section-metadata keys the experimentation plugin owns. EDS flattens them on
+// the server to data-* on the section, where they look like plugin output
+// (data-experiment, data-variant, data-audience, data-audiences) and the
+// plugin never reads them. Keep in step with the rule in tools/sidekick/blocks.md
+// ("Keys you must not use in Section Metadata").
+const PLUGIN_ATTR = /^data-(experiment|variant|audiences?|campaign)($|[-:])/;
+
+export const sectionKeyIssues = (html) => {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return [...doc.querySelectorAll('main > div')].flatMap((section, i) => [...section.attributes]
+    .filter(({ name }) => PLUGIN_ATTR.test(name))
+    .map(({ name }) => `Section ${i + 1}: section metadata key "${name.slice(5)}" does nothing on this site and can be mistaken for plugin output. Use an Experiment or Personalize table.`));
+};
+
 export const readSheet = (json, source) => (json?.data ?? []).flatMap((row) => {
   const entries = Object.entries(row);
   const pattern = entries.find(([key]) => toClassName(key) === 'url')?.[1];
