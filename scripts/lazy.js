@@ -38,8 +38,11 @@ export default async () => {
 
   // Spike (adobe/aem-experimentation v2): the plugin replaces experimentation.js
   // — both read the same `experiment*` metadata keys, so they cannot coexist.
-  // This call only loads its preview/simulation panel (never in prod). Header,
-  // footer and nav are not personalized (foundation hardening A2 = iii).
+  // This call only loads its preview/simulation panel (never in prod).
+  // Header, footer and nav are not personalized by policy (foundation
+  // hardening A2 = iii). Not enforced: the plugin's `experiment-manifest`
+  // fragment path can still target them and gets only loadArea(), not the
+  // blocks' own decoration.
   await runExperimentationLazy();
 
   // P0-44 personalization, graduated out of site/spike/ on 2026-08-28. Gated

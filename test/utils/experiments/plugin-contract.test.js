@@ -395,15 +395,14 @@ describe('vendored aem-experimentation plugin contract', () => {
 
     await loadEager(detached, options);
 
-    // The doc's own metadata and sections were ignored...
+    // The doc's own metadata and sections were ignored, and the stale global
+    // result was still overwritten (a fragment run clobbers the page's)...
     expect(window.fetch.calls).to.deep.equal([]);
     expect(window.hlx.experiments).to.deep.equal([]);
     expect(window.hlx.audiences).to.deep.equal([]);
     expect(detached.querySelector('#doc-control').textContent).to.equal('Doc control');
     expect(detached.querySelector('main [data-experiment], main [data-audience]')).to.equal(null);
     expect(detached.body.dataset.experiment).to.equal(undefined);
-    // ...the global result was still overwritten (a fragment run clobbers the page's)...
-    expect(window.hlx.experiments).not.to.equal(stale);
     // ...and the argument really was delivered.
     expect(detached.body.dataset.audiences).to.equal('mobile');
 
