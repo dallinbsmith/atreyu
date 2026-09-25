@@ -3,13 +3,9 @@ import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { decorateSubcategories } from './header-subcategories.js';
 import { toggleMenu } from './header-menu-state.js';
 
-// Code-review nit (2026-09-21 parity pass): assumes it runs once on fresh,
-// undecorated markup — not idempotent/re-entrant-safe (calling it a second
-// time on already-decorated markup would duplicate the mega-menu heading
-// below). Not currently reachable as a bug: the one real redecorator caller,
-// experimentation.js's applyChallenger, always replaces children with fresh
-// markup before calling redecorate(). Documented here so a future caller
-// that violates that assumption doesn't hit this silently.
+// Assumes it runs once on fresh, undecorated markup — not re-entrant-safe
+// (a second call on already-decorated markup would duplicate the mega-menu
+// heading below). header.js's guardDecorate is what keeps it to one call.
 const decorateNavItem = (li) => {
   li.classList.add('main-nav-item');
   const link = li.querySelector(':scope > p > a');

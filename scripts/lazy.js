@@ -38,8 +38,8 @@ export default async () => {
 
   // Spike (adobe/aem-experimentation v2): the plugin replaces experimentation.js
   // — both read the same `experiment*` metadata keys, so they cannot coexist.
-  // Chrome-scoped swaps (UC-02) move to the plugin's fragment manifest; this
-  // call only loads its preview/simulation panel (never in prod).
+  // This call only loads its preview/simulation panel (never in prod). Header,
+  // footer and nav are not personalized (foundation hardening A2 = iii).
   await runExperimentationLazy();
 
   // P0-44 personalization, graduated out of site/spike/ on 2026-08-28. Gated
@@ -50,14 +50,6 @@ export default async () => {
   if (ENV !== 'prod') {
     import('./utils/analytics/pzn.js')
       .then(({ decoratePznSlots }) => decoratePznSlots())
-      .catch((ex) => log(ex));
-
-    // ADR-003: dev-only mutual-exclusivity check between the late-phase
-    // `experiment-selector` chrome swap (run just above) and pzn.js's slots.
-    // Runs here, not in the one-shot IIFE below, because it must resolve
-    // selectors against the DOM only after footer + the late experiment exist.
-    import('./utils/analytics/pzn-audit.js')
-      .then(({ auditExperimentCollision }) => auditExperimentCollision())
       .catch((ex) => log(ex));
   }
 };

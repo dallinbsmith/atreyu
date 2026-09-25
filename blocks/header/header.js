@@ -3,15 +3,7 @@ import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
 import { createElement } from '../../scripts/utils/dom.js';
 import { decorateNavSection } from './header-nav.js';
 import { HEADER_PATH, decorateWidgets, isWidgetLink } from './header-actions.js';
-import { guardDecorate, registerRedecorator } from '../../scripts/utils/lifecycle.js';
-
-// UC-02 (ref_nav_architecture_research memory): registered once, at module
-// scope, before any late-phase experiment can run. `.main-nav-section`'s own
-// class survives experimentation.js's target.replaceChildren() untouched
-// (replaceChildren only replaces children, never the target's own
-// attributes) — so decorateNavSection can just redecorate the fresh swapped-in
-// content in place, no wrapper reconstruction needed.
-registerRedecorator('.main-nav-section', decorateNavSection);
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const contentLinks = (section) => [...section.querySelectorAll('a')].filter((a) => !isWidgetLink(a));
 

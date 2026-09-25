@@ -2,7 +2,6 @@ import { expect } from '@esm-bundle/chai';
 import { runExperiment, isSameOriginPath } from '../../../scripts/utils/analytics/experimentation.js';
 import { setConsent, resetConsent } from '../../../scripts/utils/analytics/consent.js';
 import { setAnalyticsProvider } from '../../../scripts/utils/analytics/analytics.js';
-import { registerRedecorator } from '../../../scripts/utils/lifecycle.js';
 
 const VISITOR_KEY = 'atreyu-visitor-id';
 
@@ -217,184 +216,26 @@ describe('scripts/utils/analytics/experimentation.js', () => {
     });
   });
 
-  describe('chrome-scoped experiments (experiment-selector + late phase, UC-02)', () => {
-    it('no-ops in the early phase when experiment-selector is set — belongs to the late phase instead', async () => {
-      setConsent({ personalization: true });
+  describe('experiment-selector (late chrome-scoped phase removed, A2 = iii)', () => {
+    it('no-ops when experiment-selector is set, leaving <main> and the target untouched', async () => {
+      setConsent({ personalization: true, analytics: true });
       setMeta('experiment', 'nav-test');
       setMeta('experiment-variants', '/variant-a');
       setMeta('experiment-selector', '.nav-target');
       document.body.insertAdjacentHTML('beforeend', '<nav class="nav-target"><p>Default nav</p></nav>');
-
-      const result = await runExperiment(); // default phase = 'early'
-
-      expect(result).to.equal(null);
-    });
-
-    it('no-ops in the late phase when experiment-selector is absent — belongs to the early phase instead', async () => {
-      setConsent({ personalization: true });
-      setMeta('experiment', 'hero-test');
-      setMeta('experiment-variants', '/variant-a');
-
-      const result = await runExperiment('late');
-
-      expect(result).to.equal(null);
-    });
-
-    it('applies the variant to the selector target in the late phase, leaving <main> untouched', async () => {
-      setMeta('experiment', 'nav-test');
-      setMeta('experiment-variants', '/variant-a');
-      setMeta('experiment-selector', '.nav-target-basic-apply');
-      document.body.insertAdjacentHTML('beforeend', '<nav class="nav-target-basic-apply"><p>Default nav</p></nav>');
-      window.fetch = async () => ({ ok: true, text: async () => '<p>Variant nav</p>' });
-
-      const { runExperiment: freshRun } = await freshExperimentation('?experimentPreview=/variant-a');
-      const result = await freshRun('late');
-
-      expect(result.variant).to.equal('/variant-a');
-      expect(document.querySelector('.nav-target-basic-apply p').textContent).to.equal('Variant nav');
-      expect(document.querySelector('main p').textContent).to.equal('Control content');
-    });
-
-    it('runs the swapped target through loadArea then calls its registered redecorator with the target (swap-safety fix, ref_nav_architecture_research)', async () => {
-      // Own selector, not shared with sibling tests in this describe block —
-      // lifecycle.js's redecorator registry is a module-scope Map, so a
-      // registration here would otherwise leak into every later test that
-      // reuses the same selector string (real bug found in code review: two
-      // sibling tests were silently reusing this test's leftover closure
-      // instead of each hitting their own registration/no-registration path)
-      // — same discipline lifecycle.test.js's own tests already follow.
-      setMeta('experiment', 'nav-test');
-      setMeta('experiment-variants', '/variant-a');
-      setMeta('experiment-selector', '.nav-target-redecorate-call');
-      document.body.insertAdjacentHTML('beforeend', '<nav class="nav-target-redecorate-call"><p>Default nav</p></nav>');
-      window.fetch = async () => ({ ok: true, text: async () => '<p>Variant nav</p>' });
-
-      let received;
-      registerRedecorator('.nav-target-redecorate-call', (el) => { received = el; });
-
-      const { runExperiment: freshRun } = await freshExperimentation('?experimentPreview=/variant-a');
-      const result = await freshRun('late');
-
-      expect(result.variant).to.equal('/variant-a');
-      expect(received).to.equal(document.querySelector('.nav-target-redecorate-call'));
-      expect(received.querySelector('p').textContent).to.equal('Variant nav');
-    });
-
-    it('logs (does not silently swallow) when redecorate throws after the swap has already landed — code-review fix', async () => {
-      // Real bug this pins: applyChallenger() used to share ONE try/catch
-      // across the fetch+swap AND the loadArea()/redecorate() calls, with a
-      // catch comment claiming "control fallback — original content stays."
-      // That's false once applyVariant() has already run — the swap is not
-      // reversible, so a thrown redecorator must be logged, not treated as
-      // if nothing happened.
-      setMeta('experiment', 'nav-test');
-      setMeta('experiment-variants', '/variant-a');
-      setMeta('experiment-selector', '.nav-target-redecorate-throws');
-      document.body.insertAdjacentHTML('beforeend', '<nav class="nav-target-redecorate-throws"><p>Default nav</p></nav>');
-      window.fetch = async () => ({ ok: true, text: async () => '<p>Variant nav</p>' });
-
-      registerRedecorator('.nav-target-redecorate-throws', () => { throw new Error('redecorator blew up'); });
-
-      const originalError = console.error;
-      const errors = [];
-      console.error = (...args) => errors.push(args);
-
-      let result;
-      try {
-        const { runExperiment: freshRun } = await freshExperimentation('?experimentPreview=/variant-a');
-        result = await freshRun('late');
-      } finally {
-        console.error = originalError;
-      }
-
-      // The swap itself already landed — a redecoration failure must not
-      // look like the swap never happened...
-      expect(document.querySelector('.nav-target-redecorate-throws p').textContent).to.equal('Variant nav');
-      // ...and must not be silently swallowed either.
-      expect(errors.length).to.be.above(0);
-      // runExperiment() itself must still resolve normally — a redecorator
-      // throwing must not reject the whole page-load chain.
-      expect(result.variant).to.equal('/variant-a');
-    });
-
-    it('does not call redecorate for the early/full-page-swap path, since no selector means no redecorator call', async () => {
-      // Pinning the `if (selector)` gate itself, not an incidentally-
-      // unmatched registration key: `selector` is `undefined` on this path,
-      // so a registration under a literal key (e.g. 'main') would never be
-      // hit regardless of whether the gate exists — a regression that
-      // dropped the gate and called `redecorate(undefined, target)`
-      // unconditionally would still leave that version of this test green.
-      // redecorate()'s own fail-open path only warns when it's actually
-      // invoked with no matching registration, so spying on console.warn
-      // catches an unconditional call (undefined never matches anything
-      // registered) while staying silent on the correct, gated behavior.
-      setConsent({ personalization: true });
-      setMeta('experiment', 'hero-test');
-      setMeta('experiment-variants', '/variant-a');
-      window.fetch = async () => ({ ok: true, text: async () => '<p>Variant content</p>' });
-
-      const originalWarn = console.warn;
-      const warnings = [];
-      console.warn = (...args) => warnings.push(args.join(' '));
-
-      let result;
-      try {
-        result = await runExperiment(); // default phase = 'early', no selector
-      } finally {
-        console.warn = originalWarn;
-      }
-
-      expect(result).to.not.equal(null);
-      expect(warnings.some((w) => w.includes('no redecorator registered'))).to.be.false;
-    });
-
-    it('waits for a late-appearing selector target before applying (bounded poll)', async () => {
-      setMeta('experiment', 'nav-test');
-      setMeta('experiment-variants', '/variant-a');
-      setMeta('experiment-selector', '.nav-target-late-appear');
-      window.fetch = async () => ({ ok: true, text: async () => '<p>Variant nav</p>' });
-
-      setTimeout(() => {
-        document.body.insertAdjacentHTML('beforeend', '<nav class="nav-target-late-appear"><p>Default nav</p></nav>');
-      }, 150);
-
-      const { runExperiment: freshRun } = await freshExperimentation('?experimentPreview=/variant-a');
-      const result = await freshRun('late');
-
-      expect(result.variant).to.equal('/variant-a');
-      expect(document.querySelector('.nav-target-late-appear p').textContent).to.equal('Variant nav');
-    });
-
-    it('fails open — no swap, no tracking — when the selector never resolves', async () => {
-      setConsent({ personalization: true, analytics: true });
-      setMeta('experiment', 'nav-test');
-      setMeta('experiment-variants', '/variant-a');
-      setMeta('experiment-selector', '.nav-target-that-never-appears');
       let fetchCalled = false;
       window.fetch = async () => {
         fetchCalled = true;
-        return { ok: true, text: async () => '<p>x</p>' };
+        return { ok: true, text: async () => '<p>Variant nav</p>' };
       };
 
-      const result = await runExperiment('late');
+      const result = await runExperiment();
 
       expect(result).to.equal(null);
       expect(fetchCalled).to.be.false;
       expect(tracked).to.have.length(0);
-    });
-
-    it('tags the tracked event renderType as element-swap, not full-page-swap', async () => {
-      setConsent({ personalization: true, analytics: true });
-      setMeta('experiment', 'nav-test');
-      setMeta('experiment-variants', '/variant-a');
-      setMeta('experiment-selector', '.nav-target-render-type');
-      document.body.insertAdjacentHTML('beforeend', '<nav class="nav-target-render-type"><p>Default nav</p></nav>');
-      window.fetch = async () => ({ ok: true, text: async () => '<p>Variant nav</p>' });
-
-      await runExperiment('late');
-
-      expect(tracked).to.have.length(1);
-      expect(tracked[0].renderType).to.equal('element-swap');
+      expect(document.querySelector('main p').textContent).to.equal('Control content');
+      expect(document.querySelector('.nav-target p').textContent).to.equal('Default nav');
     });
   });
 });

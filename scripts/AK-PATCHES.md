@@ -81,7 +81,7 @@ the foundation hardening plan (B7) were checked against the diff: `:55`, `:107-1
 | --- | --- | --- | --- | --- | --- |
 | L1 | module imports | Imports `getConfig`, `loadStyle` and `runExperimentationLazy` | Convention | Supports L3 and L4. | No |
 | L2 | `loadSidekick` | Path `../tools/sidekick/` becomes `./sidekick/`, plus `.catch` | Convention | Repo layout. | No |
-| L3 | default export (new) | Re-runnable: footer, experimentation panel, pzn and pzn-audit (not prod) | Mixed | Re-running the footer is an upstream fix (goes with ak.js 23). Experimentation and pzn are project code; pzn is removed in C1. | Footer part only |
+| L3 | default export (new) | Re-runnable: footer, experimentation panel and pzn (not prod) | Mixed | Re-running the footer is an upstream fix (goes with ak.js 23). Experimentation and pzn are project code; pzn is removed in C1. The pzn-audit experiment-collision check was removed in B4 (A2 = iii): with no chrome-scoped experiment left, nothing can collide. | Footer part only |
 | L4 | bootstrap IIFE | Adds `lazy-styles.css`, JSON-LD, hreflang, canonical, delegated click, `delayed.js` after 3 s, and `testid-audit` and `pzn-audit` (not prod) | Convention | SEO, analytics and dev audits. SEO stays one-shot because `jsonld.js` only appends. | No |
 | L5 | bootstrap IIFE | Utility paths move to `utils/page/` and `utils/seo/`; scheduler moves to `./scheduler/` | Convention | Repo layout. | No |
 | L6 | `loadSidekick`, bootstrap IIFE | `async function` and the named `(function loadLazy() {…}())` IIFE become arrow functions | Style | House lint style. | No |
