@@ -62,10 +62,10 @@ const pickWeightedIndex = (weights, point) => {
 export const isSameOriginPath = (path) => path.startsWith('/') && !path.startsWith('//');
 
 // Bug-squash fix, 2026-08-28: this fetch had no timeout at all. runExperiment()
-// is awaited before loadArea() in scripts.js — a deliberate, pre-existing
-// design choice this fix does not change (the full-page swap must land before
-// anything decorates, or decorated blocks get clobbered by raw variant HTML
-// with no re-decoration pass) — but that means an unbounded fetch was an
+// must run before loadArea() — a deliberate, pre-existing design choice this
+// fix does not change (the full-page swap must land before anything
+// decorates, or decorated blocks get clobbered by raw variant HTML with no
+// re-decoration pass) — but that means an unbounded fetch was an
 // unbounded reveal-gate: a hung network request blocked page reveal
 // indefinitely. A tight timeout, matching the same AbortSignal.timeout()
 // pattern scripts/utils/analytics/pzn.js already uses for its own decision fetch,
@@ -114,13 +114,11 @@ const applyChallenger = async (isControl, variant, target) => {
 };
 
 // Main-scoped (UC-01) full-page swap only, meant to run before loadArea()
-// decorates anything. Dormant: no runtime code calls it (experiment-loader.js
-// and the vendored plugin replaced it); pzn.js imports only getVisitorId and
-// isSameOriginPath from this file. The late chrome-scoped phase (UC-02,
-// `experiment-selector`) was removed with the redecorator registry
-// (foundation hardening A2 = iii). A page that still carries
-// `experiment-selector` no-ops rather than swapping <main> with content
-// authored for a nav or footer.
+// decorates anything. Dormant: no runtime code calls it. The late
+// chrome-scoped phase (UC-02, `experiment-selector`) was removed with the
+// redecorator registry (foundation hardening A2 = iii). A page that still
+// carries `experiment-selector` no-ops rather than swapping <main> with
+// content authored for a nav or footer.
 export const runExperiment = async () => {
   const experiment = getMetadata('experiment');
   if (!experiment) return null;

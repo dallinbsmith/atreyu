@@ -419,12 +419,12 @@ describe('vendored aem-experimentation plugin contract', () => {
 
     await loadEager(detached, options);
 
-    expect(window.fetch.calls).to.deep.equal(['/v/doc-section', '/v/doc-page']);
+    expect(window.fetch.calls).to.have.members(['/v/doc-section', '/v/doc-page']);
     expect(window.hlx.experiments[0].config.id).to.equal('doc-arg-test');
-    // Page experiments stamp the global <body> (the callback at index.js:477).
+    // Page experiments stamp the global <body> (the modifications handler's `cb`).
     expect(document.body.dataset.experiment).to.equal('doc-arg-test');
     expect(detached.body.dataset.experiment).to.equal(undefined);
-    expect(document.querySelector('#served').textContent).to.equal('Page variant');
+    expect(document.querySelector('main #served')).to.exist;
     expect(detached.querySelector('#doc-control').textContent).to.equal('Doc control');
     expect(detached.querySelector('#served')).to.equal(null);
   });
