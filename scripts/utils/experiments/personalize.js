@@ -27,10 +27,12 @@ import { statusOf, toClassName, VARIANT_ROOT } from './config.js';
 import { cellValue } from './block.js';
 import { withCampaigns } from './audiences.js';
 import { findConfigBlocks, removeConfigBlock } from './guard.js';
+import { DATE_ONLY } from '../i18n.js';
 
 export const MAX_RULES = 3;
 export const MAX_DAYS = 180;
-export const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+// Owned by utils/i18n.js; re-exported for experiments-panel/personalize-table.js.
+export { DATE_ONLY };
 const FIELDS = new Map([['name', 'name'], ['owner', 'owner'], ['status', 'status'], ['end-date', 'endDate']]);
 
 const warn = (prod, table, message) => {

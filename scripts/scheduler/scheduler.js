@@ -1,7 +1,7 @@
 import { LitElement, html } from '../vendor/lit/dist/index.js';
 import loadStyle from '../utils/styles.js';
 import { getScheduleSim, setScheduleSim, consumeUrlSim } from './schedule-sim.js';
-import { formatDate } from './utils.js';
+import { formatAuthorClock } from './utils.js';
 
 const styles = await loadStyle(import.meta.url);
 
@@ -51,8 +51,8 @@ class AemScheduler extends LitElement {
   }
 
   renderDate() {
-    const { date, time } = formatDate(Number(this.current * 1000));
-    const { date: utcDate, time: utcTime } = formatDate(Number(this.current * 1000), 'UTC');
+    const { date, time } = formatAuthorClock(Number(this.current * 1000));
+    const { date: utcDate, time: utcTime } = formatAuthorClock(Number(this.current * 1000), 'UTC');
 
     return html`
       <div class="date-group">
