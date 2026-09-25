@@ -23,7 +23,10 @@ import ENV from './env.js';
 // it never fires for a connected block. Keep the `= {}` default: a direct
 // call (tests) passes no second argument, leaving `signal` undefined, which
 // addEventListener accepts. Keep this guard too: the signal does not stop a
-// direct second call.
+// direct second call. The signal belongs to the element passed in: a block
+// that replaces that element (youtube.js's `a.replaceWith(container)`) has
+// its signal aborted on the next sweep while the new content is still live,
+// so only use it for resources tied to content that stays in the tree.
 export const guardDecorate = (el, name) => {
   if (el.dataset[name]) return false;
   el.dataset[name] = 'true';

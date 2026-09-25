@@ -1,13 +1,12 @@
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
-import {
-  getConfig, loadArea, setConfig, teardownDetached,
-} from '../../scripts/ak.js';
+import { getConfig, loadArea, setConfig } from '../../scripts/ak.js';
 import { config as pluginConfig } from '../../scripts/experiment-loader.js';
 import { loadFragment } from '../../scripts/utils/fragment.js';
 
 // B1: ak.js passes each block `default(el, { signal })` and aborts the signal
-// only once the block's element has left the document. The fixture blocks
+// only once the block's element has left the document; every loadArea call
+// sweeps first. The fixture blocks
 // under ./fixtures/blocks record what they were called with; codeBase is
 // pointed there so loadExperience imports them like real blocks.
 const FIXTURES = new URL('./fixtures', import.meta.url).href.replace(/\/$/, '');
@@ -35,9 +34,9 @@ describe('ak.js block teardown signal (B1)', () => {
     window.teardownProbe = new Map();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     document.body.innerHTML = '';
-    teardownDetached();
+    await loadArea({ area: document.createElement('div') });
     delete window.teardownProbe;
   });
 
@@ -103,7 +102,7 @@ describe('ak.js block teardown signal (B1)', () => {
     expect(signalOf(el).aborted).to.be.false;
 
     document.querySelector('header').append(fragment);
-    teardownDetached();
+    await loadArea({ area: document.createElement('div') });
     expect(signalOf(el).aborted).to.be.false;
 
     // Quick Edit discards the old <header>: its root is now the old header,
@@ -128,6 +127,23 @@ describe('ak.js block teardown signal (B1)', () => {
     expect(signalOf(asideOld).aborted).to.be.true;
     expect(signalOf(probeBlocks(aside)[0]).aborted).to.be.false;
     expect(signalOf(main).aborted).to.be.false;
+  });
+
+  it('aborts the old blocks after an experimentation.js-style replaceChildren plus loadArea({ area })', async () => {
+    document.body.innerHTML = `<footer><div class="fragment-content footer-content"><div>${PROBE}</div></div></footer>`;
+    const target = document.querySelector('.footer-content');
+    await loadArea({ area: target });
+    const [old] = probeBlocks(target);
+
+    // applyChallenger(): applyVariant() swaps target's children, then
+    // loadArea({ area: target }). Neither document-level nor decorateFunction.
+    const section = document.createElement('div');
+    section.innerHTML = PROBE;
+    target.replaceChildren(section);
+    await loadArea({ area: target });
+
+    expect(signalOf(old).aborted).to.be.true;
+    expect(signalOf(probeBlocks(target)[0]).aborted).to.be.false;
   });
 
   it('still decorates blocks whose default takes only one parameter', async () => {

@@ -14,7 +14,7 @@
 //      that did not run (inactive, expired, audience/consent not met) as
 //      "control", which would pollute the control arm — so read config.run.
 import ENV from './utils/env.js';
-import { getConfig, loadArea, teardownDetached } from './ak.js';
+import { getConfig, loadArea } from './ak.js';
 import { hasConsent } from './utils/analytics/consent.js';
 import { track, EVENTS } from './utils/analytics/analytics.js';
 import { getVisitorId } from './utils/analytics/visitor-id.js';
@@ -37,12 +37,7 @@ export const config = {
   audiences: AUDIENCES,
   // Plugin reads `decorateFunction` (its README says `decorationFunction`,
   // which is silently ignored). Only used for fragment-level manifest swaps.
-  // The plugin has just replaced el.innerHTML, so abort the discarded blocks'
-  // signals first (ak.js only sweeps on document-level loadArea).
-  decorateFunction: (el) => {
-    teardownDetached();
-    return loadArea({ area: el });
-  },
+  decorateFunction: (el) => loadArea({ area: el }),
 };
 
 export const isEnabled = () => !!(

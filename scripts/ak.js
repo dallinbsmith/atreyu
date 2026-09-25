@@ -78,12 +78,7 @@ export const loadStyle = async (href) => {
 // block-loading mechanism — see e.g. Adobe's own aem-boilerplate).
 const resolveModulePath = (codeBase, type, name) => `${codeBase}/${type}/${name}/${name}.js`;
 
-// Block teardown signal (AK-PATCHES.md, B1). Each decorated element gets one
-// AbortController; its signal is passed as `default(el, { signal })`. It is
-// aborted only once the element has left the document, found by the sweep
-// below, never on a re-run: connected blocks skip redecoration (blockStatus)
-// and must keep their live listeners. A Map, not a WeakMap, because the sweep
-// has to iterate it.
+// Block teardown signal: see AK-PATCHES.md #25.
 const controllers = new Map();
 
 const signalFor = (el) => {
@@ -91,14 +86,11 @@ const signalFor = (el) => {
   return controllers.get(el).signal;
 };
 
-// loadFragment() decorates inside a hidden container, then returns the
-// fragment detached until header/footer/replaceElWithFragment inserts it.
-// Blocks in that window have the `.fragment-content` element itself as their
-// root. A discarded old subtree has its topmost removed ancestor (the old
-// <header>, <main>, section...) as root, so it is still collected.
+// A root node that IS the .fragment-content means loadFragment() returned it
+// and no caller has inserted it yet (except the known gap in #25).
 const inPendingFragment = (el) => el.getRootNode().classList?.contains('fragment-content');
 
-export const teardownDetached = () => {
+const teardownDetached = () => {
   for (const [el, controller] of controllers) {
     if (!el.isConnected && !inPendingFragment(el)) {
       controller.abort();
@@ -523,9 +515,8 @@ const decorateDoc = () => {
 export const loadArea = async ({ area } = { area: document }) => {
   const isDoc = area === document;
   const isSession = sessionStorage.getItem('session');
+  teardownDetached();
   if (isDoc) {
-    // Quick Edit and dapreview swap body.innerHTML, then rerun this.
-    teardownDetached();
     if (isSession) await decorateSession();
     decorateDoc();
   }
