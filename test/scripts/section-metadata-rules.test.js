@@ -148,5 +148,18 @@ describe('section metadata follows the server rules (B2)', () => {
       await loadArea({ area });
       expect([...area.querySelectorAll('.section')].map((s) => s.id)).to.deep.equal(['pricing', 'offers', 'promo']);
     });
+
+    it('de-duplicates an Anchor against its own detached area, like promoteAnchors', async () => {
+      // A fragment is decorated before it is inserted, so document.querySelector
+      // can't see its sibling ids; slugifyUnique is given section.getRootNode().
+      const area = document.createElement('div');
+      area.innerHTML = [
+        '<div id="pricing-table"><p>a</p></div>',
+        `<div><p>b</p>${table([['Anchor', 'Pricing Table']])}</div>`,
+      ].join('');
+      await loadArea({ area });
+      expect([...area.querySelectorAll('.section')].map((s) => s.id))
+        .to.deep.equal(['pricing-table', 'pricing-table-2']);
+    });
   });
 });

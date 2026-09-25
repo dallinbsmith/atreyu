@@ -80,6 +80,19 @@ describe('fragment', () => {
       expect(new Set(ids).size).to.equal(ids.length);
     });
 
+    it('an authored section id survives a single-section fragment (B2)', async () => {
+      // Server-flattened `Id: Pricing` / `Anchor: Pricing` arrives as id="pricing".
+      restoreFetch = stubFetch(async () => new Response(
+        '<html><body><main><div id="pricing"><p>Plans</p></div></main></body></html>',
+        { status: 200 },
+      ));
+      const a = block('/system/fragments/pricing');
+      await decorate(a);
+      const section = [...document.querySelectorAll('.section')]
+        .find((el) => el.textContent.includes('Plans'));
+      expect(section.id).to.equal('pricing');
+    });
+
     it('double-decorate does not trigger a second fetch', async () => {
       let fetchCount = 0;
       restoreFetch = stubFetch(async () => {

@@ -99,7 +99,10 @@ export const replaceElWithFragment = (elToReplace, fragment, path) => {
     ? fragment.querySelectorAll(':scope > *')
     : [fragment];
   for (const [idx, child] of children.entries()) {
-    if (path?.startsWith('/')) child.id = btoa(encodeURIComponent(`${path}/${idx + 1}/${instance}`));
+    // `||=`: an authored section id (Id/Anchor section metadata) wins over the
+    // generated one (B2). Nothing decodes the generated id; lazyhash only
+    // scrolls to whatever id the hash names.
+    if (path?.startsWith('/')) child.id ||= btoa(encodeURIComponent(`${path}/${idx + 1}/${instance}`));
     elToReplace.after(child);
   }
   elToReplace.remove();

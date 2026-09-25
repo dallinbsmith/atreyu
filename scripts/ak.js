@@ -443,13 +443,14 @@ const decorateSection = (section) => {
         return;
       }
       // Reserved `anchor` key → a real, deep-linkable, de-duplicated section id
-      // (marketing deep-links, in-page jump nav). Server-flattened pages get the
-      // same result from scripts.js promoteAnchors (data-anchor). An `id`
-      // already on the section wins, as it does there. Assigned in eager
+      // (marketing deep-links, in-page jump nav). Server-flattened pages go
+      // through scripts.js promoteAnchors (data-anchor) instead, which also
+      // de-dupes against the root node and lets an existing `id` win. (The
+      // server uses a linked cell's href as the value; this reads textContent.) Assigned in eager
       // section decoration, before lazy.js imports lazyhash.js, so the id
       // exists before lazyhash's scrollIntoView on a cold deep-link.
       if (key === 'anchor') {
-        const id = !section.id && slugifyUnique(content.textContent);
+        const id = !section.id && slugifyUnique(content.textContent, section.getRootNode());
         if (id) section.id = id;
         return;
       }

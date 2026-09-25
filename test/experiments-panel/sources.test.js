@@ -1,6 +1,7 @@
 import { expect } from '@esm-bundle/chai';
 import {
   readPage, readSheet, sourceOf, isPagePath, pathFromDaContext, waitForDaContext,
+  sectionKeyIssues,
 } from '../../experiments-panel/sources.js';
 
 const PAGE = `<html><head>
@@ -113,5 +114,29 @@ describe('experiments-panel/sources.js', () => {
     window.dispatchEvent(new MessageEvent('message', { origin: 'https://da.live', source: window.parent, data: { ready: true, context: { path: '/pricing' } } }));
     expect(await pending).to.deep.equal({ path: '/pricing', port: null });
     expect(await waitForDaContext(50)).to.equal(null);
+  });
+});
+
+// PLUGIN_ATTR, through its only caller. Keep in step with the reserved-keys
+// rule in tools/sidekick/blocks.md.
+describe('sectionKeyIssues reserved keys (B2)', () => {
+  const flagged = (attr) => sectionKeyIssues(`<main><div ${attr}="x"><p>a</p></div></main>`).length > 0;
+  const cases = [
+    ['data-experiment', true],
+    ['data-experiment-variants', true],
+    ['data-campaign:-launch', true],
+    ['data-audiences', true],
+    ['data-audience', true],
+    ['data-audience:-mobile', true],
+    ['data-variant', true],
+    ['data-variants', false],
+    ['data-experiments', false],
+    ['data-grid', false],
+    ['data-campaigns', false],
+  ];
+  cases.forEach(([attr, expected]) => {
+    it(`${attr} is ${expected ? '' : 'not '}reserved`, () => {
+      expect(flagged(attr)).to.equal(expected);
+    });
   });
 });

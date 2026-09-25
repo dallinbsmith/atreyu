@@ -125,6 +125,78 @@ describe('scripts/utils/analytics/pzn.js', () => {
       expect(tracked.some((e) => e.reason === 'no_variant_authored')).to.equal(false);
     });
 
+    it('reports placement and variantId as typed while matching case-insensitively (B2)', async () => {
+      const section = setupSection();
+      section.dataset.pzn = 'HERO-cta';
+      setConsent({ analytics: true });
+      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow({ placement: 'Hero-CTA' })])]]);
+
+      const { decoratePznSlots } = await freshPzn('?segment=enterprise');
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); });
+
+      const applied = tracked.find((e) => e.event === 'personalization_applied');
+      expect(applied.placement).to.equal('Hero-CTA');
+      expect(applied.variantId).to.equal('Hero-CTA:enterprise:Enterprise CTA');
+      expect(JSON.parse(sessionStorage.getItem('pzn-variants-cache-v1'))[0].placement).to.equal('Hero-CTA');
+      expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
+    });
+
+    it('reports the section placement as typed in a fallback (B2)', async () => {
+      const section = setupSection();
+      section.dataset.pzn = 'HERO-cta';
+      setConsent({ analytics: true });
+      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow({ placement: 'Hero-CTA' })])]]);
+
+      const { decoratePznSlots } = await freshPzn('?segment=nobody');
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 100); });
+
+      const fallback = tracked.find((e) => e.event === 'personalization_fallback');
+      expect(fallback.placement).to.equal('HERO-cta');
+      expect(fallback.reason).to.equal('no_variant_for_segment');
+    });
+
+    it('a storage write error does not discard a good fetch (B2 review)', async () => {
+      const section = setupSection();
+      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
+      const original = Storage.prototype.setItem;
+      Storage.prototype.setItem = () => {
+        throw new DOMException('full', 'QuotaExceededError');
+      };
+      try {
+        const { decoratePznSlots } = await freshPzn('?segment=enterprise');
+        stopPzn = decoratePznSlots(document);
+        await new Promise((r) => { setTimeout(r, 300); });
+      } finally {
+        Storage.prototype.setItem = original;
+      }
+      expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
+    });
+
+    it('a storage read error does not skip the fetch (B2 review)', async () => {
+      const section = setupSection();
+      let fetched = false;
+      mockFetch([[FIXTURE_URL, () => {
+        fetched = true;
+        return variantsResponse([variantRow()]);
+      }]]);
+      // Same stub shape as visitor-id.test.js: every storage read throws.
+      const original = Storage.prototype.getItem;
+      Storage.prototype.getItem = () => {
+        throw new DOMException('blocked', 'SecurityError');
+      };
+      try {
+        const { decoratePznSlots } = await freshPzn('?segment=enterprise');
+        stopPzn = decoratePznSlots(document);
+        await new Promise((r) => { setTimeout(r, 300); });
+      } finally {
+        Storage.prototype.getItem = original;
+      }
+      expect(fetched).to.equal(true);
+      expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
+    });
+
     it('normalises a mixed-case placement read from the session cache (B2)', async () => {
       const section = setupSection();
       section.dataset.pzn = 'Hero-Cta';
@@ -269,10 +341,10 @@ describe('scripts/utils/analytics/pzn.js', () => {
       expect(() => { stopPzn = decoratePznSlots(document); }).to.not.throw();
       await new Promise((r) => { setTimeout(r, 50); });
 
-      // loadVariants()'s outer try/catch treats a JSON.parse failure the same
-      // as "no variants sheet at all" — fails open to [] rather than falling
-      // through to a real refetch, so baseline content stays untouched.
-      expect(section.querySelector('.cta-link').textContent).to.equal('Default CTA');
+      // B2 review: a corrupt cache now counts as no cache (readCache), so the
+      // sheet is fetched and the variant applies, instead of failing open to [].
+      await new Promise((r) => { setTimeout(r, 250); });
+      expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
     });
 
     it('does not raise an unhandled rejection on a syntactically invalid authored selector — bug-squash fix', async () => {
