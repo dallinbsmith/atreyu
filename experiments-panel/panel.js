@@ -9,6 +9,7 @@ import {
   sourceOf, waitForDaContext,
 } from './sources.js';
 import { renderBuildTab, renderPersonalizeTab } from './build-tabs.js';
+import { check, compileTableRules } from './personalize-table.js';
 
 const params = new URLSearchParams(window.location.search);
 // Page comes from Sidekick (?referrer=), a direct link (?page=), or the DA
@@ -68,13 +69,12 @@ const variantTable = (cfg) => h(
   ))),
 );
 
-const missingVariantIssues = async (cfg) => {
-  const challengers = cfg.variants.slice(1);
-  const exists = await Promise.all(challengers.map((v) => pathExists(v.path)));
-  const found = challengers.map((v, i) => (exists[i] ? null : v.path));
-  const missing = found.filter(Boolean);
+const missingPathIssues = async (paths) => {
+  const exists = await Promise.all(paths.map(pathExists));
+  const missing = paths.filter((_, i) => !exists[i]);
   return missing.length ? [{ level: 'error', message: `Variant page not found: ${missing.join(', ')}` }] : [];
 };
+const missingVariantIssues = (cfg) => missingPathIssues(cfg.variants.slice(1).map((v) => v.path));
 
 const testCard = async (test, rows) => {
   const { scope, cfg } = test;
@@ -82,7 +82,6 @@ const testCard = async (test, rows) => {
   const issues = validate(cfg, {
     audiences: AUDIENCE_NAMES,
     variantRoot: VARIANT_ROOT,
-    scope: test.kind === 'section' ? 'section' : 'page',
   });
   for (const message of [source.issue, ...(test.notes ?? [])].filter(Boolean)) issues.push({ level: 'warn', message });
   issues.push(...await missingVariantIssues(cfg));
@@ -100,6 +99,38 @@ const testCard = async (test, rows) => {
   );
 };
 
+// A section's Personalize table, as the compiler serves it with production
+// rules (sources.js readPersonalize). Issues reuse the Personalize tab's checks;
+// an error-level issue wins the badge, as in testCard.
+const personalizeCard = async ({
+  scope, values, served, notes,
+}) => {
+  const rules = served.length ? served : compileTableRules(values).rules;
+  const issues = [...check(values), ...notes.map((message) => ({ level: 'warn', message }))];
+  issues.push(...await missingPathIssues(rules.map(({ path }) => path)));
+  const blocked = issues.some(({ level }) => level === 'error');
+  const [label, tone] = (blocked && ['blocked', 'blocked']) || (served.length && ['running', 'running']) || ['not served', 'ended'];
+  const preview = (id) => {
+    const url = new URL(pageUrl);
+    url.searchParams.set('audience', id);
+    return url.href;
+  };
+  return h(
+    'article',
+    { className: 'card' },
+    h('header', {}, h('h2', {}, values.Name || 'Unnamed personalization'), h('span', { className: `badge ${tone}` }, label)),
+    h('p', { className: 'meta' }, `${scope} | Personalize table (page doc) | End Date ${values['End Date'] || 'missing'}${values.Owner ? ` | Owner ${values.Owner}` : ''}`),
+    h('table', {}, h('thead', {}, h('tr', {}, ['Audience', 'Page', ''].map((t) => h('th', {}, t)))), h('tbody', {}, rules.map(({ id, path }) => h(
+      'tr',
+      { 'data-path': path },
+      h('td', {}, id),
+      h('td', {}, h('a', { href: path, target: '_blank' }, path)),
+      h('td', {}, h('a', { href: preview(id), target: '_blank' }, 'Preview')),
+    )))),
+    issueList(issues),
+  );
+};
+
 const loadSheet = async (sheet) => readSheet(await fetchJson(sheet), sheet);
 const loadRows = async () => (await Promise.all(SHEETS.map(loadSheet))).flat();
 
@@ -109,7 +140,7 @@ const renderPage = async () => {
   const tests = readPage(html, pagePath);
   const keyIssues = sectionKeyIssues(html).map((message) => ({ level: 'warn', message }));
   return [h('p', { className: 'path' }, pagePath), ...(keyIssues.length ? [issueList(keyIssues)] : []), ...(tests.length
-    ? await Promise.all(tests.map((t) => testCard(t, rows)))
+    ? await Promise.all(tests.map((t) => (t.kind === 'personalize' ? personalizeCard(t) : testCard(t, rows))))
     : [h('p', {}, 'No tests on this page.')])];
 };
 
@@ -133,7 +164,7 @@ const renderSite = async () => {
     );
   }));
   return [
-    h('p', { className: 'note' }, 'Whole-page tests from the metadata sheets. Section tests live in page docs: open the page view on that page.'),
+    h('p', { className: 'note' }, 'Whole-page tests from the metadata sheets. Section personalizations live in Personalize tables in page docs: open the page view on that page.'),
     rows.length ? h('table', { className: 'site' }, h('thead', {}, h('tr', {}, ['Pages', 'Test', 'Status', 'Variants', 'Checks', 'Sheet'].map((t) => h('th', {}, t)))), h('tbody', {}, body))
       : h('p', {}, `No tests in ${SHEETS.join(' or ')}.`),
   ];
