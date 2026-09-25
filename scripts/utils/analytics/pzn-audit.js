@@ -77,7 +77,7 @@ export const auditExperimentCollision = async ({
 
   const variants = await load();
   [...root.querySelectorAll('[data-pzn]')].forEach((section) => {
-    const placement = section.dataset.pzn;
+    const placement = section.dataset.pzn.toLowerCase(); // same rule as pzn.js decorateSection
     const collidingRow = variants
       .filter((row) => row.placement === placement)
       .find((row) => {

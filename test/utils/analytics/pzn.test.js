@@ -111,6 +111,18 @@ describe('scripts/utils/analytics/pzn.js', () => {
       expect(decisionCalled).to.be.false;
     });
 
+    it('matches a placement authored in mixed case (B2: server keeps section metadata case)', async () => {
+      const section = setupSection();
+      section.dataset.pzn = 'Hero-CTA';
+      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
+
+      const { decoratePznSlots } = await freshPzn('?segment=enterprise');
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); });
+
+      expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
+    });
+
     it('leaves baseline content when no row matches the previewed segment', async () => {
       const section = setupSection();
       mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);

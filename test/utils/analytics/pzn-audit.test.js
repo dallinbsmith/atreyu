@@ -216,6 +216,17 @@ describe('scripts/utils/analytics/pzn-audit.js — auditExperimentCollision (ADR
     expect(warnCalls).to.have.length(1);
   });
 
+  it('matches a placement authored in mixed case (B2: server keeps section metadata case)', async () => {
+    const root = buildRoot('<div class="chrome" data-pzn="Hero"><a class="shared cta-link">Default</a></div>');
+    await auditExperimentCollision({
+      experimentSelector: '.shared',
+      root,
+      load: loadRows([variantRow({ placement: 'hero', selector: '.cta-link' })]),
+    });
+
+    expect(warnCalls).to.have.length(1);
+  });
+
   it('does NOT warn when the experiment target and pzn target are disjoint', async () => {
     const root = buildRoot(`
       <div class="wrap">

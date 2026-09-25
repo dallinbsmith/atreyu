@@ -5,8 +5,8 @@ import {
 } from '../scripts/utils/experiments/config.js';
 import { AUDIENCE_NAMES } from '../scripts/utils/experiments/audiences.js';
 import {
-  SHEETS, fetchText, isPagePath, fetchJson, pathExists, readPage, readSheet, sourceOf,
-  waitForDaContext,
+  SHEETS, fetchText, isPagePath, fetchJson, pathExists, readPage, readSheet, sectionKeyIssues,
+  sourceOf, waitForDaContext,
 } from './sources.js';
 import { renderBuildTab, renderPersonalizeTab } from './build-tabs.js';
 
@@ -107,7 +107,8 @@ const renderPage = async () => {
   if (pageError) return [h('p', { className: 'error' }, pageError)];
   const [html, rows] = await Promise.all([fetchText(pagePath), loadRows()]);
   const tests = readPage(html, pagePath);
-  return [h('p', { className: 'path' }, pagePath), ...(tests.length
+  const keyIssues = sectionKeyIssues(html).map((message) => ({ level: 'warn', message }));
+  return [h('p', { className: 'path' }, pagePath), ...(keyIssues.length ? [issueList(keyIssues)] : []), ...(tests.length
     ? await Promise.all(tests.map((t) => testCard(t, rows)))
     : [h('p', {}, 'No tests on this page.')])];
 };

@@ -1,3 +1,5 @@
+import { toClassName } from '../../scripts/ak.js';
+
 const toLinear = (v) => {
   const s = v / 255;
   return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
@@ -31,7 +33,7 @@ export const setColorScheme = (section) => {
 
 const applyMediaBackground = async (background, section) => {
   const url = new URL(background);
-  if (url.pathname.endsWith('.mp4')) return;
+  if (/\.mp4$/i.test(url.pathname)) return;
   const { createPicture } = await import('../../scripts/utils/media/picture.js');
   const pic = createPicture({ src: url.href });
   pic.classList.add('section-background');
@@ -39,25 +41,32 @@ const applyMediaBackground = async (background, section) => {
   section.prepend(pic);
 };
 
+// The server keeps values as authored (`Color-Token-Accent`), so only the
+// token check is case-insensitive; any other CSS color passes through as is.
 const applyColorBackground = (background, section) => {
-  section.style.backgroundColor = background.startsWith('color-token')
-    ? `var(${background.replace('color-token', '--color')})`
+  const token = background.toLowerCase();
+  section.style.backgroundColor = token.startsWith('color-token')
+    ? `var(${token.replace('color-token', '--color')})`
     : background;
   setColorScheme(section);
 };
 
+// URLs keep their authored case: paths are case-sensitive.
 const handleBackground = async (background, section) => {
   delete section.dataset.background;
-  return /^https?:\/\//.test(background)
+  return /^https?:\/\//i.test(background)
     ? applyMediaBackground(background, section)
     : applyColorBackground(background, section);
 };
 
+// Authored values arrive as typed (`Bento`, `3 col`): classify them the way
+// block variants are, so `.layout-bento` matches and a space can't throw.
 const handleLayout = (value, section, type) => {
   delete section.dataset[type];
-  if (value === '0') return;
+  const name = toClassName(value);
+  if (!name || name === '0') return;
   if (type === 'grid') section.classList.add('grid');
-  section.classList.add(`${type}-${value}`);
+  section.classList.add(`${type}-${name}`);
 };
 
 export default async (section) => {

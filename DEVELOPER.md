@@ -118,6 +118,9 @@ Sections are `<div>` children of `<main>`, separated by `---` in the authored do
 | `gap` / `spacing` | Spacing tokens (`xs`, `s`, `m`, `l`, `xl`, `xxl`) |
 | `container` | Content width constraint (2, 4, or 6) |
 | `layout` | `bento` for asymmetric grid |
+| `anchor` | De-duplicated slug `id` for deep links (an `id` row wins) |
+
+EDS applies the table on the server: `style` becomes classes, other keys become `data-*` attributes with the value as typed, and the table is removed before any JS runs. Don't use `experiment`, `variant`, `audience`, `audiences` or `campaign` keys here; see the Section Metadata entry in `tools/sidekick/blocks.md`.
 
 For the full architecture, see [CLAUDE.md](../CLAUDE.md).
 

@@ -94,7 +94,7 @@ Each row in the document table becomes a `.row` element. Each cell within a row 
 
 **Content structure**:
 
-The block reads `data-*` attributes from the section element (set by the EDS framework from the Section Metadata table). Supported keys:
+The block reads `data-*` attributes from the section element. EDS sets them on the server from the Section Metadata table and removes the table, so the block never sees it. Values keep the case the author typed; `grid`, `gap`, `spacing`, `container` and `layout` values are turned into class names (lowercase, spaces to hyphens), so `Bento` and `bento` are the same. Supported keys:
 
 | Key | Values | Effect |
 |-----|--------|--------|
@@ -102,10 +102,13 @@ The block reads `data-*` attributes from the section element (set by the EDS fra
 | `gap` | `xs`, `s`, `m`, `l`, `xl`, `xxl` | Sets grid gap spacing |
 | `spacing` | `xs`, `s`, `m`, `l`, `xl`, `xxl` | Sets top/bottom padding on the section |
 | `container` | `2`, `4`, `6` | Constrains section content width (2 = narrow, 6 = full grid width) |
-| `background` | URL or CSS color or `color-token-*` | Sets a background image, color, or design token. URLs ending in `.mp4` are ignored. Token format: `color-token-accent` maps to `var(--color-accent)`. |
+| `background` | URL or CSS color or `color-token-*` | Sets a background image, color, or design token. URLs ending in `.mp4` are ignored. Token format: `color-token-accent` maps to `var(--color-accent)`, in any case. Image URLs keep their case. |
 | `layout` | `bento` | Applies a predefined asymmetric bento grid layout (3-column at 768px+ with named grid areas) |
 | `style` | CSS class names | Applied directly as classes on the section by the framework (not handled by this JS) |
-| `anchor` | Any text | Reserved key. Framework promotes it to a real, slugified section `id` (e.g. `Pricing` → `id="pricing"`), giving a deep-linkable `#anchor` target for marketing campaign links and in-page jump navigation — it does **not** produce a `data-anchor` attribute. Auto de-duped with a numeric suffix if repeated. Slugged lowercase like a heading anchor. Handled in `ak.js`, not this block's JS. |
+| `anchor` | Any text | Reserved key. Promoted to a real, slugified section `id` (e.g. `Pricing Table` → `id="pricing-table"`), giving a deep-linkable `#anchor` target for marketing campaign links and in-page jump navigation. No `data-anchor` attribute is left on the section. Auto de-duped with a numeric suffix if repeated. Slugged lowercase like a heading anchor. If the section also has an `id` row, the `id` wins and the anchor is ignored. Handled in `scripts/scripts.js` (`promoteAnchors`), not this block's JS. |
+| `id` | Any text | Sets the section `id` directly (EDS server rule: lowercase, invalid characters to hyphens, leading non-letters removed). Not de-duped, so prefer `anchor`. |
+
+**Keys you must not use in Section Metadata**: `experiment` (and any `experiment …` key), `variant`, `audience` (and `audience: …`), `audiences` and `campaign` (and `campaign: …`). The server turns them into `data-experiment`, `data-variant`, `data-audience` and so on, which are the same attributes the experimentation plugin writes to report what it served, and the plugin doesn't read section metadata on this site today (PLAN.md `pz-section-meta`). Put tests in an Experiment table and audiences in a Personalize table. The Experiments panel warns when a page has one of these keys.
 
 The block also exports `setColorScheme(section)` and `getColorScheme(section)`, which calculate whether a section background is light or dark (using relative luminance) and apply `light-scheme` or `dark-scheme` classes to child elements.
 

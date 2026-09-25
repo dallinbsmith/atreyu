@@ -430,7 +430,9 @@ const applyResolved = async (placementKey, resolved, segment) => {
 };
 
 const decorateSection = async (section) => {
-  const placementKey = section.dataset.pzn;
+  // Section metadata values keep their authored case (`Pzn: Hero`); placements
+  // in the variants sheet are lowercase.
+  const placementKey = section.dataset.pzn.toLowerCase();
   const variants = await loadVariants();
   // nothing authored for this slot
   if (!variants.some((row) => row.placement === placementKey)) {

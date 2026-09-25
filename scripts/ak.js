@@ -338,7 +338,7 @@ const groupChildren = (section) => {
   return groups;
 };
 
-const toClassName = (name) => (typeof name === 'string'
+export const toClassName = (name) => (typeof name === 'string'
   ? name
     .toLowerCase()
     .replace(/[^0-9a-z]/gi, '-')
@@ -388,46 +388,75 @@ export const slugifyUnique = (text, root = document) => {
   return id;
 };
 
+// Client parser for section-metadata tables our own code builds in the
+// browser (personalize.js Audience rows, guard.js carryOverSectionMeta) and for
+// raw DA markup (Quick Edit, dapreview). Authored pages never reach it: EDS
+// flattens section metadata on the server. It follows the server's rules
+// (helix-html-pipeline 48f4301, steps/extract-section-metadata.js,
+// utils/modifiers.js toMetaName, steps/utils.js toSectionId), so both paths
+// give one result. See AK-PATCHES.md #19 and #26.
+const toMetaName = (text) => {
+  const name = text.replace(/[^0-9a-zA-Z:_-]/g, '-');
+  const lower = name.toLowerCase();
+  return lower.startsWith('hreflang-') || lower.startsWith('hreflang:')
+    ? `hreflang:${name.substring(9)}`
+    : lower;
+};
+
+const toSectionId = (text) => text.toLowerCase()
+  .replace(/[^0-9a-z._:-]+/g, '-')
+  .replace(/^[^a-z]+/, '')
+  .replace(/-+$/, '');
+
+const textParts = (node) => {
+  const parts = [];
+  const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) parts.push(...walker.currentNode.nodeValue.split(','));
+  return parts;
+};
+
+// Image srcs and link hrefs (absolute), plus comma-split text, in document order.
+const metaTokens = (node) => [...node.childNodes].flatMap((child) => {
+  if (child.nodeType === Node.TEXT_NODE) return child.nodeValue.split(',').map((t) => t.trim()).filter(Boolean);
+  if (child.matches?.('img[src]')) return [child.src];
+  if (child.matches?.('a[href]')) return [child.href];
+  return child.nodeType === Node.ELEMENT_NODE ? metaTokens(child) : [];
+});
+
 const decorateSection = (section) => {
   section.classList.add('section');
 
   const metaEl = section.querySelector(':scope > .section-metadata');
   if (metaEl) {
     [...metaEl.children].forEach((row) => {
-      const key = row.children[0].textContent.trim().toLowerCase();
-      const content = row.children[1];
+      const [name, content] = row.children;
       if (!content) return;
-      const text = content.querySelector('img')?.src ?? content.textContent.trim().toLowerCase();
-      if (!(key && text)) return;
+      const key = toMetaName(name.textContent.trim());
+      if (!key) return;
       if (key === 'style') {
-        const styles = text.split(',').map((style) => toClassName(style));
-        section.classList.add(...styles);
+        section.classList.add(...textParts(content).map(toClassName).filter(Boolean));
         return;
       }
-      // Reserved `anchor` key → a real, deep-linkable section id (marketing
-      // deep-links, in-page jump nav). Slugified via slugifyUnique() (wraps
-      // toClassName) — lowercase, mirroring the standard EDS heading-slug
-      // convention so a section anchor reads like a heading anchor (exact
-      // server-pipeline parity is not verifiable from this repo; slugifyUnique's
-      // own document-wide de-dup is the safety net for any residual mismatch)
-      // — none of the reference EDS sites this was modelled on
-      // (cmegroup/vitamix/stericycle) did that. Assigned here in eager section
-      // decoration (decorateSections runs over every section before the
-      // block-load loop and before lazy.js imports lazyhash.js), so the id
-      // exists before lazyhash's scrollIntoView fires on a cold deep-link to a
-      // below-fold section.
-      if (key === 'anchor') {
-        const id = slugifyUnique(text);
+      if (key === 'id') {
+        const id = toSectionId(content.textContent);
         if (id) section.id = id;
         return;
       }
-      // Keys become data-* attributes, so normalize to a valid dataset name:
-      // multi-word keys ("Experiment Variants", "Campaign: Launch") are
-      // required by adobe/aem-experimentation's section metadata and, raw,
-      // throw InvalidCharacterError here — aborting decoration of every
-      // remaining section.
-      const dataKey = toClassName(key).replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-      if (dataKey) section.dataset[dataKey] = text;
+      // Reserved `anchor` key → a real, deep-linkable, de-duplicated section id
+      // (marketing deep-links, in-page jump nav). Server-flattened pages get the
+      // same result from scripts.js promoteAnchors (data-anchor). An `id`
+      // already on the section wins, as it does there. Assigned in eager
+      // section decoration, before lazy.js imports lazyhash.js, so the id
+      // exists before lazyhash's scrollIntoView on a cold deep-link.
+      if (key === 'anchor') {
+        const id = !section.id && slugifyUnique(content.textContent);
+        if (id) section.id = id;
+        return;
+      }
+      // setAttribute, not dataset, so the attribute name is exactly the one the
+      // server writes (`Campaign: Launch` → data-campaign:-launch) with no
+      // camelCase round trip. Values are kept as authored.
+      section.setAttribute(`data-${key}`, metaTokens(content).join(','));
     });
     metaEl.remove();
   }
