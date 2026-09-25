@@ -1,6 +1,7 @@
 import { onReveal, addPauseToggle } from '../../scripts/utils/motion/motion.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
+import { createElement } from '../../scripts/utils/dom.js';
 
 const asset = (file) => new URL(file, import.meta.url).href;
 
@@ -15,20 +16,14 @@ export default (el) => {
   const poster = row?.querySelector('img')?.src || asset('bookend-glow.jpg');
 
   el.replaceChildren();
-  const media = document.createElement('div');
-  media.className = 'footer-glow-media';
-  media.setAttribute('aria-hidden', 'true');
-  const glow = document.createElement('div');
-  glow.className = 'footer-glow-gradient';
-  glow.setAttribute('aria-hidden', 'true');
+  const media = createElement('div', { className: 'footer-glow-media', 'aria-hidden': 'true' });
+  const glow = createElement('div', { className: 'footer-glow-gradient', 'aria-hidden': 'true' });
   el.append(media, glow);
 
   // onReveal gates on shouldAnimate(): reduced-motion/save-data/low-end → poster only
   onReveal(el, async ({ immediate }) => {
     if (immediate) {
-      const img = document.createElement('img');
-      img.src = poster;
-      img.alt = '';
+      const img = createElement('img', { src: poster, alt: '' });
       media.append(img);
       return;
     }
