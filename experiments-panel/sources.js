@@ -67,7 +67,8 @@ export const readPage = (html, pagePath) => {
 // Section-metadata keys the experimentation plugin owns. EDS flattens them on
 // the server to data-* on the section, where they look like plugin output
 // (data-experiment, data-variant, data-audience, data-audiences) and the
-// plugin never reads them (tools/sidekick/blocks.md, Section Metadata).
+// plugin never reads them. Keep in step with the rule in tools/sidekick/blocks.md
+// ("Keys you must not use in Section Metadata").
 const PLUGIN_ATTR = /^data-(experiment|variant|audiences?|campaign)($|[-:])/;
 
 export const sectionKeyIssues = (html) => {

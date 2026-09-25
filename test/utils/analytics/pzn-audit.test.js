@@ -216,12 +216,12 @@ describe('scripts/utils/analytics/pzn-audit.js — auditExperimentCollision (ADR
     expect(warnCalls).to.have.length(1);
   });
 
-  it('matches a placement authored in mixed case (B2: server keeps section metadata case)', async () => {
+  it('matches a mixed-case sheet row to a mixed-case authored placement (B2)', async () => {
     const root = buildRoot('<div class="chrome" data-pzn="Hero"><a class="shared cta-link">Default</a></div>');
     await auditExperimentCollision({
       experimentSelector: '.shared',
       root,
-      load: loadRows([variantRow({ placement: 'hero', selector: '.cta-link' })]),
+      load: loadRows([variantRow({ placement: 'HERO', selector: '.cta-link' })]),
     });
 
     expect(warnCalls).to.have.length(1);

@@ -69,6 +69,18 @@ describe('section metadata follows the server rules (B2)', () => {
       expect(sections.some((s) => s.hasAttribute('data-anchor'))).to.equal(false);
     });
 
+    it('document path: main > div[data-anchor], with no argument, is idempotent', () => {
+      const main = document.createElement('main');
+      main.innerHTML = '<div data-anchor="Pricing Table"><p>a</p></div>';
+      document.body.append(main);
+      const section = main.firstElementChild;
+      promoteAnchors();
+      expect(section.id).to.equal('pricing-table');
+      expect(section.hasAttribute('data-anchor')).to.equal(false);
+      promoteAnchors();
+      expect(section.id).to.equal('pricing-table');
+    });
+
     it('an existing id wins', () => {
       const area = mount('<div id="plans" data-anchor="Pricing Table"></div>');
       promoteAnchors(area);

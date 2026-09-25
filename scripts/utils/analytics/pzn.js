@@ -193,6 +193,17 @@ const buildVariantsUrl = () => {
 // the same session read the mapping synchronously, same spirit as the cookie
 // making the DECISION synchronous on warm visits — see file header note.
 let variantsPromise;
+
+// Placements are compared lowercase and trimmed on both sides: section
+// metadata keeps the authored case (`Pzn: Hero-CTA`, B2) and so does the sheet.
+// Shared with pzn-audit.js.
+export const toPlacement = (value) => `${value ?? ''}`.trim().toLowerCase();
+
+// Normalised before isValidRow, so a whitespace-only placement is dropped.
+const usableRows = (rows) => rows
+  .map((row) => ({ ...row, placement: toPlacement(row?.placement) }))
+  .filter(isValidRow);
+
 // Exported so the dev-mode-only pzn-audit.js can reuse this exact memoized,
 // isValidRow-filtered promise and issue zero extra network fetch (the audit
 // and decoratePznSlots share one in-flight load per tab session).
@@ -207,11 +218,11 @@ export const loadVariants = () => {
     // a column was added gets re-validated, not trusted blindly.
     try {
       const cached = sessionStorage.getItem(VARIANTS_CACHE_KEY);
-      if (cached) return JSON.parse(cached).filter(isValidRow);
+      if (cached) return usableRows(JSON.parse(cached));
       const res = await fetch(buildVariantsUrl());
       if (!res.ok) return [];
       const { data } = await res.json();
-      const rows = (data ?? []).filter(isValidRow);
+      const rows = usableRows(data ?? []);
       sessionStorage.setItem(VARIANTS_CACHE_KEY, JSON.stringify(rows));
       return rows;
     } catch {
@@ -430,9 +441,7 @@ const applyResolved = async (placementKey, resolved, segment) => {
 };
 
 const decorateSection = async (section) => {
-  // Section metadata values keep their authored case (`Pzn: Hero`); placements
-  // in the variants sheet are lowercase.
-  const placementKey = section.dataset.pzn.toLowerCase();
+  const placementKey = toPlacement(section.dataset.pzn);
   const variants = await loadVariants();
   // nothing authored for this slot
   if (!variants.some((row) => row.placement === placementKey)) {

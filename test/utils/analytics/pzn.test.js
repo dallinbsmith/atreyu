@@ -111,10 +111,25 @@ describe('scripts/utils/analytics/pzn.js', () => {
       expect(decisionCalled).to.be.false;
     });
 
-    it('matches a placement authored in mixed case (B2: server keeps section metadata case)', async () => {
+    it('matches a mixed-case sheet row to a mixed-case authored placement (B2)', async () => {
       const section = setupSection();
-      section.dataset.pzn = 'Hero-CTA';
-      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow()])]]);
+      section.dataset.pzn = 'HERO-cta';
+      setConsent({ analytics: true }); // so a fallback event would be recorded
+      mockFetch([[FIXTURE_URL, () => variantsResponse([variantRow({ placement: ' Hero-CTA ' })])]]);
+
+      const { decoratePznSlots } = await freshPzn('?segment=enterprise');
+      stopPzn = decoratePznSlots(document);
+      await new Promise((r) => { setTimeout(r, 300); });
+
+      expect(section.querySelector('.cta-link').textContent).to.equal('Enterprise CTA');
+      expect(tracked.some((e) => e.reason === 'no_variant_authored')).to.equal(false);
+    });
+
+    it('normalises a mixed-case placement read from the session cache (B2)', async () => {
+      const section = setupSection();
+      section.dataset.pzn = 'Hero-Cta';
+      sessionStorage.setItem('pzn-variants-cache-v1', JSON.stringify([variantRow({ placement: 'HERO-CTA' })]));
+      mockFetch([]);
 
       const { decoratePznSlots } = await freshPzn('?segment=enterprise');
       stopPzn = decoratePznSlots(document);

@@ -120,7 +120,7 @@ Sections are `<div>` children of `<main>`, separated by `---` in the authored do
 | `layout` | `bento` for asymmetric grid |
 | `anchor` | De-duplicated slug `id` for deep links (an `id` row wins) |
 
-EDS applies the table on the server: `style` becomes classes, other keys become `data-*` attributes with the value as typed, and the table is removed before any JS runs. Don't use `experiment`, `variant`, `audience`, `audiences` or `campaign` keys here; see the Section Metadata entry in `tools/sidekick/blocks.md`.
+EDS applies the table on the server: `style` becomes classes, other keys become `data-*` attributes with the value as typed, and the table is removed before any JS runs. Some keys are reserved for the experimentation plugin: the list is under "Keys you must not use in Section Metadata" in `tools/sidekick/blocks.md`, and the Experiments panel checks for them (`experiments-panel/sources.js`, `sectionKeyIssues`).
 
 For the full architecture, see [CLAUDE.md](../CLAUDE.md).
 

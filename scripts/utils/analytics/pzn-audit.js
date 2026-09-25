@@ -14,7 +14,7 @@
 // sessionStorage-cached fetch). Runs from lazy.js once every section has
 // decorated (same call site as testid-audit).
 import { getMetadata } from '../../ak.js';
-import { loadVariants } from './pzn.js';
+import { loadVariants, toPlacement } from './pzn.js';
 
 // `load` defaults to pzn.js's memoized loadVariants so lazy.js's zero-arg
 // `auditPzn()` shares that one in-flight fetch (zero extra network cost). It's
@@ -77,9 +77,9 @@ export const auditExperimentCollision = async ({
 
   const variants = await load();
   [...root.querySelectorAll('[data-pzn]')].forEach((section) => {
-    const placement = section.dataset.pzn.toLowerCase(); // same rule as pzn.js decorateSection
+    const placement = toPlacement(section.dataset.pzn);
     const collidingRow = variants
-      .filter((row) => row.placement === placement)
+      .filter((row) => toPlacement(row.placement) === placement)
       .find((row) => {
         let pznTarget;
         try {
