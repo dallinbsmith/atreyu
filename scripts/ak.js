@@ -78,13 +78,42 @@ export const loadStyle = async (href) => {
 // block-loading mechanism — see e.g. Adobe's own aem-boilerplate).
 const resolveModulePath = (codeBase, type, name) => `${codeBase}/${type}/${name}/${name}.js`;
 
+// Block teardown signal (AK-PATCHES.md, B1). Each decorated element gets one
+// AbortController; its signal is passed as `default(el, { signal })`. It is
+// aborted only once the element has left the document, found by the sweep
+// below, never on a re-run: connected blocks skip redecoration (blockStatus)
+// and must keep their live listeners. A Map, not a WeakMap, because the sweep
+// has to iterate it.
+const controllers = new Map();
+
+const signalFor = (el) => {
+  if (!controllers.has(el)) controllers.set(el, new AbortController());
+  return controllers.get(el).signal;
+};
+
+// loadFragment() decorates inside a hidden container, then returns the
+// fragment detached until header/footer/replaceElWithFragment inserts it.
+// Blocks in that window have the `.fragment-content` element itself as their
+// root. A discarded old subtree has its topmost removed ancestor (the old
+// <header>, <main>, section...) as root, so it is still collected.
+const inPendingFragment = (el) => el.getRootNode().classList?.contains('fragment-content');
+
+export const teardownDetached = () => {
+  for (const [el, controller] of controllers) {
+    if (!el.isConnected && !inPendingFragment(el)) {
+      controller.abort();
+      controllers.delete(el);
+    }
+  }
+};
+
 export const loadExperience = async (el, type, name, opts) => {
   const { codeBase, log } = getConfig();
   const loading = [];
   if (opts.decorate) {
     loading.push(
       import(resolveModulePath(codeBase, type, name))
-        .then((mod) => mod.default(el))
+        .then((mod) => mod.default(el, { signal: signalFor(el) }))
         .catch((ex) => log(ex, el)),
     );
   }
@@ -495,6 +524,8 @@ export const loadArea = async ({ area } = { area: document }) => {
   const isDoc = area === document;
   const isSession = sessionStorage.getItem('session');
   if (isDoc) {
+    // Quick Edit and dapreview swap body.innerHTML, then rerun this.
+    teardownDetached();
     if (isSession) await decorateSession();
     decorateDoc();
   }
