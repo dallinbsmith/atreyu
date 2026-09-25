@@ -63,6 +63,20 @@ jobs:
             echo "No lint/test paths changed; skipping."
           fi
 
+      - if: github.event_name == 'pull_request'
+        name: Require AK-PATCHES.md with engine changes
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          # Same diff range as "Detect changes"; fails closed on a git error on purpose.
+          changed="$(git diff --no-renames --name-only "$BASE...$HEAD")"
+          if grep -qE '^scripts/(ak|lazy|postlcp)\.js$' <<<"$changed" && ! grep -qFx 'scripts/AK-PATCHES.md' <<<"$changed"; then
+            echo "::error::scripts/ak.js, scripts/lazy.js or scripts/postlcp.js changed but scripts/AK-PATCHES.md did not. Add or update the row and classification in the same PR."
+            exit 1
+          fi
+
       - if: steps.changes.outputs.run == 'true'
         name: Setup Node.js
         uses: actions/setup-node@v4
