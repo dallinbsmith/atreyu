@@ -40,7 +40,7 @@ depends on you actually checking.
 
 ### Code organization
 - [ ] Edited `scripts/ak.js`, `scripts/lazy.js` or `scripts/postlcp.js`? Updated its `scripts/AK-PATCHES.md` row and classification.
-- [ ] Block structure follows `blocks.md` Structure, not line count: one directory per block, `default(el, { signal })` is the only export other code relies on, and a file that mixes concerns is split into sibling files in the block's folder. The 200-line lint backstop only catches files that went badly wrong.
+- [ ] Block structure follows `blocks.md` Structure, not line count: one directory per block, the default export is the only export other code relies on, and a file that mixes concerns is split into sibling files in the block's folder. The 200-line lint backstop only catches files that went badly wrong.
 - [ ] Before writing a new small helper (slugify, clamp, a DOM-builder), grep for one that might already exist — `slugify()` and index-clamping logic were each independently reimplemented twice before being unified.
 - [ ] A new asset (icon, image, media file) goes in the right place per `.claude/rules/assets.md`: `icons/{name}.svg` only for author-typed `:iconname:` icons, flat in the block's own folder for block-exclusive fixed media, `img/{category}/` for anything else shared and code-driven.
 

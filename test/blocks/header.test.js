@@ -3,8 +3,8 @@ import { setConfig, loadArea } from '../../scripts/ak.js';
 import { redecorate } from '../../scripts/utils/lifecycle.js';
 import decorate from '../../blocks/header/header.js';
 
-// header.js/header-nav.js/header-actions.js are one block (source files
-// split by concern) — one test file covering all three,
+// header.js and its sibling files are one block (split by concern), one test
+// file covering all of them,
 // matching this project's existing precedent for other multi-file blocks
 // (form.test.js covers form.js + form-*.js, quote-interactive.test.js
 // covers quote-interactive.js + its siblings; neither splits per source file).

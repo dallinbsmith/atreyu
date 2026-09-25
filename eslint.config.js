@@ -105,9 +105,8 @@ export default defineConfig([
       // no nested ternaries (inherited from Helix, enforced here explicitly)
       'no-nested-ternary': 'error',
 
-      // F-22: reactive/stateful blocks (e.g. pricing) are the one place
-      // vanilla JS with no build step has real correctness risk with no
-      // compiler backstop — cap cyclomatic complexity as a lint-time signal
+      // F-22: reactive/stateful blocks (e.g. pricing) are where correctness
+      // risk concentrates — cap cyclomatic complexity as a lint-time signal
       // instead of leaving it to review alone. Was present but disabled (0);
       // this just turns on the max Helix already suggested.
       complexity: ['error', 20],
@@ -206,7 +205,7 @@ export default defineConfig([
   {
     // Backstop only, not the block-size rule. The real rule (blocks.md
     // Structure) is concerns-based and enforced in review: one directory per
-    // block, `default(el, { signal })` as the only public contract, helpers
+    // block, the default export as the only public contract, helpers
     // split into sibling files once a file mixes concerns, shared utils
     // reused first. Line count doesn't measure that, so this cap sits well
     // above today's largest block file (100 counted lines, 2026-09-25) and
