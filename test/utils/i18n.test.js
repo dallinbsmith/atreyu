@@ -65,6 +65,25 @@ describe('utils/i18n formatDate', () => {
     expect(formatDate('2026-09-24', { timeZone: 'Pacific/Kiritimati' })).to.equal('September 24, 2026');
   });
 
+  // Checks the rule itself, not its output, so it holds in any process TZ.
+  // `format` is a spec getter returning a bound function, so sinon.spy can't
+  // wrap it directly; replace the getter and record each call's Date + instance.
+  // afterEach's sinon.restore() puts the real getter back.
+  it('pins a date-only value to UTC midnight and formats it in UTC', () => {
+    const { prototype } = Intl.DateTimeFormat;
+    const realGet = Object.getOwnPropertyDescriptor(prototype, 'format').get;
+    const calls = [];
+    sinon.replaceGetter(prototype, 'format', {
+      get() {
+        const bound = realGet.call(this);
+        return (date) => calls.push({ date, dtf: this }) && bound(date);
+      },
+    }.get);
+    formatDate('2026-09-24', { timeZone: 'Asia/Tokyo' });
+    expect(calls[0].date.getTime()).to.equal(Date.UTC(2026, 8, 24));
+    expect(calls[0].dtf.resolvedOptions().timeZone).to.equal('UTC');
+  });
+
   it('passes opts through to Intl.DateTimeFormat, including timeZone for instants', () => {
     useLocale('');
     const instant = Date.UTC(2026, 8, 24, 3, 0); // 03:00 UTC = 20:00 on the 23rd in LA
