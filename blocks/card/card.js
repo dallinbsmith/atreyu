@@ -1,3 +1,5 @@
+import { createElement } from '../../scripts/utils/dom.js';
+
 export default (el) => {
   const inner = el.querySelector(':scope > div');
   if (!inner) return;
@@ -5,9 +7,7 @@ export default (el) => {
   const pic = el.querySelector('picture');
   const picPara = pic?.closest('p');
   if (picPara) {
-    const picDiv = document.createElement('div');
-    picDiv.className = 'card-picture-container';
-    picDiv.append(pic);
+    const picDiv = createElement('div', { className: 'card-picture-container' }, pic);
     inner.prepend(picDiv);
     picPara.remove();
   }
