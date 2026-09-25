@@ -1,4 +1,4 @@
-import { HEADING_SELECTOR } from '../../scripts/utils/dom.js';
+import { HEADING_SELECTOR, createElement } from '../../scripts/utils/dom.js';
 
 export default (el) => {
   const inner = el.querySelector(':scope > div > div');
@@ -20,8 +20,7 @@ export default (el) => {
   // authoring two separate CTA paragraphs must not have the earlier one
   // silently lose its .btn styling (see scripts/utils/touts.js decorateTout
   // for the same merge pattern used elsewhere).
-  const ctaWrapper = document.createElement('div');
-  ctaWrapper.classList.add('bookend-cta');
+  const ctaWrapper = createElement('div', { className: 'bookend-cta' });
   ctaParas[0].parentNode.insertBefore(ctaWrapper, ctaParas[0]);
 
   ctaParas.forEach((p) => {
