@@ -121,6 +121,49 @@ describe('scripts/utils/experiments/guard.js', () => {
     expect(calls[3].signal).to.equal(caller.signal);
   });
 
+  it('guards /v, /v/ and their locale-prefixed forms only, on a path boundary', async () => {
+    const calls = [];
+    window.fetch = async (url, init = {}) => {
+      const { pathname, search } = new URL(url, window.location.origin);
+      calls.push([`${pathname}${search}`, Boolean(init.signal)]);
+      return new Response('');
+    };
+    const paths = [
+      '/v', '/v/x', '/de-de/v', '/de-de/v/x', '/de-de/v/x?a=1',
+      '/de-de/x', '/vv/x', '/de-dev/v/x', '/de-de/vv',
+    ];
+
+    await withVariantTimeout(() => Promise.all(paths.map((p) => fetch(p))));
+
+    expect(calls).to.deep.equal([
+      ['/v', true],
+      ['/v/x', true],
+      ['/de-de/v', true],
+      ['/de-de/v/x', true],
+      ['/de-de/v/x?a=1', true],
+      ['/de-de/x', false],
+      ['/vv/x', false],
+      ['/de-dev/v/x', false],
+      ['/de-de/vv', false],
+    ]);
+  });
+
+  it('aborts a stalled locale-prefixed /v/ fetch at the deadline', async () => {
+    clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    window.fetch = (url, init = {}) => new Promise((resolve, reject) => {
+      if (!init.signal) {
+        resolve(new Response('unguarded'));
+        return;
+      }
+      init.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    });
+
+    const pending = withVariantTimeout(() => fetch('/de-de/v/hang'), { ms: 1000 }).catch((ex) => ex.name);
+    await clock.tickAsync(1000);
+
+    expect(await pending).to.equal('AbortError');
+  });
+
   it('rejects a /v/ fetch issued after the deadline immediately', async () => {
     clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     let release;
