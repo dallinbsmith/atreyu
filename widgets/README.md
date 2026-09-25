@@ -13,9 +13,10 @@ PLP-style browsing, quizzes).
 - Authoring the content as rows/columns in a DA table would be more awkward
   for the author than useful — a widget doesn't have to map onto a document
   table the way a block does.
-- You've already tried modeling it as a block and the 100-line limit in
-  `.claude/rules/blocks.md` is fighting the actual shape of the problem, not
-  just asking for a refactor.
+- You've already tried modeling it as a block and even split by concern
+  into sibling files (`.claude/rules/blocks.md` Structure), and the block shape
+  is fighting the actual shape of the problem, not just asking for a
+  refactor.
 
 If none of those are true, it's a block. Most things are a block — see
 `blocks.md`'s own "minimize block usage" principle. This tier exists so that
