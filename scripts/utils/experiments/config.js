@@ -21,6 +21,19 @@ const SECTION_IGNORED_FIELDS = new Map([
 // the index and sitemap.
 export const VARIANT_ROOT = '/v/';
 
+// True for '/v/x' and '/de-de/v/x', and for the bare roots '/v' and '/de-de/v'
+// (the Worker serves those as variants too). One locale prefix is stripped on
+// a path boundary, so '/de-dev/v/' and '/vv/' miss. Used by guard.js and
+// validate(). personalize.js deliberately does NOT use it: Personalize rules
+// stay English-only, non-root /v/ paths (PLAN D-15). The Worker's own copy is
+// isVariantPage in workers/website/handlers/variants.js; parity is checked by
+// tools/config-sync/locales.test.js.
+export const isVariantPath = (path, root = VARIANT_ROOT) => {
+  const prefix = Object.keys(locales).find((p) => p && (path === p || path.startsWith(`${p}/`)));
+  const localized = path.slice(prefix?.length ?? 0) || '/';
+  return localized === root.slice(0, -1) || localized.startsWith(root);
+};
+
 export const toClassName = (name) => (typeof name === 'string'
   ? name.toLowerCase().replace(/[^0-9a-z]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
   : '');
@@ -123,13 +136,8 @@ export const validate = (cfg, { audiences = [], variantRoot, scope = 'page' } = 
   if (!challengers.length) add('error', 'No variants: set Experiment Variants.');
   splitIssues(cfg, add);
   if (challengers.some((v) => v.path === control.path)) add('warn', 'A variant points at the control page itself.');
-  const inVariantRoot = (path) => {
-    const prefix = Object.keys(locales).find((p) => p && (path === p || path.startsWith(`${p}/`)));
-    const localized = path.slice(prefix?.length ?? 0) || '/';
-    return localized === variantRoot.slice(0, -1) || localized.startsWith(variantRoot);
-  };
   const exposed = challengers
-    .filter((v) => variantRoot && v.path !== control.path && !inVariantRoot(v.path));
+    .filter((v) => variantRoot && v.path !== control.path && !isVariantPath(v.path, variantRoot));
   if (exposed.length) {
     add('warn', `Variant page outside ${variantRoot}: visitors and search engines can open it directly. Move it under ${variantRoot}: ${exposed.map((v) => v.path).join(', ')}`);
   }
