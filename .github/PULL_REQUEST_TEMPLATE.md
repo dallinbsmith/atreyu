@@ -38,6 +38,7 @@ is NOT currently automated — it depends on you actually checking.
 - [ ] Any new redirect/URL-safety check normalizes backslashes before a `startsWith('/') && !startsWith('//')`-style same-origin check — browsers treat a leading `\` as `/`, which bypassed exactly this check once in `redirects.js`.
 
 ### Code organization
+- [ ] Edited ak.js? Updated its AK-PATCHES.md row and classification.
 - [ ] Before writing a new small helper (slugify, clamp, a DOM-builder), grep for one that might already exist — `slugify()` and index-clamping logic were each independently reimplemented twice before being unified.
 - [ ] A new asset (icon, image, media file) goes in the right place per `.claude/rules/assets.md`: `icons/{name}.svg` only for author-typed `:iconname:` icons, flat in the block's own folder for block-exclusive fixed media, `img/{category}/` for anything else shared and code-driven.
 
