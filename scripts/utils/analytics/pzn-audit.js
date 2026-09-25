@@ -13,7 +13,6 @@
 // runs (a page with no [data-pzn] sections pays at most one dev-only,
 // sessionStorage-cached fetch). Runs from lazy.js once every section has
 // decorated (same call site as testid-audit).
-import { getMetadata } from '../../ak.js';
 import { loadVariants, toPlacement } from './pzn.js';
 
 // `load` defaults to pzn.js's memoized loadVariants so lazy.js's zero-arg
@@ -38,62 +37,5 @@ export default async (load = loadVariants) => {
     const detail = rows.map((row) => `"${row.selector}" → ${row.label || row.fragment}`).join(', ');
     // eslint-disable-next-line no-console -- this warning IS the diagnostic
     console.warn(`Personalization collision: placement "${placement}" + segment "${segment}" has ${rows.length} rows targeting ${selectors.length} different selectors — only one selector is swapped per visitor, the rest stay baseline for that visitor. If this is an intentional split, all rows must share one selector. Rows: ${detail}`);
-  });
-};
-
-// ADR-003 enforcement (dev-only): experiments and personalization are separate
-// mechanisms with separate precedence — a deterministic segment (pzn.js) must
-// never be overridden by a random sticky A/B assignment (experimentation.js),
-// and the two MUST NOT target the same element. They don't collide by design
-// (pzn always applies last in lazy.js, so the segment already wins the pixels),
-// but if an author points a page's late-phase `experiment-selector` (UC-02
-// chrome swap) at an element a `pzn` slot also owns, experimentation.js still
-// fires a phantom A/B exposure for a variant the visitor never saw before pzn.js
-// overwrites it — corrupting the exposure denominator §11.8's stats depend on.
-// This is an authoring mistake, so it's caught at authoring/dev time (the
-// ecosystem "registry/log" pattern — see ADR-003's evidence) rather than
-// reconciled at runtime. Only the late (selector-scoped) phase can collide; the
-// early full-page swap nests pzn slots compositionally, so a page with no
-// `experiment-selector` short-circuits immediately.
-//
-// Resolves selectors against the live dev DOM (`root`), the same DOM-truth basis
-// pzn.js's own resolveTarget and experimentation.js use — so it only fires on a
-// page where both targets actually exist at audit time. `experimentSelector`,
-// `root`, and `load` are parameters purely so a test can inject a fixture DOM
-// and dataset; production passes none and reads real page metadata + document.
-export const auditExperimentCollision = async ({
-  experimentSelector = getMetadata('experiment-selector'),
-  root = document,
-  load = loadVariants,
-} = {}) => {
-  if (!experimentSelector) return; // no late-phase chrome experiment on this page
-  let expTarget;
-  try {
-    expTarget = root.querySelector(experimentSelector);
-  } catch {
-    return; // malformed experiment-selector — experimentation.js already fails open on it
-  }
-  if (!expTarget) return; // experiment target not on this page — no collision possible
-
-  const variants = await load();
-  [...root.querySelectorAll('[data-pzn]')].forEach((section) => {
-    const placement = section.dataset.pzn; // as authored, for the message
-    const collidingRow = variants
-      .filter((row) => toPlacement(row.placement) === toPlacement(placement))
-      .find((row) => {
-        let pznTarget;
-        try {
-          pznTarget = section.querySelector(row.selector);
-        } catch {
-          return false; // malformed pzn selector — pzn.js's resolveTarget already fails open on it
-        }
-        return Boolean(pznTarget)
-          && (pznTarget === expTarget
-            || expTarget.contains(pznTarget)
-            || pznTarget.contains(expTarget));
-      });
-    if (!collidingRow) return;
-    // eslint-disable-next-line no-console -- this warning IS the diagnostic
-    console.warn(`Experiment/personalization collision (ADR-003): the page's experiment-selector "${experimentSelector}" overlaps personalization placement "${placement}" (selector "${collidingRow.selector}"). A random A/B test and a deterministic segment must not target the same element — the segment wins the pixels, but the A/B still logs a phantom exposure that corrupts the experiment. Scope them to different elements, or fold the A/B into the variants sheet.`);
   });
 };

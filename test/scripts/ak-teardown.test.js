@@ -129,14 +129,14 @@ describe('ak.js block teardown signal (B1)', () => {
     expect(signalOf(main).aborted).to.be.false;
   });
 
-  it('aborts the old blocks after an experimentation.js-style replaceChildren plus loadArea({ area })', async () => {
+  it('aborts the old blocks after a replaceChildren swap plus an area-scoped loadArea({ area })', async () => {
     document.body.innerHTML = `<footer><div class="fragment-content footer-content"><div>${PROBE}</div></div></footer>`;
     const target = document.querySelector('.footer-content');
     await loadArea({ area: target });
     const [old] = probeBlocks(target);
 
-    // applyChallenger(): applyVariant() swaps target's children, then
-    // loadArea({ area: target }). Neither document-level nor decorateFunction.
+    // Swap target's children, then loadArea({ area: target }). Neither
+    // document-level nor decorateFunction.
     const section = document.createElement('div');
     section.innerHTML = PROBE;
     target.replaceChildren(section);

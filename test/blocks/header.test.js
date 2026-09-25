@@ -1,6 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { setConfig, loadArea } from '../../scripts/ak.js';
-import { redecorate } from '../../scripts/utils/lifecycle.js';
+import { setConfig } from '../../scripts/ak.js';
 import decorate from '../../blocks/header/header.js';
 
 // header.js and its sibling files are one block (split by concern), one test
@@ -490,30 +489,6 @@ describe('header', () => {
     expect(el.querySelectorAll('.main-nav-section')).to.have.length(1);
     expect(el.querySelectorAll('.actions-section')).to.have.length(1);
     expect(el.querySelectorAll('button')).to.have.length(2);
-  });
-
-  it('UC-02: redecorates .main-nav-section via the real registered redecorator after a chrome-swap-style replacement', async () => {
-    const stub = stubFetch(fragmentHtml([brandSection, navSection, actionsSection]));
-    restoreFetch = stub.restore;
-    const el = block();
-    await decorate(el);
-
-    // Simulate experimentation.js's applyChallenger: replaceChildren() with
-    // raw, undecorated variant content shaped like a real fetched
-    // `.plain.html` response (a top-level <div> "section" wrapping the new
-    // nav markup), then run the exact same loadArea() + redecorate()
-    // sequence applyChallenger runs for a selector-scoped (UC-02) swap.
-    const navTarget = el.querySelector('.main-nav-section');
-    navTarget.replaceChildren();
-    navTarget.insertAdjacentHTML('beforeend', '<div><ul><li><p><a href="/new-feature">New Feature</a></p></li></ul></div>');
-
-    await loadArea({ area: navTarget });
-    await redecorate('.main-nav-section', navTarget);
-
-    expect(navTarget.querySelector('nav > ul.main-nav-list')).to.exist;
-    const newLink = navTarget.querySelector('a[href="/new-feature"]');
-    expect(newLink.closest('.main-nav-item')).to.exist;
-    expect(newLink.closest('.main-nav-item').querySelector('.main-nav-link')).to.equal(newLink);
   });
 
   it('brand link with whitespace-containing markup extracts the text node, not the image', async () => {

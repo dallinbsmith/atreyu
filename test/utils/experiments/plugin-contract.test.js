@@ -366,4 +366,65 @@ describe('vendored aem-experimentation plugin contract', () => {
     expect(sessionStorage.getItem(ASSIGNMENT_KEY)).to.equal(null);
     expect(fetch.calls).to.deep.equal([]);
   });
+
+  it('pins: loadEager reads the global document, not its doc argument', async () => {
+    // applyAllModifications() reads metadata through getMetadata()/getAllMetadata()
+    // (global document.head) and scans the global document's <main> and
+    // .section-metadata; loadEager() then overwrites window.hlx.experiments.
+    // The doc argument only reaches serveAudience()'s body.dataset.audiences and
+    // the aem:experimentation event target. Fragment personalization (A2) must
+    // not rely on passing a fragment as `doc`: if this fails, re-read A2.
+    const meta = `
+      <meta name="experiment" content="Doc Arg Test">
+      <meta name="experiment-variants" content="/v/doc-page">
+      <meta name="experiment-split" content="100">`;
+    const docSection = section('<p id="doc-control">Doc control</p>', [
+      linkRow('Audience: mobile', '/v/doc-section'),
+    ]);
+    const detached = document.implementation.createHTMLDocument('');
+    detached.head.innerHTML = meta;
+    detached.body.innerHTML = `<main>${docSection}</main>`;
+    setMain([`<div>${controlSection}</div>`]);
+    window.fetch = responseMap({
+      '/v/doc-page': '<p id="served">Page variant</p>',
+      '/v/doc-section': '<p id="served">Section variant</p>',
+    });
+    const options = { audiences: audiences({ mobile: true }) };
+    const stale = [{ type: 'page', config: { id: 'stale' } }];
+    window.hlx = { experiments: stale };
+
+    await loadEager(detached, options);
+
+    // The doc's own metadata and sections were ignored, and the stale global
+    // result was still overwritten (a fragment run clobbers the page's)...
+    expect(window.fetch.calls).to.deep.equal([]);
+    expect(window.hlx.experiments).to.deep.equal([]);
+    expect(window.hlx.audiences).to.deep.equal([]);
+    expect(detached.querySelector('#doc-control').textContent).to.equal('Doc control');
+    expect(detached.querySelector('main [data-experiment], main [data-audience]')).to.equal(null);
+    expect(detached.body.dataset.experiment).to.equal(undefined);
+    // ...and the argument really was delivered.
+    expect(detached.body.dataset.audiences).to.equal('mobile');
+
+    // Positive control: the same metadata on the global document is applied to
+    // the global <main>, even though `detached` is still what's passed in.
+    document.head.insertAdjacentHTML('beforeend', meta);
+    setMain([docSection]);
+    window.fetch = responseMap({
+      '/v/doc-page': '<p id="served">Page variant</p>',
+      '/v/doc-section': '<p id="served">Section variant</p>',
+    });
+    window.hlx = {};
+
+    await loadEager(detached, options);
+
+    expect(window.fetch.calls).to.have.members(['/v/doc-section', '/v/doc-page']);
+    expect(window.hlx.experiments[0].config.id).to.equal('doc-arg-test');
+    // Page experiments stamp the global <body> (the modifications handler's `cb`).
+    expect(document.body.dataset.experiment).to.equal('doc-arg-test');
+    expect(detached.body.dataset.experiment).to.equal(undefined);
+    expect(document.querySelector('main #served')).to.exist;
+    expect(detached.querySelector('#doc-control').textContent).to.equal('Doc control');
+    expect(detached.querySelector('#served')).to.equal(null);
+  });
 });

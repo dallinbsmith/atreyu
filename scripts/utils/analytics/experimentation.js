@@ -1,8 +1,7 @@
-import { getMetadata, loadArea, getConfig } from '../../ak.js';
+import { getMetadata } from '../../ak.js';
 import { track, EVENTS } from './analytics.js';
 import { sanitizeMarkup } from '../security/sanitize.js';
 import { hasConsent } from './consent.js';
-import { redecorate } from '../lifecycle.js';
 import { getVisitorId } from './visitor-id.js';
 
 export { getVisitorId };
@@ -63,10 +62,10 @@ const pickWeightedIndex = (weights, point) => {
 export const isSameOriginPath = (path) => path.startsWith('/') && !path.startsWith('//');
 
 // Bug-squash fix, 2026-08-28: this fetch had no timeout at all. runExperiment()
-// is awaited before loadArea() in scripts.js — a deliberate, pre-existing
-// design choice this fix does not change (the full-page swap must land before
-// anything decorates, or decorated blocks get clobbered by raw variant HTML
-// with no re-decoration pass) — but that means an unbounded fetch was an
+// must run before loadArea() — a deliberate, pre-existing design choice this
+// fix does not change (the full-page swap must land before anything
+// decorates, or decorated blocks get clobbered by raw variant HTML with no
+// re-decoration pass) — but that means an unbounded fetch was an
 // unbounded reveal-gate: a hung network request blocked page reveal
 // indefinitely. A tight timeout, matching the same AbortSignal.timeout()
 // pattern scripts/utils/analytics/pzn.js already uses for its own decision fetch,
@@ -90,26 +89,6 @@ const applyVariant = (html, target) => {
   target.replaceChildren(...sanitizeMarkup(html).childNodes);
 };
 
-// UC-02 (chrome-scoped experiments — nav/footer/floating elements, see
-// ref_uc02_shared_fragment_scoped_testing memory): those targets don't exist
-// yet at this file's early call site in scripts.js's loadPage() — header
-// resolves later, in postlcp.js, footer later still, in lazy.js's own
-// default export. postlcp.js's header load is fire-and-forget from
-// loadArea() (no `.then()` awaited by the caller), so on a single-section
-// page there's a real, if uncommon, race where lazy.js's default could fire
-// before header finishes. A short bounded poll — not a MutationObserver,
-// this is a small-N wait against two known, sequential loaders, not an
-// open-ended DOM-wide watch — covers that race. Fails open to null after
-// exhausting attempts, same posture as every other missing-target case here.
-const waitForElement = async (selector, { attempts = 5, delayMs = 100 } = {}) => {
-  for (let i = 0; i < attempts; i += 1) {
-    const el = document.querySelector(selector);
-    if (el || i === attempts - 1) return el;
-    await new Promise((resolve) => { setTimeout(resolve, delayMs); });
-  }
-  return null;
-};
-
 const isPreviewing = (allVariants) => Boolean(previewVariant)
   && allVariants.includes(previewVariant);
 
@@ -124,92 +103,23 @@ const resolveVariantIndex = (allVariants, experiment, visitorId, weights) => {
   return pickWeightedIndex(weights, pointFor(experiment, visitorId));
 };
 
-// Same extraction rationale as resolveVariantIndex above.
-//
-// UC-02 fix (see ref_nav_architecture_research memory): a raw
-// target.replaceChildren() has no idea how to rebuild the block-specific
-// structure (nav classes, mega-menu wiring, footer section classification)
-// the swapped-in content needs — that knowledge belongs to whichever block
-// owns the selector, not to this file. `selector` is only set on the late
-// phase (UC-02, chrome-scoped swaps); the early/full-page-swap path (selector
-// undefined, target === <main>) already gets a real decoration pass from
-// scripts.js's own loadPage() calling loadArea() right after runExperiment()
-// returns, so redecorating here too would be redundant for that path.
-// loadArea({ area: target }) runs the generic section/block decoration pass
-// (wrapping raw rows into .section/.default-content, loading any blocks)
-// before redecorate() runs the block's own targeted decorator — same two-step
-// order adobe/aem-experimentation's own decorateFunction hook follows.
-//
-// Code-review fix (real bug, not hypothetical): these two calls run in a
-// SEPARATE try/catch from the fetch+swap above, not the same one. By the
-// time loadArea()/redecorate() can throw, applyVariant() has already
-// replaced target's children — there is no "control fallback" left to fail
-// open to, the original content is gone. loadArea() calls loadBlock(), a
-// real dynamic import() that can reject on a transient network failure, and
-// a registered redecorator can throw on an unexpected input shape. Silently
-// swallowing that here (the old shared catch's "control fallback" comment)
-// would leave undecorated challenger HTML on the page while claiming
-// nothing happened. Logged via getConfig().log(), matching this project's
-// existing promise-chain convention (ak.js's loadExperience/loadBlock
-// .catch() calls) — a real authoring/config mismatch (bad selector, missing
-// redecorator) should be loud, not invisible.
-//
-// Depth note (harmless today, flagged for future redecorators): loadArea()'s
-// decorateSections() treats `target`'s OWN direct <div> children as new
-// "sections" to decorate — it does not decorate `target` itself. When
-// `target` is already a decorated element (e.g. header.js's
-// '.main-nav-section', which is itself .section-classed), the swapped-in
-// content ends up one DOM level deeper than the original (an extra nested
-// .section wrapper) rather than replacing at the same depth. Confirmed
-// harmless for '.main-nav-section'/'.footer-content' because their
-// redecorators (decorateNavSection/decorateFooterContent) and the matching
-// CSS both use unscoped descendant selectors (querySelector, not `:scope >`
-// or a direct-child CSS selector) — but a future redecorator written with a
-// `:scope > .foo` selector, or CSS relying on `target > .foo`, would silently
-// stop matching after a swap. Verify against this depth shift before adding
-// one.
-const applyChallenger = async (isControl, variant, target, selector) => {
+// Same extraction rationale as resolveVariantIndex above. Always swaps
+// <main> with raw variant HTML; the caller must run loadArea() afterwards.
+const applyChallenger = async (isControl, variant, target) => {
   if (isControl) return;
   try {
     const html = await fetchVariantContent(variant);
-    if (!html) return;
-    applyVariant(html, target);
-  } catch { return; } // fail-open — control/baseline content stays; nothing has been swapped yet
-
-  if (!selector) return;
-  try {
-    await loadArea({ area: target });
-    await redecorate(selector, target);
-  } catch (ex) {
-    // See the comment above this function — the swap already landed by this
-    // point, so this is a real failure to surface, not a fail-open no-op.
-    // No `el` arg: `target` is a live, already-swapped-in, visually correct
-    // nav/footer/actions section — error.js's dev-mode `el` path physically
-    // rewraps whatever `el` it's given into a `.has-error` box, which is the
-    // right move for a block that failed to render at all, not for content
-    // that rendered fine and only failed to *redecorate*. `getConfig().log(ex)`
-    // with no second arg still logs, just skips that DOM mutation — see
-    // linting.md's promise-chain guidance for this exact no-`el` case.
-    // Awaited (unlike most fire-and-forget `.catch((ex) => log(ex))` call
-    // sites elsewhere in this codebase): this is the tail of an async/await
-    // try/catch, not a promise chain with more work after it, so there is
-    // nothing lost by waiting for the (async, dynamic-import-backed) logger
-    // to actually finish before this function resolves.
-    await getConfig().log(ex);
-  }
+    if (html) applyVariant(html, target);
+  } catch { /* fail-open — control/baseline content stays */ }
 };
 
-// `phase` distinguishes WHERE in the page-load sequence this runs, not which
-// experiment runs — a page has exactly one `Experiment` metadata value.
-// Selector-less (main-scoped, UC-01) experiments run in scripts.js's early
-// loadPage() phase, before loadArea() decorates anything, matching this
-// mechanism's original full-page-swap design. `experiment-selector` (UC-02:
-// nav/footer/floating elements) opts a page's experiment into the LATE phase
-// instead, fired from lazy.js's own default export, after header and footer
-// have actually loaded. Each call no-ops if it isn't the phase this page's
-// experiment belongs to, so scripts.js and lazy.js can both unconditionally
-// call this on every load without coordinating which one "wins."
-export const runExperiment = async (phase = 'early') => {
+// Main-scoped (UC-01) full-page swap only, meant to run before loadArea()
+// decorates anything. Dormant: no runtime code calls it. The late
+// chrome-scoped phase (UC-02, `experiment-selector`) was removed with the
+// redecorator registry (foundation hardening A2 = iii). A page that still
+// carries `experiment-selector` no-ops rather than swapping <main> with
+// content authored for a nav or footer.
+export const runExperiment = async () => {
   const experiment = getMetadata('experiment');
   if (!experiment) return null;
 
@@ -219,16 +129,14 @@ export const runExperiment = async (phase = 'early') => {
   const variantPaths = variantsMeta.split(',').map((p) => p.trim()).filter(Boolean);
   if (!variantPaths.length) return null;
 
-  const selector = getMetadata('experiment-selector');
-  if (Boolean(selector) !== (phase === 'late')) return null;
+  if (getMetadata('experiment-selector')) return null;
 
-  const target = selector ? await waitForElement(selector) : document.querySelector('main');
+  const target = document.querySelector('main');
   // Fail-open for the swap itself, but also skip tracking (not just skip the
-  // swap and still report an exposure): if the target never resolved we can't
-  // confirm this visitor's page actually rendered the element the experiment
-  // is about, even for a visitor bucketed into control — counting an
-  // unconfirmed render as a real exposure would corrupt the denominator the
-  // D18 stats layer's significance math depends on.
+  // swap and still report an exposure): without a target we can't confirm
+  // this visitor's page actually rendered what the experiment is about —
+  // counting an unconfirmed render as a real exposure would corrupt the
+  // denominator the D18 stats layer's significance math depends on.
   if (!target) return null;
 
   const allVariants = ['control', ...variantPaths];
@@ -259,19 +167,18 @@ export const runExperiment = async (phase = 'early') => {
   const variant = allVariants[bucket];
   const isControl = bucket === 0;
 
-  await applyChallenger(isControl, variant, target, selector);
+  await applyChallenger(isControl, variant, target);
 
   // Schema reconciled 2026-08-28 to match pzn.js/P0-46's convention: always
   // 'a-b-split-test' here since this mechanism has no audience/segment
   // concept, just a random weighted hash split (uneven per-variant weights
   // are supported via `experiment-split` metadata, but the shape is still a
   // split test, not a segment match) — unlike pzn.js, where variantType can
-  // also resolve to a segment name. `renderType` distinguishes a UC-01
-  // full-page swap from a UC-02 targeted element swap, and both from pzn.js's
-  // per-slot cta/fragment swaps. Preview runs are never tracked — an author
-  // repeatedly forcing a treatment would otherwise inflate that variant's
-  // sample size against the D18 stats layer's significance math with visits
-  // that were never really bucketed.
+  // also resolve to a segment name. `renderType` distinguishes this UC-01
+  // full-page swap from pzn.js's per-slot cta/fragment swaps. Preview runs
+  // are never tracked — an author repeatedly forcing a treatment would
+  // otherwise inflate that variant's sample size against the D18 stats
+  // layer's significance math with visits that were never really bucketed.
   if (!isPreview) {
     track(EVENTS.EXPERIMENT, {
       anonId: visitorId,
@@ -279,7 +186,7 @@ export const runExperiment = async (phase = 'early') => {
       variantName: variant,
       variantType: 'a-b-split-test',
       variantId: `${experiment}:${variant}`,
-      renderType: selector ? 'element-swap' : 'full-page-swap',
+      renderType: 'full-page-swap',
       bucket,
     });
   }
