@@ -6,7 +6,7 @@ import {
 
 const iconButton = (cls, label) => createElement('button', { className: cls, 'aria-label': label });
 
-export const initTileModal = (items) => {
+export const initTileModal = (items, labels) => {
   let modal;
   let nameEl;
   let detailEl;
@@ -24,16 +24,17 @@ export const initTileModal = (items) => {
     nameEl.textContent = item.name;
     detailEl.textContent = item.detail;
     linkEl.href = item.href;
-    linkEl.textContent = item.linkText || `Visit ${item.name}`;
+    linkEl.textContent = item.linkText || labels.visit.replace('{name}', item.name);
     linkEl.hidden = !item.href;
-    counterEl.textContent = `${current + 1} of ${items.length}`;
+    counterEl.textContent = labels.counter
+      .replace('{current}', current + 1).replace('{total}', items.length);
     prevBtn.disabled = current === 0;
     nextBtn.disabled = current === items.length - 1;
   };
 
   const close = () => {
     closeModal(modal, releaseFocus, triggerEl);
-    announce('Partner details closed');
+    announce(labels.closed);
   };
 
   const build = () => {
@@ -43,9 +44,9 @@ export const initTileModal = (items) => {
       className: 'btn btn-secondary', target: '_blank', rel: 'noopener noreferrer',
     });
     counterEl = createElement('span', { className: 'tt-modal-counter' });
-    prevBtn = iconButton('tt-modal-prev', 'Previous');
-    nextBtn = iconButton('tt-modal-next', 'Next');
-    const closeBtn = iconButton('tt-modal-close', 'Close');
+    prevBtn = iconButton('tt-modal-prev', labels.prev);
+    nextBtn = iconButton('tt-modal-next', labels.next);
+    const closeBtn = iconButton('tt-modal-close', labels.close);
 
     const body = createElement('div', { className: 'tt-modal-body' }, nameEl, detailEl, linkEl);
     const nav = createElement('div', { className: 'tt-modal-nav' }, prevBtn, counterEl, nextBtn);
@@ -68,6 +69,9 @@ export const initTileModal = (items) => {
     triggerEl = trigger;
     setSlide(index);
     releaseFocus = openModal(modal, '.tt-modal-close');
-    announce(`${items[index].name}, partner ${index + 1} of ${items.length}`);
+    announce(labels.opened
+      .replace('{name}', items[index].name)
+      .replace('{current}', index + 1)
+      .replace('{total}', items.length));
   };
 };

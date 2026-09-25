@@ -26,9 +26,9 @@ const rows = [
 ];
 
 describe('tile-table', () => {
-  it('builds one tile per authored row inside a single grid', () => {
+  it('builds one tile per authored row inside a single grid', async () => {
     const el = block(rows);
-    decorate(el);
+    await decorate(el);
     expect(el.querySelectorAll('.tt-grid')).to.have.length(1);
     expect(el.querySelectorAll('.tt-tile')).to.have.length(2);
     expect(el.querySelector('.tt-label')?.textContent).to.equal('Acme');
@@ -38,12 +38,28 @@ describe('tile-table', () => {
   // an unguarded second pass would read the grid's own tile <button>s as
   // name/detail/link cells and rebuild the block from garbage. The guardDecorate
   // check must make the second call a no-op.
-  it('double-decorate leaves exactly one grid of the original tiles, not a rebuild', () => {
+  it('double-decorate leaves exactly one grid of the original tiles, not a rebuild', async () => {
     const el = block(rows);
-    decorate(el);
-    decorate(el);
+    await decorate(el);
+    await decorate(el);
     expect(el.querySelectorAll('.tt-grid')).to.have.length(1);
     expect(el.querySelectorAll('.tt-tile')).to.have.length(2);
     expect(el.querySelector('.tt-label')?.textContent).to.equal('Acme');
+  });
+
+  // Graceful degradation: a row authored with only a name cell (no detail/link
+  // columns) must still build a tile, not throw and leave the block undecorated.
+  it('does not throw on a short row with only a name cell', async () => {
+    const el = document.createElement('div');
+    el.className = 'tile-table';
+    const row = document.createElement('div');
+    const nameCell = document.createElement('div');
+    nameCell.textContent = 'Solo';
+    row.append(nameCell);
+    el.append(row);
+    document.body.append(el);
+    await decorate(el);
+    expect(el.querySelectorAll('.tt-tile')).to.have.length(1);
+    expect(el.querySelector('.tt-label')?.textContent).to.equal('Solo');
   });
 });
