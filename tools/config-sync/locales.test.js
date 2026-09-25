@@ -28,8 +28,10 @@ import assert from 'node:assert/strict';
 import locales from '../../scripts/locales.js';
 import { VARIANT_ROOT as BROWSER_VARIANT_ROOT } from '../../scripts/utils/experiments/config.js';
 import { shouldGuard } from '../../scripts/utils/experiments/guard.js';
-// The Worker is its own package; a test harness reading it for a parity check
-// is the one legitimate crossing (same as test/utils/experiments/config.test.js).
+// Crossing into the Worker package is sanctioned for this parity test by
+// foundation-hardening-plan B6 (import, don't restate). The modules are pure,
+// and the Worker's own `node --test` loads them in Node, unlike
+// segment-cookie.test.js, which regex-reads its source.
 // eslint-disable-next-line import/no-relative-packages -- cross-runtime parity check, read-only
 import { LOCALE_PREFIXES } from '../../workers/website/utils/locale.js';
 // eslint-disable-next-line import/no-relative-packages -- cross-runtime parity check, read-only
@@ -73,8 +75,11 @@ const TABLE = [
   ['/v', true, true],
   ['/v/', true, true],
   ['/de-de/v', true, true],
+  ['/de-de/v/', true, true],
   ['/de-dev/v/', false, false], // not a locale: no prefix is stripped
+  ['/de-de', false, false],
   ['/vx', false, false],
+  ['/vv/', false, false],
   ['/', false, false],
   ['/pricing', false, false],
   // Not a real media-bus name (no hash, no extension), so the Worker treats it
@@ -86,7 +91,8 @@ const TABLE = [
   // (Sec-Fetch-Dest image/video, not "empty") aren't 404ed. The browser guard
   // matches the path anyway. That's harmless: the guard only wraps
   // window.fetch, which media elements never go through, and for a fetch() it
-  // only adds a 1 s abort to a same-origin GET that had no signal.
+  // only applies the shared guard deadline (1 s by default) to a same-origin
+  // GET that had no signal.
   [`/v/${MEDIA}`, true, false],
   [`/de-de/v/${MEDIA}`, true, false],
 ];

@@ -6,7 +6,8 @@
  * and the decision-endpoint Cloudflare Worker (workers/decision-endpoint/
  * handlers/cookie.js, which SETS it). They cannot share a module — pzn.js ships
  * as static client JS; the decision endpoint is a separately-deployed Worker
- * package (crossing that boundary is what `import/no-relative-packages` forbids)
+ * package (crossing that boundary is what `import/no-relative-packages` forbids;
+ * the one sanctioned exception is locales.test.js, per B6)
  * — so the two literals are hand-synced. They have ALREADY drifted for real
  * (2026-08-28: 'pzn-spike-segment'/30-min vs 'frameio-pzn-segment'/session);
  * both files' own comments say "keep in sync by hand."

@@ -86,6 +86,7 @@ import path from 'node:path';
 // `import/no-relative-packages` lint rule exists to forbid. It also can't be
 // imported from scripts/locales.js — ESLint loads this rule as a Node module
 // outside the browser code's module graph, and the rule should not depend on it.
+// (One sanctioned exception: tools/config-sync/locales.test.js, per B6.)
 // So this list is hand-typed a third time, same as the other two keep each
 // other in sync: if the real locale list ever changes, update this array too.
 const ALLOWED_LOCALE_CODES = new Set([
