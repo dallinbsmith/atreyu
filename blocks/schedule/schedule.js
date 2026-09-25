@@ -49,14 +49,16 @@ export default async (a) => {
 
   const now = getScheduleSim() ?? Date.now();
   const found = data.find((evt) => {
-    try {
-      const start = Date.parse(evt.start);
-      const end = Date.parse(evt.end);
-      return now > start && now < end;
-    } catch {
+    // Date.parse returns NaN (it never throws) on a malformed/missing date, and
+    // every comparison with NaN is false — so guard NaN explicitly instead of
+    // relying on a try/catch that could never fire.
+    const start = Date.parse(evt.start);
+    const end = Date.parse(evt.end);
+    if (Number.isNaN(start) || Number.isNaN(end)) {
       config.log(`Could not get scheduled event: ${evt.name}`);
       return false;
     }
+    return now > start && now < end;
   });
   const defEvent = data.find((evt) => !(evt.start && evt.end));
   const event = found || defEvent;
