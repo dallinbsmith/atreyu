@@ -78,13 +78,36 @@ export const loadStyle = async (href) => {
 // block-loading mechanism — see e.g. Adobe's own aem-boilerplate).
 const resolveModulePath = (codeBase, type, name) => `${codeBase}/${type}/${name}/${name}.js`;
 
+// Block teardown signal: see AK-PATCHES.md #25.
+const controllers = new Map();
+
+const signalFor = (el) => {
+  if (!controllers.has(el)) controllers.set(el, new AbortController());
+  return controllers.get(el).signal;
+};
+
+// A root node that IS the .fragment-content means loadFragment() returned it
+// and no caller has inserted it yet (except the known gap in #25).
+const inPendingFragment = (el) => el.getRootNode().classList?.contains('fragment-content');
+
+const teardownDetached = () => {
+  for (const [el, controller] of controllers) {
+    if (!el.isConnected && !inPendingFragment(el)) {
+      controller.abort();
+      controllers.delete(el);
+    }
+  }
+};
+
 export const loadExperience = async (el, type, name, opts) => {
   const { codeBase, log } = getConfig();
   const loading = [];
   if (opts.decorate) {
+    // Registered before the import, so a swap during it is still swept.
+    const signal = signalFor(el);
     loading.push(
       import(resolveModulePath(codeBase, type, name))
-        .then((mod) => mod.default(el))
+        .then((mod) => mod.default(el, { signal }))
         .catch((ex) => log(ex, el)),
     );
   }
@@ -494,6 +517,7 @@ const decorateDoc = () => {
 export const loadArea = async ({ area } = { area: document }) => {
   const isDoc = area === document;
   const isSession = sessionStorage.getItem('session');
+  teardownDetached();
   if (isDoc) {
     if (isSession) await decorateSession();
     decorateDoc();
