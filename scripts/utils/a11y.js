@@ -1,4 +1,5 @@
 import { listenGroup } from './listen.js';
+import { createElement } from './dom.js';
 
 let idCounter = 0;
 
@@ -101,8 +102,7 @@ let liveRegion;
 
 export const announce = (message, priority = 'polite') => {
   if (!liveRegion) {
-    liveRegion = document.createElement('div');
-    liveRegion.className = 'visually-hidden';
+    liveRegion = createElement('div', { className: 'visually-hidden' });
     document.body.append(liveRegion);
   }
 

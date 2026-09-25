@@ -1,6 +1,6 @@
 // Feature navigation grid. Each authored row is [media, label, link]; the whole
 // card becomes the link target. Used to cross-link sibling feature pages.
-import { HEADING_SELECTOR } from '../../scripts/utils/dom.js';
+import { HEADING_SELECTOR, createElement } from '../../scripts/utils/dom.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 export default (el) => {
@@ -16,8 +16,7 @@ export default (el) => {
       || media?.querySelector('img')?.alt?.trim()
       || '';
 
-    const card = document.createElement(link ? 'a' : 'div');
-    card.className = 'cgn-card';
+    const card = createElement(link ? 'a' : 'div', { className: 'cgn-card' });
     if (link) {
       card.href = link.getAttribute('href');
       if (link.target) {
@@ -27,15 +26,9 @@ export default (el) => {
       }
     }
     if (media) {
-      const wrap = document.createElement('div');
-      wrap.className = 'cgn-media';
-      wrap.append(media);
-      card.append(wrap);
+      card.append(createElement('div', { className: 'cgn-media' }, media));
     }
-    const cap = document.createElement('span');
-    cap.className = 'cgn-label';
-    cap.textContent = label;
-    card.append(cap);
+    card.append(createElement('span', { className: 'cgn-label' }, label));
     row.replaceWith(card);
   });
 };
