@@ -6,15 +6,10 @@ import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 import { createElement, classifyCtaParagraphs, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 import { POSTERS, posterUrl } from './posters/catalog.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
+import { formatDate } from '../../scripts/utils/i18n.js';
 
 // Also hardcoded as CSS `:nth-child(1)`–`(12)` and mobile `nth-child(n + 7)`.
 const MAX_CARDS = 12;
-
-const fmtDate = (s) => {
-  const d = s && new Date(s);
-  return !d || Number.isNaN(d.getTime()) ? (s ?? '')
-    : d.toLocaleDateString(document.documentElement.lang || undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-};
 
 // Shape every row once, then split: no pics → lockup text; first lone image
 // with no chin text → background; every other pictured row → cards.
@@ -48,7 +43,7 @@ const buildTile = (i, card) => {
     'span',
     { className: 'hc-chin-sub' },
     createElement('span', { className: 'hc-chin-author' }, aAuthor || fallback.author),
-    createElement('span', { className: 'hc-chin-date' }, fmtDate(aDate || fallback.date)),
+    createElement('span', { className: 'hc-chin-date' }, formatDate(aDate || fallback.date)),
   );
   const chin = createElement(
     'div',

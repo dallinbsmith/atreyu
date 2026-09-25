@@ -1,6 +1,10 @@
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import decorate from '../../blocks/hero-cards-transition/hero-cards-transition.js';
+import { setConfig } from '../../scripts/ak.js';
+import locales from '../../scripts/locales.js';
+
+setConfig({ locales });
 
 // A single text-only row (no picture) is enough to exercise the CTA-classing
 // path; collect() falls back to default poster tiles for the card wall.
@@ -126,9 +130,8 @@ describe('hero-cards-transition collect() row classification', () => {
     const tile = [...el.querySelectorAll('.hc-tile')].find((t) => t.querySelector('img[src$="card2.jpg"]'));
     expect(tile.querySelector('.hc-chin-title').textContent).to.equal('My Title');
     expect(tile.querySelector('.hc-chin-author').textContent).to.equal('My Author');
-    const expectedDate = new Date('2024-01-15')
-      .toLocaleDateString(document.documentElement.lang || undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-    expect(tile.querySelector('.hc-chin-date').textContent).to.equal(expectedDate);
+    // Literal, not recomputed: a date-only value must not drift a day west of UTC.
+    expect(tile.querySelector('.hc-chin-date').textContent).to.equal('January 15, 2024');
   });
 });
 
