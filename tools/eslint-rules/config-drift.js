@@ -83,12 +83,14 @@ import path from 'node:path';
 // — that directory is its own separately-deployed package (its own
 // package.json, name "website", built/deployed independently via wrangler)
 // and a relative import across that boundary is exactly what this repo's
-// `import/no-relative-packages` lint rule exists to forbid. It also can't be
-// imported from scripts/locales.js — ESLint loads this rule as a Node module
-// outside the browser code's module graph, and the rule should not depend on it.
-// So this list is hand-typed a third time, same as the other two keep each
-// other in sync: if the real locale list ever changes, update this array too.
-const ALLOWED_LOCALE_CODES = new Set([
+// `import/no-relative-packages` lint rule exists to forbid (its one sanctioned
+// exception is the tools/config-sync/locales.test.js parity test, per B6). It
+// also can't be imported from scripts/locales.js — ESLint loads this rule as a
+// Node module outside the browser code's module graph, and the rule should not
+// depend on it. So this list is hand-typed a third time. It's exported so
+// tools/config-sync/locales.test.js can check it against scripts/locales.js;
+// if the real locale list ever changes, update this array too.
+export const ALLOWED_LOCALE_CODES = new Set([
   'de-de', 'en-us', 'es-es', 'fr-fr', 'it-it', 'ja-jp', 'ko-kr', 'pt-br', 'ru-ru', 'zh-cn',
 ]);
 

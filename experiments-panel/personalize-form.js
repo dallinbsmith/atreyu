@@ -143,11 +143,13 @@ export default ({ view, port, pageHtml }) => {
   };
   const refresh = () => renderIssues([...loadErrors, ...check(values(form)), ...pathWarnings]);
   const checkPaths = async () => {
-    const isVariantPath = (path) => path.startsWith(VARIANT_ROOT) && path !== VARIANT_ROOT;
+    // Deliberately stricter than config.js isVariantPath: English-only, never the bare root.
+    const isPersonalizeVariantPath = (path) => path.startsWith(VARIANT_ROOT)
+      && path !== VARIANT_ROOT;
     const current = values(form);
     const paths = normalizeValues(current).rules
       .map(({ path }) => normalizedPath(path))
-      .filter(isVariantPath);
+      .filter(isPersonalizeVariantPath);
     const key = paths.join('\n');
     const warnings = await Promise.all(paths.map((path) => {
       if (!pathCache.has(path)) {
@@ -166,7 +168,7 @@ export default ({ view, port, pageHtml }) => {
     }));
     const latest = normalizeValues(values(form)).rules
       .map(({ path }) => normalizedPath(path))
-      .filter(isVariantPath)
+      .filter(isPersonalizeVariantPath)
       .join('\n');
     if (key === latest) {
       pathWarnings = warnings.flat();

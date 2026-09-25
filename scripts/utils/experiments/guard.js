@@ -1,25 +1,18 @@
-import locales from '../../locales.js';
-import { VARIANT_ROOT } from './config.js';
+import { isVariantPath } from './config.js';
 
 let activeGuard;
-
-// '/v/' plus '/de-de/v/' and so on for each locale. VARIANT_ROOT ends in '/',
-// so a prefix match stays on a path boundary: '/de-dev/v/' and '/vv/' miss.
-// VARIANT_BARE holds the bare roots ('/v', '/de-de/v'), matched exactly,
-// because config.js validate() accepts them and the Worker serves them as
-// variants.
-const VARIANT_PATHS = Object.keys(locales).map((prefix) => `${prefix}${VARIANT_ROOT}`);
-const VARIANT_BARE = VARIANT_PATHS.map((p) => p.slice(0, -1));
 
 const requestUrl = (input) => new URL(input.url ?? input, window.location.href);
 const requestMethod = (input, init) => init.method ?? input.method ?? 'GET';
 const hasSignal = (input, init) => Boolean(init.signal ?? input.signal);
 
-const shouldGuard = (input, init = {}) => {
+// Covers '/v/x', '/de-de/v/x' and the bare roots (config.js isVariantPath).
+// Exported for tools/config-sync/locales.test.js, which checks it against the
+// Worker's isVariantPage.
+export const shouldGuard = (input, init = {}) => {
   const url = requestUrl(input);
   return url.origin === window.location.origin
-    && (VARIANT_PATHS.some((p) => url.pathname.startsWith(p))
-      || VARIANT_BARE.includes(url.pathname))
+    && isVariantPath(url.pathname)
     && requestMethod(input, init).toUpperCase() === 'GET'
     && !hasSignal(input, init);
 };
