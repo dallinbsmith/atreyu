@@ -1,8 +1,9 @@
 # Patches to the author-kit engine
 
 `scripts/ak.js` is Adobe's author-kit engine with project changes mixed in. This file lists every
-change we have made to it, and to the other author-kit files in `scripts/`. It was built from a
-real `git diff`, not from memory.
+change we have made to the four author-kit engine files: `scripts/ak.js`, `scripts/lazy.js`,
+`scripts/postlcp.js` and `scripts/scripts.js`. Other files that came from author-kit (blocks,
+tools, utilities) are out of scope. It was built from a real `git diff`, not from memory.
 
 Rows are keyed by function name, not line number, so they survive edits to `ak.js`.
 
@@ -53,11 +54,11 @@ the foundation hardening plan (B7) were checked against the diff: `:55`, `:107-1
 | 4 | `loadExperience` | Rewritten as a promise chain calling `mod.default(el)` | Style | Same behavior: errors still go to `log(ex, el)`. This is the call site B1 changes. | No |
 | 5 | `loadBlock` | `data-block-status` re-run guard (`loading`, then `loaded`) | Upstream | DA Quick Edit reruns `loadPage()` then `loadArea()` on the live DOM, so every block's `default(el)` ran a second time. Quick Edit is an upstream tool, so upstream has the same bug. The code comment says the guard was "dropped in this fork"; that's wrong, because author-kit never had it (it comes from aem-boilerplate). | Yes |
 | 6 | `loadBlock` | `data-variant` mirror of the variant classes | Convention | A stable selector for tests and analytics, so a CSS class rename can't break it. | No |
-| 7 | `decoratePictures` | `data-grid-source` re-run guard | Upstream | On a re-run, the prepended `<source>` was cloned again, adding one duplicate per run. Upstream addressed a similar problem another way in `16f193e` (`picture:has([loading])`); reconcile the two before opening a PR. | Yes (after reconciling) |
+| 7 | `decoratePictures` | `data-grid-source` re-run guard, and a null check on `<source>` | Upstream | On a re-run, the prepended `<source>` was cloned again, adding one duplicate per run. The base also threw a `TypeError` on a `<picture>` with no `<source>`, which rejected `loadArea`; our `querySelector('source')` check skips those pictures instead. Upstream's `picture:has([loading])` filter (`16f193e`) has a different purpose ("do not add a new breakpoint if already loading") and does not stop re-run duplicates, because the `<img>` keeps its `loading` attribute. | Yes |
 | 8 | `decoratePictures`, module imports | `MQ_GRID_CAP` import used as the grid `<source>` media query | Convention | Project breakpoint token, `(width >= 1440px)`, from `utils/breakpoints.js`. It matches the base value; upstream has since moved to `1400px` (`16f193e`). | No |
 | 9 | `decorateButton` | Button roles, with `***bold italic***` renamed from `btn-accent` to `btn-glass` | Convention | Frame.io's button schemes; the role name drives both the class and the test ID. This is a class rename: `styles/styles.css` still styles `.btn-accent`, and a few block tests build `btn-accent` by hand, but `ak.js` no longer emits it. | No |
 | 10 | `decorateButton` | `data-testid` (`{block}-cta-{role}[-outline]`) | Convention | Primary test and analytics selector. Only set inside a real block. | No |
-| 11 | `decorateButton` | Underline button: `link.innerHTML = isUnder.innerHTML` becomes `link.append(...isUnder.childNodes)` | Upstream | Removes an `innerHTML` sink and keeps the original nodes. | Yes |
+| 11 | `decorateButton` | Underline button: `link.innerHTML = isUnder.innerHTML` becomes `link.append(...isUnder.childNodes)` | Upstream | Removes an `innerHTML` sink and keeps the original nodes. **Known issue, fix before any upstream PR:** it reorders content. `<a><u>Buy</u> now</a>` becomes " nowBuy", because the `<u>` children are appended after the text that follows it. `isUnder.replaceWith(...isUnder.childNodes)` preserves the order. Not changed in the PR that added this file. | Yes (after the fix) |
 | 12 | `decorateButton` | `replaceChild` becomes `replaceWith` | Style | Same effect; the parent is already checked. | No |
 | 13 | `decorateLink` | External links get `rel="noopener noreferrer"` | Upstream | Generic hardening. It overwrites any `rel` already set. | Yes |
 | 14 | `decorateLink`, module imports | `tagBehavior(a)` from `scripts/behaviors.js` | Convention | Stamps `data-behavior` and `data-phase` from the project's behavior registry. | No |
@@ -68,9 +69,9 @@ the foundation hardening plan (B7) were checked against the diff: `:55`, `:107-1
 | 19 | `decorateSection` | Dataset key normalization (`toClassName`, then camelCase) | Upstream | A multi-word key such as "Experiment Variants" threw `InvalidCharacterError` and stopped decoration of every later section. | No (upstream deleted this code in `345f6ea`) |
 | 20 | `decorateSections` | `data-section-status` re-run guard | Upstream | Without it, `groupChildren()` wraps an already-wrapped section again on every re-run. | Yes (with 5) |
 | 21 | `decorateSections` | `decorateLinks()` and the block list re-run on every pass, including guarded sections | Upstream | Picks up content added to an already-decorated section during Quick Edit. Relies on `decorateLink()` being idempotent. | Yes (with 5 and 20) |
-| 22 | `decorateSkipToContent` (new), `decorateDoc` | Skip link, with a re-run guard | Convention | Accessibility. The whole function is ours, not just the guard: upstream has no skip link. It uses a hard-coded English label. | No |
+| 22 | `decorateSkipToContent` (new), `decorateDoc` | Skip link, with a re-run guard | Convention | Accessibility. The whole function is ours, not just the guard. Upstream's `ak.js` has none; upstream's header block has `decorateSkipLink` with an authorable label (`fc08e37`). Reconcile if we ever sync the header, or we'll ship two skip links. Ours hardcodes the English label. | No |
 | 23 | `loadArea` | `import('./lazy.js')` now calls `mod.default()` | Upstream | A repeat `import()` resolves from cache without re-running top-level code, so footer and pzn never re-decorated on a second `loadArea()`. Goes with the `lazy.js` default export below. Upstream has the same bug for its footer. | Yes (with lazy.js L3) |
-| 24 | throughout | Arrow functions, `?.`, `.at(0)`, `loadStyle` via `Promise.withResolvers()`, `map`/`filter` in `decorateLinks`, early returns in `decorateSection`, upstream comments deleted | Style | House lint style (`prefer-arrow-functions`). `loadStyle` still resolves immediately when the link already exists, as the base did (`null` now, `undefined` before; no caller reads the value). | No |
+| 24 | throughout | Arrow functions, `?.`, `.at(0)`, `getMetadata` returning `undefined` instead of `null` for a missing tag, `loadStyle` via `Promise.withResolvers()`, `map`/`filter` in `decorateLinks`, early returns in `decorateSection`, upstream comments deleted | Style | House lint style (`prefer-arrow-functions`). `loadStyle` still resolves immediately when the link already exists, as the base did (`null` now, `undefined` before; no caller reads the value). No caller compares `getMetadata` to `null`. | No |
 
 ## scripts/lazy.js
 
@@ -81,6 +82,7 @@ the foundation hardening plan (B7) were checked against the diff: `:55`, `:107-1
 | L3 | default export (new) | Re-runnable: footer, experimentation panel, pzn and pzn-audit (not prod) | Mixed | Re-running the footer is an upstream fix (goes with ak.js 23). Experimentation and pzn are project code; pzn is removed in C1. | Footer part only |
 | L4 | bootstrap IIFE | Adds `lazy-styles.css`, JSON-LD, hreflang, canonical, delegated click, `delayed.js` after 3 s, and `testid-audit` and `pzn-audit` (not prod) | Convention | SEO, analytics and dev audits. SEO stays one-shot because `jsonld.js` only appends. | No |
 | L5 | bootstrap IIFE | Utility paths move to `utils/page/` and `utils/seo/`; scheduler moves to `./scheduler/` | Convention | Repo layout. | No |
+| L6 | `loadSidekick`, bootstrap IIFE | `async function` and the named `(function loadLazy() {…}())` IIFE become arrow functions | Style | House lint style. | No |
 
 ## scripts/postlcp.js
 
@@ -100,6 +102,7 @@ This is author-kit's intended project configuration file, so most changes are ex
 | S3 | `loadFonts` (new), `loadPage` | Font CSS with a `fonts-loaded` session flag and `prefers-reduced-data` | Convention | Font loading strategy. | No |
 | S4 | `loadPage` | `await runExperimentation()` before `loadArea()` | Convention | Experimentation plugin. | No |
 | S5 | `loadAuthoringPreviews` (was the `da` IIFE) | Gated by `isAuthoringPreviewAllowed(host)`, has an injectable importer, and moves paths from `../tools/` to `./` | Mixed | The host gate is generic hardening (don't load `dapreview` or Quick Edit on arbitrary hosts). The importer and paths are project-specific. | Host gate only |
+| S6 | `loadPage`, top level | `async function loadPage` becomes an arrow export; upstream's comments ("Blocks with self-managed styles", "How to decorate an area before loading it") deleted | Style | House lint style. | No |
 
 ## Upstream fixes we don't have
 
@@ -110,10 +113,11 @@ These are from `a861e99..625e178` on upstream `main`.
 | `9fe4d70` | `getLocale` | Falls back to root for an unknown prefix instead of throwing | Missing. We still read `locales[prefix].lang`, so unknown `locale` metadata throws inside `setConfig()` and blanks the page. | Sanctioned patch; take upstream's code verbatim. |
 | `16f193e` (reworked in `9fe4d70`) | `getLocale` | Sets `document.documentElement.dir` from the locale | Missing. No locale here sets `dir` yet. | Comes with the `9fe4d70` code above. |
 | `9fe4d70` | `decorateLink` | The catch calls `config.log(ex, a)`. (`a7a0455` had only changed it to `config.log(ex)`.) | Missing. We still call `config.log('Could not decorate link', ex)`, which passes a string as `ex` and the exception as `el`, so `error.js` masks the real failure. | Sanctioned patch; take upstream's code verbatim. |
-| `16f193e` | `decoratePictures` | Only handles `picture:has([loading])`; grid source at `1400px` | Partly covered. Our guard (ak.js 7) handles re-runs; our breakpoint is the `MQ_GRID_CAP` token. | Consider the `:has([loading])` filter. Keep our breakpoint. |
+| `16f193e` | `decoratePictures` | Only handles `picture:has([loading])` ("do not add a new breakpoint if already loading"); grid source at `1400px` | Not taken. Our breakpoint is the `MQ_GRID_CAP` token. | Optional. Our `<source>` null check already covers the crash case; the filter doesn't replace our guard. |
 | `345f6ea` | `decorateSection`, `toClassName` | Deletes the client-side `.section-metadata` parsing and `toClassName`. Edge Delivery now flattens section metadata on the server (helix-html-pipeline `extract-section-metadata.js`, for rendering version 2 or later, or sites created on or after 2026-05-01): keys go through `toMetaName` into `data-*`, values are not lowercased, `style` becomes classes, an `id` key sets `section.id`, and the metadata div is removed. | **Do not take.** Our own code builds `.section-metadata` divs in the browser, after the server has run: `utils/experiments/personalize.js` (Audience rows) and `carryOverSectionMeta` in `utils/experiments/guard.js`, which re-adds style and anchor rows after swaps. `decorateSection` in `ak.js` is the only thing that parses and removes those. | Keep our parser. B2 is re-scoped to match it to the server's rules (see below). |
 | `b673ff3` | `loadArea` | `import('../deps/rum.js')` after the first section | Not needed. `head.html` loads `scripts/vendor/rum.js`. | None. |
 | `a8031ed` | `loadIcons` | `utils/icons.js` becomes `utils/svg.js` (`<use href="#icon">` contract) | Not taken. We have `utils/media/icons.js`. | Review separately; not an `ak.js` concern. |
+| `2fa4b67` (PR #11) | `tools/quick-edit` | Origin allowlist before importing the Quick Edit module (a DOM-XSS fix) | Covered by our `resolvePreviewOrigin` / `isAuthoringPreviewAllowed` (`scripts/quick-edit/quick-edit.js`, `init`). | None, but compare it on any Quick Edit sync. |
 | `9c10caa` | `scripts.js` top level | Trusted Types default policy | Not taken. No CSP here sets `require-trusted-types-for`. | Only needed if the CSP adds that directive. |
 
 ## Sanctioned future patches
@@ -132,10 +136,12 @@ the `ak.js` table above in the same PR.
 1. **New project conventions go in `scripts.js` hooks, not in `ak.js`.** Use `decorateArea`, or add
    a new hook that `ak.js` calls through `getConfig()`. `ak.js` should only change for generic bug
    fixes, or for a patch listed under "Sanctioned future patches".
-2. **Anyone editing `ak.js` must update this file in the same PR:** add or change the row and set
-   the classification. CI fails a pull request that changes `scripts/ak.js` without changing this
-   file.
+2. **Anyone editing `scripts/ak.js`, `scripts/lazy.js` or `scripts/postlcp.js` must update this
+   file in the same PR:** add or change the row and set the classification. CI fails a pull request
+   that changes any of those three files without changing this one. `scripts/scripts.js` is project
+   configuration, so CI doesn't check it; still add a row for any change to its author-kit code.
 3. **Upstream-class rows are candidates to send upstream.** Once upstream merges one, remove our
-   copy on the next sync and delete the row.
+   copy on the next sync and delete the row. A **sync** means rerunning the diff against upstream
+   HEAD, updating the rows, and updating "Upstream HEAD compared" in the Base table.
 4. C4 moves the existing conventions (button roles, test IDs, section `anchor`) out of `ak.js` into
    hooks.

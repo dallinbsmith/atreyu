@@ -64,14 +64,16 @@ jobs:
           fi
 
       - if: github.event_name == 'pull_request'
-        name: Require AK-PATCHES.md with ak.js changes
+        name: Require AK-PATCHES.md with engine changes
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
+        shell: bash
         run: |
-          changed="$(git diff --name-only "$BASE...$HEAD")"
-          if echo "$changed" | grep -qx 'scripts/ak.js' && ! echo "$changed" | grep -qx 'scripts/AK-PATCHES.md'; then
-            echo "::error file=scripts/ak.js::scripts/ak.js changed but scripts/AK-PATCHES.md did not. Add or update its row and classification in the same PR."
+          # Same diff range as "Detect changes"; fails closed on a git error on purpose.
+          changed="$(git diff --no-renames --name-only "$BASE...$HEAD")"
+          if grep -qE '^scripts/(ak|lazy|postlcp)\.js$' <<<"$changed" && ! grep -qFx 'scripts/AK-PATCHES.md' <<<"$changed"; then
+            echo "::error::scripts/ak.js, scripts/lazy.js or scripts/postlcp.js changed but scripts/AK-PATCHES.md did not. Add or update the row and classification in the same PR."
             exit 1
           fi
 
