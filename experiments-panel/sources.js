@@ -54,12 +54,19 @@ const readPersonalize = (doc, sections) => {
   const tables = [...bySection].filter(([section]) => section)
     .map(([section, own]) => ({ section, count: own.length, values: readValues(section) }));
   const plan = applyPersonalizeTables(doc, { prod: true, search: '' });
-  return tables.map(({ section, count, values }) => ({
+  // Panel-only notes, kept out of personalize-table.js check(), which the
+  // Personalize tab also uses to validate a table before insert.
+  const notesFor = ({ section, count, values }) => [
+    count > 1 && `${count} Personalize tables in this section: only the first is used.`,
+    values.Status === 'inactive' && 'Status is inactive: served only in `?audience=` previews.',
+    !section.isConnected && 'This section holds only the Personalize table, so the compiler removes it and serves nothing.',
+  ].filter(Boolean);
+  return tables.map((table) => ({
     kind: 'personalize',
-    scope: `Section ${sections.indexOf(section) + 1}`,
-    values,
-    served: plan.find((entry) => entry.section === section)?.rules ?? [],
-    notes: count > 1 ? [`${count} Personalize tables in this section: only the first is used.`] : [],
+    scope: `Section ${sections.indexOf(table.section) + 1}`,
+    values: table.values,
+    served: plan.find((entry) => entry.section === table.section)?.rules ?? [],
+    notes: notesFor(table),
   }));
 };
 

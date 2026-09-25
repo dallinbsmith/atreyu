@@ -88,6 +88,8 @@ describe('experiments-panel/sources.js', () => {
       const tests = readPage(html, '/');
       expect(tests.map((t) => t.scope)).to.deep.equal(['Section 1', 'Section 2']);
       expect(tests.map((t) => t.served)).to.deep.equal([[], []]);
+      expect(tests[0].notes).to.deep.equal(['Status is inactive: served only in `?audience=` previews.']);
+      expect(tests[1].notes).to.deep.equal([]);
     });
 
     it('notes a second table in the same section, which the compiler ignores', () => {
@@ -102,7 +104,12 @@ describe('experiments-panel/sources.js', () => {
         personalize([row('Audience: mobile', '/v/x'), row('End Date', day(30))]),
         `<p>Two</p>${personalize([row('Audience: desktop', '/v/y'), row('End Date', day(30))])}`,
       ]);
-      expect(readPage(html, '/').map((t) => t.scope)).to.deep.equal(['Section 1', 'Section 2']);
+      const [removed, kept] = readPage(html, '/');
+      expect([removed.scope, kept.scope]).to.deep.equal(['Section 1', 'Section 2']);
+      expect(removed.served).to.deep.equal([]);
+      expect(removed.notes).to.deep.equal(['This section holds only the Personalize table, so the compiler removes it and serves nothing.']);
+      expect(kept.served).to.deep.equal([{ id: 'desktop', path: '/v/y' }]);
+      expect(kept.notes).to.deep.equal([]);
     });
   });
 

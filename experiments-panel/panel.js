@@ -100,8 +100,9 @@ const testCard = async (test, rows) => {
 };
 
 // A section's Personalize table, as the compiler serves it with production
-// rules (sources.js readPersonalize). Issues reuse the Personalize tab's checks;
-// an error-level issue wins the badge, as in testCard.
+// rules (sources.js readPersonalize). Issues reuse the Personalize tab's checks.
+// Unlike testCard, "running" wins over an error: the compiler drops only the
+// bad rows and serves the rest, so the errors are listed but the table runs.
 const personalizeCard = async ({
   scope, values, served, notes,
 }) => {
@@ -109,7 +110,9 @@ const personalizeCard = async ({
   const issues = [...check(values), ...notes.map((message) => ({ level: 'warn', message }))];
   issues.push(...await missingPathIssues(rules.map(({ path }) => path)));
   const blocked = issues.some(({ level }) => level === 'error');
-  const [label, tone] = (blocked && ['blocked', 'blocked']) || (served.length && ['running', 'running']) || ['not served', 'ended'];
+  const [label, tone] = (served.length && ['running', 'running']) || (blocked && ['blocked', 'blocked']) || ['not served', 'ended'];
+  // ?audience= previews serve an inactive table too (non-prod only).
+  const previewable = served.length > 0 || values.Status === 'inactive';
   const preview = (id) => {
     const url = new URL(pageUrl);
     url.searchParams.set('audience', id);
@@ -119,13 +122,13 @@ const personalizeCard = async ({
     'article',
     { className: 'card' },
     h('header', {}, h('h2', {}, values.Name || 'Unnamed personalization'), h('span', { className: `badge ${tone}` }, label)),
-    h('p', { className: 'meta' }, `${scope} | Personalize table (page doc) | End Date ${values['End Date'] || 'missing'}${values.Owner ? ` | Owner ${values.Owner}` : ''}`),
-    h('table', {}, h('thead', {}, h('tr', {}, ['Audience', 'Page', ''].map((t) => h('th', {}, t)))), h('tbody', {}, rules.map(({ id, path }) => h(
+    h('p', { className: 'meta' }, `${scope} | Personalize table (page doc) | Status ${values.Status} | End Date ${values['End Date'] || 'missing'}${values.Owner ? ` | Owner ${values.Owner}` : ''}`),
+    h('table', {}, h('thead', {}, h('tr', {}, ['Audience', 'Page', ...(previewable ? [''] : [])].map((t) => h('th', {}, t)))), h('tbody', {}, rules.map(({ id, path }) => h(
       'tr',
       { 'data-path': path },
       h('td', {}, id),
       h('td', {}, h('a', { href: path, target: '_blank' }, path)),
-      h('td', {}, h('a', { href: preview(id), target: '_blank' }, 'Preview')),
+      previewable ? h('td', {}, h('a', { href: preview(id), target: '_blank' }, 'Preview')) : null,
     )))),
     issueList(issues),
   );

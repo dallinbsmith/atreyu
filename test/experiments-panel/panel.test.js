@@ -67,4 +67,29 @@ describe('experiments-panel/panel.js', () => {
     expect(new URL(card.querySelector('tr[data-path] td:last-child a').href).searchParams.get('audience')).to.equal('mobile');
     expect(view.textContent).to.include('Section 1: section metadata key "audience" does nothing');
   });
+
+  it('shows running when the compiler serves a rule, and still lists the error for a bad row', async () => {
+    const html = PAGE_HTML.replace(
+      '<div><div><p>End Date</p></div>',
+      '<div><div><p>Audience: nobody</p></div><div><p><a href="/v/body-nobody">/v/body-nobody</a></p></div></div><div><div><p>End Date</p></div>',
+    );
+    history.pushState({}, '', '/experiments-panel/index.html?page=/pzn-mixed.html');
+    document.body.innerHTML = PANEL_HTML;
+    window.fetch = async (url, init = {}) => {
+      const path = new URL(url, window.location.origin).pathname;
+      if (path === '/pzn-mixed.html') return new Response(html, { status: 200 });
+      if (path === '/metadata.json' || path === '/metadata-experiments.json') return new Response('{}', { status: 200 });
+      if (init.method === 'HEAD') return new Response('', { status: 200 });
+      throw new Error(`Unexpected fetch ${path}`);
+    };
+
+    await import(`/experiments-panel/panel.js?v=${Date.now()}`);
+    await waitFor(() => document.querySelector('#view .card'));
+
+    const card = document.querySelector('#view .card');
+    expect(card.querySelector('.badge').textContent).to.equal('running');
+    expect(card.querySelector('.issues li.error').textContent).to.equal('Unknown audience "nobody".');
+    expect([...card.querySelectorAll('tr[data-path]')].map((tr) => tr.dataset.path)).to.deep.equal(['/v/body-mobile']);
+    expect(card.textContent).to.include('Status active');
+  });
 });
