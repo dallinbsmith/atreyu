@@ -20,7 +20,12 @@ import ENV from './env.js';
 // Pass it to addEventListener/fetch, and for timers, rAF and observers add
 // `signal?.addEventListener('abort', cleanup)`. ak.js aborts it only after
 // the block's element has left the document (Quick Edit, a plugin swap), so
-// it never fires for a connected block. Keep the `= {}` default: a direct
+// it never fires for a connected block. The abort happens at the next
+// loadArea() sweep, which may never come, not at the moment the element is
+// removed. A block can receive an already-aborted signal (its element was
+// swapped out while its module loaded), and an 'abort' listener never fires
+// on one: if `signal?.aborted`, return before starting timers, rAF or
+// observers. Keep the `= {}` default: a direct
 // call (tests) passes no second argument, leaving `signal` undefined, which
 // addEventListener accepts. Keep this guard too: the signal does not stop a
 // direct second call. The signal belongs to the element passed in: a block

@@ -6,9 +6,9 @@ import { loadFragment } from '../../scripts/utils/fragment.js';
 
 // B1: ak.js passes each block `default(el, { signal })` and aborts the signal
 // only once the block's element has left the document; every loadArea call
-// sweeps first. The fixture blocks
-// under ./fixtures/blocks record what they were called with; codeBase is
-// pointed there so loadExperience imports them like real blocks.
+// sweeps first. The fixture blocks under ./fixtures/blocks record what they
+// were called with; codeBase is pointed there so loadExperience imports them
+// like real blocks.
 const FIXTURES = new URL('./fixtures', import.meta.url).href.replace(/\/$/, '');
 const PROBE = '<div class="teardown-probe"><div><div>probe</div></div></div>';
 const LEGACY = '<div class="teardown-legacy"><div><div>legacy</div></div></div>';
@@ -28,7 +28,7 @@ describe('ak.js block teardown signal (B1)', () => {
   beforeEach(() => {
     log = sinon.spy();
     setConfig({
-      components: ['teardown-probe', 'teardown-legacy'], hostnames: [], linkBlocks: [], log,
+      components: ['teardown-probe', 'teardown-legacy', 'teardown-slow'], hostnames: [], linkBlocks: [], log,
     });
     getConfig().codeBase = FIXTURES;
     window.teardownProbe = new Map();
@@ -144,6 +144,24 @@ describe('ak.js block teardown signal (B1)', () => {
 
     expect(signalOf(old).aborted).to.be.true;
     expect(signalOf(probeBlocks(target)[0]).aborted).to.be.false;
+  });
+
+  it('aborts a block swapped out while its module import is still in flight', async () => {
+    document.body.innerHTML = '<main><div><div class="teardown-slow"><div><div>slow</div></div></div></div></main>';
+    const el = document.querySelector('.teardown-slow');
+    const first = loadArea();
+    while (el.dataset.blockStatus !== 'loading') {
+      // eslint-disable-next-line no-await-in-loop -- polling for the import to start
+      await new Promise((resolve) => { setTimeout(resolve, 5); });
+    }
+
+    // Quick Edit swap while teardown-slow.js is still importing (~60 ms).
+    document.body.innerHTML = '<main><div><p>swapped</p></div></main>';
+    await loadArea();
+    await first;
+
+    expect(window.teardownProbe.has(el)).to.be.true;
+    expect(signalOf(el).aborted).to.be.true;
   });
 
   it('still decorates blocks whose default takes only one parameter', async () => {

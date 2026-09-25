@@ -103,9 +103,11 @@ export const loadExperience = async (el, type, name, opts) => {
   const { codeBase, log } = getConfig();
   const loading = [];
   if (opts.decorate) {
+    // Registered before the import, so a swap during it is still swept.
+    const signal = signalFor(el);
     loading.push(
       import(resolveModulePath(codeBase, type, name))
-        .then((mod) => mod.default(el, { signal: signalFor(el) }))
+        .then((mod) => mod.default(el, { signal }))
         .catch((ex) => log(ex, el)),
     );
   }
