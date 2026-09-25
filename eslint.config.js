@@ -105,9 +105,8 @@ export default defineConfig([
       // no nested ternaries (inherited from Helix, enforced here explicitly)
       'no-nested-ternary': 'error',
 
-      // F-22: reactive/stateful blocks (e.g. pricing) are the one place the
-      // 100-line vanilla-JS constraint has real correctness risk with no
-      // compiler backstop — cap cyclomatic complexity as a lint-time signal
+      // F-22: reactive/stateful blocks (e.g. pricing) are where correctness
+      // risk concentrates — cap cyclomatic complexity as a lint-time signal
       // instead of leaving it to review alone. Was present but disabled (0);
       // this just turns on the max Helix already suggested.
       complexity: ['error', 20],
@@ -204,17 +203,19 @@ export default defineConfig([
     },
   },
   {
-    // blocks.md: "Keep block JS under 100 lines; extract helpers to
-    // scripts/utils/ if larger" — documented since the beginning but never
-    // actually enforced, which let 5 files exceed it silently before this
-    // was noticed in an audit. Five pre-existing overages are grandfathered
-    // via a file-level eslint-disable comment (each explaining why forcing
-    // a split was judged premature-abstraction risk rather than fixed) —
-    // this rule exists to stop a sixth from landing unnoticed, not to force
-    // those five under the limit retroactively.
+    // Backstop only, not the block-size rule. The real rule (blocks.md
+    // Structure) is concerns-based and enforced in review: one directory per
+    // block, the default export as the only public contract, helpers
+    // split into sibling files once a file mixes concerns, shared utils
+    // reused first. Line count doesn't measure that, so this cap sits well
+    // above today's largest block file (100 counted lines, 2026-09-25) and
+    // only catches a file that has plainly grown past one concern without
+    // anyone splitting it. It replaced a 100-line cap that pushed files to
+    // be compressed to fit rather than split by concern. No file-level
+    // disables exist; don't add one, split the file instead.
     files: ['blocks/**/*.js'],
     rules: {
-      'max-lines': ['error', { max: 100, skipBlankLines: true, skipComments: true }],
+      'max-lines': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
     },
   },
 ]);

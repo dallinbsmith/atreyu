@@ -1,11 +1,11 @@
 import { trapFocus } from '../../scripts/utils/a11y.js';
 import { listenGroup } from '../../scripts/utils/listen.js';
 
-// Split out of header-nav.js (2026-09-21) — that file had grown past this
-// project's enforced 100-line-per-block-file budget (blocks.md's Structure
-// rule). This is the self-contained mega-menu/mobile-nav open/close state
-// machine: no dependency on decorateNavItem/decorateNavSection (which stayed
-// in header-nav.js), so the two files only ever depend one direction —
+// Split out of header-nav.js (2026-09-21) by concern: header-nav.js
+// decorates authored nav content, this file owns the self-contained
+// mega-menu/mobile-nav open/close state machine. It has no dependency on
+// decorateNavItem/decorateNavSection (which stayed in header-nav.js), so the
+// two files only ever depend one direction —
 // header-nav.js imports toggleMenu from here, this file imports nothing back.
 const traps = new WeakMap();
 let docGroup;

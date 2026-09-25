@@ -6,9 +6,9 @@ import { slugifyUnique } from '../../scripts/ak.js';
 // field, and per ref_nav_architecture_research memory no new one is needed:
 // a heading immediately followed by a <ul> inside a mega-menu (an author
 // already writes "### Column heading" above a bullet list with zero new
-// convention) is decorated into a labeled, ARIA-grouped subcategory. Split
-// into its own file — not header-nav.js, which is already at the header
-// block's own 100-line-per-file budget (blocks.md's Structure rule).
+// convention) is decorated into a labeled, ARIA-grouped subcategory. Kept in
+// its own file by concern: subcategory grouping is a separate decoration step
+// from header-nav.js's nav item and section decoration.
 export const decorateSubcategories = (menu) => {
   const groups = [...menu.querySelectorAll(HEADING_SELECTOR)]
     .map((heading) => ({ heading, list: heading.nextElementSibling }))
