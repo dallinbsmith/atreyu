@@ -25,9 +25,9 @@ export const VARIANT_ROOT = '/v/';
 // (the Worker serves those as variants too). One locale prefix is stripped on
 // a path boundary, so '/de-dev/v/' and '/vv/' miss. Used by guard.js and
 // validate(). personalize.js deliberately does NOT use it: Personalize rules
-// stay English-only, non-root /v/ paths (PLAN D-15). The Worker's own copy is
-// isVariantPage in workers/website/handlers/variants.js; parity is checked by
-// tools/config-sync/locales.test.js.
+// stay English-only (PLAN D-15) and never the bare root. The Worker's own copy
+// is isVariantPage in workers/website/handlers/variants.js; parity is checked
+// by tools/config-sync/locales.test.js.
 export const isVariantPath = (path, root = VARIANT_ROOT) => {
   const prefix = Object.keys(locales).find((p) => p && (path === p || path.startsWith(`${p}/`)));
   const localized = path.slice(prefix?.length ?? 0) || '/';

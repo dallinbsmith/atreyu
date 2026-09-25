@@ -14,6 +14,7 @@
  * Checks:
  *  1. scripts/locales.js keys (minus the '' default) equal the Worker's
  *     LOCALE_PREFIXES, as sorted sets.
+ *     The config-drift rule's ALLOWED_LOCALE_CODES matches them too.
  *  2. VARIANT_ROOT is the same in experiments/config.js and handlers/variants.js.
  *  3. A path table run through the browser's guard.js shouldGuard and the
  *     Worker's isVariantPage. They must agree, except for real media-bus paths
@@ -28,6 +29,7 @@ import assert from 'node:assert/strict';
 import locales from '../../scripts/locales.js';
 import { VARIANT_ROOT as BROWSER_VARIANT_ROOT } from '../../scripts/utils/experiments/config.js';
 import { shouldGuard } from '../../scripts/utils/experiments/guard.js';
+import { ALLOWED_LOCALE_CODES } from '../eslint-rules/config-drift.js';
 // Crossing into the Worker package is sanctioned for this parity test by
 // foundation-hardening-plan B6 (import, don't restate). The modules are pure,
 // and the Worker's own `node --test` loads them in Node, unlike
@@ -46,6 +48,15 @@ assert.deepEqual(
   workerLocales,
   'Locale lists drifted between scripts/locales.js and workers/website/utils/locale.js (LOCALE_PREFIXES). '
   + 'Both must hold the same prefixes; the Worker routes and redirects by its list, the browser localizes by its own.',
+);
+
+// 1b. The config-drift ESLint rule's own hand-typed copy (bare codes, plus
+// 'en-us' for the unprefixed default).
+assert.deepEqual(
+  [...ALLOWED_LOCALE_CODES].sort(),
+  ['en-us', ...browserLocales.map((p) => p.slice(1))].sort(),
+  'tools/eslint-rules/config-drift.js ALLOWED_LOCALE_CODES drifted from scripts/locales.js. '
+  + "It must hold each locale prefix without the slash, plus 'en-us'.",
 );
 
 // 2. Variant root.
@@ -87,16 +98,19 @@ const TABLE = [
   ['/v/media_x', true, true],
   ['/de-de/v/media_x', true, true],
   // The documented difference. The Worker leaves real media under /v/ out of
-  // the variant gate so the variant page's own <img>/<video> requests
-  // (Sec-Fetch-Dest image/video, not "empty") aren't 404ed. The browser guard
+  // the variant gate, so the variant page's own <img>/<video> requests
+  // (Sec-Fetch-Dest image/video, not "empty") aren't 404ed. Its isMediaPath
+  // isn't anchored at the start and allows a tail after the hash, so a media
+  // name at any depth counts (/v/sub/media_...). The browser guard
   // matches the path anyway. That's harmless: the guard only wraps
   // window.fetch, which media elements never go through, and for a fetch() it
   // only applies the shared guard deadline (1 s by default) to a same-origin
   // GET that had no signal.
   [`/v/${MEDIA}`, true, false],
   [`/de-de/v/${MEDIA}`, true, false],
+  [`/v/sub/${MEDIA}`, true, false],
 ];
-const KNOWN_DIFFERENCE = new Set([`/v/${MEDIA}`, `/de-de/v/${MEDIA}`]);
+const KNOWN_DIFFERENCE = new Set([`/v/${MEDIA}`, `/de-de/v/${MEDIA}`, `/v/sub/${MEDIA}`]);
 
 for (const [path, browser, worker] of TABLE) {
   const got = { browser: guarded(path), worker: isVariantPage(path) };
