@@ -45,18 +45,40 @@ describe('utils/i18n formatDate', () => {
     expect(formatDate('2026-09-24')).to.equal('September 24, 2026');
   });
 
-  it("falls back to 'en', not the browser locale, when the entry has no lang", () => {
+  it("falls back to 'en', not the browser locale or <html lang>, when the entry has no lang", () => {
+    // A stale <html lang> must not leak in: the locale comes from config only.
+    // getLocale only writes <html lang> when the entry has a lang, so 'fr' stays.
+    document.documentElement.lang = 'fr';
     // No locales -> getLocale's default `{ '': {} }`, so config.locale.lang is undefined.
     setConfig({});
+    expect(document.documentElement.lang).to.equal('fr');
     const spy = sinon.spy(Intl, 'DateTimeFormat');
-    formatDate('2026-09-24');
+    expect(formatDate('2026-09-24')).to.equal('September 24, 2026');
     expect(spy.firstCall.args[0]).to.equal('en');
+    document.documentElement.lang = initialLang;
+  });
+
+  it("treats an empty lang as missing, like ak.js getLocale (Intl throws on '')", () => {
+    setConfig({ locales: { '': { lang: '' } } });
+    expect(formatDate('2026-09-24')).to.equal('September 24, 2026');
   });
 
   it('keeps a YYYY-MM-DD date on the same calendar day', () => {
     useLocale('');
     expect(formatDate('2026-09-24')).to.equal('September 24, 2026');
     expect(formatDate('2024-01-01')).to.equal('January 1, 2024');
+  });
+
+  it('trims whitespace before recognising a YYYY-MM-DD date', () => {
+    useLocale('');
+    // UTC-11: any reading other than the pinned calendar day lands on the 23rd.
+    expect(formatDate(' 2026-09-24 ', { timeZone: 'Pacific/Pago_Pago' })).to.equal('September 24, 2026');
+  });
+
+  it('pins only the full YYYY-MM-DD form; YYYY-MM is a UTC instant', () => {
+    useLocale('');
+    expect(formatDate('2026-09', { timeZone: 'UTC' })).to.equal('September 1, 2026');
+    expect(formatDate('2026-09', { timeZone: 'America/Los_Angeles' })).to.equal('August 31, 2026');
   });
 
   it('does not let a caller timeZone shift a date-only value (any runner zone)', () => {
@@ -91,6 +113,14 @@ describe('utils/i18n formatDate', () => {
     expect(formatDate(instant, { timeZone: 'America/Los_Angeles' })).to.equal('September 23, 2026');
     expect(formatDate('2026-09-24', { month: 'short' })).to.equal('Sep 24, 2026');
     expect(formatDate('2026-09-24', { dateStyle: 'short' })).to.equal('9/24/26');
+    expect(formatDate('2026-09-24', { day: undefined })).to.equal('September 2026');
+  });
+
+  it('drops the date defaults for timeStyle, so an instant can show only its time', () => {
+    useLocale('');
+    const instant = Date.UTC(2026, 8, 24, 15, 5);
+    // Chrome puts U+202F (narrow no-break space) before AM/PM; \s matches it.
+    expect(formatDate(instant, { timeStyle: 'short', timeZone: 'UTC' }).replace(/\s/g, ' ')).to.equal('3:05 PM');
   });
 
   it('returns invalid or empty input unchanged, like the old fmtDate', () => {
