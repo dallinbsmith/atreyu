@@ -35,8 +35,19 @@ const writeGraph = () => {
     .replace(/&/g, '\\u0026');
 };
 
+// Idempotent: a Quick-Edit re-decoration re-runs a block's default export (and
+// thus its inject()), but `graph` + the <head> script survive the body swap, so
+// an unconditional push would accumulate duplicate nodes (and multiple same-type
+// nodes like two FAQPage on one URL are invalid structured data). Dedup by
+// `@id` when present, else by structural equality, so a repeat inject replaces
+// rather than appends; genuinely-distinct nodes still coexist.
 export const inject = (data) => {
-  graph.push(data);
+  const id = data['@id'];
+  const idx = id
+    ? graph.findIndex((node) => node['@id'] === id)
+    : graph.findIndex((node) => JSON.stringify(node) === JSON.stringify(data));
+  if (idx === -1) graph.push(data);
+  else graph[idx] = data;
   if (scriptEl) writeGraph();
 };
 
