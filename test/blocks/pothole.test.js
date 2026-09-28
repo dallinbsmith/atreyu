@@ -129,7 +129,7 @@ describe('pothole', () => {
     expect(el.querySelector('.pothole-content a')).to.exist;
   });
 
-  describe('trailing key: value metadata row', () => {
+  describe('trailing scale: n metadata row', () => {
     it('a "scale: n" trailing row sets --media-scale and is removed from content', () => {
       const el = block([img, '<h2>Title</h2>', 'scale: 1.2']);
       decorate(el);
@@ -144,11 +144,32 @@ describe('pothole', () => {
       expect(el.querySelectorAll(':scope > div')).to.have.length(2);
     });
 
-    it('an invalid "scale: big" row is removed as meta but not applied', () => {
-      const el = block([img, '<h2>Title</h2>', 'scale: big']);
+    // Non-numeric values do not match META_RE: the row stays as content.
+    ['scale: big', 'Scale: from one editor to a thousand', 'scale: -1', 'scale: 0x10',
+      'scale: 1.', 'scale: Infinity'].forEach((text) => {
+      it(`"${text}" is not meta: kept as content, --media-scale unset`, () => {
+        const el = block([img, '<h2>Title</h2>', `<p>${text}</p>`]);
+        decorate(el);
+        expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+        expect(el.querySelector('.pothole-content').textContent).to.include(text);
+      });
+    });
+
+    // Numeric but unusable values match META_RE: removed, not applied.
+    ['scale: 0', 'scale: 0.0', 'scale: 1e999'].forEach((text) => {
+      it(`"${text}" is removed as meta but not applied`, () => {
+        const el = block([img, '<h2>Title</h2>', text]);
+        decorate(el);
+        expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+        expect(el.querySelector('.pothole-content').textContent).to.not.include(text);
+      });
+    });
+
+    it('writes the normalized number, not the raw text ("scale: +1.50" -> "1.5")', () => {
+      const el = block([img, '<h2>Title</h2>', 'scale: +1.50']);
       decorate(el);
-      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
-      expect(el.querySelector('.pothole-content').textContent).to.not.include('scale: big');
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('1.5');
+      expect(el.querySelector('.pothole-content').textContent).to.not.include('scale');
     });
 
     it('a trailing "glow: blue" row is ordinary content: kept, and adds no class', () => {
@@ -170,12 +191,18 @@ describe('pothole', () => {
       expect(text).to.include('more');
     });
 
-    it('a content row whose sole text happens to be a color/number name is NOT misread as metadata', () => {
-      const el = block([img, '<h2>Blue</h2>']);
+    it('a bare number as the last row is content, not meta (no "scale:" key)', () => {
+      const el = block([img, '<h2>Title</h2>', '<p>1.2</p>']);
       decorate(el);
-      expect(el.classList.contains('glow-blue')).to.be.false;
-      expect(el.querySelector('.pothole-background')).to.exist;
-      expect(el.querySelector('.pothole-content h2').textContent).to.equal('Blue');
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+      expect(el.querySelector('.pothole-content').textContent).to.include('1.2');
+    });
+
+    it('regression: plain pothole (no variants, no meta row) leaves --media-scale unset', () => {
+      const el = block([img, '<h2>Title</h2>']);
+      decorate(el);
+      expect(el.className).to.equal('pothole');
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
     });
 
     it('a single-row block (sole text matching the meta pattern) does not throw and is treated as content', () => {

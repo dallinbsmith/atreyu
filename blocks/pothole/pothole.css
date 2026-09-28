@@ -57,7 +57,8 @@
 
     /* Glow layer only exists when a glow variant is set (authored as
        `Pothole (glow-blue)`), so a plain pothole
-       gets no extra pseudo-element or blend layer. */
+       gets no extra pseudo-element or blend layer. Purple/blue/green use
+       :root tokens; pink has no token, so it stays a named colour. */
     &:is(.glow-purple, .glow-blue, .glow-pink, .glow-green)::before {
       content: '';
       position: absolute;
@@ -69,11 +70,11 @@
     }
 
     &.glow-purple {
-      --glow-background: radial-gradient(circle, color-mix(in srgb, purple 60%, transparent), transparent 70%);
+      --glow-background: radial-gradient(circle, color-mix(in srgb, var(--color-iris) 60%, transparent), transparent 70%);
     }
 
     &.glow-blue {
-      --glow-background: radial-gradient(circle, color-mix(in srgb, blue 60%, transparent), transparent 70%);
+      --glow-background: radial-gradient(circle, color-mix(in srgb, var(--color-blue-500) 60%, transparent), transparent 70%);
     }
 
     &.glow-pink {
@@ -81,7 +82,7 @@
     }
 
     &.glow-green {
-      --glow-background: radial-gradient(circle, color-mix(in srgb, seagreen 60%, transparent), transparent 70%);
+      --glow-background: radial-gradient(circle, color-mix(in srgb, var(--color-green-400) 60%, transparent), transparent 70%);
     }
 
     .pothole-content {
