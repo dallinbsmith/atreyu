@@ -137,17 +137,37 @@ describe('pothole', () => {
       expect(el.querySelectorAll(':scope > div')).to.have.length(2);
     });
 
-    it('a "glow: {color}" trailing row adds a glow-{color} class', () => {
-      const el = block([img, '<h2>Title</h2>', 'glow: purple']);
+    it('scale matching is case-insensitive ("Scale: 1.2")', () => {
+      const el = block([img, '<h2>Title</h2>', 'Scale: 1.2']);
       decorate(el);
-      expect(el.classList.contains('glow-purple')).to.be.true;
-      expect(el.querySelector('.pothole-content')?.textContent).to.not.include('purple');
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('1.2');
+      expect(el.querySelectorAll(':scope > div')).to.have.length(2);
     });
 
-    it('an unknown glow color is consumed but adds no class', () => {
-      const el = block([img, '<h2>Title</h2>', 'glow: orange']);
+    it('an invalid "scale: big" row is removed as meta but not applied', () => {
+      const el = block([img, '<h2>Title</h2>', 'scale: big']);
       decorate(el);
-      expect([...el.classList].some((c) => c.startsWith('glow-'))).to.be.false;
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+      expect(el.querySelector('.pothole-content').textContent).to.not.include('scale: big');
+    });
+
+    it('a trailing "glow: blue" row is ordinary content: kept, and adds no class', () => {
+      const el = block([img, '<h2>Title</h2>', '<p>glow: blue</p>']);
+      decorate(el);
+      expect(el.classList.contains('glow-blue')).to.be.false;
+      expect(el.querySelector('.pothole-content').textContent).to.include('glow: blue');
+    });
+
+    it('a two-cell last row is not read as meta', () => {
+      const el = block([img, '<h2>Title</h2>']);
+      const row = document.createElement('div');
+      row.innerHTML = '<div><p>scale: 1.2</p></div><div><p>more</p></div>';
+      el.append(row);
+      decorate(el);
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+      const text = el.querySelector('.pothole-content').textContent;
+      expect(text).to.include('scale: 1.2');
+      expect(text).to.include('more');
     });
 
     it('a content row whose sole text happens to be a color/number name is NOT misread as metadata', () => {
@@ -159,10 +179,10 @@ describe('pothole', () => {
     });
 
     it('a single-row block (sole text matching the meta pattern) does not throw and is treated as content', () => {
-      const el = block(['<h2>glow: purple</h2>']);
+      const el = block(['<h2>scale: 1.2</h2>']);
       expect(() => decorate(el)).to.not.throw();
-      expect(el.classList.contains('glow-purple')).to.be.false;
-      expect(el.querySelector('.pothole-content')).to.exist;
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+      expect(el.querySelector('.pothole-content').textContent).to.include('scale: 1.2');
     });
 
     it('a 2-row block never treats its last row as metadata', () => {

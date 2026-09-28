@@ -56,7 +56,7 @@
     }
 
     /* Glow layer only exists when a glow variant is set (authored as
-       `Pothole (glow-blue)` or a `glow: blue` row), so a plain pothole
+       `Pothole (glow-blue)`), so a plain pothole
        gets no extra pseudo-element or blend layer. */
     &:is(.glow-purple, .glow-blue, .glow-pink, .glow-green)::before {
       content: '';
