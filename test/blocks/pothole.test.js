@@ -2,9 +2,9 @@ import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import decorate from '../../blocks/pothole/pothole.js';
 
-const block = (rowsHtml) => {
+const block = (rowsHtml, classes = '') => {
   const el = document.createElement('div');
-  el.className = 'pothole';
+  el.className = `pothole ${classes}`.trim();
   rowsHtml.forEach((html) => {
     const row = document.createElement('div');
     const cell = document.createElement('div');
@@ -127,6 +127,120 @@ describe('pothole', () => {
     const text = el.querySelector('.pothole-content')?.textContent ?? '';
     expect(text).to.include('Real content');
     expect(el.querySelector('.pothole-content a')).to.exist;
+  });
+
+  describe('trailing scale: n metadata row', () => {
+    it('a "scale: n" trailing row sets --media-scale and is removed from content', () => {
+      const el = block([img, '<h2>Title</h2>', 'scale: 1.2']);
+      decorate(el);
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('1.2');
+      expect(el.querySelectorAll(':scope > div')).to.have.length(2);
+    });
+
+    it('scale matching is case-insensitive ("Scale: 1.2")', () => {
+      const el = block([img, '<h2>Title</h2>', 'Scale: 1.2']);
+      decorate(el);
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('1.2');
+      expect(el.querySelectorAll(':scope > div')).to.have.length(2);
+    });
+
+    // Non-numeric values do not match META_RE: the row stays as content.
+    ['scale: big', 'Scale: from one editor to a thousand', 'scale: -1', 'scale: 0x10',
+      'scale: 1.', 'scale: Infinity'].forEach((text) => {
+      it(`"${text}" is not meta: kept as content, --media-scale unset`, () => {
+        const el = block([img, '<h2>Title</h2>', `<p>${text}</p>`]);
+        decorate(el);
+        expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+        expect(el.querySelector('.pothole-content').textContent).to.include(text);
+      });
+    });
+
+    // Numeric but unusable values match META_RE: removed, not applied.
+    ['scale: 0', 'scale: 0.0', 'scale: 1e999'].forEach((text) => {
+      it(`"${text}" is removed as meta but not applied`, () => {
+        const el = block([img, '<h2>Title</h2>', text]);
+        decorate(el);
+        expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+        expect(el.querySelector('.pothole-content').textContent).to.not.include(text);
+      });
+    });
+
+    it('writes the normalized number, not the raw text ("scale: +1.50" -> "1.5")', () => {
+      const el = block([img, '<h2>Title</h2>', 'scale: +1.50']);
+      decorate(el);
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('1.5');
+      expect(el.querySelector('.pothole-content').textContent).to.not.include('scale');
+    });
+
+    it('a trailing "glow: blue" row is ordinary content: kept, and adds no class', () => {
+      const el = block([img, '<h2>Title</h2>', '<p>glow: blue</p>']);
+      decorate(el);
+      expect(el.classList.contains('glow-blue')).to.be.false;
+      expect(el.querySelector('.pothole-content').textContent).to.include('glow: blue');
+    });
+
+    it('a two-cell last row is not read as meta', () => {
+      const el = block([img, '<h2>Title</h2>']);
+      const row = document.createElement('div');
+      row.innerHTML = '<div><p>scale: 1.2</p></div><div><p>more</p></div>';
+      el.append(row);
+      decorate(el);
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+      const text = el.querySelector('.pothole-content').textContent;
+      expect(text).to.include('scale: 1.2');
+      expect(text).to.include('more');
+    });
+
+    it('a bare number as the last row is content, not meta (no "scale:" key)', () => {
+      const el = block([img, '<h2>Title</h2>', '<p>1.2</p>']);
+      decorate(el);
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+      expect(el.querySelector('.pothole-content').textContent).to.include('1.2');
+    });
+
+    it('regression: plain pothole (no variants, no meta row) leaves --media-scale unset', () => {
+      const el = block([img, '<h2>Title</h2>']);
+      decorate(el);
+      expect(el.className).to.equal('pothole');
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+    });
+
+    it('a single-row block (sole text matching the meta pattern) does not throw and is treated as content', () => {
+      const el = block(['<h2>scale: 1.2</h2>']);
+      expect(() => decorate(el)).to.not.throw();
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+      expect(el.querySelector('.pothole-content').textContent).to.include('scale: 1.2');
+    });
+
+    it('a 2-row block never treats its last row as metadata', () => {
+      const el = block([img, '<p>scale: 1.2</p>']);
+      decorate(el);
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+      expect(el.querySelector('.pothole-content').textContent).to.include('scale: 1.2');
+    });
+
+    it('an unrecognized trailing row is left as ordinary content, not consumed as metadata', () => {
+      const el = block([img, '<h2>Title</h2>', '<p>not metadata</p>']);
+      decorate(el);
+      expect(el.querySelector('.pothole-content').textContent).to.include('not metadata');
+    });
+
+    it('an author-provided second content row is merged in, not dropped — even alongside a metadata row', () => {
+      const el = block([img, '<h2>Real content</h2>', '<p>Second row</p>', 'scale: 1.2']);
+      decorate(el);
+      const text = el.querySelector('.pothole-content').textContent;
+      expect(text).to.include('Real content');
+      expect(text).to.include('Second row');
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('1.2');
+    });
+  });
+
+  it('preserves author-set variant classes (layout and glow)', () => {
+    const el = block([img, '<h2>Title</h2>'], 'top right-aligned overflow glow-blue');
+    decorate(el);
+    ['top', 'right-aligned', 'overflow', 'glow-blue'].forEach((c) => {
+      expect(el.classList.contains(c)).to.be.true;
+    });
   });
 
   describe('re-decoration idempotency', () => {
