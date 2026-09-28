@@ -2,9 +2,9 @@ import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import decorate from '../../blocks/pothole/pothole.js';
 
-const block = (rowsHtml) => {
+const block = (rowsHtml, classes = '') => {
   const el = document.createElement('div');
-  el.className = 'pothole';
+  el.className = `pothole ${classes}`.trim();
   rowsHtml.forEach((html) => {
     const row = document.createElement('div');
     const cell = document.createElement('div');
@@ -127,6 +127,73 @@ describe('pothole', () => {
     const text = el.querySelector('.pothole-content')?.textContent ?? '';
     expect(text).to.include('Real content');
     expect(el.querySelector('.pothole-content a')).to.exist;
+  });
+
+  describe('trailing key: value metadata row', () => {
+    it('a "scale: n" trailing row sets --media-scale and is removed from content', () => {
+      const el = block([img, '<h2>Title</h2>', 'scale: 1.2']);
+      decorate(el);
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('1.2');
+      expect(el.querySelectorAll(':scope > div')).to.have.length(2);
+    });
+
+    it('a "glow: {color}" trailing row adds a glow-{color} class', () => {
+      const el = block([img, '<h2>Title</h2>', 'glow: purple']);
+      decorate(el);
+      expect(el.classList.contains('glow-purple')).to.be.true;
+      expect(el.querySelector('.pothole-content')?.textContent).to.not.include('purple');
+    });
+
+    it('an unknown glow color is consumed but adds no class', () => {
+      const el = block([img, '<h2>Title</h2>', 'glow: orange']);
+      decorate(el);
+      expect([...el.classList].some((c) => c.startsWith('glow-'))).to.be.false;
+    });
+
+    it('a content row whose sole text happens to be a color/number name is NOT misread as metadata', () => {
+      const el = block([img, '<h2>Blue</h2>']);
+      decorate(el);
+      expect(el.classList.contains('glow-blue')).to.be.false;
+      expect(el.querySelector('.pothole-background')).to.exist;
+      expect(el.querySelector('.pothole-content h2').textContent).to.equal('Blue');
+    });
+
+    it('a single-row block (sole text matching the meta pattern) does not throw and is treated as content', () => {
+      const el = block(['<h2>glow: purple</h2>']);
+      expect(() => decorate(el)).to.not.throw();
+      expect(el.classList.contains('glow-purple')).to.be.false;
+      expect(el.querySelector('.pothole-content')).to.exist;
+    });
+
+    it('a 2-row block never treats its last row as metadata', () => {
+      const el = block([img, '<p>scale: 1.2</p>']);
+      decorate(el);
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('');
+      expect(el.querySelector('.pothole-content').textContent).to.include('scale: 1.2');
+    });
+
+    it('an unrecognized trailing row is left as ordinary content, not consumed as metadata', () => {
+      const el = block([img, '<h2>Title</h2>', '<p>not metadata</p>']);
+      decorate(el);
+      expect(el.querySelector('.pothole-content').textContent).to.include('not metadata');
+    });
+
+    it('an author-provided second content row is merged in, not dropped — even alongside a metadata row', () => {
+      const el = block([img, '<h2>Real content</h2>', '<p>Second row</p>', 'scale: 1.2']);
+      decorate(el);
+      const text = el.querySelector('.pothole-content').textContent;
+      expect(text).to.include('Real content');
+      expect(text).to.include('Second row');
+      expect(el.style.getPropertyValue('--media-scale')).to.equal('1.2');
+    });
+  });
+
+  it('preserves author-set variant classes (layout and glow)', () => {
+    const el = block([img, '<h2>Title</h2>'], 'top right-aligned overflow glow-blue');
+    decorate(el);
+    ['top', 'right-aligned', 'overflow', 'glow-blue'].forEach((c) => {
+      expect(el.classList.contains(c)).to.be.true;
+    });
   });
 
   describe('re-decoration idempotency', () => {
