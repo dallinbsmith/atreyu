@@ -69,8 +69,8 @@ export const HEADING_SELECTOR = 'h1, h2, h3, h4, h5, h6';
 export const parseGlassborderDecoration = (el) => {
   const line = [...el.querySelectorAll('p')].find((p) => /^\s*decoration\s*[:=]/i.test(p.textContent));
   if (!line) return;
-  const pair = line.textContent.split(/[;,\n]/).find((p) => /^\s*decoration\s*[:=]/i.test(p));
-  const [, value] = pair.split(/[:=]/).map((s) => s?.trim());
+  const segment = line.textContent.split(/[;,\n]/).find((p) => /^\s*decoration\s*[:=]/i.test(p));
+  const [, value] = segment.split(/[:=]/).map((s) => s?.trim());
   if (value?.toLowerCase() === 'glassborder') el.classList.add('glassborder');
   line.remove();
 };
