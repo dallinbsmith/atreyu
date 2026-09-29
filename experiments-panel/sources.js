@@ -1,6 +1,6 @@
 import { readExperiment, matchesPattern, toClassName } from '../scripts/utils/experiments/config.js';
 import { findExperimentBlocks, readExperimentBlock } from '../scripts/utils/experiments/block.js';
-import { findConfigBlocks } from '../scripts/utils/experiments/guard.js';
+import { findConfigBlocks, removeConfigBlock } from '../scripts/utils/experiments/guard.js';
 import { applyPersonalizeTables } from '../scripts/utils/experiments/personalize.js';
 import { readValues } from './personalize-table.js';
 
@@ -52,7 +52,13 @@ const readPersonalize = (doc, sections) => {
   const blocks = findConfigBlocks(doc.querySelector('main'), ['personalize']);
   const bySection = Map.groupBy(blocks, (block) => block.closest('main > div'));
   const tables = [...bySection].filter(([section]) => section)
-    .map(([section, own]) => ({ section, count: own.length, values: readValues(section) }));
+    .map(([section, own]) => ({
+      section, block: own[0], count: own.length, values: readValues(section),
+    }));
+  // Same order as the loader (experiment-loader.js runExperimentation):
+  // Experiment tables go first, so a section left with only its Personalize
+  // table is removed by the compiler here too.
+  findExperimentBlocks(doc).forEach((block) => removeConfigBlock(block));
   const plan = applyPersonalizeTables(doc, { prod: true, search: '' });
   // Panel-only notes, kept out of personalize-table.js check(), which the
   // Personalize tab also uses to validate a table before insert.
@@ -64,6 +70,8 @@ const readPersonalize = (doc, sections) => {
   return tables.map((table) => ({
     kind: 'personalize',
     scope: `Section ${sections.indexOf(table.section) + 1}`,
+    section: table.section,
+    block: table.block,
     values: table.values,
     served: plan.find((entry) => entry.section === table.section)?.rules ?? [],
     notes: notesFor(table),

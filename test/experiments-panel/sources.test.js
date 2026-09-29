@@ -111,6 +111,21 @@ describe('experiments-panel/sources.js', () => {
       expect(kept.served).to.deep.equal([{ id: 'desktop', path: '/v/y' }]);
       expect(kept.notes).to.deep.equal([]);
     });
+
+    it('removes Experiment tables first, like the loader, so an Experiment + Personalize section serves nothing', () => {
+      const experiment = '<div class="experiment"><div><div>Test Name</div><div>Table Test</div></div><div><div>Variants</div><div><a href="/v/t">t</a></div></div></div>';
+      const html = served([
+        '<h1>Hero</h1>',
+        `${experiment}${personalize([row('Audience: mobile', '/v/x'), row('End Date', day(30))])}`,
+      ]);
+      const [page, test, ...rest] = readPage(html, '/');
+      expect(rest).to.deep.equal([]);
+      expect(page.cfg.id).to.equal('table-test');
+      expect(test.scope).to.equal('Section 2');
+      expect(test.served).to.deep.equal([]);
+      expect(test.section.isConnected).to.equal(false);
+      expect(test.notes).to.deep.equal(['This section holds only the Personalize table, so the compiler removes it and serves nothing.']);
+    });
   });
 
   it('returns no tests for a page without experiment metadata', () => {

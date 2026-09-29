@@ -7,7 +7,8 @@ Insert. It shows what the plugin will actually do, using the same parsing rules 
 
 - **This page:**
   - every test on the current page: whole-page (head metadata or an Experiment table), and each
-    section's Personalize table with the rules the compiler serves under production rules.
+    section's Personalize table with the rules the compiler serves under production rules (or,
+    when it serves none, the table's valid rows as the compiler reads them).
     Section-level config is tables only (PLAN.md `pz-section-meta`): authored Section Metadata is
     flattened on the server, so the panel never reads it as a test;
   - where each test is configured (page doc or metadata sheet);

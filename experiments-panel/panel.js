@@ -9,7 +9,8 @@ import {
   sourceOf, waitForDaContext,
 } from './sources.js';
 import { renderBuildTab, renderPersonalizeTab } from './build-tabs.js';
-import { check, compileTableRules } from './personalize-table.js';
+import { check } from './personalize-table.js';
+import { readPersonalizeTable, resolveTableRules } from '../scripts/utils/experiments/personalize.js';
 
 const params = new URLSearchParams(window.location.search);
 // Page comes from Sidekick (?referrer=), a direct link (?page=), or the DA
@@ -99,20 +100,25 @@ const testCard = async (test, rows) => {
   );
 };
 
-// A section's Personalize table, as the compiler serves it with production
-// rules (sources.js readPersonalize). Issues reuse the Personalize tab's checks.
-// Unlike testCard, "running" wins over an error: the compiler drops only the
-// bad rows and serves the rest, so the errors are listed but the table runs.
+// A section's Personalize table (sources.js readPersonalize). Rows are the
+// rules the compiler serves under production rules; when it serves none, the
+// table's valid rows as the compiler reads them (readPersonalizeTable, then
+// resolveTableRules), before Status and End Date. Issues reuse the Personalize
+// tab's checks. Unlike testCard, "running" wins over an error: the compiler
+// drops only the bad rows and serves the rest, so the errors are listed but
+// the table runs. A missing variant page is also listed as an error but
+// doesn't change a running badge.
 const personalizeCard = async ({
-  scope, values, served, notes,
+  scope, section, block, values, served, notes,
 }) => {
-  const rules = served.length ? served : compileTableRules(values).rules;
+  const rules = served.length ? served : resolveTableRules(readPersonalizeTable(block)).rules;
   const issues = [...check(values), ...notes.map((message) => ({ level: 'warn', message }))];
   issues.push(...await missingPathIssues(rules.map(({ path }) => path)));
   const blocked = issues.some(({ level }) => level === 'error');
   const [label, tone] = (served.length && ['running', 'running']) || (blocked && ['blocked', 'blocked']) || ['not served', 'ended'];
-  // ?audience= previews serve an inactive table too (non-prod only).
-  const previewable = served.length > 0 || values.Status === 'inactive';
+  // ?audience= previews serve an inactive table too (non-prod only), but not
+  // one whose section the compiler removed.
+  const previewable = section.isConnected && (served.length > 0 || values.Status === 'inactive');
   const preview = (id) => {
     const url = new URL(pageUrl);
     url.searchParams.set('audience', id);
