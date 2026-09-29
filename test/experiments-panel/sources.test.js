@@ -4,22 +4,25 @@ import {
   sectionKeyIssues,
 } from '../../experiments-panel/sources.js';
 
+// Served (server-rendered) HTML, the shape the panel fetches: authored
+// Section Metadata is already flattened to data-* on the section.
 const PAGE = `<html><head>
   <meta name="experiment" content="Page Test">
   <meta name="experiment-variants" content="/variants/pricing/b">
 </head><body><main>
   <div><h1>Hero</h1></div>
-  <div><p>Body</p><div class="section-metadata">
-    <div><div>Experiment</div><div>Hero Copy</div></div>
-    <div><div>Experiment Variants</div><div><p><a href="https://main--atreyu--dallinbsmith.aem.page/v/one">x</a></p><p><a href="/v/two">y</a></p></div></div>
-    <div><div>Experiment Split</div><div>25, 25</div></div>
-    <div><div>Experiment End Date</div><div>2026-12-01</div></div>
-    <div><div>Experiment Start Date</div><div>2026-01-01</div></div>
-    <div><div>Experiment Requires Consent</div><div>true</div></div>
-    <div><div>Experiment Variant Names</div><div>Bold, Clear</div></div>
-    <div><div>Experiment Optimizing Target</div><div>signup</div></div>
-  </div></div>
+  <div data-experiment="Hero Copy" data-experiment-variants="https://main--atreyu--dallinbsmith.aem.page/v/one"><p>Body</p></div>
 </main></body></html>`;
+
+const day = (offset) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return [d.getFullYear(), d.getMonth() + 1, d.getDate()].map((n) => `${n}`.padStart(2, '0')).join('-');
+};
+
+const row = (key, value) => `<div><div><p>${key}</p></div><div><p>${value}</p></div></div>`;
+const personalize = (rows) => `<div class="personalize">${rows.join('')}</div>`;
+const served = (sections) => `<html><head></head><body><main>${sections.map((s) => `<div>${s}</div>`).join('')}</main></body></html>`;
 
 const SHEET = {
   data: [
@@ -30,38 +33,99 @@ const SHEET = {
 };
 
 describe('experiments-panel/sources.js', () => {
-  it('reads the page-level test from head meta and section tests from section metadata', () => {
-    const [page, section] = readPage(PAGE, '/pricing');
-    expect(page.kind).to.equal('page');
-    expect(page.scope).to.equal('Whole page');
-    expect(page.cfg.id).to.equal('page-test');
-    expect(section.kind).to.equal('section');
-    expect(section.scope).to.equal('Section 2');
-    expect(section.cfg.id).to.equal('hero-copy');
-    expect(section.cfg.variants.map((v) => v.path)).to.deep.equal(['/pricing', '/v/one', '/v/two']);
-    expect(section.cfg.variants.map((v) => v.split)).to.deep.equal([50, 25, 25]);
-    expect(section.cfg.variants.map((v) => v.label)).to.deep.equal(['Control', 'Challenger 1', 'Challenger 2']);
-    expect(section.cfg.startDate).to.equal(null);
-    expect(section.cfg.endDate).to.equal(null);
-    expect(section.cfg.ignoredAtSection).to.deep.equal([
-      'End Date',
-      'Start Date',
-      'Requires Consent',
-      'Variant Names',
-      'Optimizing Target',
-    ]);
+  it('reads the page-level test from head meta and ignores flattened section keys (tables only)', () => {
+    const tests = readPage(PAGE, '/pricing');
+    expect(tests.map((t) => t.kind)).to.deep.equal(['page']);
+    expect(tests[0].scope).to.equal('Whole page');
+    expect(tests[0].cfg.id).to.equal('page-test');
+    const issues = sectionKeyIssues(PAGE);
+    expect(issues).to.have.length(2);
+    expect(issues[0]).to.contain('Section 2').and.to.contain('"experiment"').and.to.contain('Personalize table for a section');
   });
 
   it('reads the Experiment table as the whole-page test and flags what it replaces', () => {
     const table = '<div class="experiment"><div><div>Test Name</div><div>Table Test</div></div><div><div>Variants</div><div><a href="/v/t">t</a></div></div></div>';
     const html = PAGE.replace('<div><h1>Hero</h1></div>', `<div><h1>Hero</h1></div><div>${table}${table}</div>`);
-    const [page, section] = readPage(html, '/pricing');
+    const [page, ...rest] = readPage(html, '/pricing');
+    expect(rest).to.deep.equal([]);
     expect(page.cfg.id).to.equal('table-test');
     expect(page.cfg.variants.map((v) => v.path)).to.deep.equal(['/pricing', '/v/t']);
     expect(sourceOf(page, [], '/pricing').label).to.equal('Experiment table (page doc)');
     expect(page.notes[0]).to.contain('Replaces test "page-test"');
     expect(page.notes[1]).to.contain('2 Experiment tables');
-    expect(section.cfg.id).to.equal('hero-copy');
+  });
+
+  describe('Personalize tables (the only section-level source)', () => {
+    it('reports what the compiler serves, in catalog order, with the section number', () => {
+      const html = served([
+        '<h1>Hero</h1>',
+        `<p>Body</p>${personalize([
+          row('Name', 'Hero by device'),
+          row('Audience: desktop', '<a href="/v/desktop">/v/desktop</a>'),
+          row('Audience: mobile', '<a href="/v/mobile">/v/mobile</a>'),
+          row('End Date', day(30)),
+          row('Owner', 'Web team'),
+        ])}`,
+      ]);
+      const [test, ...rest] = readPage(html, '/');
+      expect(rest).to.deep.equal([]);
+      expect(test.kind).to.equal('personalize');
+      expect(test.scope).to.equal('Section 2');
+      expect(test.values.Name).to.equal('Hero by device');
+      expect(test.values.Owner).to.equal('Web team');
+      expect(test.served).to.deep.equal([
+        { id: 'mobile', path: '/v/mobile' },
+        { id: 'desktop', path: '/v/desktop' },
+      ]);
+      expect(test.notes).to.deep.equal([]);
+    });
+
+    it('serves nothing for an inactive table or a past End Date (production rules)', () => {
+      const html = served([
+        `<p>A</p>${personalize([row('Audience: mobile', '/v/a'), row('Status', 'inactive'), row('End Date', day(30))])}`,
+        `<p>B</p>${personalize([row('Audience: mobile', '/v/b'), row('End Date', day(-1))])}`,
+      ]);
+      const tests = readPage(html, '/');
+      expect(tests.map((t) => t.scope)).to.deep.equal(['Section 1', 'Section 2']);
+      expect(tests.map((t) => t.served)).to.deep.equal([[], []]);
+      expect(tests[0].notes).to.deep.equal(['Status is inactive: served only in `?audience=` previews.']);
+      expect(tests[1].notes).to.deep.equal([]);
+    });
+
+    it('notes a second table in the same section, which the compiler ignores', () => {
+      const html = served([`<p>A</p>${personalize([row('Audience: mobile', '/v/first'), row('End Date', day(30))])}${personalize([row('Audience: mobile', '/v/second'), row('End Date', day(30))])}`]);
+      const [test] = readPage(html, '/');
+      expect(test.served).to.deep.equal([{ id: 'mobile', path: '/v/first' }]);
+      expect(test.notes[0]).to.contain('2 Personalize tables');
+    });
+
+    it('numbers sections as authored even when the compiler removes a table-only section', () => {
+      const html = served([
+        personalize([row('Audience: mobile', '/v/x'), row('End Date', day(30))]),
+        `<p>Two</p>${personalize([row('Audience: desktop', '/v/y'), row('End Date', day(30))])}`,
+      ]);
+      const [removed, kept] = readPage(html, '/');
+      expect([removed.scope, kept.scope]).to.deep.equal(['Section 1', 'Section 2']);
+      expect(removed.served).to.deep.equal([]);
+      expect(removed.notes).to.deep.equal(['This section holds only the Personalize table, so the compiler removes it and serves nothing.']);
+      expect(kept.served).to.deep.equal([{ id: 'desktop', path: '/v/y' }]);
+      expect(kept.notes).to.deep.equal([]);
+    });
+
+    it('removes Experiment tables first, like the loader, so an Experiment + Personalize section serves nothing', () => {
+      const experiment = '<div class="experiment"><div><div>Test Name</div><div>Table Test</div></div><div><div>Variants</div><div><a href="/v/t">t</a></div></div></div>';
+      const html = served([
+        '<h1>Hero</h1>',
+        `${experiment}${personalize([row('Audience: mobile', '/v/x'), row('End Date', day(30))])}`,
+      ]);
+      const [page, test, ...rest] = readPage(html, '/');
+      expect(rest).to.deep.equal([]);
+      expect(page.cfg.id).to.equal('table-test');
+      expect(test.scope).to.equal('Section 2');
+      expect(test.served).to.deep.equal([]);
+      expect(test.section.isConnected).to.equal(false);
+      expect(test.notes).to.deep.equal(['This section holds only the Personalize table, so the compiler removes it and serves nothing.']);
+    });
   });
 
   it('returns no tests for a page without experiment metadata', () => {

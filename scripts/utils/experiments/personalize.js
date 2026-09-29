@@ -1,6 +1,6 @@
 // The authoring "Personalize" table (P1.3). Never rendered: it compiles,
-// before the plugin runs, to the `Audience: <id>` section-metadata rows an
-// author could write by hand.
+// before the plugin runs, to `Audience: <id>` section-metadata rows, the only
+// supported source of them (tables only: authors never write these rows by hand).
 // Rows: Name, Audience: <id> -> /v/... (1-3), Status (active | inactive;
 // missing or empty = active, like block.js readExperimentBlock), End Date
 // (required), Owner.
