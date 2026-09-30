@@ -35,9 +35,9 @@ export const MAX_DAYS = 180;
 export { DATE_ONLY };
 const FIELDS = new Map([['name', 'name'], ['owner', 'owner'], ['status', 'status'], ['end-date', 'endDate']]);
 
-const warn = (prod, table, message) => {
-  // eslint-disable-next-line no-console -- author-facing diagnostics, non-prod only
-  if (!prod) console.warn(`Personalize table: ${table.name || 'unnamed'}: ${message}`);
+const warn = (quiet, table, message) => {
+  // eslint-disable-next-line no-console -- author-facing diagnostics, non-prod unless quiet
+  if (!quiet) console.warn(`Personalize table: ${table.name || 'unnamed'}: ${message}`);
 };
 
 const isAudienceKey = (key) => key === 'audience' || key.startsWith('audience-');
@@ -84,9 +84,10 @@ const dropReason = ({ status, endDate }, { now, preview }) => {
   if (end > new Date(today.getFullYear(), today.getMonth(), today.getDate() + MAX_DAYS + 1)) {
     return `End Date is more than ${MAX_DAYS} days away`;
   }
-  const state = statusOf({ status, endDate: end }, now);
-  if (state === 'ended') return 'End Date has passed';
-  if (state === 'inactive' && !preview) return `Status "${status}" is not active`;
+  // Ended before inactive: statusOf checks inactive first, which would keep an
+  // inactive, ended table in a preview.
+  if (end <= now) return 'End Date has passed';
+  if (statusOf({ status }, now) === 'inactive' && !preview) return `Status "${status}" is not active`;
   return null;
 };
 
@@ -110,9 +111,9 @@ export const resolveTableRules = (table, order = Object.keys(withCampaigns(
   return { rules: valid.slice(0, MAX_RULES), warnings };
 };
 
-const toRules = (table, order, prod) => {
+const toRules = (table, order, quiet) => {
   const { rules, warnings } = resolveTableRules(table, order);
-  for (const message of warnings) warn(prod, table, message);
+  for (const message of warnings) warn(quiet, table, message);
   return rules;
 };
 
@@ -148,17 +149,22 @@ const writeRules = (section, rules) => {
 
 // Returns the plan `{ section, name, owner, rules: [{ id, path }] }[]` of the
 // tables that compiled to at least one rule (consumed by P5 events).
+// Preview mode is any non-prod URL with an `audience` param, whatever its
+// value. `quiet` silences the warnings off prod (prod never warns): the
+// experiments panel's preview compile runs on a parsed copy and must not log.
 export const applyPersonalizeTables = (doc = document, {
   prod = ENV === 'prod',
   now = Date.now(),
   search = window.location.search,
+  quiet: quietOption = false,
 } = {}) => {
+  const quiet = prod || quietOption;
   const preview = !prod && new URLSearchParams(search).has('audience');
   const owners = new Map();
   for (const block of findConfigBlocks(doc.querySelector('main'), ['personalize'])) {
     const section = block.closest('main > div');
     const table = readPersonalizeTable(block);
-    if (section && owners.has(section)) warn(prod, table, 'a later table in this section is ignored.');
+    if (section && owners.has(section)) warn(quiet, table, 'a later table in this section is ignored.');
     else if (section) owners.set(section, table);
     removeConfigBlock(block);
   }
@@ -167,8 +173,8 @@ export const applyPersonalizeTables = (doc = document, {
   const order = Object.keys(withCampaigns(campaignIds(tableIds)));
   return live.flatMap(([section, table]) => {
     const reason = dropReason(table, { now, preview });
-    if (reason) warn(prod, table, `rules dropped, ${reason}.`);
-    const rules = reason ? [] : toRules(table, order, prod);
+    if (reason) warn(quiet, table, `rules dropped, ${reason}.`);
+    const rules = reason ? [] : toRules(table, order, quiet);
     writeRules(section, rules);
     return rules.length ? [{ section, name: table.name, owner: table.owner, rules }] : [];
   });

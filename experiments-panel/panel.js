@@ -107,18 +107,16 @@ const testCard = async (test, rows) => {
 // tab's checks. Unlike testCard, "running" wins over an error: the compiler
 // drops only the bad rows and serves the rest, so the errors are listed but
 // the table runs. A missing variant page is also listed as an error but
-// doesn't change a running badge.
+// doesn't change a running badge. Preview links only when the compiler's
+// preview run serves the table (`previewable`, sources.js previewSections).
 const personalizeCard = async ({
-  scope, section, block, values, served, notes,
+  scope, block, values, served, previewable, notes,
 }) => {
   const rules = served.length ? served : resolveTableRules(readPersonalizeTable(block)).rules;
   const issues = [...check(values), ...notes.map((message) => ({ level: 'warn', message }))];
   issues.push(...await missingPathIssues(rules.map(({ path }) => path)));
   const blocked = issues.some(({ level }) => level === 'error');
   const [label, tone] = (served.length && ['running', 'running']) || (blocked && ['blocked', 'blocked']) || ['not served', 'ended'];
-  // ?audience= previews serve an inactive table too (non-prod only), but not
-  // one whose section the compiler removed.
-  const previewable = section.isConnected && (served.length > 0 || values.Status === 'inactive');
   const preview = (id) => {
     const url = new URL(pageUrl);
     url.searchParams.set('audience', id);

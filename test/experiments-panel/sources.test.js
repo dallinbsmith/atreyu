@@ -90,6 +90,26 @@ describe('experiments-panel/sources.js', () => {
       expect(tests.map((t) => t.served)).to.deep.equal([[], []]);
       expect(tests[0].notes).to.deep.equal(['Status is inactive: served only in `?audience=` previews.']);
       expect(tests[1].notes).to.deep.equal([]);
+      expect(tests.map((t) => t.previewable)).to.deep.equal([true, false]);
+    });
+
+    it('marks an inactive table previewable only when a preview compile serves it, without logging', () => {
+      const { warn } = console;
+      const calls = [];
+      console.warn = (...args) => calls.push(args);
+      try {
+        const html = served([
+          `<p>A</p>${personalize([row('Audience: mobile', '/v/a'), row('Status', 'inactive'), row('End Date', day(-1))])}`,
+          `<p>B</p>${personalize([row('Audience: mobile', '/v/b'), row('Status', 'inactive'), row('End Date', 'soon')])}`,
+          `<p>C</p>${personalize([row('Audience: mobile', '/v/c'), row('Status', 'inactive'), row('End Date', day(30))])}`,
+        ]);
+        const tests = readPage(html, '/');
+        expect(tests.map((t) => t.previewable)).to.deep.equal([false, false, true]);
+        expect(tests.map((t) => t.notes.length)).to.deep.equal([0, 0, 1]);
+        expect(calls).to.deep.equal([]);
+      } finally {
+        console.warn = warn;
+      }
     });
 
     it('notes a second table in the same section, which the compiler ignores', () => {
