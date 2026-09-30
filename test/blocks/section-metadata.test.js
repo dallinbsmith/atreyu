@@ -128,12 +128,12 @@ describe('section-metadata block: container widths', () => {
     await setViewport({ width: 800, height: 600 });
   });
 
-  const contentWidth = async ({ style, container }) => {
+  const contentWidth = async ({ style, container, wrapper = 'default-content' }) => {
     const el = document.createElement('div');
     el.className = 'section';
     if (style) el.classList.add(style);
     if (container) el.dataset.container = container;
-    el.innerHTML = '<div class="default-content"><p>x</p></div>';
+    el.innerHTML = `<div class="${wrapper}"><p>x</p></div>`;
     document.body.append(el);
     await decorate(el);
     return el.firstElementChild.getBoundingClientRect().width;
@@ -150,8 +150,8 @@ describe('section-metadata block: container widths', () => {
     });
   }
 
-  // Option A: `Container: N` is N sixths of `--grid-container-width`, centred,
-  // at every viewport. The content area is 83.4% of the viewport below
+  // `Container: N` is N sixths of `--grid-container-width`, centred, at every
+  // viewport, for both default content and blocks. The content area is 83.4% of the viewport below
   // 1440px and 1120px from 1440px up (styles.css `:root`).
   const EXPECTED = {
     375: { 2: 104.25, 4: 208.5, 6: 312.75 },
@@ -170,6 +170,11 @@ describe('section-metadata block: container widths', () => {
           expect(w).to.be.closeTo(px, TOLERANCE);
         });
       }
+
+      it(`Container: 4 also constrains .block-content (~${sizes[4]}px)`, async () => {
+        const w = await contentWidth({ container: '4', wrapper: 'block-content' });
+        expect(w).to.be.closeTo(sizes[4], TOLERANCE);
+      });
 
       it('orders Container: 2 < 4 < 6', async () => {
         const two = await contentWidth({ container: '2' });
