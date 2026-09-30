@@ -1,10 +1,11 @@
-// Vanilla port of Falkor's HeroTransitionV4 module — a single glowing image
+// Glow Reveal: vanilla port of Falkor's HeroTransitionV4 module (renamed
+// from `hero-transition-v4` for what it does) — a single glowing image
 // used as a repeated mid-page "reveal" section, not a page-level hero. Real
 // content (checked directly against the live Sanity dataset, 2026-09-04) is
 // always a single image; 6 of 7 real instances add a glow behind it, one
 // omits it (opt out via the `no-glow` variant). This uses a one-shot
 // reveal-on-scroll, not the continuous trackScrollProgress() engine
-// pothole/pothole-v4 use — that engine assumes a tall, pinned section
+// pothole uses — that engine assumes a tall, pinned section
 // (`scroll.js`'s own doc comment), and this content is a short, normal-flow
 // element. Matches hero-cards-transition.js's own onReveal()-for-entrance
 // pattern instead.
@@ -17,7 +18,7 @@ export default (el) => {
   // reload path re-running loadBlock unconditionally) must not re-classify
   // already-restructured DOM: doing so would strip a level of wrapping off
   // any merged extra content on every subsequent call.
-  if (!guardDecorate(el, 'heroTransitionV4Decorated')) return;
+  if (!guardDecorate(el, 'glowRevealDecorated')) return;
 
   // Row meaning is classified by CELL, not by whole row: a row can hold more
   // than one column (children of rows are cells), so a row that pairs the
@@ -35,7 +36,7 @@ export default (el) => {
     img.setAttribute('decoding', 'async');
   }
 
-  const media = createElement('div', { className: 'hero-transition-v4-media' }, pic);
+  const media = createElement('div', { className: 'glow-reveal-media' }, pic);
   const extra = cells.filter((c) => c !== picCell);
   el.replaceChildren(media, ...extra);
 

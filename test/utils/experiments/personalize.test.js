@@ -166,6 +166,13 @@ describe('scripts/utils/experiments/personalize.js', () => {
 
     it('drops an ended table even in preview', () => {
       expect(rulesFor(baseRows({ endDate: PAST }), { search: '?audience=mobile' }).rows).to.deep.equal([]);
+      expect(rulesFor(baseRows({ endDate: PAST }), { prod: true }).rows).to.deep.equal([]);
+    });
+
+    it('drops an inactive, ended table even in preview (ended wins over inactive)', () => {
+      expect(rulesFor(baseRows({ status: 'inactive', endDate: PAST }), { search: '?audience=mobile' }).rows)
+        .to.deep.equal([]);
+      expect(warn.calledWithMatch(/End Date has passed/)).to.equal(true);
     });
 
     it('drops a table whose End Date is missing or invalid', () => {
@@ -305,6 +312,16 @@ describe('scripts/utils/experiments/personalize.js', () => {
     setMain(section(content, table(baseRows()), second));
     compile({ prod: true });
     expect(audienceRows()).to.deep.equal([['Audience: mobile', '/v/p/home/mobile']]);
+    expect(warn.called).to.equal(false);
+  });
+
+  it('quiet silences warnings off prod without changing what compiles', () => {
+    setMain(section(content, table(baseRows({ status: 'inactive', endDate: PAST }))));
+    expect(compile({ search: '?audience=mobile', quiet: true })).to.deep.equal([]);
+    expect(warn.called).to.equal(false);
+    setMain(section(content, table(baseRows({ status: 'inactive' }))));
+    expect(compile({ search: '?audience=any', quiet: true }).map(({ rules }) => rules))
+      .to.deep.equal([[{ id: 'mobile', path: '/v/p/home/mobile' }]]);
     expect(warn.called).to.equal(false);
   });
 
