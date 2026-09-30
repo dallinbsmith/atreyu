@@ -94,12 +94,19 @@ export const decorateTout = (el, prefix = 'tout', testidId = prefix) => {
   // already have a data-testid from decorateButton itself. A link that
   // carries an arrow icon (`:arrow:`) becomes a borderless text-link. Otherwise
   // assign positional primary/secondary to plain links.
+  const roleCounts = {};
   [...ctaWrapper.querySelectorAll('a')].forEach((a, idx) => {
     if (a.classList.contains('btn')) return;
     const isArrowLink = a.querySelector('.icon-arrow');
     let role = idx === 0 ? 'primary' : 'secondary';
     if (isArrowLink) role = 'link';
-    a.dataset.testid ||= `${testidId}-cta-${role}`;
+    // Disambiguate a repeated role within one tout (e.g. two secondary links or
+    // two arrow-links) so their data-testids don't collide. The first of each
+    // role keeps the bare `-cta-<role>` id (unchanged); the 2nd+ get a `-<n>`
+    // suffix. `testidId` already disambiguates across touts, not within one.
+    roleCounts[role] = (roleCounts[role] ?? 0) + 1;
+    const suffix = roleCounts[role] > 1 ? `-${roleCounts[role]}` : '';
+    a.dataset.testid ||= `${testidId}-cta-${role}${suffix}`;
     a.classList.add('btn', `btn-${role}`);
   });
 };

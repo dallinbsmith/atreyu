@@ -3,6 +3,7 @@ import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { announce } from '../../scripts/utils/a11y.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
+import { createElement } from '../../scripts/utils/dom.js';
 
 // One row = one slide. Classified by image shape (extractRowMedia), not
 // column position: the large photo becomes the full-bleed background, a
@@ -40,10 +41,7 @@ const buildSlide = (row, idx, total, slideLabel) => {
   }
 
   if (media) {
-    const mediaWrap = document.createElement('div');
-    mediaWrap.className = 'carousel-slide-media';
-    mediaWrap.append(media);
-    row.prepend(mediaWrap);
+    row.prepend(createElement('div', { className: 'carousel-slide-media' }, media));
   }
 };
 
@@ -57,11 +55,12 @@ const announceCurrentSlide = (viewport, total, slideLabel) => {
 };
 
 const makeNavButton = (label, dir, viewport) => {
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = `carousel-nav carousel-nav-${dir}`;
-  btn.setAttribute('aria-label', label);
-  btn.dataset.testid = `carousel-nav-${dir}`;
+  const btn = createElement('button', {
+    type: 'button',
+    className: `carousel-nav carousel-nav-${dir}`,
+    'aria-label': label,
+    'data-testid': `carousel-nav-${dir}`,
+  });
   btn.addEventListener('click', () => {
     const amount = viewport.clientWidth * 0.8 * (dir === 'prev' ? -1 : 1);
     viewport.scrollBy({ left: amount, behavior: shouldAnimate() ? 'smooth' : 'auto' });
@@ -88,13 +87,8 @@ export default async (el) => {
 
   rows.forEach((row, idx) => buildSlide(row, idx, rows.length, slideLabel));
 
-  const track = document.createElement('div');
-  track.className = 'carousel-track';
-  track.append(...rows);
-
-  const viewport = document.createElement('div');
-  viewport.className = 'carousel-viewport';
-  viewport.append(track);
+  const track = createElement('div', { className: 'carousel-track' }, ...rows);
+  const viewport = createElement('div', { className: 'carousel-viewport' }, track);
 
   el.setAttribute('role', 'region');
   el.setAttribute('aria-roledescription', 'carousel');
