@@ -120,5 +120,23 @@ describe('fragment', () => {
       expect(document.body.contains(a)).to.be.false;
       expect(logged.length).to.be.greaterThan(0);
     });
+
+    it('a detached anchor logs "Fragment anchor detached" instead of silently doing nothing', async () => {
+      const logged = [];
+      setConfig({
+        components: [],
+        hostnames: [],
+        linkBlocks: [],
+        log: (msg) => logged.push(msg),
+        locales: { '/ja-jp': {} },
+      });
+      restoreFetch = stubFetch(async () => new Response(fragmentHtml(['<p>Orphan</p>']), { status: 200 }));
+      const a = document.createElement('a');
+      a.className = 'fragment auto-block';
+      a.href = '/system/fragments/orphan';
+      await decorate(a);
+      expect(logged).to.include('Fragment anchor detached: /system/fragments/orphan');
+      expect(document.body.textContent).to.not.include('Orphan');
+    });
   });
 });

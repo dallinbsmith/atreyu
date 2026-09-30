@@ -20,7 +20,7 @@ const applyPageStyles = (fragment) => {
 };
 
 export const loadFragment = async (path) => {
-  const resp = await fetch(`${path}`);
+  const resp = await fetch(path);
   if (!resp.ok) throw Error(`Couldn't fetch ${path}`);
 
   const html = await resp.text();
@@ -66,7 +66,11 @@ export const getReplaceEl = (a) => {
   let current = a;
   const ancestor = a.closest('.section');
 
-  while (current && current !== ancestor) {
+  // `current.parentElement` guard: a detached anchor, or one outside any
+  // `.section`, has `ancestor === null`, so without it the loop would climb
+  // past the tree root and throw on `null.children`. Author-supplied anchors
+  // (fragment.js, schedule.js) can be detached by a prior swap.
+  while (current && current !== ancestor && current.parentElement) {
     const childCount = current.parentElement.children.length;
     if (childCount <= 1) {
       current = current.parentElement;
@@ -75,7 +79,9 @@ export const getReplaceEl = (a) => {
     }
   }
 
-  return current;
+  // No parent means nowhere to insert: `.after()` on a parentless node is a
+  // silent no-op, so return null and let the caller log and bail visibly.
+  return current.parentElement ? current : null;
 };
 
 // Page-lifetime counter, folded into each fragment's id alongside path/idx so
