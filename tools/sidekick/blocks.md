@@ -101,7 +101,7 @@ The block reads `data-*` attributes from the section element. EDS sets them on t
 | `grid` | `2`, `3`, `4`, `5`, `6` | Adds a CSS grid with the specified column count to `.block-content` children |
 | `gap` | `xs`, `s`, `m`, `l`, `xl`, `xxl` | Sets grid gap spacing |
 | `spacing` | `xs`, `s`, `m`, `l`, `xl`, `xxl` | Sets top/bottom padding on the section |
-| `container` | `2`, `4`, `6` | Constrains section content width (2 = narrow, 6 = full grid width). Works on its own: the block also adds the `container` class, so no `Style: container` row is needed. `0` or empty does nothing |
+| `container` | `2`, `4`, `6` | Constrains section content width, centred: 2 = one third, 4 = two thirds, 6 = the full content width. Same on every screen size. Blocks in the section are limited to the same width, so they are no longer full-bleed. Any other value (e.g. `3`) is ignored and the content keeps the default width. Works on its own: the block also adds the `container` class, so no `Style: container` row is needed. `0` or empty does nothing |
 | `background` | URL or CSS color or `color-token-*` | Sets a background image, color, or design token. URLs ending in `.mp4` are ignored. Token format: `color-token-accent` maps to `var(--color-accent)`, in any case. Image URLs keep their case. |
 | `layout` | `bento` | Applies a predefined asymmetric bento grid layout (3-column at 768px+ with named grid areas) |
 | `style` | CSS class names | Applied directly as classes on the section by the framework (not handled by this JS) |
