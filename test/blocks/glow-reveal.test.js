@@ -1,10 +1,10 @@
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
-import decorate from '../../blocks/hero-transition-v4/hero-transition-v4.js';
+import decorate from '../../blocks/glow-reveal/glow-reveal.js';
 
 const block = (rowsHtml) => {
   const el = document.createElement('div');
-  el.className = 'hero-transition-v4';
+  el.className = 'glow-reveal';
   rowsHtml.forEach((cellsHtml) => {
     const row = document.createElement('div');
     cellsHtml.forEach((html) => {
@@ -39,32 +39,32 @@ class FakeIntersectionObserver {
 }
 FakeIntersectionObserver.instances = [];
 
-describe('hero-transition-v4', () => {
+describe('glow-reveal', () => {
   afterEach(() => sinon.restore());
 
-  it('a single picture row decorates into .hero-transition-v4-media', () => {
+  it('a single picture row decorates into .glow-reveal-media', () => {
     const el = block([[img]]);
     decorate(el);
-    expect(el.querySelector('.hero-transition-v4-media picture')).to.exist;
+    expect(el.querySelector('.glow-reveal-media picture')).to.exist;
   });
 
   it('a row with a picture cell and a sibling text cell in the same row keeps the text (Fix 1 regression)', () => {
     const el = block([[img, '<p>Caption</p>']]);
     decorate(el);
-    expect(el.querySelector('.hero-transition-v4-media picture')).to.exist;
+    expect(el.querySelector('.glow-reveal-media picture')).to.exist;
     expect(el.textContent).to.include('Caption');
   });
 
   it('an extra separate row is still merged in, not dropped', () => {
     const el = block([[img], ['<p>Extra authored row</p>']]);
     decorate(el);
-    expect(el.querySelector('.hero-transition-v4-media picture')).to.exist;
+    expect(el.querySelector('.glow-reveal-media picture')).to.exist;
     expect(el.textContent).to.include('Extra authored row');
   });
 
   it('an empty block (no rows) does not throw', () => {
     const el = document.createElement('div');
-    el.className = 'hero-transition-v4';
+    el.className = 'glow-reveal';
     document.body.append(el);
     expect(() => decorate(el)).to.not.throw();
   });
@@ -102,7 +102,7 @@ describe('hero-transition-v4', () => {
       const el = block([[img], ['<p>Extra caption</p>']]);
 
       decorate(el);
-      expect(el.querySelector('.hero-transition-v4-media picture')).to.exist;
+      expect(el.querySelector('.glow-reveal-media picture')).to.exist;
       expect(el.textContent).to.include('Extra caption');
       // the merged extra cell keeps its own wrapping div — same shape as an
       // authored cell, not unwrapped down to its bare <p>

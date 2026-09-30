@@ -71,6 +71,11 @@ const metadataRows = (section) => section.querySelector(':scope > .section-metad
 
 const isCarryRow = (row) => ['style', 'anchor'].includes(row.children[0]?.textContent.trim().toLowerCase());
 
+// Kept for Quick Edit and DA preview only: both run the loader on raw DA
+// markup, where Section Metadata is still a table, so a plugin section swap
+// would drop its Style/Anchor rows before loadArea() applies them. On
+// .page/.live the server has already flattened Section Metadata, so there is
+// nothing to carry and this does nothing.
 export const carryOverSectionMeta = (main = document.querySelector('main')) => {
   const sections = [...(main?.querySelectorAll(':scope > div') ?? [])];
   const stashed = new WeakMap();
