@@ -43,7 +43,7 @@ export default async (a) => {
 
   const btn = createElement('button', {
     className: 'youtube-play',
-    'aria-label': playLabel.replace('{title}', title),
+    'aria-label': playLabel.replace('{title}', () => title),
   }, await loadSvg(new URL('./play.svg', import.meta.url).href));
 
   const container = createElement('div', { className: 'youtube-lite' }, img, btn);

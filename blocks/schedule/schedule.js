@@ -49,9 +49,12 @@ export default async (a) => {
 
   const now = getScheduleSim() ?? Date.now();
   const found = data.find((evt) => {
-    // Date.parse returns NaN (it never throws) on a malformed/missing date, and
-    // every comparison with NaN is false — so guard NaN explicitly instead of
-    // relying on a try/catch that could never fire.
+    // A row with a blank start or end is the default row (picked up as
+    // defEvent below), not a scheduled one: skip it silently, before parsing.
+    if (!(evt.start && evt.end)) return false;
+    // Date.parse returns NaN (it never throws) on a malformed date, and every
+    // comparison with NaN is false, so guard NaN explicitly and log only when
+    // an authored date is present but unparseable.
     const start = Date.parse(evt.start);
     const end = Date.parse(evt.end);
     if (Number.isNaN(start) || Number.isNaN(end)) {

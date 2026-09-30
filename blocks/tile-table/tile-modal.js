@@ -24,7 +24,7 @@ export const initTileModal = (items, labels) => {
     nameEl.textContent = item.name;
     detailEl.textContent = item.detail;
     linkEl.href = item.href;
-    linkEl.textContent = item.linkText || labels.visit.replace('{name}', item.name);
+    linkEl.textContent = item.linkText || labels.visit.replace('{name}', () => item.name);
     linkEl.hidden = !item.href;
     counterEl.textContent = labels.counter
       .replace('{current}', current + 1).replace('{total}', items.length);
@@ -70,7 +70,7 @@ export const initTileModal = (items, labels) => {
     setSlide(index);
     releaseFocus = openModal(modal, '.tt-modal-close');
     announce(labels.opened
-      .replace('{name}', items[index].name)
+      .replace('{name}', () => items[index].name)
       .replace('{current}', index + 1)
       .replace('{total}', items.length));
   };

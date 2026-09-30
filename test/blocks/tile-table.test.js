@@ -58,8 +58,12 @@ describe('tile-table', () => {
     row.append(nameCell);
     el.append(row);
     document.body.append(el);
-    await decorate(el);
-    expect(el.querySelectorAll('.tt-tile')).to.have.length(1);
-    expect(el.querySelector('.tt-label')?.textContent).to.equal('Solo');
+    try {
+      await decorate(el);
+      expect(el.querySelectorAll('.tt-tile')).to.have.length(1);
+      expect(el.querySelector('.tt-label')?.textContent).to.equal('Solo');
+    } finally {
+      el.remove();
+    }
   });
 });
