@@ -116,7 +116,7 @@ Sections are `<div>` children of `<main>`, separated by `---` in the authored do
 | `background` | Image URL, CSS color, or `color-token-*` design token |
 | `grid` | Column count (2-6) applied to `.block-content` children |
 | `gap` / `spacing` | Spacing tokens (`xs`, `s`, `m`, `l`, `xl`, `xxl`) |
-| `container` | Content width constraint (2, 4, or 6) |
+| `container` | Content width constraint (2, 4, or 6). Also adds the `container` class, so `Style: container` isn't needed |
 | `layout` | `bento` for asymmetric grid |
 | `anchor` | De-duplicated slug `id` for deep links (an `id` row wins) |
 
