@@ -116,11 +116,11 @@ Sections are `<div>` children of `<main>`, separated by `---` in the authored do
 | `background` | Image URL, CSS color, or `color-token-*` design token |
 | `grid` | Column count (2-6) applied to `.block-content` children |
 | `gap` / `spacing` | Spacing tokens (`xs`, `s`, `m`, `l`, `xl`, `xxl`) |
-| `container` | Content width constraint (2, 4, or 6) |
+| `container` | Centred content width: 2 = one third, 4 = two thirds, 6 = full content width, same on every screen size. Blocks in the section are limited to the same width, so they are no longer full-bleed. Other values are ignored (default width). Also adds the `container` class, so `Style: container` isn't needed |
 | `layout` | `bento` for asymmetric grid |
 | `anchor` | De-duplicated slug `id` for deep links (an `id` row wins) |
 
-EDS applies the table on the server and removes it before any JS runs. `style` becomes classes. `id` is special: it sets the section `id` (lowercased, invalid characters to `-`). Every other key becomes a `data-*` attribute whose value keeps the author's case: comma-separated tokens are trimmed and joined with `,`, and a link or image becomes its absolute URL. Some keys are reserved for the experimentation plugin: the list is under "Keys you must not use in Section Metadata" in `tools/sidekick/blocks.md`, and the Experiments panel checks for them (`experiments-panel/sources.js`, `sectionKeyIssues`).
+EDS applies the table on the server and removes it before any JS runs. `style` becomes classes. `id` is special: it sets the section `id` (lowercased, invalid characters to `-`). Every other key becomes a `data-*` attribute whose value keeps the author's case: comma-separated tokens are trimmed and joined with `,`, and a link or image becomes its absolute URL. Some keys are reserved for the experimentation plugin: the list is under "Keys you must not use in Section Metadata" in `tools/sidekick/blocks.md`, and the Experiments panel checks for them (`experiments-panel/sources.js`, `sectionKeyIssues`). Section-level experiments and audiences must use the Personalize table, never Section Metadata rows ("tables only", PLAN.md `pz-section-meta`): the plugin reads only real section metadata tables, which on previewed and published (.page/.live) pages exist only when the Personalize compiler builds them in the browser. Quick Edit and DA preview render the raw doc, so hand-written rows may appear to work there; they won't after preview/publish.
 
 For the full architecture, see [CLAUDE.md](../CLAUDE.md).
 
