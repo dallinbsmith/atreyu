@@ -1,21 +1,18 @@
 import { getConfig } from '../../scripts/ak.js';
 import { generateId, rovingTabindex, activateTab } from '../../scripts/utils/a11y.js';
+import { createElement } from '../../scripts/utils/dom.js';
 
 const { log } = getConfig();
 
 const buildTabList = (tabItems, panels) => {
-  const tabList = document.createElement('div');
-  tabList.className = 'tab-list';
-  tabList.setAttribute('role', 'tablist');
+  const tabList = createElement('div', { className: 'tab-list', role: 'tablist' });
 
   const tabs = [...tabItems].map((item, idx) => {
     const tabId = generateId('tab');
     const panelId = generateId('tabpanel');
-    const btn = document.createElement('button');
-    btn.setAttribute('role', 'tab');
-    btn.id = tabId;
-    btn.textContent = item.textContent;
-    btn.setAttribute('aria-controls', panelId);
+    const btn = createElement('button', {
+      role: 'tab', id: tabId, 'aria-controls': panelId,
+    }, item.textContent);
 
     panels[idx].id = panelId;
     panels[idx].setAttribute('role', 'tabpanel');
