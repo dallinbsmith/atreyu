@@ -24,9 +24,10 @@ const injectVideoLd = (id, title) => inject({
 export default async (a) => {
   const params = new URLSearchParams(a.search);
   const id = params.get('v') || a.pathname.split('/').pop();
-  const [fallbackTitle, playLabel] = await Promise.all([
+  const [fallbackTitle, playLabel, playIcon] = await Promise.all([
     getPlaceholder('youtubeTitle', 'YouTube Video'),
     getPlaceholder('youtubePlay', 'Play {title}'),
+    loadSvg(new URL('./play.svg', import.meta.url).href),
   ]);
   const title = a.textContent.trim() || fallbackTitle;
   params.delete('v');
@@ -44,7 +45,7 @@ export default async (a) => {
   const btn = createElement('button', {
     className: 'youtube-play',
     'aria-label': playLabel.replace('{title}', () => title),
-  }, await loadSvg(new URL('./play.svg', import.meta.url).href));
+  }, playIcon);
 
   const container = createElement('div', { className: 'youtube-lite' }, img, btn);
   const play = () => {
