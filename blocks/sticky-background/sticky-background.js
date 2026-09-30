@@ -76,6 +76,6 @@ export default (el) => {
   // save-data / low-power): no progress-driven JS motion runs, --sbg-edge stays
   // unset (0), and CSS renders the fully-visible resting state. The cleanup
   // handle is intentionally discarded — el lives for the page lifetime (EDS is
-  // full-page-load, no client routing), matching pothole/decorate.js.
+  // full-page-load, no client routing), matching pothole.js.
   trackScrollProgress(el, (p) => el.style.setProperty('--sbg-edge', edgeProgress(p).toFixed(4)));
 };

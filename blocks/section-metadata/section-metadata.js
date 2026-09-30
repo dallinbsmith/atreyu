@@ -61,11 +61,16 @@ const handleBackground = async (background, section) => {
 
 // Authored values arrive as typed (`Bento`, `3 col`): classify them the way
 // block variants are, so `.layout-bento` matches and a space can't throw.
+// Grid and Container also add their base class: the CSS only sizes
+// `.container-N` inside `.container`, so `Container: 4` works without
+// `Style: container`.
+const BASE_CLASS_TYPES = new Set(['grid', 'container']);
+
 const handleLayout = (value, section, type) => {
   delete section.dataset[type];
   const name = toClassName(value);
   if (!name || name === '0') return;
-  if (type === 'grid') section.classList.add('grid');
+  if (BASE_CLASS_TYPES.has(type)) section.classList.add(type);
   section.classList.add(`${type}-${name}`);
 };
 
