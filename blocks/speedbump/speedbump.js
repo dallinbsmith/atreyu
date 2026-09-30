@@ -48,7 +48,7 @@ export default (el) => {
     ...picCell.children,
   );
   // Decorative once text is laid over it (see speedbump.css's scrim) — same
-  // shape and reasoning as pothole/decorate.js's identical treatment.
+  // shape and reasoning as pothole.js's identical treatment.
   if (media) {
     const img = media.querySelector('img');
     if (img) img.alt = '';

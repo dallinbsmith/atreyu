@@ -8,6 +8,10 @@
     isolation: isolate;
     background-color: var(--color-dark);
 
+    &.top {
+      align-items: flex-start;
+    }
+
     .pothole-background {
       position: absolute;
       inset: 0;
@@ -24,7 +28,7 @@
         height: 100%;
         object-fit: cover;
         display: block;
-        transform: translateY(calc(var(--progress, 0) * -8%));
+        transform: translateY(calc(var(--progress, 0) * -8%)) scale(var(--media-scale, 1));
         transform-origin: top;
       }
 
@@ -34,6 +38,51 @@
         inset: 0;
         background: linear-gradient(0deg, rgb(0 0 0 / 55%) 0%, rgb(0 0 0 / 15%) 60%);
       }
+    }
+
+    &.overflow .pothole-background {
+      inset: -20%;
+    }
+
+    &.right-aligned .pothole-background {
+      inset: 0 0 0 40%;
+    }
+
+    /* Higher specificity than either single-variant rule above (four classes
+       vs. three) so the two compose instead of right-aligned silently
+       overriding overflow's inset via source order. */
+    &.right-aligned.overflow .pothole-background {
+      inset: -20% -20% -20% 20%;
+    }
+
+    /* Glow layer only exists when a glow variant is set (authored as
+       `Pothole (glow-blue)`), so a plain pothole
+       gets no extra pseudo-element or blend layer. Purple/blue/green use
+       :root tokens; pink has no token, so it stays a named colour. */
+    &:is(.glow-purple, .glow-blue, .glow-pink, .glow-green)::before {
+      content: '';
+      position: absolute;
+      inset: -30%;
+      z-index: 0;
+      background: var(--glow-background);
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    &.glow-purple {
+      --glow-background: radial-gradient(circle, color-mix(in srgb, var(--color-iris) 60%, transparent), transparent 70%);
+    }
+
+    &.glow-blue {
+      --glow-background: radial-gradient(circle, color-mix(in srgb, var(--color-blue-500) 60%, transparent), transparent 70%);
+    }
+
+    &.glow-pink {
+      --glow-background: radial-gradient(circle, color-mix(in srgb, deeppink 60%, transparent), transparent 70%);
+    }
+
+    &.glow-green {
+      --glow-background: radial-gradient(circle, color-mix(in srgb, var(--color-green-400) 60%, transparent), transparent 70%);
     }
 
     .pothole-content {
