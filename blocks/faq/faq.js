@@ -1,6 +1,7 @@
 import { getConfig } from '../../scripts/ak.js';
 import { inject } from '../../scripts/utils/seo/jsonld.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
+import { createElement } from '../../scripts/utils/dom.js';
 
 const { log } = getConfig();
 
@@ -31,20 +32,11 @@ export default (el) => {
     if (qCol && aCol && question) {
       const answerText = aCol.textContent.trim();
 
-      const details = document.createElement('details');
-      details.className = 'faq-item';
-
-      const summary = document.createElement('summary');
-      summary.className = 'faq-question';
-      summary.textContent = question;
-
-      const content = document.createElement('div');
-      content.className = 'faq-answer';
+      const summary = createElement('summary', { className: 'faq-question' }, question);
       // move authored nodes directly — no innerHTML round-trip (avoids re-parsing
       // authored markup as a string; keeps the decorator's XSS surface minimal)
-      content.append(...aCol.childNodes);
-
-      details.append(summary, content);
+      const content = createElement('div', { className: 'faq-answer' }, ...aCol.childNodes);
+      const details = createElement('details', { className: 'faq-item' }, summary, content);
 
       el.append(details);
       items.push({ question, answer: answerText });

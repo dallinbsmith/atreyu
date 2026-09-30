@@ -187,6 +187,27 @@ describe('utils/touts decorateTout', () => {
     expect(links[1].dataset.testid).to.equal('side-by-side-tout-cta-link');
   });
 
+  it('suffixes a repeated role within one tout; the first of each role keeps its bare id', () => {
+    const el = document.createElement('div');
+    el.innerHTML = [
+      '<h3>Head</h3>',
+      '<p><a href="/a">A</a></p>',
+      '<p><a href="/b">B</a></p>',
+      '<p><a href="/c">C</a></p>',
+      '<p><a href="/d">D <span class="icon icon-arrow"></span></a></p>',
+      '<p><a href="/e">E <span class="icon icon-arrow"></span></a></p>',
+    ].join('');
+    decorateTout(el, 'tout', 'tout-3');
+    const testids = [...el.querySelectorAll('.tout-cta a')].map((a) => a.dataset.testid);
+    expect(testids).to.deep.equal([
+      'tout-3-cta-primary',
+      'tout-3-cta-secondary',
+      'tout-3-cta-secondary-2',
+      'tout-3-cta-link',
+      'tout-3-cta-link-2',
+    ]);
+  });
+
   it('does not overwrite data-testid on a link already classed .btn', () => {
     const el = document.createElement('div');
     el.innerHTML = '<p>copy</p><p><a class="btn btn-accent" data-testid="custom" href="/a">A</a></p>';
