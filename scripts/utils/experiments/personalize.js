@@ -36,7 +36,7 @@ export { DATE_ONLY };
 const FIELDS = new Map([['name', 'name'], ['owner', 'owner'], ['status', 'status'], ['end-date', 'endDate']]);
 
 const warn = (quiet, table, message) => {
-  // eslint-disable-next-line no-console -- author-facing diagnostics, non-prod only
+  // eslint-disable-next-line no-console -- author-facing diagnostics, non-prod unless quiet
   if (!quiet) console.warn(`Personalize table: ${table.name || 'unnamed'}: ${message}`);
 };
 
