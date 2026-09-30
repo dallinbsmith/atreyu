@@ -84,9 +84,10 @@ const dropReason = ({ status, endDate }, { now, preview }) => {
   if (end > new Date(today.getFullYear(), today.getMonth(), today.getDate() + MAX_DAYS + 1)) {
     return `End Date is more than ${MAX_DAYS} days away`;
   }
-  const state = statusOf({ status, endDate: end }, now);
-  if (state === 'ended') return 'End Date has passed';
-  if (state === 'inactive' && !preview) return `Status "${status}" is not active`;
+  // Ended before inactive: statusOf checks inactive first, which would keep an
+  // inactive, ended table in a preview.
+  if (end <= now) return 'End Date has passed';
+  if (statusOf({ status }, now) === 'inactive' && !preview) return `Status "${status}" is not active`;
   return null;
 };
 
