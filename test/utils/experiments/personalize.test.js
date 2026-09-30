@@ -315,6 +315,16 @@ describe('scripts/utils/experiments/personalize.js', () => {
     expect(warn.called).to.equal(false);
   });
 
+  it('quiet silences warnings off prod without changing what compiles', () => {
+    setMain(section(content, table(baseRows({ status: 'inactive', endDate: PAST }))));
+    expect(compile({ search: '?audience=mobile', quiet: true })).to.deep.equal([]);
+    expect(warn.called).to.equal(false);
+    setMain(section(content, table(baseRows({ status: 'inactive' }))));
+    expect(compile({ search: '?audience=any', quiet: true }).map(({ rules }) => rules))
+      .to.deep.equal([[{ id: 'mobile', path: '/v/p/home/mobile' }]]);
+    expect(warn.called).to.equal(false);
+  });
+
   it('removes a section that held only the table (and metadata), compiling nothing', () => {
     setMain(
       section(table(baseRows()), meta([row('Style', 'dark')])),

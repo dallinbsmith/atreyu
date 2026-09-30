@@ -129,4 +129,42 @@ describe('experiments-panel/panel.js', () => {
     expect(card.querySelectorAll('th')).to.have.length(2);
     expect(card.querySelector('a[href*="audience="]')).to.equal(null);
   });
+
+  // An inactive table with this End Date; the preview compile decides.
+  const inactive = (endDate) => PAGE_HTML.replace(
+    `<div><div><p>End Date</p></div><div><p>${day(30)}</p></div></div>`,
+    `<div><div><p>Status</p></div><div><p>inactive</p></div></div><div><div><p>End Date</p></div><div><p>${endDate}</p></div></div>`,
+  );
+  const INACTIVE_NOTE = 'served only in `?audience=` previews';
+
+  it('shows no Preview links or inactive note for an inactive table whose End Date has passed', async () => {
+    const card = await renderCard('pzn-inactive-ended', inactive(day(-1)));
+    expect(card.querySelector('.badge').textContent).to.equal('blocked');
+    expect([...card.querySelectorAll('tr[data-path]')].map((tr) => tr.dataset.path)).to.deep.equal(['/v/body-mobile']);
+    expect(card.querySelectorAll('th').length).to.equal(2);
+    expect(card.querySelectorAll('a[href*="audience="]').length).to.equal(0);
+    expect(card.textContent).not.to.include(INACTIVE_NOTE);
+  });
+
+  for (const [what, endDate] of [['an invalid', 'soon'], ['a more-than-180-day', day(400)]]) {
+    it(`shows no Preview links or inactive note for an inactive table with ${what} End Date`, async () => {
+      const card = await renderCard(`pzn-inactive-bad-${endDate}`, inactive(endDate));
+      expect(card.querySelectorAll('a[href*="audience="]').length).to.equal(0);
+      expect(card.textContent).not.to.include(INACTIVE_NOTE);
+    });
+  }
+
+  it('shows no Preview links or inactive note for an inactive table with no End Date', async () => {
+    const html = inactive('x').replace('<div><div><p>End Date</p></div><div><p>x</p></div></div>', '');
+    const card = await renderCard('pzn-inactive-missing', html);
+    expect(card.querySelectorAll('a[href*="audience="]').length).to.equal(0);
+    expect(card.textContent).not.to.include(INACTIVE_NOTE);
+  });
+
+  it('keeps Preview links and the inactive note for an inactive table with a future End Date', async () => {
+    const card = await renderCard('pzn-inactive-future', inactive(day(30)));
+    expect(card.querySelector('.badge').textContent).to.equal('not served');
+    expect(new URL(card.querySelector('a[href*="audience="]').href).searchParams.get('audience')).to.equal('mobile');
+    expect(card.textContent).to.include(INACTIVE_NOTE);
+  });
 });
