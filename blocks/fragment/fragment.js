@@ -27,6 +27,10 @@ export default async (a) => {
   try {
     const fragment = await loadFragmentWithFallback([`${locale.prefix}${path}`, path]);
     const elToReplace = getReplaceEl(a);
+    if (!elToReplace) {
+      log(`Fragment anchor detached: ${path}`);
+      return;
+    }
     replaceElWithFragment(elToReplace, fragment, path);
   } catch (ex) {
     log(ex, a);

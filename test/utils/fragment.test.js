@@ -17,6 +17,7 @@ describe('scripts/utils/fragment.js getReplaceEl', () => {
     const a = document.createElement('a');
     wrapper.append(a); // a is wrapper's only child
     section.append(wrapper); // wrapper is section's only child
+    document.createElement('main').append(section); // section needs a parent to insert after
     // climbs a -> wrapper -> stops at ancestor (section)
     expect(getReplaceEl(a)).to.equal(section);
   });
@@ -24,9 +25,18 @@ describe('scripts/utils/fragment.js getReplaceEl', () => {
   // Regression: a detached anchor (or one outside any `.section`) has
   // ancestor === null; without the parentElement guard the loop climbed past
   // the tree root and threw on null.children.
-  it('does not throw on a detached anchor with no section ancestor', () => {
+  it('returns null (does not throw) on a detached anchor with no section ancestor', () => {
     const a = document.createElement('a');
     expect(() => getReplaceEl(a)).to.not.throw();
-    expect(getReplaceEl(a)).to.equal(a);
+    expect(getReplaceEl(a)).to.be.null;
+  });
+
+  // The climb can end on the root of a detached subtree: still nowhere to
+  // insert, so null rather than a node whose `.after()` is a silent no-op.
+  it('returns null when the climb ends on a parentless wrapper', () => {
+    const wrapper = document.createElement('p');
+    const a = document.createElement('a');
+    wrapper.append(a);
+    expect(getReplaceEl(a)).to.be.null;
   });
 });

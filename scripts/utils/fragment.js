@@ -79,7 +79,9 @@ export const getReplaceEl = (a) => {
     }
   }
 
-  return current;
+  // No parent means nowhere to insert: `.after()` on a parentless node is a
+  // silent no-op, so return null and let the caller log and bail visibly.
+  return current.parentElement ? current : null;
 };
 
 // Page-lifetime counter, folded into each fragment's id alongside path/idx so

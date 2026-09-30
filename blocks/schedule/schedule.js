@@ -35,7 +35,12 @@ const loadEvent = async (a, event, defEvent) => {
     removeSchedule(a);
     return;
   }
-  replaceElWithFragment(getReplaceEl(a), fragment);
+  const elToReplace = getReplaceEl(a);
+  if (!elToReplace) {
+    config.log(`Fragment anchor detached: ${a.href}`);
+    return;
+  }
+  replaceElWithFragment(elToReplace, fragment);
 };
 
 export default async (a) => {
