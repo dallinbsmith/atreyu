@@ -101,6 +101,11 @@
       }
     }
 
+    /* `Container: N` = N sixths of the content area, centred, at every
+       viewport: 2 = 4 of 12 columns, 4 = 8, 6 = all 12. Any other value
+       keeps the default width. `--grid-column-width` is resolved on `:root`
+       (1/12 of 83.4%, or of 1120px from 1440px up), so the % here resolves
+       against the section, like the default `.default-content` width. */
     &.container {
       .default-content,
       .block-content {
@@ -167,14 +172,6 @@
       &.grid-6 .block-content {
         display: grid;
         grid-template-columns: repeat(calc(var(--grid-size) / 2), 1fr);
-      }
-
-      &.container.container-4 {
-        --section-container-width: calc(var(--grid-column-width) * 4);
-      }
-
-      &.container.container-6 {
-        --section-container-width: calc(var(--grid-column-width) * 6);
       }
 
       &.peek-background {
