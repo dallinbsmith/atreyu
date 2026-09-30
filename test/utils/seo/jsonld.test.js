@@ -22,21 +22,13 @@ describe('scripts/utils/seo/jsonld.js inject', () => {
     document.head.querySelectorAll('script[type="application/ld+json"]').forEach((s) => s.remove());
   });
 
-  it('dedups an identical re-inject (idempotent) instead of appending', async () => {
-    const { inject, flush } = await freshJsonld();
-    const node = { '@type': 'FAQPage', mainEntity: [{ '@type': 'Question', name: 'Q' }] };
-    inject(node);
-    inject(structuredClone(node)); // simulates a Quick-Edit re-decoration
-    flush();
-    expect(readGraph().filter((n) => n['@type'] === 'FAQPage')).to.have.length(1);
-  });
-
-  it('keeps genuinely distinct nodes (different @id) both present', async () => {
+  it('appends every injected node in call order (no dedup)', async () => {
     const { inject, flush } = await freshJsonld();
     inject({ '@type': 'Product', '@id': '#a', name: 'A' });
     inject({ '@type': 'Product', '@id': '#b', name: 'B' });
     flush();
-    expect(readGraph().filter((n) => n['@type'] === 'Product')).to.have.length(2);
+    expect(readGraph().filter((n) => n['@type'] === 'Product').map((n) => n.name))
+      .to.deep.equal(['A', 'B']);
   });
 
   it('escapes </script> so authored text cannot break out of the <head> script', async () => {
