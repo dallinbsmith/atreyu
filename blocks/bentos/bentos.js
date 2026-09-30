@@ -1,5 +1,6 @@
 import { decorateTout, inferMediaLayout } from '../../scripts/utils/touts.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
+import { createElement } from '../../scripts/utils/dom.js';
 
 // DA / Google-Docs fallback: authors set per-card options with a leading config
 // line, e.g. "media: background; bg: full; decoration: glassborder". Recognized
@@ -38,9 +39,7 @@ const placeMedia = (card) => {
   const isBg = layout === 'background' || layout === 'backgroundAndForeground';
   if (isBg && img) img.alt = ''; // full-bleed bg is decorative; text carries meaning
   const host = pic.closest('p') ?? pic;
-  const media = document.createElement('div');
-  media.className = `bento-card-media ${isBg ? 'bg' : 'fg'}`;
-  media.append(pic.closest('picture') ?? pic);
+  const media = createElement('div', { className: `bento-card-media ${isBg ? 'bg' : 'fg'}` }, pic.closest('picture') ?? pic);
   if (host !== card && host.parentElement === card && !host.textContent.trim()) host.remove();
   card.dataset.mediaLayout = layout;
   return media;
