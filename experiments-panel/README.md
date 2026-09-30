@@ -6,14 +6,18 @@ Insert. It shows what the plugin will actually do, using the same parsing rules 
 `test/utils/experiments/config.test.js` checks this against the vendored plugin.
 
 - **This page:**
-  - every test on the current page: whole-page (head metadata) and section-level (section metadata);
+  - every test on the current page: whole-page (head metadata or an Experiment table), and each
+    section's Personalize table with the rules the compiler serves under production rules (or,
+    when it serves none, the table's valid rows as the compiler reads them).
+    Section-level config is tables only (PLAN.md `pz-section-meta`): authored Section Metadata is
+    flattened on the server, so the panel never reads it as a test;
   - where each test is configured (page doc or metadata sheet);
   - status, audiences, dates, and variants with their effective split;
   - preview links (`?experiment=<id>/<variant>`);
   - which variant this tab is serving.
 - **Sitewide:** every whole-page test defined in the bulk metadata sheets (`/metadata.json`,
-  `/metadata-experiments.json`). Section tests live in page docs, so they only appear in the page
-  view.
+  `/metadata-experiments.json`). Section personalizations live in page docs, so they only appear in
+  the page view.
 - **Build test:** a form that writes the Experiment table into the DA doc (see
   [the Build test tab](#the-build-test-tab-dropdowns-and-date-pickers)).
 - **Checks:** the silent failure modes of the plugin:

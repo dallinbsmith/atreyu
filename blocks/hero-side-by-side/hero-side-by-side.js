@@ -20,7 +20,7 @@ export default (el) => {
 
   // Cell, not row: a picture cell with a sibling text cell must not sweep
   // that sibling into `.hero-side-by-side-media` (overflow:hidden + abs
-  // picture would clip it). Same F-66 pattern as hero.js / hero-transition-v4.
+  // picture would clip it). Same F-66 pattern as hero.js / glow-reveal.
   const cells = getCells(el);
   const picCell = cells.find((c) => c.querySelector('picture'));
   const extra = cells.filter((c) => c !== picCell);

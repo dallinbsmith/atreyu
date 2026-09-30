@@ -1,5 +1,5 @@
 @layer blocks {
-  .hero-transition-v4 {
+  .glow-reveal {
     position: relative;
     display: flex;
     justify-content: center;
@@ -7,7 +7,7 @@
     overflow: hidden;
     isolation: isolate;
 
-    .hero-transition-v4-media {
+    .glow-reveal-media {
       position: relative;
       width: min(100%, var(--grid-container-width));
 
@@ -38,11 +38,11 @@
       }
     }
 
-    &.is-in .hero-transition-v4-media img {
+    &.is-in .glow-reveal-media img {
       transform: scale(1) translateY(0);
     }
 
-    &.no-glow .hero-transition-v4-media::before {
+    &.no-glow .glow-reveal-media::before {
       content: none;
     }
   }
@@ -51,14 +51,14 @@
      when shouldAnimate() is false at init. Snap the resting transform too,
      or the pre-reveal scale/offset sticks until the next intersection. */
   @media (prefers-reduced-motion: reduce) {
-    .hero-transition-v4 .hero-transition-v4-media img {
+    .glow-reveal .glow-reveal-media img {
       transform: none;
       transition: none;
     }
   }
 
   @media (width >= 768px) {
-    .hero-transition-v4 {
+    .glow-reveal {
       padding: var(--spacing-xxl) var(--spacing-l);
     }
   }
