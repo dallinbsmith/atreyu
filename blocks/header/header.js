@@ -6,27 +6,9 @@ import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const contentLinks = (section) => [...section.querySelectorAll('a')].filter((a) => !isWidgetLink(a));
 
-// Business-critical, order-independent CTA slot (ref_nav_architecture_
-// research memory): an author can label any content link in the actions
-// section "cta: <label>" instead of relying on last-link-wins list position.
-// Mirrors form.js's existing `submit: <text>` prefix convention — same
-// `key: value` text-prefix idiom (docs/conventions/blocks.md's Row Classification rule),
-// applied to a link's own text instead of a row. Falls back to the original
-// last-link-wins heuristic when no link uses the prefix, so already-authored
-// header content keeps working unchanged — verified 2026-09-21 against the
-// real DA header fragment (/system/fragments/nav/header): two links, "Sign
-// In"/"Get Started," neither prefixed, zero blast radius. Deliberately a
-// direct prefix check, not a SLOTS config array for a hypothetical second
-// slot (e.g. sign-in) — per this project's rule-of-three, that's premature
-// until a second slot is actually requested.
-//
-// Author note: the prefix is matched against the link's own direct text
-// nodes only — inline formatting spanning the whole label (e.g.
-// `[**cta: Sign up**](url)` → `<a><strong>cta: Sign up</strong></a>`) won't
-// match. Type `cta:` as plain, unformatted text at the start of the link
-// label. (Same accepted tradeoff already live in form.js's `submit:`
-// convention: a real link that happens to start with the literal text
-// "cta:" would also be misread — not a new risk this introduces.)
+// CTA selection is order-independent: authors may prefix any action link
+// with `cta:`; without that prefix the existing last-link fallback remains.
+// Match only direct text nodes, mirroring form.js's `submit:` convention.
 const CTA_PREFIX = /^\s*cta:\s*/i;
 
 const findCtaTextNode = (links) => links
@@ -57,13 +39,9 @@ const decorateBrandSection = (section) => {
   brandLink.append(createElement('span', { className: 'brand-text' }, text));
 };
 
-// Classify by content shape, never position — see side-by-side.js/footer.js.
-// Widget-marker links (`/tools/widgets/{scheme,language,toggle}`) don't count
-// as content: nav = the section with the main nav <ul>; brand = the remaining
-// section with exactly one real link (the logo, even if a hamburger marker
-// sits next to it); actions = whatever's left. decorateActionsSection() picks
-// the primary CTA — a `cta:`-prefixed link if one exists, else the last real
-// actions link (widgets never steal the stamp either way).
+// Classify sections by content shape, never position. Widget-marker links
+// do not count as content, so language/theme/toggle controls cannot steal
+// brand/nav/action roles.
 const decorateHeaderContent = async (fragment) => {
   const sections = [...fragment.querySelectorAll(':scope > .section')];
   const navSection = sections.find((s) => s.querySelector('ul'));

@@ -102,23 +102,9 @@
        numerals in blocks/header/header.css. */
     --font-tertiary: neuemachinainktrap, "NeueMachinaInktrap-fallback", "Arial", sans-serif;
 
-    /* z-index scale — GLOBAL tier only. A block's own internal layering
-       (background-behind-text, decorative pseudo-elements) never belongs
-       here — use raw -1/0/1/2/3 directly, contained by that block's own
-       `isolation: isolate`/`overflow: hidden`. Reach for a token below only
-       when an element uses `position: fixed` or is appended outside its own
-       block's DOM subtree (e.g. document.body) — see docs/conventions/css.md's
-       "Z-Index and Stacking Contexts" section. Stylelint enforces this: any
-       raw z-index on a position: fixed element (tools/stylelint-rules/
-       z-index-requires-token.js) is a lint error, not just a documented
-       convention.
-
-       Pre-allocated with real gaps (matching the industry-standard pattern —
-       Bootstrap/Microsoft's Atlas Design system both use the same shape) so a
-       genuinely new tier has an obvious slot instead of requiring a fresh
-       judgment call each time. Every tier below is labeled with its real
-       current consumer, or "reserved" if none exists yet — pre-allocating the
-       SLOT is not the same as pretending something is built that isn't. */
+    /* Global z-index tokens are only for fixed/body-appended UI; block internals
+       should use local -1/0/1 layering inside their own stacking context.
+       See docs/conventions/css.md. */
     --z-index-body-overlay: 20; /* non-modal fixed/body-appended UI. Real consumer: quote-interactive's .qi-hover. */
     --z-index-toast: 40; /* reserved — a future toast/notification/consent-banner system. No consumer yet. */
     --z-index-nav: 100; /* the fixed header. Real consumer: header.css. */

@@ -1,23 +1,12 @@
-// Glow Reveal: vanilla port of Falkor's HeroTransitionV4 module (renamed
-// from `hero-transition-v4` for what it does) — a single glowing image
-// used as a repeated mid-page "reveal" section, not a page-level hero. Real
-// content (checked directly against the live Sanity dataset, 2026-09-04) is
-// always a single image; 6 of 7 real instances add a glow behind it, one
-// omits it (opt out via the `no-glow` variant). This uses a one-shot
-// reveal-on-scroll, not the continuous trackScrollProgress() engine
-// pothole uses — that engine assumes a tall, pinned section
-// (`scroll.js`'s own doc comment), and this content is a short, normal-flow
-// element. Matches hero-cards-transition.js's own onReveal()-for-entrance
-// pattern instead.
+// One image with an optional glow, revealed once via onReveal. Not
+// trackScrollProgress: the section is short and in normal flow, not pinned.
 import { onReveal } from '../../scripts/utils/motion/motion.js';
 import { createElement, getCells } from '../../scripts/utils/dom.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 export default (el) => {
-  // Idempotency guard — a second decorate() call (e.g. DA's live-preview
-  // reload path re-running loadBlock unconditionally) must not re-classify
-  // already-restructured DOM: doing so would strip a level of wrapping off
-  // any merged extra content on every subsequent call.
+  // Guard re-decoration: DA live preview can call decorate again on the same
+  // element, and duplicate media layers would stack visibly.
   if (!guardDecorate(el, 'glowRevealDecorated')) return;
 
   // Row meaning is classified by CELL, not by whole row: a row can hold more

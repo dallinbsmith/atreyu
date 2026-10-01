@@ -3,58 +3,25 @@ import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { decorateSubcategories } from './header-subcategories.js';
 import { toggleMenu } from './header-menu-state.js';
 
-// Assumes it runs once on fresh, undecorated markup — not re-entrant-safe
-// (a second call on already-decorated markup would duplicate the mega-menu
-// heading below). header.js's guardDecorate is what keeps it to one call.
+// Not re-entrant: assumes fresh undecorated markup; header.js's
+// guardDecorate keeps decoration to one call.
 const decorateNavItem = (li) => {
   li.classList.add('main-nav-item');
   const link = li.querySelector(':scope > p > a');
   link?.classList.add('main-nav-link');
-  // Real bug found authoring actual nav content, 2026-09-21: `.fragment-content`
-  // is not a reliable marker for "this is the resolved mega-menu" — every
-  // mega-menu authored so far renders as an unstyled, permanently-open block,
-  // because scripts/utils/fragment.js's replaceElWithFragment() strips that
-  // wrapper class whenever the referenced fragment resolves to exactly one
-  // top-level section (the common case — it unwraps to the section itself),
-  // only preserving `.fragment-content` for a 2+-section fragment, a shape
-  // nothing has ever actually authored. Classify by content shape instead
-  // (docs/conventions/blocks.md's Row Classification rule): the mega-menu is whichever direct
-  // child of `li` isn't the trigger link's own paragraph — present regardless
-  // of which of fragment.js's two unwrap shapes resolved.
+  // Classify the mega-menu by content shape, not `.fragment-content`:
+  // fragment.js unwraps single-section fragments and drops that class.
   const linkPara = link?.parentElement;
   const resolved = [...li.children].find((child) => child !== linkPara);
-  // Second real bug, found empirically (headless Chrome + real styles.css,
-  // not just reasoning) once the fix above actually let `.mega-menu` reach a
-  // real element: the resolved content IS the platform's own `.section` div
-  // (decorateSections() classes every top-level fragment row `.section`
-  // before this ever runs). `@layer sections { .section { display: block } }`
-  // (styles.css) is declared AFTER `@layer blocks` (this file's own layer,
-  // enforced by tools/lint-css-layers.mjs) in the project's `@layer reset,
-  // base, tokens, blocks, sections, utilities` order — so it wins over this
-  // file's `.mega-menu { display: none }` on the SAME element regardless of
-  // selector specificity, and the menu rendered permanently visible
-  // (confirmed: all 3 panels are `position: absolute; inset: 0`, so they
-  // stack and only the last-painted one, Resources, was visible — "one menu
-  // locked open, the others unresponsive" was this, not a JS state bug; the
-  // real `.is-open` toggle was already working correctly). Fix: never toggle
-  // `display` on an element that also carries `.section` — wrap it in a new
-  // element that carries `.mega-menu` alone, giving the toggled/measured
-  // element an uncontested wrapper.
+  // Never toggle display on the `.section` element: `@layer sections`
+  // loads after `@layer blocks`, so its `display: block` wins. Wrap it.
   const menu = resolved && createElement('div', { className: 'mega-menu' });
   if (menu) {
-    // Real-browser measurement gap (2026-09-21): production repeats the
-    // trigger's own label as a real heading at the panel's top ("Features"),
-    // never new authored content — mirror `link`'s own text, the same text
-    // already used for aria-expanded below. No font-size/weight/letter-
-    // spacing override needed in header.css: a bare <h2> already inherits
-    // exactly the measured values (48px/600/-0.04em at >=1240px) from this
-    // project's own base h1-h6/h2 rules in styles.css.
+    // Heading mirrors the trigger label to match production; it inherits h2
+    // base styles, so no overrides are needed.
     const heading = createElement('h2', { className: 'mega-menu-heading' }, link?.textContent.trim());
-    // The grid/centering must land on a container that is NOT also the
-    // panel's own background box (measured: production's panel background
-    // is full-bleed, only its content is gutter-inset) — give the flattened
-    // content its own wrapper instead of making the heading fight the
-    // content for a grid column too.
+    // Grid goes on an inner wrapper: the panel background is full-bleed,
+    // only its content is gutter-inset.
     const links = createElement('div', { className: 'mega-menu-links' });
     resolved.replaceWith(menu);
     links.append(resolved);
@@ -63,12 +30,8 @@ const decorateNavItem = (li) => {
   }
   if (!menu || !link) return;
   link.setAttribute('aria-expanded', 'false');
-  // Real-browser measurement gap (2026-09-21 parity pass): production
-  // pairs every trigger that actually opens a mega-menu with a small
-  // rotating chevron. "Pricing" has no .mega-menu, so it never reaches this
-  // line and correctly gets no chevron. Decorative only — aria-expanded on
-  // `link` itself (above) is the real open/close signal for AT, so this is
-  // aria-hidden rather than given its own label.
+  // The chevron is decorative; aria-expanded on the trigger is the AT
+  // open/close signal, and links without a menu get no chevron.
   link.append(createElement('span', { className: 'nav-chevron', 'aria-hidden': 'true' }));
   link.addEventListener('click', (e) => {
     if (!li.classList.contains('is-open')) e.preventDefault();

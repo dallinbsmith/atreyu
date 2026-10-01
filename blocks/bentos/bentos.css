@@ -85,9 +85,8 @@
       }
     }
 
-    /* FOREGROUND media: graphic / logo / UI preview above the title
-       (foregroundOnly). Sized by WIDTH like Falkor (foregroundContainer ~336px),
-       so the graphic fills the card width instead of a small height-capped icon. */
+    /* Foreground media sits above the title; background media is handled by the
+       card shell so text remains readable. */
     .bento-card-media.fg {
       width: 100%;
       max-width: 336px;

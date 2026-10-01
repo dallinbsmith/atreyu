@@ -1,24 +1,5 @@
-// Organic Mosaic: a media-only, multi-column photo/video mosaic with a gentle
-// scroll-driven per-column parallax. Ported from Falkor's OrganicMosaic
-// (organisms/modules/OrganicMosaic): an array of >=5 media assets laid into
-// staggered columns that drift at different rates as the section scrolls.
-// Authoring is one block table -- every cell holding a <picture> is one media
-// tile (a picture wrapped in an <a href*=".mp4"> becomes a looping background
-// video via decorateVideoMedia, which brings its own WCAG pause control and
-// reduced-motion poster). Classification is by content shape, never row
-// position. Media distribute round-robin into columns for a stable layout.
-// The parallax lives entirely in CSS (per-column --om-speed driven by
-// --progress from trackScrollProgress) and is gated on shouldAnimate(): the
-// resting DOM is a valid static mosaic grid, so reduced-motion / save-data /
-// low-power visitors get a good page with zero motion and zero observers.
-// Mobile keeps the static grid only -- the parallax is a >=768px enhancement,
-// gated in BOTH the CSS (the transform lives inside @media >=768px) AND the JS
-// (is-scrubbing + trackScrollProgress are skipped below md), matching Falkor
-// (its onProgress no-ops below the md breakpoint) and keeping the mobile scroll
-// path -- the most INP-sensitive one -- free of per-rAF layout reads it can't
-// use. A bare <picture> renders as-is; a picture wrapped in an .mp4 link becomes
-// a background video; a picture inside any OTHER anchor keeps the picture and
-// drops the link (correct for a media-only module -- there is no CTA here).
+// Organic Mosaic uses one authored media set; CSS reshapes it by breakpoint
+// and motion enhances the already-readable static mosaic.
 import { createElement, getCells } from '../../scripts/utils/dom.js';
 import { decorateVideoMedia } from '../../scripts/utils/media/video.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';

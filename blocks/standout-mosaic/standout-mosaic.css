@@ -40,8 +40,8 @@
       inset-block-start: 50%;
       inset-inline-start: 50%;
 
-      /* Raw geometry (Falkor device sizing) — no token category exists for a
-         component width; kept raw like pothole's min-height. FLAG for parity. */
+      /* Raw device geometry has no token category; these values track the source
+         asset proportions rather than the design system spacing scale. */
       width: min(62%, 320px);
       transform: translate(-50%, -50%);
 

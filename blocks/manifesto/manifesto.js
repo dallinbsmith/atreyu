@@ -1,21 +1,5 @@
-// Vanilla port of Falkor's Manifesto module (organisms/modules/Manifesto).
-// Content model (Sanity module.manifesto): one required image + a large
-// bodyXL statement rich-text lockup + a "Watch the video" CTA that links to a
-// Wistia video. Falkor's fullscreen-player choreography (wheel-to-dismiss +
-// GSAP scale-to-fullscreen + scroll-lock + nav hiding) is deliberately NOT
-// ported: the CTA is an authored Wistia link wired via the shared
-// wireVideoModalLinks util, which already gives an accessible modal (focus
-// trap, Escape, backdrop close, announce). Cells are classified by content
-// shape (F-66), never position: the pure-media cell is the image, every other
-// cell is the statement/CTA. Authoring note: keep the image cell caption-free
-// — a caption gives that cell text, so the classifier treats it as content and
-// it renders inline instead of as the full-bleed background (put captions in
-// the statement cell; same media-cell contract as media-with-text). Motion is
-// a faithful, minimal mapping of Falkor's useScrollProgress fade — shared
-// trackScrollProgress(el) sets --progress
-// (0..1) and CSS drifts/fades the media off it (compositor-only). No-op under
-// reduced motion / save-data — CSS's var(--progress, 0) fallback leaves a
-// static, readable resting DOM (image + statement + CTA).
+// Manifesto motion is enhancement over a readable statement + image layout;
+// CSS consumes --progress only after JS opts in.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
 import {
@@ -34,8 +18,8 @@ export default (el) => {
   // Classified by shape, not position: the pure-media cell (a picture/img
   // carrying no text) is the manifesto image; every remaining cell holds the
   // statement richtext and/or the authored "Watch the video" Wistia link.
-  // Requiring the media cell to be text-free keeps a statement that references
-  // an inline mark from being misread as the image.
+  // Keep the image cell caption-free; a caption turns it into content and it
+  // renders inline.
   const cells = getCells(el);
   const mediaCell = cells.find((c) => c.querySelector('picture, img') && !c.textContent.trim());
   const contentCells = cells.filter((c) => c !== mediaCell);
