@@ -22,10 +22,17 @@ export default async (a) => {
   if (!guardDecorate(a, 'fragmentDecorated')) return;
 
   const path = getRequestPath(a);
-  const { locale, log } = getConfig();
+  const { locale: { prefix }, locales = {}, log } = getConfig();
+  // ak.js decorateLink has usually localized the href already; strip the current
+  // locale so it isn't prefixed twice. Locale fragment first, root fallback. A
+  // path already under another locale (authored on purpose) is used as-is,
+  // matching localizeUrl.
+  const bare = prefix && path.startsWith(`${prefix}/`) ? path.slice(prefix.length) : path;
+  const otherLocale = Object.keys(locales).some((key) => key && bare.startsWith(`${key}/`));
+  const paths = bare.startsWith('/') && !otherLocale ? [...new Set([`${prefix}${bare}`, bare])] : [bare];
 
   try {
-    const fragment = await loadFragmentWithFallback([`${locale.prefix}${path}`, path]);
+    const fragment = await loadFragmentWithFallback(paths);
     const elToReplace = getReplaceEl(a);
     if (!elToReplace) {
       log(`Fragment anchor detached: ${path}`);
