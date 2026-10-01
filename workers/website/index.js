@@ -41,6 +41,11 @@ export const EDS_ASSET_PATHS = Object.freeze([
   '/blocks/', '/icons/', '/img/', '/plugins/', '/scripts/', '/styles/', '/system/', '/templates/',
 ]);
 
+// Takes a locale-stripped path.
+const isEdsAssetPath = (path) => EDS_ASSET_PATHS.some((p) => path.startsWith(p));
+
+const isRUMRequest = (url) => /\/\.(rum|optel)\/.*/.test(url.pathname);
+
 // Encoded slashes/backslashes: the URL parser resolves `..` and `%2e%2e`
 // segments before this runs, but it leaves `%2F`/`%5C` encoded, so a path
 // like /scripts/..%2Fdrafts%2Fx would match a prefix here while an origin
@@ -68,7 +73,7 @@ export const createIsEdsPath = (manifest, isCellLive = () => true) => {
     const locale = matchLocalePrefix(pathname) ?? '';
     const path = stripLocale(pathname);
     const localeCells = cells.filter((cell) => cell.locale === locale && live(cell, env));
-    if (EDS_ASSET_PATHS.some((p) => path.startsWith(p))) return locale === '' || localeCells.length > 0;
+    if (isEdsAssetPath(path)) return locale === '' || localeCells.length > 0;
     const cohort = matchCohort(cohorts, path);
     return cohort !== undefined && localeCells.some((cell) => cell.cohort === cohort);
   };
@@ -85,6 +90,21 @@ export const isEdsPath = createIsEdsPath(ROUTING_MANIFEST);
 export const EDS_PATHS = Object.freeze(ROUTING_MANIFEST.cells
   .filter(({ locale }) => locale === '')
   .flatMap(({ cohort }) => ROUTING_MANIFEST.cohorts[cohort]));
+
+// Trailing-slash pages (fh-arch7 #1). Pages are authored as /blog, not
+// /blog/index, so EDS 404s /blog/ and /blog/x/; Falkor answers every such path
+// with a 308 to the slashless URL, relative Location, query kept (curl,
+// 2026-10-01). ROUTES only sees EDS-routed paths, globals and RUM beacons;
+// beacons are excluded here, so Falkor-bound pages are untouched. Asset
+// folders are never redirected. All trailing slashes go in one hop. Collapsing
+// leading slashes is defense in depth: Location can never start with '//'.
+export const isTrailingSlashPage = (pathname) => pathname.length > 1 && pathname.endsWith('/')
+  && !isRUMRequest({ pathname }) && !isEdsAssetPath(stripLocale(pathname));
+
+const redirectTrailingSlash = ({ url, savedSearch }) => new Response(null, {
+  status: 308,
+  headers: { location: `/${url.pathname.replace(/^\/+|\/+$/g, '')}${savedSearch}` },
+});
 
 // `global: true` marks a ROUTES entry as Worker-owned regardless of cohort status
 // (drafts denial, langstore denial, schedules, dasc) — the strangler below must
@@ -138,6 +158,11 @@ const ROUTES = [
     match: () => true,
     handler: fetchRedirect,
   },
+  // After fetchRedirect, whose lookup ignores trailing slashes: one hop, not two.
+  {
+    match: isTrailingSlashPage,
+    handler: redirectTrailingSlash,
+  },
   {
     match: () => true,
     handler: fetchFromAem,
@@ -154,7 +179,6 @@ const getExtension = (path) => {
 };
 
 const isMediaRequest = (url) => isMediaPath(url.pathname);
-const isRUMRequest = (url) => /\/\.(rum|optel)\/.*/.test(url.pathname);
 
 const getPortRedirect = (request, url) => {
   if (url.port && url.hostname !== 'localhost') {
