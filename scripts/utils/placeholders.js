@@ -2,20 +2,17 @@ import { getConfig } from '../ak.js';
 import { fetchData } from './fetch-data.js';
 
 // One DA Sheet per namespace: `forms.submit` reads row `submit` from
-// `${prefix}/system/placeholders/forms.json`. A bare key (no dot) reads the
-// legacy `${prefix}/system/placeholders.json`, which is also the DA Library's
-// placeholder source. Each sheet is fetched on first use and cached per URL
-// (so per locale prefix and namespace). See DA-CONTENT-STRUCTURE.md, Placeholders.
+// `${prefix}/system/placeholders/forms.json`. The namespace is the text before
+// the first dot; everything after it is the row key. Each sheet is fetched on
+// first use and cached per URL (so per locale prefix and namespace). The legacy
+// `/system/placeholders.json` is the DA Library's source only; code never reads
+// it. See DA-CONTENT-STRUCTURE.md, Placeholders.
 const cache = new Map();
+const NAMESPACE = /^[a-z][a-z-]*$/;
 
-const splitKey = (key) => {
-  const dot = key.indexOf('.');
-  return dot < 0 ? ['', key] : [key.slice(0, dot).toLowerCase(), key.slice(dot + 1)];
-};
-
-export const getPlaceholders = async (ns = '') => {
+export const getPlaceholders = async (ns) => {
   const { prefix } = getConfig().locale;
-  const url = `${prefix}/system/placeholders${ns ? `/${ns}` : ''}.json`;
+  const url = `${prefix}/system/placeholders/${ns}.json`;
   if (cache.has(url)) return cache.get(url);
   const json = await fetchData(url);
   const map = new Map(
@@ -33,7 +30,14 @@ export const getPlaceholders = async (ns = '') => {
 // deliberately empty placeholder. A missing locale sheet or key falls back to
 // the code default, never to the English sheet.
 export const getPlaceholder = async (key, fallback = '') => {
-  const [ns, name] = splitKey(key);
+  const dot = key.indexOf('.');
+  const ns = key.slice(0, Math.max(dot, 0));
+  const name = key.slice(dot + 1);
+  if (dot < 0 || !NAMESPACE.test(ns) || !name) {
+    // eslint-disable-next-line no-console -- a malformed key is a code bug
+    console.warn(`getPlaceholder: "${key}" needs a "namespace.key" form with a lowercase namespace; using the fallback.`);
+    return fallback;
+  }
   const map = await getPlaceholders(ns);
   return map.get(name.toLowerCase()) || fallback;
 };

@@ -44,51 +44,17 @@ describe('fillPlaceholder', () => {
 
 describe('getPlaceholder', () => {
   let originalFetch;
-
-  before(() => {
-    setConfig({});
-    originalFetch = window.fetch;
-    window.fetch = (url, opts) => (url === '/system/placeholders.json'
-      ? Promise.resolve(new Response(JSON.stringify({
-        data: [
-          { Key: 'blankRow', Text: '' },
-          { Key: 'filledRow', Text: 'Localized' },
-          { Key: 'freeTrialCta', Text: 'Start Free Trial' },
-        ],
-      })))
-      : originalFetch(url, opts));
-  });
-
-  after(() => { window.fetch = originalFetch; });
-
-  it('returns the authored text when present (case-insensitive key)', async () => {
-    expect(await getPlaceholder('FILLEDROW', 'Fallback')).to.equal('Localized');
-  });
-
-  it('falls back when the authored row is blank', async () => {
-    expect(await getPlaceholder('blankRow', 'Pause')).to.equal('Pause');
-  });
-
-  it('falls back when the key is missing', async () => {
-    expect(await getPlaceholder('missingRow', 'Play')).to.equal('Play');
-  });
-
-  it('defaults the fallback to an empty string', async () => {
-    expect(await getPlaceholder('missingRow')).to.equal('');
-  });
-
-  it('resolves bare (un-namespaced) keys, like the live freeTrialCta, from the legacy sheet', async () => {
-    expect(await getPlaceholder('freeTrialCta', 'x')).to.equal('Start Free Trial');
-  });
-});
-
-describe('getPlaceholder namespaces', () => {
-  let originalFetch;
+  let originalWarn;
   let calls;
+  let warnings;
   const sheets = {
-    '/system/placeholders.json': [{ Key: 'freeTrialCta', Text: 'Start Free Trial' }, { Key: 'submit', Text: 'Legacy' }],
-    '/system/placeholders/forms.json': [{ Key: 'submit', Text: 'Send' }, { Key: 'blank', Text: '' }],
+    '/system/placeholders/forms.json': [
+      { Key: 'submit', Text: 'Send' },
+      { Key: 'blank', Text: '' },
+      { Key: 'a.b', Text: 'Dotted' },
+    ],
     '/system/placeholders/tile-table.json': [{ Key: 'prev', Text: 'Back' }],
+    '/system/placeholders/controls.json': [{ Key: 'pause', Text: 'Stop' }],
     '/ja-jp/system/placeholders/forms.json': [{ Key: 'submit', Text: '送信' }],
   };
   const setLocale = (prefix) => {
@@ -100,6 +66,8 @@ describe('getPlaceholder namespaces', () => {
 
   before(() => {
     originalFetch = window.fetch;
+    originalWarn = console.warn;
+    console.warn = (msg) => warnings.push(msg);
     window.fetch = (url) => {
       calls.push(url);
       return Promise.resolve(sheets[url]
@@ -109,28 +77,46 @@ describe('getPlaceholder namespaces', () => {
   });
   beforeEach(() => {
     calls = [];
+    warnings = [];
     setLocale('');
   });
   after(() => {
     window.fetch = originalFetch;
+    console.warn = originalWarn;
     setLocale('');
   });
 
-  it('routes a namespaced key to its sheet, matching the name case-insensitively', async () => {
+  it('routes a namespaced key to its sheet, matching the row key case-insensitively', async () => {
     expect(await getPlaceholder('forms.SUBMIT', 'Submit')).to.equal('Send');
     expect(await getPlaceholder('tile-table.prev', 'Previous')).to.equal('Back');
   });
 
-  it('never reads a namespaced key from the legacy sheet', async () => {
-    expect(await getPlaceholder('media.submit', 'Fallback')).to.equal('Fallback');
-    expect(count('/system/placeholders.json')).to.equal(0);
+  it('treats only the text before the first dot as the namespace', async () => {
+    expect(await getPlaceholder('forms.a.b', 'Fallback')).to.equal('Dotted');
+  });
+
+  it('never reads the legacy sheet for a key missing from its namespace', async () => {
+    expect(await getPlaceholder('media.freeTrialCta', 'Fallback')).to.equal('Fallback');
+    expect(calls).to.deep.equal(['/system/placeholders/media.json']);
+  });
+
+  it('returns the fallback for a bare key without fetching, and warns', async () => {
+    expect(await getPlaceholder('freeTrialCta', 'Fallback')).to.equal('Fallback');
+    expect(calls).to.deep.equal([]);
+    expect(warnings).to.have.length(1);
+  });
+
+  it('rejects an invalid namespace or empty row key without fetching', async () => {
+    for (const key of ['...x', 'Forms.submit', '.foo', 'forms.', 'f0rms.x', '-x.y']) {
+      expect(await getPlaceholder(key, 'Fallback')).to.equal('Fallback');
+    }
+    expect(calls).to.deep.equal([]);
+    expect(warnings).to.have.length(6);
   });
 
   it('fetches a namespace once and only when a key in it is used', async () => {
-    sheets['/system/placeholders/controls.json'] = [{ Key: 'pause', Text: 'Stop' }];
     await Promise.all([getPlaceholder('controls.pause'), getPlaceholder('controls.play')]);
     expect(await getPlaceholder('controls.pause')).to.equal('Stop');
-    expect(count('/system/placeholders/controls.json')).to.equal(1);
     expect(calls).to.deep.equal(['/system/placeholders/controls.json']);
   });
 
@@ -140,8 +126,13 @@ describe('getPlaceholder namespaces', () => {
     expect(count('/system/placeholders/nav.json')).to.equal(2);
   });
 
-  it('falls back on a blank row', async () => {
-    expect(await getPlaceholder('forms.blank', 'Fallback')).to.equal('Fallback');
+  it('falls back on a blank row or a missing key', async () => {
+    expect(await getPlaceholder('forms.blank', 'Pause')).to.equal('Pause');
+    expect(await getPlaceholder('forms.missing', 'Play')).to.equal('Play');
+  });
+
+  it('defaults the fallback to an empty string', async () => {
+    expect(await getPlaceholder('forms.missing')).to.equal('');
   });
 
   it('reads the locale prefix and falls back to code, not English, on a miss', async () => {

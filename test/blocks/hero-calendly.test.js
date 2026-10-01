@@ -1,7 +1,7 @@
 import { expect } from '@esm-bundle/chai';
 import decorate from '../../blocks/hero-calendly/hero-calendly.js';
 
-// getPlaceholder (placeholders.json) hits the real (404-ing) test server and
+// getPlaceholder (placeholders/forms.json) hits the real (404-ing) test server and
 // gracefully falls back to its English default — same pattern relied on by
 // logo-wall.test.js/form.test.js, no fetch stubbing needed here.
 const FALLBACK_TEXT = 'This scheduling widget is not available right now.';

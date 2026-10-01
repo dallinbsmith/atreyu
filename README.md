@@ -99,7 +99,7 @@ No literal LCP measurement — a structural proxy instead. Once the first sectio
 
 - **No build step, no bundler.** Vanilla ES2025 JS and native CSS, served directly over HTTP/2. See `CLAUDE.md` for the full engineering conventions (arrow-only JS, three-layer CSS cascade, loading-phase rules) — that file is the authoritative style guide for this repo, written for both humans and AI agents working in it.
 - **Cloudflare Worker strangler** (`workers/website/`) is the real production routing backbone, not a reference example. Per request, it decides which backend (the new EDS site or the legacy Next.js origin) serves a given path, and also handles CSP enforcement, redirects, and locale-prefix routing — this is how the migration moves one URL cohort at a time instead of a big-bang cutover. Confirm before modifying `index.js` routes or `wrangler.toml`.
-- **Content lives in DA**, not in this repo. Pages, the block/template library, the sitewide dictionary (`placeholders.json`), and personalization variants are all DA documents/sheets, edited by authors directly, independent of code deploys.
+- **Content lives in DA**, not in this repo. Pages, the block/template library, the UI-string dictionary (one `system/placeholders/<namespace>` sheet per namespace, per locale), and personalization variants are all DA documents/sheets, edited by authors directly, independent of code deploys.
 - **Blocks** (`blocks/{name}/`) are the unit of author-facing functionality — each pairs a `.js` and `.css` file, auto-loaded by `scripts/ak.js` when present on a page.
 
 Full architecture rationale, decision history, and open questions live in `artifacts/` — start with `artifacts/ARCHITECTURE-DECISIONS.md` and `artifacts/master-plan/`.
