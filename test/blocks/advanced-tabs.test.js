@@ -1,5 +1,13 @@
 import { expect } from '@esm-bundle/chai';
-import decorate from '../../blocks/advanced-tabs/advanced-tabs.js';
+import { setConfig } from '../../scripts/ak.js';
+
+// advanced-tabs.js caches getConfig().log at module load, so setConfig (with
+// a log spy) must run before the block module is imported.
+const logs = [];
+setConfig({
+  components: [], hostnames: [], linkBlocks: [], locales: { '': {} }, log: (msg) => logs.push(msg),
+});
+const { default: decorate } = await import('../../blocks/advanced-tabs/advanced-tabs.js');
 
 // advanced-tabs reads sibling .section elements (within the same main/
 // fragment-content) as panels, and the block's own <ul> as tab labels.
@@ -85,12 +93,27 @@ describe('advanced-tabs', () => {
     expect(tabs[1].getAttribute('aria-selected')).to.equal('true');
   });
 
-  it('never leaves the parent hidden when no sibling sections exist', () => {
+  it('with no sibling sections, leaves the <ul>, builds no empty tablist, un-hides the parent', () => {
     const el = build(['A'], 0);
     const main = el.closest('main');
+    logs.length = 0;
     expect(() => decorate(el)).to.not.throw();
-    expect(el.querySelectorAll('[role="tab"]')).to.have.length(0);
+    expect(el.querySelector('ul')).to.exist;
+    expect(el.querySelector('[role="tablist"]')).to.not.exist;
     expect(main.style.display).to.not.equal('none');
+    expect(logs).to.include('Advanced tabs: no sibling sections to use as panels.');
+  });
+
+  it('logs sections that have no tab label, and keeps them hidden', () => {
+    const el = build(['A', 'B', 'C']);
+    el.querySelector('li:last-child').remove();
+    logs.length = 0;
+    decorate(el);
+    expect(logs).to.include('Advanced tabs: 1 section(s) have no tab label and will be hidden.');
+    expect(el.querySelectorAll('[role="tab"]')).to.have.length(2);
+    const sections = [...el.querySelectorAll(':scope > .section')];
+    expect(sections).to.have.length(3);
+    expect(sections[2].hasAttribute('hidden')).to.be.true;
   });
 
   it('is idempotent — a second decorate() does not rebuild tabs from a <ul> inside a panel', () => {

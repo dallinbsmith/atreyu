@@ -46,12 +46,21 @@ export default (el) => {
     const currSection = el.closest('.section');
     const panels = [...parent.querySelectorAll(':scope > .section')]
       .filter((section) => section !== currSection);
+    // No panels means no tabs: leave the authored <ul> rather than build an
+    // empty role="tablist" (ARIA requires it to own at least one tab).
+    if (!panels.length) {
+      log('Advanced tabs: no sibling sections to use as panels.');
+      return;
+    }
     // Tab labels pair with sibling sections by order, so a label with no
     // section left to pair with is dropped rather than crashing the block.
     const allItems = [...tabs.querySelectorAll('li')];
     const tabItems = allItems.slice(0, panels.length);
     if (allItems.length > tabItems.length) {
       log(`Advanced tabs: ${allItems.length - tabItems.length} tab(s) have no matching section and were skipped.`);
+    }
+    if (panels.length > allItems.length) {
+      log(`Advanced tabs: ${panels.length - allItems.length} section(s) have no tab label and will be hidden.`);
     }
 
     const tabList = buildTabList(tabItems, panels);
