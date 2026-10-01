@@ -243,6 +243,7 @@ All utilities live in `scripts/utils/`. Import with explicit `.js` extensions.
 | `env.js` | default export (`'prod'` / `'stage'` / `'dev'`) | Detects environment from hostname. `--` in host = stage, `local` = dev, everything else = prod. |
 | `error.js` | default export `(ex, el)` | Logs errors to console. In non-prod, wraps the failing element in a visible `.has-error` container. |
 | `event-bus.js` | `emit(name, detail)`, `on(name, handler)`, `off(name, handler)` | Namespaced (`atreyu:*`) event bus on `document` for inter-block communication. `on()` returns a cleanup function. |
+| `color-scheme.js` | `getColorScheme(section)`, `setColorScheme(section)` | `getColorScheme` returns `'light-scheme'` or `'dark-scheme'` from the section's computed background colour (WCAG relative luminance), or `null` for a missing section or an unparseable colour. `setColorScheme` replaces either class on every child of the section. Used by section-metadata and the header's scheme toggle. |
 | `listen.js` | `listenGroup()` | Disposable `addEventListener` session. `listen(target, type, handler)` then `end()` drops the whole group (AbortController). For overlays that stay in the DOM. Modals that `remove()` themselves don't need it. |
 | `page/favicon.js` | (self-executing) | Sets favicon and apple-touch-icon from `img/favicons/`. Reads `favicon` metadata for custom name. |
 | `fetch-data.js` | `fetchData(url, options)` | Fetches JSON with automatic caching. Supports `sheet`, `limit`, and `offset` options for EDS spreadsheet endpoints. |
