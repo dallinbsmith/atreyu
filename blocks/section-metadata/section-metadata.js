@@ -59,8 +59,6 @@ const handleBackground = async (background, section) => {
     : applyColorBackground(background, section);
 };
 
-// Authored values arrive as typed (`Bento`, `3 col`): classify them the way
-// block variants are, so `.layout-bento` matches and a space can't throw.
 // Grid sizes the CSS defines. Any other value (`7`, `1`, `3 col`, a typo)
 // adds no class: a bare `.grid` turns `.block-content` into a one-column
 // grid that applies `Gap:`, stops margins collapsing and lets a block grow
@@ -77,6 +75,8 @@ const CONTAINER_SIZES = new Set(['2', '4', '6']);
 // works without `Style: container`.
 const BASE_CLASS_SIZES = new Map([['grid', GRID_SIZES], ['container', CONTAINER_SIZES]]);
 
+// Authored values arrive as typed (`Bento`, `3 col`): classify them the way
+// block variants are, so `.layout-bento` matches and a space can't throw.
 const handleLayout = (value, section, type) => {
   delete section.dataset[type];
   const name = toClassName(value);
