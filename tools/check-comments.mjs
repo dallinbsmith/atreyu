@@ -9,8 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'espree';
 
 const ROOT = process.cwd();
-const FAIL_TARGETS = ['scripts', 'workers/website', 'tools'];
-const WARN_TARGETS = ['blocks', 'styles'];
+const FAIL_TARGETS = ['blocks', 'scripts', 'styles', 'workers/website', 'tools'];
 const ROOT_FILES = ['eslint.config.js'];
 const EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.css']);
 export const BANNED = [
@@ -119,7 +118,6 @@ export const commentRanges = (source, ext) => (ext === '.css'
 const targetKind = (file) => {
   const p = posix(file);
   if (ROOT_FILES.includes(p) || FAIL_TARGETS.some((dir) => p === dir || p.startsWith(`${dir}/`))) return 'fail';
-  if (WARN_TARGETS.some((dir) => p === dir || p.startsWith(`${dir}/`))) return 'warn';
   return null;
 };
 
@@ -144,7 +142,7 @@ export const checkFiles = async (files) => {
 };
 
 const scopedFiles = async () => [
-  ...(await Promise.all([...FAIL_TARGETS, ...WARN_TARGETS].map(walk))).flat(),
+  ...(await Promise.all(FAIL_TARGETS.map(walk))).flat(),
   ...ROOT_FILES,
 ]
   .filter((file) => EXTENSIONS.has(path.extname(file)) && !skip(file));
@@ -152,16 +150,9 @@ const scopedFiles = async () => [
 export const run = async () => {
   const results = await checkFiles(await scopedFiles());
   const failures = results.filter((r) => r.kind === 'fail');
-  const warnings = results.filter((r) => r.kind === 'warn');
 
   for (const result of results) {
-    const label = result.kind === 'fail' ? 'ERROR' : 'WARN ';
-    console.error(`${label} ${result.file}:${result.line} ${result.name}`);
-  }
-
-  if (warnings.length) {
-    console.error(`check-comments: ${warnings.length} block/style warning(s); `
-      + 'these are non-fatal until the block/style cleanup branch lands.');
+    console.error(`ERROR ${result.file}:${result.line} ${result.name}`);
   }
 
   if (failures.length) {
