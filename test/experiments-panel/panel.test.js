@@ -45,11 +45,11 @@ describe('experiments-panel/panel.js', () => {
   });
 
   it('renders a Personalize table as a section card and warns on a flattened reserved key', async () => {
-    history.pushState({}, '', '/experiments-panel/index.html?page=/pzn-page.html');
+    history.pushState({}, '', '/experiments-panel/index.html?page=/personalize-page.html');
     document.body.innerHTML = PANEL_HTML;
     window.fetch = async (url, init = {}) => {
       const path = new URL(url, window.location.origin).pathname;
-      if (path === '/pzn-page.html') return new Response(PAGE_HTML, { status: 200 });
+      if (path === '/personalize-page.html') return new Response(PAGE_HTML, { status: 200 });
       if (path === '/metadata.json' || path === '/metadata-experiments.json') return new Response('{}', { status: 200 });
       if (init.method === 'HEAD') return new Response('', { status: 200 });
       throw new Error(`Unexpected fetch ${path}`);
@@ -73,11 +73,11 @@ describe('experiments-panel/panel.js', () => {
       '<div><div><p>End Date</p></div>',
       '<div><div><p>Audience: nobody</p></div><div><p><a href="/v/body-nobody">/v/body-nobody</a></p></div></div><div><div><p>End Date</p></div>',
     );
-    history.pushState({}, '', '/experiments-panel/index.html?page=/pzn-mixed.html');
+    history.pushState({}, '', '/experiments-panel/index.html?page=/personalize-mixed.html');
     document.body.innerHTML = PANEL_HTML;
     window.fetch = async (url, init = {}) => {
       const path = new URL(url, window.location.origin).pathname;
-      if (path === '/pzn-mixed.html') return new Response(html, { status: 200 });
+      if (path === '/personalize-mixed.html') return new Response(html, { status: 200 });
       if (path === '/metadata.json' || path === '/metadata-experiments.json') return new Response('{}', { status: 200 });
       if (init.method === 'HEAD') return new Response('', { status: 200 });
       throw new Error(`Unexpected fetch ${path}`);
@@ -112,7 +112,7 @@ describe('experiments-panel/panel.js', () => {
     const html = PAGE_HTML
       .replace('<p><a href="/v/body-mobile">/v/body-mobile</a></p>', '<p>/v/first</p><p>/v/second</p>')
       .replace('<div><div><p>End Date</p></div>', '<div><div><p>Status</p></div><div><p>inactive</p></div></div><div><div><p>End Date</p></div>');
-    const card = await renderCard('pzn-paragraphs', html);
+    const card = await renderCard('personalize-paragraphs', html);
     expect(card.querySelector('.badge').textContent).to.equal('not served');
     expect([...card.querySelectorAll('tr[data-path]')].map((tr) => tr.dataset.path)).to.deep.equal(['/v/first']);
     expect(new URL(card.querySelector('tr[data-path] td:last-child a').href).searchParams.get('audience')).to.equal('mobile');
@@ -122,7 +122,7 @@ describe('experiments-panel/panel.js', () => {
     const html = PAGE_HTML
       .replace('<div><p>Body</p><div class="personalize">', '<div><div class="personalize">')
       .replace('<div><div><p>End Date</p></div>', '<div><div><p>Status</p></div><div><p>inactive</p></div></div><div><div><p>End Date</p></div>');
-    const card = await renderCard('pzn-removed', html);
+    const card = await renderCard('personalize-removed', html);
     expect(card.querySelector('.badge').textContent).to.equal('not served');
     expect(card.textContent).to.include('the compiler removes it');
     expect([...card.querySelectorAll('tr[data-path]')].map((tr) => tr.dataset.path)).to.deep.equal(['/v/body-mobile']);
@@ -138,7 +138,7 @@ describe('experiments-panel/panel.js', () => {
   const INACTIVE_NOTE = 'served only in `?audience=` previews';
 
   it('shows no Preview links or inactive note for an inactive table whose End Date has passed', async () => {
-    const card = await renderCard('pzn-inactive-ended', inactive(day(-1)));
+    const card = await renderCard('personalize-inactive-ended', inactive(day(-1)));
     expect(card.querySelector('.badge').textContent).to.equal('blocked');
     expect([...card.querySelectorAll('tr[data-path]')].map((tr) => tr.dataset.path)).to.deep.equal(['/v/body-mobile']);
     expect(card.querySelectorAll('th').length).to.equal(2);
@@ -148,7 +148,7 @@ describe('experiments-panel/panel.js', () => {
 
   for (const [what, endDate] of [['an invalid', 'soon'], ['a more-than-180-day', day(400)]]) {
     it(`shows no Preview links or inactive note for an inactive table with ${what} End Date`, async () => {
-      const card = await renderCard(`pzn-inactive-bad-${endDate}`, inactive(endDate));
+      const card = await renderCard(`personalize-inactive-bad-${endDate}`, inactive(endDate));
       expect(card.querySelectorAll('a[href*="audience="]').length).to.equal(0);
       expect(card.textContent).not.to.include(INACTIVE_NOTE);
     });
@@ -156,13 +156,13 @@ describe('experiments-panel/panel.js', () => {
 
   it('shows no Preview links or inactive note for an inactive table with no End Date', async () => {
     const html = inactive('x').replace('<div><div><p>End Date</p></div><div><p>x</p></div></div>', '');
-    const card = await renderCard('pzn-inactive-missing', html);
+    const card = await renderCard('personalize-inactive-missing', html);
     expect(card.querySelectorAll('a[href*="audience="]').length).to.equal(0);
     expect(card.textContent).not.to.include(INACTIVE_NOTE);
   });
 
   it('keeps Preview links and the inactive note for an inactive table with a future End Date', async () => {
-    const card = await renderCard('pzn-inactive-future', inactive(day(30)));
+    const card = await renderCard('personalize-inactive-future', inactive(day(30)));
     expect(card.querySelector('.badge').textContent).to.equal('not served');
     expect(new URL(card.querySelector('a[href*="audience="]').href).searchParams.get('audience')).to.equal('mobile');
     expect(card.textContent).to.include(INACTIVE_NOTE);

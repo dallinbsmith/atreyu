@@ -5,9 +5,8 @@
  * their own copy, because they can't share a module: one ships as static
  * client JS with no build step, the other runs in a Cloudflare isolate. Each
  * pair is two designated files that must agree with each other, which
- * `config-drift/no-duplicate-locale-list` can't check (see
- * segment-cookie.test.js and .claude/rules/scripts.md). Unlike that test, these
- * modules are pure, so this one imports them rather than regex-reading source.
+ * `config-drift/no-duplicate-locale-list` can't check. These modules are pure,
+ * so this test imports them rather than regex-reading source.
  * Nothing here writes a locale list out: both sides are imported, so this file
  * can't become a third copy.
  *
@@ -32,8 +31,7 @@ import { shouldGuard } from '../../scripts/utils/experiments/guard.js';
 import { ALLOWED_LOCALE_CODES } from '../eslint-rules/config-drift.js';
 // Crossing into the Worker package is sanctioned for this parity test by
 // foundation-hardening-plan B6 (import, don't restate). The modules are pure,
-// and the Worker's own `node --test` loads them in Node, unlike
-// segment-cookie.test.js, which regex-reads its source.
+// and the Worker's own `node --test` loads them in Node.
 // eslint-disable-next-line import/no-relative-packages -- cross-runtime parity check, read-only
 import { LOCALE_PREFIXES } from '../../workers/website/utils/locale.js';
 // eslint-disable-next-line import/no-relative-packages -- cross-runtime parity check, read-only

@@ -41,7 +41,7 @@ describe('scripts/lazy.js', () => {
   // Bug-squash fix, 2026-09-18: lazy.js used to be a bare top-level IIFE with
   // no export — ak.js's `import('./lazy.js')` on a second loadArea() call
   // (DA Quick Edit's re-render) resolved the already-cached module without
-  // re-running anything, so footer/pzn never re-decorated past the first
+  // re-running anything, so footer never re-decorated past the first
   // page load. A real default export is the fix; this pins that it exists
   // and is a genuinely re-invokable function, not a one-shot side effect.
   it('exports a callable default, distinct from the one-shot bootstrap IIFE', () => {

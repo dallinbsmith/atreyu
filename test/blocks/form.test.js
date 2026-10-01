@@ -32,7 +32,7 @@ const stubFetch = (endpoint, handler) => {
 };
 
 // A real wall-clock wait for the async submit handler's fetch round trip to
-// settle — same pattern used in test/utils/analytics/pzn.test.js, since the
+// settle, since the
 // 'submit' event listener isn't itself awaitable from dispatchEvent().
 const tick = (ms = 50) => new Promise((r) => { setTimeout(r, ms); });
 

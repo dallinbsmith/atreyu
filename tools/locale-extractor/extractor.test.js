@@ -102,11 +102,6 @@ assert.deepEqual(renderPortableText([]), []);
 }
 
 {
-  const { metadataHtml } = resolveVariantKeys(heroScreen, { emitPznHooks: true });
-  assert.match(metadataHtml, /pzn/, '--emit-pzn-hooks produces a pzn: marker instead of silently dropping');
-}
-
-{
   const { dropped, metadataHtml } = resolveVariantKeys(spacer);
   assert.deepEqual(dropped, [], 'a module with no variantKeys drops nothing');
   assert.equal(metadataHtml, '');
