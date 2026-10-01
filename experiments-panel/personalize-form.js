@@ -1,4 +1,5 @@
 import { createElement as h } from '../scripts/utils/dom.js';
+import { DATE_ONLY } from '../scripts/utils/date-only.js';
 import { readSelection, sendHtml } from './da-port.js';
 import { fetchText } from './sources.js';
 import {
@@ -65,7 +66,7 @@ const fill = (form, source = {}) => {
   const v = normalizeValues({ ...source, rules: kept });
   form.elements.Name.value = v.Name ?? '';
   form.elements.Status.value = v.Status ?? 'inactive';
-  form.elements['End Date'].value = /^\d{4}-\d{2}-\d{2}$/.test(`${source['End Date'] ?? ''}`.trim())
+  form.elements['End Date'].value = DATE_ONLY.test(`${source['End Date'] ?? ''}`.trim())
     ? v['End Date'] : '';
   form.elements.Owner.value = v.Owner ?? '';
   for (let i = 0; i < MAX_RULES; i += 1) {
