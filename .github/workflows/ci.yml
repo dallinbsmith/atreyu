@@ -119,6 +119,10 @@ jobs:
         run: npm run test:config-sync
 
       - if: steps.changes.outputs.run == 'true'
+        name: Experiments panel must not import ak.js
+        run: node tools/config-sync/panel-no-ak.test.js
+
+      - if: steps.changes.outputs.run == 'true'
         name: Run tests
         run: npm test
 

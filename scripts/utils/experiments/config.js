@@ -34,6 +34,8 @@ export const isVariantPath = (path, root = VARIANT_ROOT) => {
   return localized === root.slice(0, -1) || localized.startsWith(root);
 };
 
+// Copy of ak.js's: the panel must not load ak.js (tools/config-sync/panel-no-ak.test.js).
+// Parity with ak.js: test/utils/experiments/to-class-name-parity.test.js.
 export const toClassName = (name) => (typeof name === 'string'
   ? name.toLowerCase().replace(/[^0-9a-z]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
   : '');

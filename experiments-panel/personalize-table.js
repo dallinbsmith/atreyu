@@ -4,8 +4,9 @@ import {
   ACTIVE, toClassName, VARIANT_ROOT,
 } from '../scripts/utils/experiments/config.js';
 import {
-  DATE_ONLY, MAX_DAYS, MAX_RULES, resolveTableRules, toEnd,
+  MAX_DAYS, MAX_RULES, resolveTableRules, toEnd,
 } from '../scripts/utils/experiments/personalize.js';
+import { DATE_ONLY } from '../scripts/utils/date-only.js';
 import { isSafeHref, toDateInput } from './table.js';
 
 export { MAX_DAYS, MAX_RULES, VARIANT_ROOT };

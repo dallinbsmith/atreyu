@@ -1,9 +1,8 @@
 // Locale-aware formatting for user-visible values. Dates only for now;
 // formatNumber/formatCurrency and the locales.js `intl` field are deferred (L7).
 import { getConfig } from '../ak.js';
+import { DATE_ONLY } from './date-only.js';
 
-// Shared with experiments/personalize.js (Personalize End Date).
-export const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DEFAULTS = { year: 'numeric', month: 'long', day: 'numeric' };
 
 // Read per call, never at module scope: a module-scope read would run before
