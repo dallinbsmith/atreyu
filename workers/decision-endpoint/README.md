@@ -19,6 +19,9 @@ npm install
 npm run dev          # wrangler dev, listens on http://localhost:8787
 ```
 
+Requires Node 22+. `wrangler` is pinned exactly to the same version as
+`workers/website`; bump both together.
+
 ### Mock mode (no Clearbit key needed)
 
 `wrangler.toml` sets `MOCK_CLEARBIT = "true"` for local dev. With that set,
