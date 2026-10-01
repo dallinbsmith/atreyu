@@ -3,7 +3,7 @@
  * element (declared on the same rule, or an ancestor rule via native CSS
  * nesting, whose OWN z-index isn't already a token) instead of a `var(--z-*)`
  * token from the global scale in styles.css. This is the exact shape of two
- * real, confirmed bugs in this project's history — see .claude/rules/css.md's
+ * real, confirmed bugs in this project's history — see docs/conventions/css.md's
  * "Z-Index and Stacking Contexts" section:
  *  - header.css's `z-index: 1000` (should have been `var(--z-index-nav)`),
  *    which rendered the fixed header ABOVE every real modal in the app and
@@ -16,14 +16,14 @@
  * rule that is) `position: fixed` — that's this project's local tier
  * (background-behind-text, decorative pseudo-elements, contained by
  * `isolation: isolate`/`overflow: hidden`), which is correct and expected to
- * use small raw integers directly, per the same css.md rule.
+ * use small raw integers directly, per the same docs/conventions/css.md rule.
  *
  * Also does NOT flag a raw z-index nested inside a `position: fixed` ancestor
  * whose OWN z-index is already a token (e.g. header.css's `.language`
  * mega-menu submenu, nested inside `header { position: fixed; z-index:
  * var(--z-index-nav); ... }`) — once the ancestor has actually established
  * global-tier containment via a token, everything nested inside it is by
- * definition local to that already-safe context, matching css.md's own
+ * definition local to that already-safe context, matching docs/conventions/css.md's own
  * step-zero rule. (Fixed 2026-09-08 after a review found the first version of
  * this rule flagged exactly this real, already-correct pattern — it only
  * escaped detection by accident of header.css's `.language` rule living in a
@@ -31,7 +31,7 @@
  * because the logic was actually right.)
  *
  * Known, accepted limitations (a lint-time heuristic, not full certification
- * — see .claude/rules/agent-behavior.md's stance on pattern-matching vs.
+ * — see AGENTS.md's stance on pattern-matching vs.
  * certifying something safe):
  *  - only tracks `position: fixed` declared on the same rule or a direct
  *    ancestor rule (the real CSS-nesting parent chain) — a `position: fixed`
@@ -45,7 +45,7 @@
  *  - only catches CSS-visible escapes (`position: fixed`) — an element that
  *    escapes its own block by being appended to `document.body` in JS without
  *    ever being `position: fixed` is invisible to a CSS-only linter and still
- *    needs the human judgment call css.md documents. Every real body-appended
+ *    needs the human judgment call docs/conventions/css.md documents. Every real body-appended
  *    element in this codebase today is also `position: fixed`, so this is
  *    believed to have zero current false negatives, not a theoretical-only
  *    gap.
@@ -56,7 +56,7 @@ const ruleName = 'atreyu/z-index-requires-token';
 
 const messages = stylelint.utils.ruleMessages(ruleName, {
   rejected: (value) => `z-index: ${value} on a position: fixed element must use a var(--z-*) token, `
-    + 'not a raw number — see .claude/rules/css.md\'s "Z-Index and Stacking Contexts" section. '
+    + 'not a raw number — see docs/conventions/css.md\'s "Z-Index and Stacking Contexts" section. '
     + 'This exact shape (a raw number on a fixed/escaping element with no token establishing '
     + 'its containment) caused two real production bugs before: header.css rendered above every '
     + "modal in the app, and quote-interactive.css's .qi-hover only avoided colliding by luck.",

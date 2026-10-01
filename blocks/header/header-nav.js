@@ -18,7 +18,7 @@ const decorateNavItem = (li) => {
   // top-level section (the common case — it unwraps to the section itself),
   // only preserving `.fragment-content` for a 2+-section fragment, a shape
   // nothing has ever actually authored. Classify by content shape instead
-  // (blocks.md's Row Classification rule): the mega-menu is whichever direct
+  // (docs/conventions/blocks.md's Row Classification rule): the mega-menu is whichever direct
   // child of `li` isn't the trigger link's own paragraph — present regardless
   // of which of fragment.js's two unwrap shapes resolved.
   const linkPara = link?.parentElement;

@@ -1,0 +1,12 @@
+# Code owners. GitHub requests review from these owners on matching PRs.
+# Later lines take precedence over earlier ones.
+
+*                                   @dallinbsmith
+
+# Worker: decides which origin serves real traffic. Owner approval required.
+/workers/                           @dallinbsmith
+/workers/website/routing-manifest.js @dallinbsmith
+
+# Author-kit core (see scripts/AK-PATCHES.md) and lint configuration.
+/scripts/ak.js                      @dallinbsmith
+/eslint.config.js                   @dallinbsmith

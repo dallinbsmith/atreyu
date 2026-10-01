@@ -1,6 +1,6 @@
 // module.logoWall → the `logo-wall` block (site/blocks/logo-wall), one
 // partner name per row (must match a real icons/partners/ file per
-// blocks.md's Library Sync notes). Real shape confirmed on the ja-jp
+// docs/conventions/blocks.md's Library Sync notes). Real shape confirmed on the ja-jp
 // enterprise page: `useGlobalConfig: true`, with NO page-local logo list at
 // all, the page's logos come from a separate global/site-wide config this
 // extractor doesn't query. Fabricating partner names here would be worse

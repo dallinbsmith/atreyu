@@ -1,6 +1,6 @@
 /**
- * Cohort × locale routing manifest (locale-i18n-plan.md D-L5 / L-2,
- * fh-arch6-review-2026-10-01.md B-2). The one place that decides which
+ * Cohort × locale routing manifest (docs/decisions/0015-locale-cutover-cells.md D-L5 / L-2,
+ * docs/architecture/worker.md B-2). The one place that decides which
  * (cohort, locale) cells the strangler serves from EDS.
  *
  * Spec:
@@ -11,13 +11,13 @@
  * - A locale's shared assets (/de-de/system/…) reach EDS once it has any live
  *   cell; until then they stay on the existing origin with its pages.
  * - CELLS is the governed ceiling. A runtime switch (R-L1) may only remove
- *   cells, never add one (r-l1-gov-gate-review-2026-10-01.md fix 1).
+ *   cells, never add one (docs/architecture/worker.md, runtime switches).
  * - An invalid manifest throws at module load, so tests and the upload fail
  *   instead of routing on a typo.
  */
 import { LOCALE_PREFIXES } from './utils/locale.js';
 
-// Migration cohort phases (master-plan/implementation-plan.md): Phase 2 adds
+// Migration cohort phases (docs/status.md): Phase 2 adds
 // /customers/ + /resources/, Phase 3 / + /enterprise + /demo, Phase 4 /pricing.
 // Add a phase's cohort and its English cell when it ships, not before. Phase
 // 3's home page '/' needs an exact-match rule first: as a prefix it matches

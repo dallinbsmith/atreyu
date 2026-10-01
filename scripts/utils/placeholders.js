@@ -6,7 +6,7 @@ import { fetchData } from './fetch-data.js';
 // the first dot; everything after it is the row key. Each sheet is fetched on
 // first use and cached per URL (so per locale prefix and namespace). The legacy
 // `/system/placeholders.json` is the DA Library's source only; code never reads
-// it. See DA-CONTENT-STRUCTURE.md, Placeholders.
+// it. See docs/authoring/da-content-structure.md, Placeholders.
 const cache = new Map();
 const NAMESPACE = /^[a-z][a-z-]*$/;
 

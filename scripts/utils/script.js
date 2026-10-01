@@ -1,6 +1,6 @@
 // Promise-memoized so two concurrent callers loading the same src share one
 // real load event instead of the second seeing the first's not-yet-loaded
-// <script> tag and returning null immediately (see scripts.md's shared-fetch
+// <script> tag and returning null immediately (see docs/conventions/javascript.md's shared-fetch
 // memoization pattern, e.g. fetch-data.js).
 const pending = new Map();
 

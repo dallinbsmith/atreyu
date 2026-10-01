@@ -61,7 +61,8 @@ const previewSections = (html) => {
   return new Set(plan.map(({ section }) => sections.indexOf(section)));
 };
 
-// Section-level config is tables only (PLAN.md pz-section-meta): the page the
+// Section-level config is tables only
+// (docs/decisions/0012-section-personalization-tables-only.md): the page the
 // panel fetches is server-rendered, so authored Section Metadata is already
 // flattened to data-* (see sectionKeyIssues) and the only section-level source
 // left is the Personalize table. Read each section's first table, then run the
@@ -125,7 +126,7 @@ export const readPage = (html, pagePath) => {
 // the server to data-* on the section, where they look like plugin output
 // (data-experiment, data-variant, data-audience, data-audiences) and the
 // plugin never reads them: under the tables-only rule they do nothing. Keep
-// in step with the rule in tools/sidekick/blocks.md ("Keys you must not use
+// in step with the rule in docs/authoring/section-metadata.md ("Keys you must not use
 // in Section Metadata").
 const PLUGIN_ATTR = /^data-(experiment|variant|audiences?|campaign)($|[-:])/;
 

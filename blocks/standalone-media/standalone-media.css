@@ -53,7 +53,7 @@
     }
 
     /* decoration: glassborder — shared frosted-panel treatment, same tokens
-       styles.css already declares for .btn-glass (see css.md's "reference
+       styles.css already declares for .btn-glass (see docs/conventions/css.md's "reference
        tokens, never hardcode" rule). */
     &.glassborder .standalone-media-media {
       padding: var(--spacing-s);

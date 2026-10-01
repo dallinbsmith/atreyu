@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable no-console -- CLI script; console output is the reporting mechanism */
-// css.md: "Every block's CSS file must wrap its entire contents in
+// docs/conventions/css.md: "Every block's CSS file must wrap its entire contents in
 // `@layer blocks { }` — this is enforced, not optional." That line was true
 // in prose since the beginning but had zero automated enforcement until this
 // script — one of 29 files had never actually done it, found only by a manual
@@ -86,7 +86,7 @@ const failures = results.filter(([, problem]) => problem !== null);
 if (failures.length > 0) {
   console.error(`${failures.length} block CSS file(s) not wrapped in '@layer blocks { }':\n`);
   failures.forEach(([path, problem]) => console.error(`  ${path} — ${problem}`));
-  console.error('\nSee .claude/rules/css.md — every block CSS file must wrap its entire contents in @layer blocks { }.');
+  console.error('\nSee docs/conventions/css.md — every block CSS file must wrap its entire contents in @layer blocks { }.');
   process.exit(1);
 } else {
   console.log(`All ${files.length} block CSS files are correctly wrapped in @layer blocks { }.`);

@@ -11,7 +11,7 @@ import { track } from './analytics.js';
 //
 // No element in this codebase sets data-track-event today (behaviors.js's
 // own modules track() directly, with dynamic properties this attribute
-// scheme can't express — see scripts.md). If a future element ever carries
+// scheme can't express — see docs/conventions/javascript.md). If a future element ever carries
 // both a behaviors.js entry AND data-track-event, this would double-fire —
 // worth a guard (or a dev-mode assertion) before that first real pairing lands.
 document.addEventListener('click', (e) => {

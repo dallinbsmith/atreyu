@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Locale extractor CLI, D-L7's extractor (B1 in locale-i18n-plan.md).
+// Locale extractor CLI, D-L7's extractor (B1 in docs/decisions/0017-translation-workflow.md).
 // Pulls real Falkor/Sanity locale content and emits local DA-shaped HTML
 // files for review, same pattern this project already used for the Library
 // bootstrap (local export → human review → da_create_source upload) rather
@@ -14,7 +14,7 @@
 // wave, 28 pages for ja-jp per the spike). With --slug, pulls one page,
 // useful for iterating on one module transformer at a time.
 //
-// --check-redirects (B6b, locale-i18n-plan.md): for each page, does a
+// --check-redirects (B6b, docs/architecture/locale.md): for each page, does a
 // read-only HEAD request against the live Falkor path this extractor
 // assumes (/{locale}/{slug}, unchanged from the Sanity slug) and reports
 // anything that doesn't already resolve there as-is. See

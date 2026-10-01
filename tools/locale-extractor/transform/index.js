@@ -55,7 +55,7 @@ export const MODULE_TRANSFORMERS = {
 };
 
 // Never silently drop an unrecognized module type (same "fail loud over
-// fabricating partial state" discipline as scripts.md's Global State
+// fabricating partial state" discipline as docs/conventions/javascript.md's Global State
 // section), an unknown type becomes a visible HTML comment in the output
 // and a warning, not a missing section nobody notices until a real author
 // complains content is gone.

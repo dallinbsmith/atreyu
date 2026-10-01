@@ -14,7 +14,7 @@ import { createElement, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 
 // Group title: a lone-heading row with no media. Only ever checked at
 // position 0, never scanned across every row — a shape-only check risks
-// misclassifying a real, content-light card (blocks.md's F-66 family);
+// misclassifying a real, content-light card (docs/conventions/blocks.md's F-66 family);
 // restricting to the first row keeps that risk off every card past it.
 // Known, accepted tradeoff pending real content (no Library example yet).
 const isTitleRow = (row) => !row.querySelector('img, picture') && row.querySelector(HEADING_SELECTOR);

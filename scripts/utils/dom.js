@@ -4,7 +4,7 @@
 // Cuts createElement/className/append ceremony when a block builds a new
 // wrapper element. It does not replace, and cannot substitute for, the
 // separate discipline of classifying authored rows by content shape rather
-// than position — see .claude/rules/blocks.md.
+// than position — see docs/conventions/blocks.md.
 export const createElement = (tag, attrs, ...children) => {
   const el = document.createElement(tag);
   Object.entries(attrs ?? {}).forEach(([key, value]) => {
@@ -34,7 +34,7 @@ export const createElement = (tag, attrs, ...children) => {
 export const parseSvg = (markup) => new DOMParser().parseFromString(markup, 'text/html').querySelector('svg');
 
 // A block's row/cell shape is fixed by the platform's own document model
-// (blocks.md's Init Contract: children of `el` are rows, children of rows
+// (docs/conventions/blocks.md's Init Contract: children of `el` are rows, children of rows
 // are cells) — this just flattens that two-level structure into one array
 // of every cell, for blocks that classify a specific cell (e.g. "whichever
 // cell holds a picture") rather than a whole row. Real DOM traversal
@@ -42,7 +42,7 @@ export const parseSvg = (markup) => new DOMParser().parseFromString(markup, 'tex
 // can't silently return an empty list.
 export const getCells = (el) => [...el.children].flatMap((row) => [...row.children]);
 
-// Classify by content shape, never a structural selector (scripts.md's
+// Classify by content shape, never a structural selector (docs/conventions/javascript.md's
 // "Identifying Elements" rule): every paragraph that contains a link gets
 // className, so CSS keys off the class instead of re-deriving "which
 // paragraph is the CTA" via `p:has(a)`. Shared by hero-screen.js,

@@ -10,7 +10,7 @@ const contentLinks = (section) => [...section.querySelectorAll('a')].filter((a) 
 // research memory): an author can label any content link in the actions
 // section "cta: <label>" instead of relying on last-link-wins list position.
 // Mirrors form.js's existing `submit: <text>` prefix convention — same
-// `key: value` text-prefix idiom (blocks.md's Row Classification rule),
+// `key: value` text-prefix idiom (docs/conventions/blocks.md's Row Classification rule),
 // applied to a link's own text instead of a row. Falls back to the original
 // last-link-wins heuristic when no link uses the prefix, so already-authored
 // header content keeps working unchanged — verified 2026-09-21 against the

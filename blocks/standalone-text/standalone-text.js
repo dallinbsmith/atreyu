@@ -1,6 +1,6 @@
 // Authoring: one row.
 // - One column: plain intro/section text — prefer default content instead
-//   (see blocks.md "minimize block usage"); this block only exists so an
+//   (see docs/conventions/blocks.md "minimize block usage"); this block only exists so an
 //   author who reaches for it still gets a sane, centered, width-capped
 //   result rather than nothing.
 // - Two columns: a genuine side-by-side text split (heading left, body

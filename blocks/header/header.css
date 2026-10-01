@@ -560,7 +560,7 @@
            --duration-500 there. Reuses the shared /img/glyphs/chevron.svg
            mask + background-color pattern (carousel.css's nav arrows)
            rather than a new local copy — header.js is a second-or-later
-           consumer of an already-shared glyph per .claude/rules/assets.md.
+           consumer of an already-shared glyph per docs/conventions/assets.md.
            header-nav.js only appends this element to a trigger that
            actually has a .mega-menu ("Pricing" has none, so it never gets
            one).
@@ -723,7 +723,7 @@
       }
     }
 
-    /* Per CLAUDE.md/accessibility.md's prefers-reduced-motion convention —
+    /* Per docs/conventions/accessibility.md's prefers-reduced-motion convention —
        matching the established pattern (faq.css's chevron, same shared
        glyph): null the transition only, leave the end-state value changes
        (rotate, opacity/visibility/transform) intact, so state still changes
