@@ -9,7 +9,7 @@ This repo is the in-progress migration of Frame.io's marketing site off Next.js 
 Only a handful of pages are fully built and content-complete:
 - `/integrations/davinci-resolve`
 - `/customers/sundance-film-festival`
-- `/features/c2c` (with a real `/ja-jp/features/c2c` translation pair)
+- `/features/c2c` (translated at `/ja-jp/c2c`; the paths differ, see `c2c-pair-path`)
 
 `/blog`, `/glossary`, `/integrations`, and `/customers` exist as landing-page placeholders, not full sections yet. Don't assume a page exists just because its route is wired in the Worker — check `artifacts/master-plan/DA-CONTENT-STRUCTURE.md` for the current real content map before building against a page.
 
