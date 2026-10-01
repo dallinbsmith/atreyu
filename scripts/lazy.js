@@ -36,8 +36,8 @@ export default async () => {
   const { log } = getConfig();
   await import('./utils/page/footer.js').then(({ default: footer }) => footer()).catch((ex) => log(ex));
 
-  // Spike (adobe/aem-experimentation v2): the plugin replaces experimentation.js
-  // — both read the same `experiment*` metadata keys, so they cannot coexist.
+  // adobe/aem-experimentation v2 owns `experiment*` metadata (our own
+  // experimentation.js swap was removed).
   // This call only loads its preview/simulation panel (never in prod).
   // Header, footer and nav are not personalized by policy (foundation
   // hardening A2 = iii). Not enforced: the plugin's `experiment-manifest`
