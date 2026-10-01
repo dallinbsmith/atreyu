@@ -90,6 +90,22 @@ describe('scripts/experiment-loader.js', () => {
       sectionWithExperiment('50');
       expect(isEnabled()).to.equal(true);
     });
+
+    it('reads only the key cell: a value match or an `Audiences` key does not enable', () => {
+      document.body.innerHTML = `<main><div><p>Hi</p><div class="section-metadata">
+        <div><div>Anchor</div><div>Audience Stories</div></div>
+        <div><div>Style</div><div>experiment, campaign</div></div>
+        <div><div>Audiences</div><div>mobile</div></div>
+      </div></div></main>`;
+      expect(isEnabled()).to.equal(false);
+    });
+
+    it('detects a normalized key such as `Audience: mobile`', () => {
+      document.body.innerHTML = `<main><div><div class="section-metadata">
+        <div><div> Audience: mobile </div><div>/v/m</div></div>
+      </div></div></main>`;
+      expect(isEnabled()).to.equal(true);
+    });
   });
 
   describe('trackExposures', () => {
@@ -245,6 +261,29 @@ describe('scripts/experiment-loader.js', () => {
       expect(document.querySelector('#headline').textContent).to.equal('Challenger headline');
       expect(Boolean(document.querySelector('.experiment'))).to.equal(false);
       expect(tracked.find((t) => t.event === 'experiment').props.variantId).to.equal('table-test:challenger-1');
+    });
+
+    it('with a page-level test running, a hand-written section Audience row stays control', async () => {
+      setConsent({ analytics: true, personalization: true });
+      const requested = [];
+      window.fetch = async (url) => {
+        requested.push(new URL(url, window.location.origin).pathname);
+        return new Response(
+          '<html><head></head><body><main><div><h1 id="headline">Page variant</h1></div><div><p id="section">Mobile section</p></div></main></body></html>',
+          { status: 200, headers: { 'content-type': 'text/html' } },
+        );
+      };
+      pageWithTable('0');
+      document.querySelector('main').insertAdjacentHTML('beforeend', `<div><p id="section">Control section</p>
+        <div class="section-metadata">
+          <div><div>Audience: mobile</div><div><a href="/v/mobile">/v/mobile</a></div></div>
+        </div></div>`);
+      expect(await runExperimentation()).not.to.equal(null);
+      expect(window.hlx.experiments.some((e) => e.config.id === 'table-test')).to.equal(true);
+      expect(window.hlx.audiences ?? []).to.deep.equal([]);
+      expect(requested).to.deep.equal([]);
+      expect(document.querySelector('#section').textContent).to.equal('Control section');
+      expect(document.querySelector('.section-metadata')).to.equal(null);
     });
 
     it('without consent, still removes the Experiment table and serves control', async () => {

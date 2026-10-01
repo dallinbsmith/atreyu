@@ -97,18 +97,16 @@ export const carryOverSectionMeta = (main = document.querySelector('main')) => {
   };
 };
 
-// Section Metadata keys the plugin reads (getAllSectionMeta: the prefix
-// alone or followed by `-`, after toClassName). On .page/.live the server
-// flattens authored rows to data-* and removes the table, so the plugin never
-// sees them. Quick Edit and DA preview render raw DA markup, so strip them
-// here to match (tables only, PLAN pz-section-meta). Runs before the
-// Personalize compiler writes its own Audience rows.
-const PLUGIN_KEY = /^(experiment|audience|campaign)(-|$)/;
+// Keys (toClassName'd) the plugin reads in Section Metadata. .page/.live
+// flatten authored rows to data-*, so the plugin never sees them; strip them
+// from raw DA markup (Quick Edit, dapreview) to match (PLAN pz-section-meta).
+export const isPluginKey = (key, prefixes = ['experiment', 'audience', 'campaign']) => prefixes
+  .some((p) => key === p || key.startsWith(`${p}-`));
 
 export const stripPluginSectionMeta = (main = document.querySelector('main')) => {
   for (const meta of main?.querySelectorAll('.section-metadata') ?? []) {
     for (const row of [...meta.children]) {
-      if (PLUGIN_KEY.test(toClassName(row.children[0]?.textContent))) row.remove();
+      if (isPluginKey(toClassName(row.children[0]?.textContent))) row.remove();
     }
     if (!meta.children.length) meta.remove();
   }

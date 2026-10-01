@@ -14,7 +14,7 @@
 //      that did not run (inactive, expired, audience/consent not met) as
 //      "control", which would pollute the control arm — so read config.run.
 import ENV from './utils/env.js';
-import { getConfig, loadArea } from './ak.js';
+import { getConfig, loadArea, toClassName } from './ak.js';
 import { hasConsent } from './utils/analytics/consent.js';
 import { track, EVENTS } from './utils/analytics/analytics.js';
 import { getVisitorId } from './utils/analytics/visitor-id.js';
@@ -23,6 +23,7 @@ import { applyExperimentBlock } from './utils/experiments/block.js';
 import { applyPersonalizeTables, planAudiences } from './utils/experiments/personalize.js';
 import {
   carryOverSectionMeta,
+  isPluginKey,
   removeLeftoverConfigBlocks,
   stripPluginSectionMeta,
   withVariantTimeout,
@@ -43,8 +44,8 @@ export const config = {
 
 export const isEnabled = () => !!(
   document.head.querySelector('[name^="experiment"],[name^="campaign-"],[name^="audience-"],[property^="campaign:"],[property^="audience:"]')
-  || [...document.querySelectorAll('.section-metadata div')]
-    .some((d) => /Experiment|Campaign|Audience/i.test(d.textContent))
+  || [...document.querySelectorAll('.section-metadata > div')]
+    .some((row) => isPluginKey(toClassName(row.children[0]?.textContent)))
 );
 
 const copyKey = (from, to) => {
