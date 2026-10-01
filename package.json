@@ -18,6 +18,7 @@
     "test:watch": "npm test -- --watch",
     "test:file": "wtr --config ./web-test-runner.config.mjs --coverage --concurrency 2",
     "test:file:watch": "wtr --config ./web-test-runner.config.mjs --coverage --concurrency 2 --watch",
+    "build:lit": "esbuild --format=esm --minify ./scripts/vendor/lit/src/index.js --bundle --outfile=./scripts/vendor/lit/dist/index.js",
     "lighthouse": "lhci autorun",
     "lighthouse:mobile": "lhci autorun --collect.settings.preset=perf"
   },
