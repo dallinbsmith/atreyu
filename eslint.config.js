@@ -222,6 +222,18 @@ export default defineConfig([
     },
   },
   {
+    // Locale extractor (B1, locale-i18n-plan.md): consumes raw Sanity
+    // documents, whose own field-naming convention (`_type`/`_key`/`_id`) is
+    // external API shape this tool doesn't control — same rationale as the
+    // `test/**/*.js` override above. `no-console` is off because this is a
+    // CLI tool whose whole job is printing progress/warnings to stdout.
+    files: ['tools/locale-extractor/**/*.js'],
+    rules: {
+      'no-console': 'off',
+      'no-underscore-dangle': 0,
+    },
+  },
+  {
     // Backstop only, not the block-size rule. The real rule (blocks.md
     // Structure) is concerns-based and enforced in review: one directory per
     // block, the default export as the only public contract, helpers

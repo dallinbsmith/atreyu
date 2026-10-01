@@ -1,0 +1,820 @@
+{
+  "_comment": "Real data, verbatim from live Sanity queries against project s6lu43cv / dataset production-v4 (2026-10-01), trimmed to the fields each test actually asserts on. Sources: ja-jp enterprise/agencies (hero, heroTransitionV4, carousel), ja-jp features/workflow-management (cardGridNav), ja-jp pricing (faq), ja-jp case-studies/xfinity (pothole), ja-jp enterprise (bentos: statsCard variant-e, backgroundAndForeground card with unsupported enum values, variantA card-count-only for the unimplemented-variant warning path), ja-jp enterprise (sideBySides: 3-item stack with multiImage, and a single card-layout item with touts+CTA button), ja-jp enterprise (touts: 3 real items, 2 with graphicType=icon).",
+  "hero": {
+    "_key": "96c62ffa91ed",
+    "_type": "module.hero",
+    "content": {
+      "content": [
+        {
+          "_key": "d2193ba99fb7",
+          "_type": "block",
+          "style": "eyebrow",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "a",
+              "_type": "span",
+              "marks": [],
+              "text": "エージェンシー向けFrame.io"
+            }
+          ]
+        },
+        {
+          "_key": "982c2cffcb4d",
+          "_type": "block",
+          "style": "title1",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "b",
+              "_type": "span",
+              "marks": [],
+              "text": "クライアントと\nクリエイターと\nアセットが、\nついにひとつに"
+            }
+          ]
+        }
+      ]
+    },
+    "media": {
+      "_type": "enhancedMedia",
+      "media": {
+        "_type": "media",
+        "image": {
+          "_type": "extendedImage",
+          "asset": {
+            "_ref": "image-4ca5dbe0aa72a406a2f355296371bcf5bfe8a6f8-4999x5504-png"
+          }
+        }
+      }
+    }
+  },
+  "heroTransitionV4": {
+    "_key": "6dc5abdda697",
+    "_type": "module.heroTransitionV4",
+    "media": {
+      "_type": "enhancedMedia",
+      "glow": {
+        "_type": "glow",
+        "shapesKey": "rectangleNarrow"
+      },
+      "media": {
+        "_type": "media",
+        "image": {
+          "_type": "extendedImage",
+          "asset": {
+            "_ref": "image-1f625f790d6ef0b42691cbfb1e09de73f3b45796-3840x2160-png"
+          }
+        }
+      }
+    }
+  },
+  "carousel": {
+    "_key": "676931c4d998",
+    "_type": "module.carousel",
+    "slides": [
+      {
+        "_key": "3afa66940935",
+        "_type": "slide",
+        "image": {
+          "_type": "enhancedMedia",
+          "image": {
+            "_type": "extendedImage",
+            "asset": {
+              "_ref": "image-aa387d9c706777b8eddf2aac8e1cee1034454ce8-1424x966-png"
+            }
+          }
+        },
+        "text": {
+          "content": [
+            {
+              "_key": "fd52d0fdd5ea",
+              "_type": "block.graphic",
+              "logo": {
+                "_ref": "d5dbf638-34d0-42ee-9852-ff26802a0b5d"
+              }
+            },
+            {
+              "_key": "e4084deb1399",
+              "_type": "block",
+              "style": "title5",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "c",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "Princess CruisesはFrame.ioとAdobe Creative Cloudを使用"
+                }
+              ]
+            },
+            {
+              "_key": "fea806e2d22c",
+              "_type": "block.button",
+              "button": {
+                "_type": "button",
+                "label": "事例を見る",
+                "reference": {
+                  "_ref": "e75dc8b9-290f-4539-ac73-8cd99fa03f24"
+                },
+                "type": "internal"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "cardGridNav": {
+    "_key": "cd6d9207fa94",
+    "_type": "module.cardGridNav",
+    "cardGridNavItems": [
+      {
+        "_key": "cccbd18ee9f5",
+        "_type": "cardGridNavItem",
+        "link": {
+          "_type": "link",
+          "label": "ワークフロー管理",
+          "reference": {
+            "_ref": "3677ff69-565a-48fd-aaeb-b207b869cbb0"
+          },
+          "type": "internal"
+        },
+        "media": {
+          "_type": "enhancedMedia",
+          "media": {
+            "_type": "media",
+            "mediaType": "video",
+            "video": {
+              "_type": "wistia.video",
+              "asset": {
+                "_ref": "video-sj5qmht4z7"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "faq": {
+    "_key": "c02e9c6eab71",
+    "_type": "module.faq",
+    "sections": [
+      {
+        "_key": "3b9b3f0d6852",
+        "question": "月々プランと年間プランの料金はどのように異なりますか？",
+        "answer": {
+          "content": [
+            {
+              "_key": "a",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "b",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "月々プランに登録すると、解約するまで毎月自動的に課金されます。"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "text": {
+      "content": [
+        {
+          "_key": "3f06f11a6024",
+          "_type": "block",
+          "style": "title3",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "c",
+              "_type": "span",
+              "marks": [],
+              "text": "よくある\n質問"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "potholeReal": {
+    "_key": "0a05485f3f33",
+    "_type": "module.pothole",
+    "content": {
+      "content": [
+        {
+          "_key": "b1479f168600",
+          "_type": "block",
+          "style": "title4",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "a",
+              "_type": "span",
+              "marks": [],
+              "text": "マーケティング担当者が制作プロセスに完全に関与"
+            }
+          ]
+        }
+      ]
+    },
+    "image": {
+      "_type": "enhancedMedia",
+      "image": {
+        "_type": "extendedImage",
+        "asset": {
+          "_ref": "image-9821b03161a9a56ccad00479399f16a27a23773c-2880x1921-jpg"
+        }
+      }
+    }
+  },
+  "bentosStatsCard": {
+    "_key": "70e9e4d1846d",
+    "_type": "module.bentos",
+    "bentosLayout": {
+      "name": "variantE"
+    },
+    "cards": [
+      {
+        "_key": "0f6de812b652",
+        "_type": "bento.statsCard",
+        "content": {
+          "alignment": "left",
+          "columns": "12",
+          "content": [
+            {
+              "_key": "a1",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "a1s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "ワークフロー管理"
+                }
+              ]
+            },
+            {
+              "_key": "a2",
+              "_type": "block",
+              "style": "title2",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "a2s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "3.6倍"
+                }
+              ]
+            },
+            {
+              "_key": "a3",
+              "_type": "block",
+              "style": "label",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "a3s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "制作ワークフローを3.6倍に加速"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "bentosUnsupportedStates": {
+    "_key": "f7561dd29d82",
+    "_type": "card",
+    "background": {
+      "mediaDisplayMode": "fullWidth",
+      "size": "default"
+    },
+    "bentoMediaLayout": "foregroundOnly",
+    "content": {
+      "content": [
+        {
+          "_key": "b1",
+          "_type": "block",
+          "style": "title6",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "b1s",
+              "_type": "span",
+              "marks": [],
+              "text": "設計段階からセキュリティを重視"
+            }
+          ]
+        },
+        {
+          "_key": "b2",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "b2s",
+              "_type": "span",
+              "marks": [],
+              "text": "Frame.ioは最高水準のクラウドセキュリティで業界をリード。"
+            }
+          ]
+        }
+      ]
+    },
+    "foreground": {
+      "decoration": "none",
+      "mediaSize": "large",
+      "media": {
+        "_type": "enhancedMedia",
+        "media": {
+          "_type": "media",
+          "image": {
+            "_type": "extendedImage",
+            "alt": "screenshot",
+            "asset": {
+              "_ref": "image-29e73c0b95f1b741111f392a1873d422cd81760a-2001x1384-png",
+              "_type": "reference"
+            }
+          },
+          "mediaType": "image"
+        }
+      }
+    },
+    "textAlignment": "center",
+    "textPlacement": "bottom"
+  },
+  "bentosUnsupportedVariant": {
+    "_key": "abc123",
+    "_type": "module.bentos",
+    "bentosLayout": {
+      "name": "variantA"
+    },
+    "cards": [
+      {
+        "_key": "c1"
+      },
+      {
+        "_key": "c2"
+      },
+      {
+        "_key": "c3"
+      },
+      {
+        "_key": "c4"
+      }
+    ]
+  },
+  "sideBySidesStack": {
+    "_key": "3ff1c20259ab",
+    "_type": "module.sideBySides",
+    "isStack": false,
+    "name": "Side by Sides",
+    "sideBySides": [
+      {
+        "_key": "9add80f1a2b6",
+        "_type": "sideBySide",
+        "layout": "textLeftMediaRight",
+        "mediaLayout": "multiImage",
+        "title": {
+          "content": [
+            {
+              "_key": "t1",
+              "_type": "block",
+              "style": "eyebrow",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "t1s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "スケーラビリティ"
+                }
+              ]
+            },
+            {
+              "_key": "t2",
+              "_type": "block",
+              "style": "title2",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "t2s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "チームと共に成長する"
+                }
+              ]
+            }
+          ]
+        },
+        "content": {
+          "content": [
+            {
+              "_key": "c1",
+              "_type": "block",
+              "style": "title5",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "c1s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "一元化されたアカウント管理"
+                }
+              ]
+            },
+            {
+              "_key": "c2",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "c2s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "ワークスペースとプロジェクトテーブルを使用して詳細にコントロールできます。"
+                }
+              ]
+            }
+          ]
+        },
+        "medias": [
+          {
+            "_key": "m1",
+            "_type": "media",
+            "mediaType": "image",
+            "image": {
+              "_type": "extendedImage",
+              "alt": "Frame.ioのUIのスクリーンショット",
+              "asset": {
+                "_ref": "image-b77c77285619391f305f53bd9e0aeb73840949cc-1220x1510-png",
+                "_type": "reference"
+              }
+            }
+          },
+          {
+            "_key": "m2",
+            "_type": "media",
+            "mediaType": "image",
+            "image": {
+              "_type": "extendedImage",
+              "alt": "Frame.ioのUIのスクリーンショット",
+              "asset": {
+                "_ref": "image-6e0efa6e4dc1c8364e7abec54ce6202946d8b41e-640x1185-png",
+                "_type": "reference"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "_key": "d884131204095ecb63acdb2bbda66e33",
+        "_type": "sideBySide",
+        "layout": "textLeftMediaRight",
+        "mediaLayout": "multiImage",
+        "title": {
+          "content": [
+            {
+              "_key": "t3",
+              "_type": "block",
+              "style": "eyebrow",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "t3s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": ""
+                }
+              ]
+            }
+          ]
+        },
+        "content": {
+          "content": [
+            {
+              "_key": "c3",
+              "_type": "block",
+              "style": "title5",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "c3s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "柔軟なカスタムワークフロー"
+                }
+              ]
+            }
+          ]
+        },
+        "medias": [
+          {
+            "_key": "m3",
+            "_type": "media",
+            "mediaType": "video",
+            "video": {
+              "_type": "wistia.video",
+              "alt": "Frame.ioのインターフェイス動画",
+              "asset": {
+                "_ref": "video-ub9yuu9mjq",
+                "_type": "reference"
+              },
+              "isLooping": false
+            }
+          },
+          {
+            "_key": "m4",
+            "_type": "media",
+            "mediaType": "video",
+            "video": {
+              "_type": "wistia.video",
+              "alt": "x",
+              "asset": {
+                "_ref": "video-65p2aua4l8",
+                "_type": "reference"
+              },
+              "isLooping": false
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "sideBySidesCardTouts": {
+    "_key": "197cd8931421",
+    "_type": "sideBySide",
+    "layout": "textLeftMediaRight",
+    "mediaLayout": "card",
+    "textContentType": "touts",
+    "title": {
+      "content": [
+        {
+          "_key": "ct1",
+          "_type": "block",
+          "style": "title2",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "ct1s",
+              "_type": "span",
+              "marks": [],
+              "text": "Create your perfect workflow."
+            }
+          ]
+        }
+      ]
+    },
+    "content": {
+      "content": [
+        {
+          "_key": "cc1",
+          "_type": "block",
+          "style": "title4",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "cc1s",
+              "_type": "span",
+              "marks": [],
+              "text": "Shoot directly to the cloud"
+            }
+          ]
+        },
+        {
+          "_key": "cc2",
+          "_type": "block.button",
+          "button": {
+            "_type": "button",
+            "label": "Download Fujifilm Firmware",
+            "type": "external",
+            "url": "https://fujifilm-x.com/en-us/lp/fujifilm-x-frame-io"
+          }
+        }
+      ]
+    },
+    "medias": [
+      {
+        "_key": "cm1",
+        "_type": "media",
+        "mediaType": "image",
+        "image": {
+          "_type": "extendedImage",
+          "asset": {
+            "_ref": "image-81153e31f0386e1c3da3c32db94efc043f89b7d4-2824x1883-jpg",
+            "_type": "reference"
+          }
+        }
+      }
+    ],
+    "touts": {
+      "touts": [
+        {
+          "_key": "tt1",
+          "_type": "touts.tout",
+          "content": {
+            "content": [
+              {
+                "_key": "tt1a",
+                "_type": "block",
+                "style": "title6",
+                "markDefs": [],
+                "children": [
+                  {
+                    "_key": "tt1as",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Organize assets how you like"
+                  }
+                ]
+              },
+              {
+                "_key": "tt1b",
+                "_type": "block",
+                "style": "normal",
+                "markDefs": [],
+                "children": [
+                  {
+                    "_key": "tt1bs",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Flexible, custom metadata lets you organize assets."
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "_key": "tt2",
+          "_type": "touts.tout",
+          "content": {
+            "content": [
+              {
+                "_key": "tt2a",
+                "_type": "block",
+                "style": "title6",
+                "markDefs": [],
+                "children": [
+                  {
+                    "_key": "tt2as",
+                    "_type": "span",
+                    "marks": [],
+                    "text": "Integrations that keep work flowing"
+                  }
+                ]
+              },
+              {
+                "_key": "tt2b",
+                "_type": "block.button",
+                "button": {
+                  "_type": "button",
+                  "label": "See the Offer",
+                  "type": "external",
+                  "url": "#pricing"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "toutsModule": {
+    "_key": "8b59257cb888",
+    "_type": "module.touts",
+    "name": "Touts",
+    "title": {
+      "lockup": "title4Tout",
+      "styles": [
+        "body",
+        "title4"
+      ]
+    },
+    "touts": [
+      {
+        "_key": "2b951da4c755",
+        "_type": "touts.tout",
+        "graphicType": "icon",
+        "content": {
+          "content": [
+            {
+              "_key": "a1",
+              "_type": "block",
+              "style": "title6",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "a1s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "24時間365日のサポート"
+                }
+              ]
+            },
+            {
+              "_key": "a2",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "a2s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "お問い合わせには1時間以内の応答をSLA保証。"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "_key": "cf2b6ce9919a",
+        "_type": "touts.tout",
+        "graphicType": "icon",
+        "content": {
+          "content": [
+            {
+              "_key": "b1",
+              "_type": "block",
+              "style": "title6",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "b1s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "専任アカウントチーム"
+                }
+              ]
+            },
+            {
+              "_key": "b2",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "b2s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "お客様の組織を理解できるようトレーニングを受けたチームが対応します。"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "_key": "7e3053461faa",
+        "_type": "touts.tout",
+        "content": {
+          "content": [
+            {
+              "_key": "c1",
+              "_type": "block",
+              "style": "title6",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "c1s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "豊富なベストプラクティス"
+                }
+              ]
+            },
+            {
+              "_key": "c2",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "c2s",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "エキスパート主導のトレーニングをご活用ください。"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
