@@ -12,6 +12,8 @@
     "test:eslint-rules": "node tools/eslint-rules/config-drift.test.js",
     "test:stylelint-rules": "node tools/stylelint-rules/z-index-requires-token.test.js",
     "test:config-sync": "node tools/config-sync/segment-cookie.test.js && node tools/config-sync/locales.test.js",
+    "test:locale-extractor": "node tools/locale-extractor/extractor.test.js",
+    "locale-extractor": "node tools/locale-extractor/cli.js",
     "test": "wtr \"./test/**/*.test.(js|html)\" --node-resolve --port=2000 --coverage --concurrent-browsers 4 --concurrency 2",
     "test:watch": "npm test -- --watch",
     "test:file": "wtr --node-resolve --port=2000 --coverage --concurrency 2",

@@ -1,0 +1,85 @@
+{
+  "_comment": "Real data, verbatim from a live Sanity query against project s6lu43cv / dataset production-v4 (2026-10-01), doc _id 10a88b71-2e2d-4570-9a23-06e9fcf2275a, the ja-jp /enterprise page's first section. Not fabricated — used as-is to ground the extractor's unit tests in a real document shape.",
+  "_type": "sectionItem",
+  "modules": [
+    {
+      "_key": "654fc1241562",
+      "_type": "module.heroScreen",
+      "content": {
+        "alignment": "center",
+        "columns": "10",
+        "lockup": "title1Block",
+        "styles": ["body", "eyebrow", "title1"],
+        "content": [
+          {
+            "_key": "128337816823",
+            "_type": "block",
+            "style": "eyebrow",
+            "markDefs": [],
+            "children": [{ "_key": "36de629990ea", "_type": "span", "marks": [], "text": "エンタープライズ版" }]
+          },
+          {
+            "_key": "a0996eab4c9b",
+            "_type": "block",
+            "style": "title1",
+            "markDefs": [],
+            "children": [{ "_key": "4fa8677d14890", "_type": "span", "marks": [], "text": "制作ワークフローを\n安全に拡張" }]
+          },
+          {
+            "_key": "eac3d0b58ce3",
+            "_type": "block",
+            "style": "normal",
+            "markDefs": [],
+            "children": [{ "_key": "5b1037be7d960", "_type": "span", "marks": [], "text": "チーム、関係者、クリエイティブアセットをすばやく安全につなぐ共同作業プラットフォームで、コンテンツ制作を加速しましょう。" }]
+          },
+          {
+            "_key": "cd2410ba1ec4",
+            "_type": "block.calendlyButton",
+            "button": {
+              "_type": "calendlyButton",
+              "buttonColorScheme": "white",
+              "buttonVariant": "primary",
+              "hasIcon": false,
+              "iconPosition": "right",
+              "iconType": "custom",
+              "label": "相談予約"
+            }
+          },
+          {
+            "_key": "0ffe0ca4a55f",
+            "_type": "block.button",
+            "button": {
+              "_type": "button",
+              "buttonColorScheme": "ghost",
+              "buttonVariant": "primary",
+              "hasIcon": false,
+              "iconPosition": "right",
+              "iconType": "custom",
+              "label": "0120‑693‑682",
+              "phoneNumberUrl": "tel:+81120693682",
+              "type": "phoneNumber"
+            }
+          }
+        ]
+      },
+      "media": { "_type": "enhancedMedia" },
+      "variantKeys": [{ "type": "largeEnterprise" }, { "type": "largeEnterpriseReturningVisitor" }]
+    },
+    {
+      "_key": "63f72602483a",
+      "_type": "module.spacer",
+      "name": "Spacer",
+      "sizes": [
+        { "_key": "0f47e1147851", "breakpoint": "sm", "height": 64 },
+        { "_key": "d510ef7033b2", "breakpoint": "md", "height": 96 },
+        { "_key": "e06032d9a066", "breakpoint": "lg", "height": 96 }
+      ]
+    },
+    {
+      "_key": "bcce84c147ed",
+      "_type": "module.logoWall",
+      "name": "Logos",
+      "useGlobalConfig": true
+    }
+  ]
+}
