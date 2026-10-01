@@ -32,8 +32,7 @@ const stubFetch = (endpoint, handler) => {
 };
 
 // A real wall-clock wait for the async submit handler's fetch round trip to
-// settle, since the
-// 'submit' event listener isn't itself awaitable from dispatchEvent().
+// settle, since the 'submit' event listener isn't itself awaitable from dispatchEvent().
 const tick = (ms = 50) => new Promise((r) => { setTimeout(r, ms); });
 
 describe('form', () => {
