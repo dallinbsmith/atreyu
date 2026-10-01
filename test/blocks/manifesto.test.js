@@ -35,22 +35,39 @@ const block = (...cellsHtml) => {
 // trackScrollProgress viewport gate resolves deterministically in a headless
 // render (the real IntersectionObserver fires on its own frame schedule).
 class SyncIO {
-  constructor(cb) { this.cb = cb; }
+  constructor(cb) {
+    this.cb = cb;
+    SyncIO.instances.push(this);
+  }
 
-  observe(target) { this.cb([{ target, isIntersecting: true }]); }
+  observe(target) {
+    this.target = target;
+    this.cb([{ target, isIntersecting: true }]);
+  }
 
   unobserve() {}
 
   disconnect() {}
 }
+SyncIO.instances = [];
 
-const until = async (fn, ms = 2000) => {
-  const start = Date.now();
-  while (!fn()) {
-    if (Date.now() - start > ms) throw new Error('until: timed out');
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise((r) => { setTimeout(r, 10); });
-  }
+let scrollFrameCallbacks;
+
+const stubScrollFrames = () => {
+  scrollFrameCallbacks = [];
+  return sinon.stub(window, 'requestAnimationFrame').callsFake((cb) => {
+    scrollFrameCallbacks.push(cb);
+    return scrollFrameCallbacks.length;
+  });
+};
+
+const flushScrollFrames = () => {
+  const callbacks = scrollFrameCallbacks.splice(0);
+  callbacks.forEach((cb) => cb(performance.now()));
+};
+
+const deactivateObservers = () => {
+  SyncIO.instances.forEach((io) => io.cb([{ target: io.target, isIntersecting: false }]));
 };
 
 const closeAnyModal = () => document.querySelector('.video-modal-close')?.click();
@@ -183,22 +200,28 @@ describe('manifesto', () => {
       sinon.stub(navigator, 'hardwareConcurrency').value(8);
       realIO = window.IntersectionObserver;
       window.IntersectionObserver = SyncIO;
+      SyncIO.instances = [];
+      stubScrollFrames();
     });
-    afterEach(() => { window.IntersectionObserver = realIO; });
+    afterEach(() => {
+      deactivateObservers();
+      window.IntersectionObserver = realIO;
+    });
 
     it('adds is-animating and still ships the full resting DOM (image + statement + CTA)', () => {
       const el = block(picture(), `${statement}${wistiaCta()}`);
       decorate(el);
+      flushScrollFrames();
       expect(el.classList.contains('is-animating')).to.be.true;
       expect(el.querySelector('.manifesto-media img[src="photo.jpg"]')).to.exist;
       expect(el.querySelector('.manifesto-heading')).to.exist;
       expect(el.querySelector('.manifesto-cta a')).to.exist;
     });
 
-    it('wires trackScrollProgress: --progress (0..1) is set on the block once in view', async () => {
+    it('wires trackScrollProgress: --progress (0..1) is set on the block once in view', () => {
       const el = block(picture(), statement);
       decorate(el);
-      await until(() => el.style.getPropertyValue('--progress') !== '');
+      flushScrollFrames();
       const p = Number(el.style.getPropertyValue('--progress'));
       expect(p).to.be.a('number').and.not.be.NaN;
       expect(p).to.be.at.least(0);

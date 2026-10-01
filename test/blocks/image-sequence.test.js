@@ -25,23 +25,25 @@ class FakeIntersectionObserver {
 }
 FakeIntersectionObserver.instances = [];
 
-// scroll.js's rAF-scheduled update() is real (not stubbed) — this waits a
-// couple of real animation frames so a scheduled `update()` has actually run
-// before we assert on its side effects (--progress / the scrub callback).
-const nextFrames = (n = 2) => [...Array(n)].reduce(
-  (p) => p.then(() => new Promise((resolve) => { requestAnimationFrame(resolve); })),
-  Promise.resolve(),
-);
+let scrollFrameCallbacks;
 
-const waitFor = async (check, { timeout = 2000, interval = 10 } = {}) => {
-  const deadline = Date.now() + timeout;
-  while (Date.now() < deadline) {
-    const result = check();
-    if (result) return result;
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise((resolve) => { setTimeout(resolve, interval); });
-  }
-  throw new Error('waitFor: condition never became true');
+const stubScrollFrames = () => {
+  scrollFrameCallbacks = [];
+  return sinon.stub(window, 'requestAnimationFrame').callsFake((cb) => {
+    scrollFrameCallbacks.push(cb);
+    return scrollFrameCallbacks.length;
+  });
+};
+
+const flushScrollFrames = () => {
+  const callbacks = scrollFrameCallbacks.splice(0);
+  callbacks.forEach((cb) => cb(performance.now()));
+};
+
+const deactivateObservers = () => {
+  FakeIntersectionObserver.instances.forEach((io) => {
+    io.callback([{ isIntersecting: false, target: io.target }]);
+  });
 };
 
 // EDS-shaped block: a text row (heading) + a media row (an authored <a> to an
@@ -78,9 +80,11 @@ describe('image-sequence', () => {
     originalIO = window.IntersectionObserver;
     window.IntersectionObserver = FakeIntersectionObserver;
     FakeIntersectionObserver.instances = [];
+    stubScrollFrames();
   });
 
   afterEach(() => {
+    deactivateObservers();
     window.IntersectionObserver = originalIO;
     sinon.restore();
     document.body.innerHTML = '';
@@ -135,7 +139,7 @@ describe('image-sequence', () => {
   // for below-fold instances. It should start deferred and only bump once
   // trackScrollProgress's own IntersectionObserver (rootMargin: '100% 0px')
   // reports the block near-viewport.
-  it('preload starts deferred and only bumps to auto once scroll tracking reports near-viewport (Fix 3)', async () => {
+  it('preload starts deferred and only bumps to auto once scroll tracking reports near-viewport (Fix 3)', () => {
     sinon.stub(navigator, 'hardwareConcurrency').value(8);
     const el = block();
     decorate(el);
@@ -145,16 +149,14 @@ describe('image-sequence', () => {
     expect(FakeIntersectionObserver.instances).to.have.length(1);
 
     FakeIntersectionObserver.instances[0].callback([{ isIntersecting: true, target: el }]);
-    await nextFrames();
-
-    await waitFor(() => video.preload === 'auto');
+    flushScrollFrames();
     expect(video.preload).to.equal('auto');
   });
 
   // First progress tick can fire during Lazy (100% rootMargin, block sits
   // behind the hero) before the mp4 has duration. Without a loadedmetadata
   // retry the video stays at 0 until the next scroll.
-  it('seeks on loadedmetadata when the first progress tick arrived before duration', async () => {
+  it('seeks on loadedmetadata when the first progress tick arrived before duration', () => {
     sinon.stub(navigator, 'hardwareConcurrency').value(8);
     const el = block();
     decorate(el);
@@ -182,8 +184,8 @@ describe('image-sequence', () => {
     sinon.stub(el, 'getBoundingClientRect').returns(rect);
 
     FakeIntersectionObserver.instances[0].callback([{ isIntersecting: true, target: el }]);
-    await nextFrames();
-    await waitFor(() => video.preload === 'auto');
+    flushScrollFrames();
+    expect(video.preload).to.equal('auto');
     expect(current).to.equal(0);
 
     duration = 10;

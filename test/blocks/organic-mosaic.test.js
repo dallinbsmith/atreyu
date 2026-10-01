@@ -38,8 +38,8 @@ const tilesOf = (el) => [...el.querySelectorAll('.organic-mosaic-tile')];
 const alts = (el) => [...el.querySelectorAll('.organic-mosaic-tile img')].map((img) => img.getAttribute('alt'));
 
 // scroll.js's trackScrollProgress looks up the global `IntersectionObserver` at
-// call-time and its rAF-scheduled update() is real (not stubbed). Swapping the
-// global constructor for a fake that CAPTURES each instance lets a test (a) fire
+// call-time. Swapping the global constructor for a fake that CAPTURES each
+// instance lets a test (a) fire
 // the "near viewport" entry deterministically and (b) assert how many observers
 // a block created -- so double-decorate can be proven to create no second one.
 // Pattern matches image-sequence.test.js / hero-cards-transition.test.js.
@@ -58,12 +58,26 @@ class FakeIntersectionObserver {
 }
 FakeIntersectionObserver.instances = [];
 
-// Waits a couple of real animation frames so scroll.js's scheduled update()
-// (which writes --progress) has actually run before we assert on it.
-const nextFrames = (n = 2) => [...Array(n)].reduce(
-  (p) => p.then(() => new Promise((resolve) => { requestAnimationFrame(resolve); })),
-  Promise.resolve(),
-);
+let scrollFrameCallbacks;
+
+const stubScrollFrames = () => {
+  scrollFrameCallbacks = [];
+  return sinon.stub(window, 'requestAnimationFrame').callsFake((cb) => {
+    scrollFrameCallbacks.push(cb);
+    return scrollFrameCallbacks.length;
+  });
+};
+
+const flushScrollFrames = () => {
+  const callbacks = scrollFrameCallbacks.splice(0);
+  callbacks.forEach((cb) => cb(performance.now()));
+};
+
+const deactivateObservers = () => {
+  FakeIntersectionObserver.instances.forEach((io) => {
+    io.callback([{ isIntersecting: false, target: io.target }]);
+  });
+};
 
 describe('organic-mosaic', () => {
   afterEach(() => sinon.restore());
@@ -171,10 +185,14 @@ describe('organic-mosaic', () => {
       realIO = window.IntersectionObserver;
       window.IntersectionObserver = FakeIntersectionObserver;
       FakeIntersectionObserver.instances = [];
+      stubScrollFrames();
     });
-    afterEach(() => { window.IntersectionObserver = realIO; });
+    afterEach(() => {
+      deactivateObservers();
+      window.IntersectionObserver = realIO;
+    });
 
-    it('enables scrub wiring and drives a real --progress value on the block (>=md)', async () => {
+    it('enables scrub wiring and drives a real --progress value on the block (>=md)', () => {
       stubMd(true);
       const el = gallery(6);
       decorate(el);
@@ -184,7 +202,7 @@ describe('organic-mosaic', () => {
       // entry, then let scroll.js's rAF update() write --progress (0..1).
       expect(FakeIntersectionObserver.instances).to.have.length(1);
       FakeIntersectionObserver.instances[0].callback([{ isIntersecting: true, target: el }]);
-      await nextFrames();
+      flushScrollFrames();
       const p = parseFloat(el.style.getPropertyValue('--progress'));
       expect(p).to.be.within(0, 1);
       // The static mosaic is still fully present underneath the enhancement.
