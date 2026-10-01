@@ -25,7 +25,7 @@ const pkg = await readJson(join(dir, 'package.json'));
 const wrangler = await readJson(join(dir, 'node_modules/wrangler/package.json'));
 const pinned = pkg.devDependencies?.miniflare;
 const wanted = wrangler.dependencies?.miniflare;
-const EXACT = /^\d+\.\d+\.\d+(?:-[\w.]+)?$/;
+const EXACT = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 const notExact = (name, where, v) => {
   console.error(`${where}/package.json pins ${name} "${v}", which is not an exact version. Use "x.y.z" (no ^, ~ or range).`);
   process.exit(1);
