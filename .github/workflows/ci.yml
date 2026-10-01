@@ -96,10 +96,11 @@ jobs:
         name: Install Worker dependencies (website)
         run: npm ci --prefix workers/website
 
-      # Exact wrangler/miniflare pins must agree; see tools/check-miniflare-pin.mjs.
+      # Exact wrangler/miniflare pins must agree, and decision-endpoint must pin
+      # the same wrangler; see tools/check-miniflare-pin.mjs.
       - if: steps.changes.outputs.run == 'true'
-        name: Check miniflare pin matches wrangler (website)
-        run: node tools/check-miniflare-pin.mjs workers/website
+        name: Check wrangler/miniflare pins (website, decision-endpoint)
+        run: node tools/check-miniflare-pin.mjs workers/website workers/decision-endpoint
 
       - if: steps.changes.outputs.run == 'true'
         name: Run linter
