@@ -243,9 +243,8 @@ export const loadVariants = () => {
   return variantsPromise;
 };
 
-// Deterministic djb2-style hash, same approach scripts/utils/analytics/experimentation.js
-// uses for its own sticky bucketing (that file doesn't export its private
-// `hash`/`getBucket`, so this is a same-shape reuse, not a shared import).
+// Deterministic djb2-style hash for sticky bucketing (arithmetic only, no
+// bitwise ops).
 const hash = (str) => {
   let h = 5381;
   for (let i = 0; i < str.length; i += 1) {
