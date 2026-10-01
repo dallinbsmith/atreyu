@@ -25,8 +25,8 @@ export default async (a) => {
   const params = new URLSearchParams(a.search);
   const id = params.get('v') || a.pathname.split('/').pop();
   const [fallbackTitle, playLabel, playIcon] = await Promise.all([
-    getPlaceholder('youtubeTitle', 'YouTube Video'),
-    getPlaceholder('youtubePlay', 'Play {title}'),
+    getPlaceholder('media.videoTitle', 'YouTube Video'),
+    getPlaceholder('media.playTitle', 'Play {title}'),
     loadSvg(new URL('./play.svg', import.meta.url).href),
   ]);
   const title = a.textContent.trim() || fallbackTitle;

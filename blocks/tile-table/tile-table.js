@@ -34,13 +34,13 @@ export default async (el) => {
   if (!guardDecorate(el, 'tileTable')) return;
   const items = [...el.children].filter((r) => r.textContent.trim()).map(rowToItem);
   const [prev, next, close, closed, visit, counter, opened] = await Promise.all([
-    getPlaceholder('tileTablePrev', 'Previous'),
-    getPlaceholder('tileTableNext', 'Next'),
-    getPlaceholder('tileTableClose', 'Close'),
-    getPlaceholder('tileTableClosed', 'Partner details closed'),
-    getPlaceholder('tileTableVisit', 'Visit {name}'),
-    getPlaceholder('tileTableCounter', '{current} of {total}'),
-    getPlaceholder('tileTableOpened', '{name}, partner {current} of {total}'),
+    getPlaceholder('tile-table.prev', 'Previous'),
+    getPlaceholder('tile-table.next', 'Next'),
+    getPlaceholder('tile-table.close', 'Close'),
+    getPlaceholder('tile-table.closed', 'Partner details closed'),
+    getPlaceholder('tile-table.visit', 'Visit {name}'),
+    getPlaceholder('tile-table.counter', '{current} of {total}'),
+    getPlaceholder('tile-table.opened', '{name}, partner {current} of {total}'),
   ]);
   const openModal = initTileModal(items, {
     prev, next, close, closed, visit, counter, opened,

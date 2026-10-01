@@ -85,7 +85,7 @@ export default async (el) => {
 
   titleRow?.classList.add('card-grid-landscape-title');
 
-  const dotLabel = await getPlaceholder('cardGridPosition', 'Go to card {current} of {total}');
+  const dotLabel = await getPlaceholder('controls.goToCard', 'Go to card {current} of {total}');
   cardRows.forEach(buildCard);
 
   const track = createElement('div', { className: 'card-grid-landscape-track' }, ...cardRows);

@@ -1,29 +1,41 @@
 import { getConfig } from '../ak.js';
 import { fetchData } from './fetch-data.js';
 
+// One DA Sheet per namespace: `forms.submit` reads row `submit` from
+// `${prefix}/system/placeholders/forms.json`. A bare key (no dot) reads the
+// legacy `${prefix}/system/placeholders.json`, which is also the DA Library's
+// placeholder source. Each sheet is fetched on first use and cached per URL
+// (so per locale prefix and namespace). See DA-CONTENT-STRUCTURE.md, Placeholders.
 const cache = new Map();
 
-export const getPlaceholders = async () => {
-  const { locale } = getConfig();
-  const { prefix } = locale;
-  if (cache.has(prefix)) return cache.get(prefix);
-  const json = await fetchData(`${prefix}/system/placeholders.json`);
+const splitKey = (key) => {
+  const dot = key.indexOf('.');
+  return dot < 0 ? ['', key] : [key.slice(0, dot).toLowerCase(), key.slice(dot + 1)];
+};
+
+export const getPlaceholders = async (ns = '') => {
+  const { prefix } = getConfig().locale;
+  const url = `${prefix}/system/placeholders${ns ? `/${ns}` : ''}.json`;
+  if (cache.has(url)) return cache.get(url);
+  const json = await fetchData(url);
   const map = new Map(
     (json?.data ?? []).map(({ Key, Text }) => [Key.toLowerCase(), Text]),
   );
   // Only cache on an actual successful fetch — caching the empty map produced by
   // a failed/transient fetchData() call would permanently mask every placeholder
-  // lookup for this locale, even though fetchData()'s own cache allows a retry.
-  if (json) cache.set(prefix, map);
+  // lookup for this sheet, even though fetchData()'s own cache allows a retry.
+  if (json) cache.set(url, map);
   return map;
 };
 
 // `||`, not `??`: a blank author row (Text: '') must fall back too, otherwise
 // icon-only buttons end up with aria-label="". No caller relies on a
-// deliberately empty placeholder.
+// deliberately empty placeholder. A missing locale sheet or key falls back to
+// the code default, never to the English sheet.
 export const getPlaceholder = async (key, fallback = '') => {
-  const map = await getPlaceholders();
-  return map.get(key.toLowerCase()) || fallback;
+  const [ns, name] = splitKey(key);
+  const map = await getPlaceholders(ns);
+  return map.get(name.toLowerCase()) || fallback;
 };
 
 // Fills `{key}` tokens in a placeholder template in a single pass. Every

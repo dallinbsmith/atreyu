@@ -38,8 +38,8 @@ const buildTrack = (items) => {
 // both settle so the duplicate track isn't empty spans.
 const startMarquee = async (el, viewport, { track, loads }) => {
   const [pause, play] = await Promise.all([
-    getPlaceholder('logoWallPause', 'Pause'),
-    getPlaceholder('logoWallPlay', 'Play'),
+    getPlaceholder('controls.pause', 'Pause'),
+    getPlaceholder('controls.play', 'Play'),
     Promise.all(loads),
   ]);
   const clone = track.cloneNode(true);

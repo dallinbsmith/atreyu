@@ -64,7 +64,7 @@ const buildCard = (row, badgeText) => {
 
 export default async (el) => {
   if (!guardDecorate(el, 'pricing')) return;
-  const badgeText = await getPlaceholder('pricingMostPopular', 'Most Popular');
+  const badgeText = await getPlaceholder('pricing.mostPopular', 'Most Popular');
   const plans = [...el.children].map((row) => buildCard(row, badgeText)).filter(Boolean);
   el.replaceChildren(...plans.map(({ card }) => card));
   if (plans.length) injectSchema(plans);

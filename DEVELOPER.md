@@ -259,7 +259,7 @@ All utilities live in `scripts/utils/`. Import with explicit `.js` extensions.
 | `glyphs.js` | `loadSvg(url)` | Fetches a code-owned `.svg` file and returns a fresh SVG element. Markup lives in the file, not in JS. Prefer a CSS mask unless you need a real node. |
 | `media/picture.js` | `createPicture({ src, alt, eager, breakpoints })` | Programmatically creates a responsive `<picture>` element with WebP sources and breakpoint-based sizing. |
 | `media/video.js` | `decorateVideoMedia(bg)`, `addVideoPauseControl(bg, video, onToggle)` | Picture-wrapped `.mp4` link becomes a looping muted video, gated by `shouldAnimate()`, with a pause control. |
-| `placeholders.js` | `getPlaceholders()`, `getPlaceholder(key, fallback)`, `fillPlaceholder(tpl, vars)` | Fetches the locale-specific `<locale prefix>/system/placeholders.json` spreadsheet. Returns a `Map` of key-value pairs for i18n text replacement. `getPlaceholder` returns `fallback` when the key is missing or its row is blank. `fillPlaceholder` replaces `{name}` tokens from `vars` in one pass; values are inserted literally (no `$&` patterns), and unknown tokens are left as-is. |
+| `placeholders.js` | `getPlaceholders(ns)`, `getPlaceholder(key, fallback)`, `fillPlaceholder(tpl, vars)` | Keys are `namespace.name` (`forms.submit`): the namespace picks the DA Sheet `<locale prefix>/system/placeholders/<namespace>.json` and `name` is its `Key` row (case-insensitive). A bare key with no dot reads the legacy `<locale prefix>/system/placeholders.json`. Each sheet is fetched on first use and cached per locale and namespace; failed fetches aren't cached. `getPlaceholder` returns `fallback` when the sheet, key or text is missing (no English-sheet fallback). Namespaces and keys: DA-CONTENT-STRUCTURE.md, Placeholders. `fillPlaceholder` replaces `{name}` tokens from `vars` in one pass; values are inserted literally (no `$&` patterns), and unknown tokens are left as-is. |
 | `script.js` | default export `(src)` | Loads an external `<script>` tag into `<head>`. Returns a promise. Deduplicates by `src`. Uses `Promise.withResolvers()`. |
 | `styles.js` | default export `(href)` | Fetches a CSS file and returns a `CSSStyleSheet` (constructable stylesheet). Caches by path. Accepts `.js` paths and swaps extension to `.css`. |
 
@@ -305,7 +305,7 @@ export default async (el) => {
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 
 export default async (el) => {
-  const label = await getPlaceholder('cta-signup', 'Sign Up Free');
+  const label = await getPlaceholder('controls.showMore', 'Show more');
   el.querySelector('.cta').textContent = label;
 };
 ```
@@ -573,16 +573,16 @@ Events are namespaced with `atreyu:` automatically. The bus uses standard `Custo
 
 ### i18n with placeholders
 
-1. Authors maintain a `/placeholders.json` spreadsheet with `Key` and `Value` columns (one per locale)
+1. Authors maintain one DA Sheet per namespace, `<locale prefix>/system/placeholders/<namespace>`, with `Key` and `Text` columns
 2. Blocks fetch translated strings at runtime:
 
 ```javascript
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 
-const label = await getPlaceholder('read-more', 'Read More');
+const label = await getPlaceholder('forms.submit', 'Submit');
 ```
 
-The placeholder map is fetched once per locale and cached. Always provide a fallback value.
+Each namespace sheet is fetched once per locale and cached. Always provide a fallback value.
 
 ### Analytics tracking
 

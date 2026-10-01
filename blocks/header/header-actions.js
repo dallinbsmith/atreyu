@@ -8,9 +8,9 @@ import { toggleMenu, openMobileNav, closeMobileNav } from './header-menu-state.j
 export const HEADER_PATH = '/system/fragments/nav/header';
 
 const WIDGETS = [
-  { href: '/tools/widgets/language', key: 'headerLanguage', label: 'Select language' },
-  { href: '/tools/widgets/scheme', key: 'headerScheme', label: 'Toggle color scheme' },
-  { href: '/tools/widgets/toggle', key: 'headerNavToggle', label: 'Toggle navigation menu' },
+  { href: '/tools/widgets/language', key: 'nav.language', label: 'Select language' },
+  { href: '/tools/widgets/scheme', key: 'nav.scheme', label: 'Toggle color scheme' },
+  { href: '/tools/widgets/toggle', key: 'nav.menuToggle', label: 'Toggle navigation menu' },
 ];
 
 export const isWidgetLink = (a) => WIDGETS.some(({ href }) => a.getAttribute('href')?.includes(href));
