@@ -33,26 +33,44 @@ const block = (rows) => {
 const imagesOf = (el) => [...el.querySelectorAll('.icloud-image')];
 const alts = (el) => imagesOf(el).map((w) => w.querySelector('img').getAttribute('alt'));
 
-const until = async (fn, ms = 2000) => {
-  const start = Date.now();
-  while (!fn()) {
-    if (Date.now() - start > ms) throw new Error('until: timed out');
-    await new Promise((r) => { setTimeout(r, 10); });
-  }
-};
-
 // Fires the observed callback synchronously as intersecting so
 // trackScrollProgress's IO (which drives --progress) is deterministic in a
 // headless render, matching logo-tile-wall.test.js's SyncIO.
 class SyncIO {
-  constructor(cb) { this.cb = cb; }
+  constructor(cb) {
+    this.cb = cb;
+    SyncIO.instances.push(this);
+  }
 
-  observe(target) { this.cb([{ target, isIntersecting: true }]); }
+  observe(target) {
+    this.target = target;
+    this.cb([{ target, isIntersecting: true }]);
+  }
 
   unobserve() {}
 
   disconnect() {}
 }
+SyncIO.instances = [];
+
+let scrollFrameCallbacks;
+
+const stubScrollFrames = () => {
+  scrollFrameCallbacks = [];
+  return sinon.stub(window, 'requestAnimationFrame').callsFake((cb) => {
+    scrollFrameCallbacks.push(cb);
+    return scrollFrameCallbacks.length;
+  });
+};
+
+const flushScrollFrames = () => {
+  const callbacks = scrollFrameCallbacks.splice(0);
+  callbacks.forEach((cb) => cb(performance.now()));
+};
+
+const deactivateObservers = () => {
+  SyncIO.instances.forEach((io) => io.cb([{ target: io.target, isIntersecting: false }]));
+};
 
 describe('image-cloud', () => {
   afterEach(() => sinon.restore());
@@ -140,20 +158,26 @@ describe('image-cloud', () => {
       sinon.stub(navigator, 'hardwareConcurrency').value(8);
       realIO = window.IntersectionObserver;
       window.IntersectionObserver = SyncIO;
+      SyncIO.instances = [];
+      stubScrollFrames();
     });
-    afterEach(() => { window.IntersectionObserver = realIO; });
+    afterEach(() => {
+      deactivateObservers();
+      flushScrollFrames();
+      window.IntersectionObserver = realIO;
+    });
 
-    it('enables scrub wiring and drives a real --progress value on the block', async () => {
+    it('enables scrub wiring and drives a real --progress value on the block', () => {
       const el = block([
         [textCell('<h2>Cloud</h2>')],
         [imgCell('tile one'), imgCell('tile two')],
       ]);
       decorate(el);
+      flushScrollFrames();
       // The scrub class is the CSS contract that turns --icloud-drift on.
       expect(el.classList.contains('is-scrubbing')).to.be.true;
       // trackScrollProgress observed the block and, once intersecting, sets a
       // numeric --progress (0..1) that the CSS parallax calc() consumes.
-      await until(() => el.style.getPropertyValue('--progress') !== '');
       const p = parseFloat(el.style.getPropertyValue('--progress'));
       expect(p).to.be.within(0, 1);
       // Images still carry their per-image factor so drift differs per tile.

@@ -32,26 +32,44 @@ const block = (rows) => {
 
 const labels = (el) => [...el.querySelectorAll('.cc-item .cc-label')].map((l) => l.textContent);
 
-const until = async (fn, ms = 2000) => {
-  const start = Date.now();
-  while (!fn()) {
-    if (Date.now() - start > ms) throw new Error('until: timed out');
-    await new Promise((r) => { setTimeout(r, 10); });
-  }
-};
-
 // Fires the observed callback synchronously as intersecting so the
 // trackScrollProgress viewport gate resolves deterministically in a headless
 // render (the real IntersectionObserver fires on its own frame schedule).
 class SyncIO {
-  constructor(cb) { this.cb = cb; }
+  constructor(cb) {
+    this.cb = cb;
+    SyncIO.instances.push(this);
+  }
 
-  observe(target) { this.cb([{ target, isIntersecting: true }]); }
+  observe(target) {
+    this.target = target;
+    this.cb([{ target, isIntersecting: true }]);
+  }
 
   unobserve() {}
 
   disconnect() {}
 }
+SyncIO.instances = [];
+
+let scrollFrameCallbacks;
+
+const stubScrollFrames = () => {
+  scrollFrameCallbacks = [];
+  return sinon.stub(window, 'requestAnimationFrame').callsFake((cb) => {
+    scrollFrameCallbacks.push(cb);
+    return scrollFrameCallbacks.length;
+  });
+};
+
+const flushScrollFrames = () => {
+  const callbacks = scrollFrameCallbacks.splice(0);
+  callbacks.forEach((cb) => cb(performance.now()));
+};
+
+const deactivateObservers = () => {
+  SyncIO.instances.forEach((io) => io.cb([{ target: io.target, isIntersecting: false }]));
+};
 
 describe('chiclet-constellation', () => {
   afterEach(() => sinon.restore());
@@ -197,8 +215,14 @@ describe('chiclet-constellation', () => {
       sinon.stub(navigator, 'hardwareConcurrency').value(8);
       realIO = window.IntersectionObserver;
       window.IntersectionObserver = SyncIO;
+      SyncIO.instances = [];
+      stubScrollFrames();
     });
-    afterEach(() => { window.IntersectionObserver = realIO; });
+    afterEach(() => {
+      deactivateObservers();
+      flushScrollFrames();
+      window.IntersectionObserver = realIO;
+    });
 
     it('adds is-animating and still ships the labeled, decorative-icon DOM', () => {
       const el = block([
@@ -206,6 +230,7 @@ describe('chiclet-constellation', () => {
         ['<span class="icon icon-ai"></span>', 'Illustrator'],
       ]);
       decorate(el);
+      flushScrollFrames();
       expect(el.classList.contains('is-animating')).to.be.true;
       expect(labels(el)).to.deep.equal(['Photoshop', 'Illustrator']);
       el.querySelectorAll('.cc-item').forEach((item) => {
@@ -213,11 +238,13 @@ describe('chiclet-constellation', () => {
       });
     });
 
-    it('wires trackScrollProgress: --progress (0..1) is set on the block once in view', async () => {
+    it('wires trackScrollProgress: --progress (0..1) is set on the block once in view', () => {
       const el = block([['<span class="icon icon-ps"></span>', 'Photoshop']]);
       decorate(el);
-      await until(() => el.style.getPropertyValue('--progress') !== '');
-      const p = Number(el.style.getPropertyValue('--progress'));
+      flushScrollFrames();
+      const progress = el.style.getPropertyValue('--progress');
+      expect(progress).to.not.equal('');
+      const p = Number(progress);
       expect(p).to.be.a('number').and.not.be.NaN;
       expect(p).to.be.at.least(0);
       expect(p).to.be.at.most(1);
