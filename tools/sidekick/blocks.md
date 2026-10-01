@@ -98,7 +98,7 @@ The block reads `data-*` attributes from the section element. EDS sets them on t
 
 | Key | Values | Effect |
 |-----|--------|--------|
-| `grid` | `2`, `3`, `4`, `5`, `6` | Adds a CSS grid with the specified column count to `.block-content` children |
+| `grid` | `2`, `3`, `4`, `5`, `6` | Adds a CSS grid with the specified column count to `.block-content` children. Any other value (e.g. `7`, `1`, `3 col` or a typo) is ignored: no `grid` or `grid-N` class is added and the blocks keep the default layout, as with no `grid` row (`.grid` alone would turn them into a one-column grid). With `Style: grid` the section then behaves as `Style: grid` alone. `0` or empty does nothing |
 | `gap` | `xs`, `s`, `m`, `l`, `xl`, `xxl` | Sets grid gap spacing |
 | `spacing` | `xs`, `s`, `m`, `l`, `xl`, `xxl` | Sets top/bottom padding on the section |
 | `container` | `2`, `4`, `6` | Constrains section content width, centred: 2 = one third, 4 = two thirds, 6 = the full content width. Same on every screen size. Blocks in the section are limited to the same width, so they are no longer full-bleed. Any other value (e.g. `3` or a typo) is ignored: no class is added, and the content and blocks keep the default width. With `Style: container` the section then behaves as `Style: container` alone. A supported value works on its own: the block also adds the `container` class, so no `Style: container` row is needed. `0` or empty does nothing |

@@ -59,24 +59,31 @@ const handleBackground = async (background, section) => {
     : applyColorBackground(background, section);
 };
 
-// Authored values arrive as typed (`Bento`, `3 col`): classify them the way
-// block variants are, so `.layout-bento` matches and a space can't throw.
-// Grid and Container also add their base class: the CSS only sizes
-// `.container-N` inside `.container`, so `Container: 4` works without
-// `Style: container`.
-const BASE_CLASS_TYPES = new Set(['grid', 'container']);
+// Grid sizes the CSS defines. Any other value (`7`, `1`, `3 col`, a typo)
+// adds no class: a bare `.grid` turns `.block-content` into a one-column
+// grid that applies `Gap:`, stops margins collapsing and lets a block grow
+// past the section width. Must match the &.grid-N rules in section-metadata.css.
+const GRID_SIZES = new Set(['2', '3', '4', '5', '6']);
 
 // Container sizes the CSS defines. Any other value (`3`, a typo) adds no
 // class: a bare `.container` would cap full-bleed blocks for nothing.
 // Must match the &.container-N rules in section-metadata.css.
 const CONTAINER_SIZES = new Set(['2', '4', '6']);
 
+// Grid and Container accept only their sizes and also add their base class:
+// the CSS only sizes `.container-N` inside `.container`, so `Container: 4`
+// works without `Style: container`.
+const BASE_CLASS_SIZES = new Map([['grid', GRID_SIZES], ['container', CONTAINER_SIZES]]);
+
+// Authored values arrive as typed (`Bento`, `3 col`): classify them the way
+// block variants are, so `.layout-bento` matches and a space can't throw.
 const handleLayout = (value, section, type) => {
   delete section.dataset[type];
   const name = toClassName(value);
   if (!name || name === '0') return;
-  if (type === 'container' && !CONTAINER_SIZES.has(name)) return;
-  if (BASE_CLASS_TYPES.has(type)) section.classList.add(type);
+  const sizes = BASE_CLASS_SIZES.get(type);
+  if (sizes && !sizes.has(name)) return;
+  if (sizes) section.classList.add(type);
   section.classList.add(`${type}-${name}`);
 };
 
