@@ -115,12 +115,12 @@ jobs:
         run: npm run test:stylelint-rules
 
       - if: steps.changes.outputs.run == 'true'
-        name: Run config-sync tests
+        name: Run config-sync tests (incl. panel-no-ak)
         run: npm run test:config-sync
 
       - if: steps.changes.outputs.run == 'true'
-        name: Experiments panel must not import ak.js
-        run: node tools/config-sync/panel-no-ak.test.js
+        name: Run locale extractor tests
+        run: npm run test:locale-extractor
 
       - if: steps.changes.outputs.run == 'true'
         name: Run tests
