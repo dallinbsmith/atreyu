@@ -1,8 +1,7 @@
 // Project glue for adobe/aem-experimentation v2 (vendored at
 // plugins/experimentation via git subtree — never hand-edit that folder).
 // Owns the three things the plugin leaves to the host project:
-//   1. consent: nothing
-//      runs (and no storage is written) without consent.js 'personalization',
+//   1. consent: nothing runs (and no storage is written) without consent.js 'personalization',
 //      except author previews (?experiment= / ?audience=). A later grant takes
 //      effect on the next page load, never as a mid-read content swap.
 //   2. stickiness: the plugin hard-codes DEVICE randomization in sessionStorage
