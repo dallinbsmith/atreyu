@@ -8,7 +8,7 @@ No build step. No bundler. No framework. Vanilla ES2025 served via HTTP/2 from C
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+ (wrangler and miniflare require it; CI runs 22)
 - npm 9+
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) (for Worker development)
 

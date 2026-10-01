@@ -81,7 +81,7 @@ jobs:
         name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - if: steps.changes.outputs.run == 'true'
@@ -92,9 +92,18 @@ jobs:
       # Miniflare pinned in workers/website; the selector is the security
       # property, so it isn't tested against a fake HTMLRewriter alone.
       # Installed before lint: eslint's import/no-unresolved must resolve it.
+      # Both pins in workers/website/package.json are exact on purpose. wrangler
+      # pins its own miniflare exactly, so the direct miniflare pin must equal
+      # node_modules/wrangler/package.json dependencies.miniflare. Otherwise npm
+      # installs two workerd copies and nonce.test.js stops testing the runtime
+      # wrangler ships. When you bump wrangler, bump miniflare to match.
       - if: steps.changes.outputs.run == 'true'
         name: Install Worker dependencies (website)
         run: npm ci --prefix workers/website
+
+      - if: steps.changes.outputs.run == 'true'
+        name: Check miniflare pin matches wrangler (website)
+        run: node tools/check-miniflare-pin.mjs workers/website
 
       - if: steps.changes.outputs.run == 'true'
         name: Run linter
