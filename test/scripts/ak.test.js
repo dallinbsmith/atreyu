@@ -1,7 +1,7 @@
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import {
-  setConfig, getConfig, loadBlock, decorateLink, loadArea, slugifyUnique,
+  setConfig, getConfig, getLocale, loadBlock, decorateLink, loadArea, slugifyUnique,
 } from '../../scripts/ak.js';
 
 const block = (className) => {
@@ -144,6 +144,98 @@ describe('ak.js decorateLink — same-site hostnames match exactly', () => {
 
   it('does not match a lookalike host', () => {
     expect(link('https://evilframe.io/x', '/ja-jp')).to.equal('https://evilframe.io/x');
+  });
+});
+
+// Upstream author-kit 9fe4d70 (AK-PATCHES ak.js row 28): an
+// unknown prefix used to read locales[prefix].lang off undefined, throwing
+// inside setConfig() and blanking the page.
+describe('ak.js getLocale — unknown prefix falls back to root (upstream 9fe4d70)', () => {
+  const LOCALES = { '': { lang: 'en' }, '/ja-jp': { lang: 'ja' }, '/ar': { lang: 'ar', dir: 'rtl' } };
+  const html = document.documentElement;
+  let lang;
+  let dir;
+
+  const setLocaleMeta = (value) => {
+    document.head.querySelector('meta[name="locale"]')?.remove();
+    if (!value) return;
+    const meta = document.createElement('meta');
+    meta.name = 'locale';
+    meta.content = value;
+    document.head.append(meta);
+  };
+
+  beforeEach(() => {
+    lang = html.getAttribute('lang');
+    dir = html.getAttribute('dir');
+  });
+
+  afterEach(() => {
+    setLocaleMeta(null);
+    if (lang === null) html.removeAttribute('lang');
+    else html.setAttribute('lang', lang);
+    if (dir === null) html.removeAttribute('dir');
+    else html.setAttribute('dir', dir);
+  });
+
+  it('unknown locale metadata resolves to the root locale without throwing', () => {
+    setLocaleMeta('/klingon');
+    let locale;
+    expect(() => { locale = getLocale(LOCALES); }).to.not.throw();
+    expect(locale).to.deep.equal({ prefix: '', lang: 'en' });
+    expect(html.lang).to.equal('en');
+  });
+
+  it('setConfig() survives unknown locale metadata', () => {
+    setLocaleMeta('/klingon');
+    let config;
+    expect(() => {
+      config = setConfig({
+        components: [], hostnames: [], linkBlocks: [], locales: LOCALES, log: () => {},
+      });
+    }).to.not.throw();
+    expect(config.locale.prefix).to.equal('');
+    setConfig({ components: [], hostnames: [], linkBlocks: [], log: () => {} });
+  });
+
+  it('inherited Object keys are not treated as locales', () => {
+    setLocaleMeta('constructor');
+    expect(getLocale(LOCALES).prefix).to.equal('');
+  });
+
+  it('a known locale is unaffected', () => {
+    setLocaleMeta('/ja-jp');
+    expect(getLocale(LOCALES)).to.deep.equal({ prefix: '/ja-jp', lang: 'ja' });
+    expect(html.lang).to.equal('ja');
+  });
+
+  it('sets dir from the locale when it has one', () => {
+    setLocaleMeta('/ar');
+    expect(getLocale(LOCALES).prefix).to.equal('/ar');
+    expect(html.dir).to.equal('rtl');
+  });
+
+  it('does not throw when the locale map has no root entry', () => {
+    expect(getLocale({ '/ja-jp': { lang: 'ja' } })).to.deep.equal({ prefix: '' });
+  });
+});
+
+describe('ak.js decorateLink — catch logs (ex, a) (upstream 9fe4d70)', () => {
+  it('passes the exception first and the anchor second to config.log', () => {
+    const calls = [];
+    const a = document.createElement('a'); // no href: new URL('') throws
+    decorateLink({
+      hostnames: [],
+      linkBlocks: [],
+      locales: { '': {} },
+      locale: { prefix: '' },
+      log: (...args) => calls.push(args),
+    }, a);
+    expect(calls).to.have.length(1);
+    const [[ex, el, ...rest]] = calls;
+    expect(ex).to.be.instanceOf(Error);
+    expect(el).to.equal(a);
+    expect(rest).to.be.empty;
   });
 });
 
