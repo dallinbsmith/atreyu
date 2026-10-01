@@ -18,7 +18,20 @@ export const getPlaceholders = async () => {
   return map;
 };
 
+// `||`, not `??`: a blank author row (Text: '') must fall back too, otherwise
+// icon-only buttons end up with aria-label="". No caller relies on a
+// deliberately empty placeholder.
 export const getPlaceholder = async (key, fallback = '') => {
   const map = await getPlaceholders();
-  return map.get(key.toLowerCase()) ?? fallback;
+  return map.get(key.toLowerCase()) || fallback;
 };
+
+// Fills `{key}` tokens in a placeholder template in a single pass. Every
+// occurrence is replaced; unknown keys are left intact. The replacer is a
+// function, so `$&`/`$\``/`$'` in an author-supplied value are inserted
+// literally (a string replacement would expand them), and a value that itself
+// contains `{token}` text is never re-substituted.
+export const fillPlaceholder = (tpl, vars) => tpl.replace(
+  /\{(\w+)\}/g,
+  (match, key) => (Object.hasOwn(vars, key) ? String(vars[key]) : match),
+);

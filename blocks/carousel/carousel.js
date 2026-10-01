@@ -1,5 +1,5 @@
 import { decorateTout, extractRowMedia } from '../../scripts/utils/touts.js';
-import { getPlaceholder } from '../../scripts/utils/placeholders.js';
+import { getPlaceholder, fillPlaceholder } from '../../scripts/utils/placeholders.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { announce } from '../../scripts/utils/a11y.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
@@ -16,7 +16,7 @@ import { createElement } from '../../scripts/utils/dom.js';
 const buildSlide = (row, idx, total, slideLabel) => {
   row.setAttribute('role', 'group');
   row.setAttribute('aria-roledescription', 'slide');
-  row.setAttribute('aria-label', slideLabel.replace('{current}', idx + 1).replace('{total}', total));
+  row.setAttribute('aria-label', fillPlaceholder(slideLabel, { current: idx + 1, total }));
 
   // Authored columns (media cell, content cell) are an authoring convenience,
   // not meaningful structure — capture them now, before any extraction, so
@@ -51,7 +51,7 @@ const buildSlide = (row, idx, total, slideLabel) => {
 const announceCurrentSlide = (viewport, total, slideLabel) => {
   const raw = Math.round(viewport.scrollLeft / viewport.clientWidth);
   const idx = Math.min(Math.max(raw, 0), total - 1);
-  announce(slideLabel.replace('{current}', idx + 1).replace('{total}', total));
+  announce(fillPlaceholder(slideLabel, { current: idx + 1, total }));
 };
 
 const makeNavButton = (label, dir, viewport) => {

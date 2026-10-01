@@ -1,7 +1,7 @@
 import { inject } from '../../scripts/utils/seo/jsonld.js';
 import { createElement } from '../../scripts/utils/dom.js';
 import { loadSvg } from '../../scripts/utils/glyphs.js';
-import { getPlaceholder } from '../../scripts/utils/placeholders.js';
+import { getPlaceholder, fillPlaceholder } from '../../scripts/utils/placeholders.js';
 
 const THUMB_BASE = 'https://i.ytimg.com/vi';
 const EMBED_BASE = 'https://www.youtube-nocookie.com/embed';
@@ -44,7 +44,7 @@ export default async (a) => {
 
   const btn = createElement('button', {
     className: 'youtube-play',
-    'aria-label': playLabel.replace('{title}', () => title),
+    'aria-label': fillPlaceholder(playLabel, { title }),
   }, playIcon);
 
   const container = createElement('div', { className: 'youtube-lite' }, img, btn);

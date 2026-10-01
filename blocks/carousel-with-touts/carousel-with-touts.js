@@ -1,4 +1,4 @@
-import { getPlaceholder } from '../../scripts/utils/placeholders.js';
+import { getPlaceholder, fillPlaceholder } from '../../scripts/utils/placeholders.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { announce } from '../../scripts/utils/a11y.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
@@ -104,7 +104,7 @@ export default async (el) => {
   ]);
 
   const slides = data.map((d, i) => buildSlide(d, i));
-  const label = (i) => slideLabel.replace('{current}', i + 1).replace('{total}', slides.length);
+  const label = (i) => fillPlaceholder(slideLabel, { current: i + 1, total: slides.length });
   // Falkor autoplays only the first video (muted); every other video slide is
   // posterised so no raw .mp4 link is left as a tab-stop.
   slides.filter((s) => s.querySelector('a[href*=".mp4"]'))
