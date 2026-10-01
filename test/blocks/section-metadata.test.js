@@ -24,11 +24,30 @@ describe('section-metadata block: authored-case values (B2)', () => {
     expect(el.dataset.layout).to.equal(undefined);
   });
 
-  it('Grid: 3 col does not throw and still adds .grid', async () => {
+  it('Grid: 3 col does not throw and adds no class', async () => {
     const el = section({ grid: '3 col' });
     await decorate(el);
-    expect(el.classList.contains('grid')).to.equal(true);
-    expect(el.classList.contains('grid-3-col')).to.equal(true);
+    expect([...el.classList]).to.deep.equal(['section']);
+  });
+
+  it('Grid: 2 to 6 add .grid and .grid-N', async () => {
+    for (const value of ['2', '3', '4', '5', '6']) {
+      const el = section({ grid: value });
+      // eslint-disable-next-line no-await-in-loop
+      await decorate(el);
+      expect([...el.classList]).to.have.members(['section', 'grid', `grid-${value}`]);
+      expect(el.dataset.grid).to.equal(undefined);
+    }
+  });
+
+  it('an unsupported Grid value (7, 1, a typo) adds nothing', async () => {
+    for (const value of ['7', '1', 'tree', 'Three']) {
+      const el = section({ grid: value });
+      // eslint-disable-next-line no-await-in-loop
+      await decorate(el);
+      expect([...el.classList]).to.deep.equal(['section']);
+      expect(el.dataset.grid).to.equal(undefined);
+    }
   });
 
   it('classifies mixed-case gap, spacing and container values', async () => {
@@ -99,6 +118,13 @@ describe('section-metadata block: authored-case values (B2)', () => {
     const el = section({ grid: '0' });
     await decorate(el);
     expect([...el.classList]).to.deep.equal(['section']);
+  });
+
+  it('Style: grid with an unsupported Grid value keeps only .grid', async () => {
+    const el = section({ grid: '7' });
+    el.classList.add('grid');
+    await decorate(el);
+    expect([...el.classList]).to.deep.equal(['section', 'grid']);
   });
 
   it('keeps the background URL case as authored', async () => {
@@ -247,5 +273,48 @@ describe('section-metadata block: container widths', () => {
         expect(left).to.be.closeTo((sectionWidth - w) / 2, TOLERANCE);
       });
     });
+  }
+});
+
+// `.grid` alone makes `.block-content` a one-column CSS grid: `Gap:` then
+// spaces the blocks, margins stop collapsing, and a block grows to its widest
+// content instead of the section width. Without a `grid-N` rule nothing sets
+// the column count, so an unsupported value must lay out like no Grid row.
+describe('section-metadata block: unsupported Grid values keep the default layout', () => {
+  before(async () => {
+    await loadStyle('/styles/styles.css');
+    await loadStyle('/blocks/section-metadata/section-metadata.css');
+  });
+
+  afterEach(async () => {
+    document.body.innerHTML = '';
+    await setViewport({ width: 800, height: 600 });
+  });
+
+  const render = async (data) => {
+    const el = document.createElement('div');
+    el.className = 'section';
+    Object.assign(el.dataset, data);
+    el.innerHTML = `<div class="block-content">
+      <div class="a"><div style="width: 2000px; height: 10px"></div></div>
+      <div class="b"><p>x</p></div>
+    </div>`;
+    document.body.append(el);
+    await decorate(el);
+    const [a, b] = el.querySelectorAll('.block-content > div');
+    const ra = a.getBoundingClientRect();
+    const rb = b.getBoundingClientRect();
+    return { width: ra.width, gap: rb.top - ra.bottom };
+  };
+
+  for (const width of [375, 800, 1440]) {
+    for (const value of ['7', '1', 'tree']) {
+      it(`Grid: ${value} with Gap: l matches no Grid row at ${width}px`, async () => {
+        await setViewport({ width, height: 600 });
+        const plain = await render({ gap: 'l' });
+        const grid = await render({ grid: value, gap: 'l' });
+        expect(grid).to.deep.equal(plain);
+      });
+    }
   }
 });

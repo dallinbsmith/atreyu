@@ -10,6 +10,9 @@
       color: light-dark(var(--color-dark), var(--color-light));
     }
 
+    /* `Grid: N` columns. Sizes must match GRID_SIZES in section-metadata.js:
+       any other value adds neither `.grid` nor `.grid-N`, since `.grid`
+       alone would make `.block-content` a one-column grid (below). */
     &.grid-2 {
       --grid-size: 2;
     }

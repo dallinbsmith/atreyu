@@ -114,7 +114,7 @@ Sections are `<div>` children of `<main>`, separated by `---` in the authored do
 |---|---|
 | `style` | CSS classes on the `<section>` (e.g., `dark`) |
 | `background` | Image URL, CSS color, or `color-token-*` design token |
-| `grid` | Column count (2-6) applied to `.block-content` children |
+| `grid` | Column count (2-6) applied to `.block-content` children. Any other value (e.g. `7`, `1` or a typo) is ignored: no class is added and the blocks keep the default layout |
 | `gap` / `spacing` | Spacing tokens (`xs`, `s`, `m`, `l`, `xl`, `xxl`) |
 | `container` | Centred content width: 2 = one third, 4 = two thirds, 6 = full content width, same on every screen size. Blocks in the section are limited to the same width, so they are no longer full-bleed. Any other value (e.g. `3` or a typo) is ignored: no class is added and the content and blocks keep the default width (with `Style: container` the section behaves as `Style: container` alone). A supported value also adds the `container` class, so `Style: container` isn't needed |
 | `layout` | `bento` for asymmetric grid |
