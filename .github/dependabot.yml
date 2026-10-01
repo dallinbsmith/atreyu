@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # plugins/experimentation is vendored upstream (adobe/aem-experimentation).
+  # It has no runtime deps and its lockfile is never installed or served, so
+  # updates belong upstream; bumping it here only diverges the vendored copy.
+  - package-ecosystem: npm
+    directory: /plugins/experimentation
+    schedule:
+      interval: monthly
+    ignore:
+      - dependency-name: "*"
