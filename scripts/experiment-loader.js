@@ -24,6 +24,7 @@ import { applyPersonalizeTables, planAudiences } from './utils/experiments/perso
 import {
   carryOverSectionMeta,
   removeLeftoverConfigBlocks,
+  stripPluginSectionMeta,
   withVariantTimeout,
 } from './utils/experiments/guard.js';
 
@@ -112,6 +113,7 @@ const compilePersonalizeTables = (doc) => {
 export const runExperimentation = async (doc = document) => {
   // Always, even without consent: config tables must never render.
   applyExperimentBlock(doc);
+  stripPluginSectionMeta(doc.querySelector('main'));
   const plan = compilePersonalizeTables(doc);
   removeLeftoverConfigBlocks(doc.querySelector('main'));
   if (!isEnabled()) return null;

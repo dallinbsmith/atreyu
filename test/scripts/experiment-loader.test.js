@@ -33,6 +33,24 @@ const sectionWithExperiment = (split) => {
   </div></main>`;
 };
 
+const pageWithTable = (split) => {
+  document.body.innerHTML = `<main><div><h1 id="headline">Control headline</h1></div>
+    <div><div class="experiment">
+      <div><div>Test Name</div><div>Table Test</div></div>
+      <div><div>Variants</div><div><a href="/variants/table-b">/variants/table-b</a></div></div>
+      <div><div>Split</div><div>${split}</div></div>
+    </div></div></main>`;
+};
+
+// End Date is YYYY-MM-DD only; 30 days out stays within the 180-day cap.
+const soon = ((d) => [d.getFullYear(), d.getMonth() + 1, d.getDate()]
+  .map((n) => `${n}`.padStart(2, '0')).join('-'))(new Date(Date.now() + 30 * 864e5));
+const personalize = (id, path) => `<div class="personalize">
+  <div><div>Name</div><div>Hero</div></div>
+  <div><div>Audience: ${id}</div><div><a href="${path}">${path}</a></div></div>
+  <div><div>End Date</div><div>${soon}</div></div>
+</div>`;
+
 describe('scripts/experiment-loader.js', () => {
   beforeEach(() => {
     tracked = [];
@@ -158,13 +176,22 @@ describe('scripts/experiment-loader.js', () => {
       expect(await runExperimentation()).to.equal(null);
     });
 
-    it('swaps a section-level challenger before decoration and tracks the exposure', async () => {
+    it('strips hand-written section rows, like .page/.live: control, no fetch, no plugin', async () => {
+      setConsent({ analytics: true, personalization: true });
+      window.fetch = async () => { throw new Error('no fetch expected'); };
+      sectionWithExperiment('100');
+      expect(await runExperimentation()).to.equal(null);
+      expect(document.querySelector('#headline').textContent).to.equal('Control headline');
+      expect(document.querySelector('.section-metadata')).to.equal(null);
+    });
+
+    it('swaps a challenger before decoration, tracks the exposure and persists the assignment', async () => {
       setConsent({ analytics: true, personalization: true });
       window.fetch = async () => new Response(
         '<html><body><main><div><h1 id="headline">Challenger headline</h1></div></main></body></html>',
         { status: 200, headers: { 'content-type': 'text/html' } },
       );
-      sectionWithExperiment('100');
+      pageWithTable('100');
       await runExperimentation();
       expect(document.querySelector('#headline').textContent).to.equal('Challenger headline');
       const exposure = tracked.find((t) => t.event === 'experiment');
@@ -180,7 +207,7 @@ describe('scripts/experiment-loader.js', () => {
         fetched = true;
         return new Response('');
       };
-      sectionWithExperiment('100');
+      pageWithTable('100');
       expect(await runExperimentation()).to.equal(null);
       expect(fetched).to.equal(false);
       expect(document.querySelector('#headline').textContent).to.equal('Control headline');
@@ -195,21 +222,12 @@ describe('scripts/experiment-loader.js', () => {
         fetched = true;
         return new Response('');
       };
-      sectionWithExperiment('0');
+      pageWithTable('0');
       await runExperimentation();
       expect(fetched).to.equal(false);
       expect(document.querySelector('#headline').textContent).to.equal('Control headline');
       expect(tracked.find((t) => t.event === 'experiment').props.variantName).to.equal('control');
     });
-
-    const pageWithTable = (split) => {
-      document.body.innerHTML = `<main><div><h1 id="headline">Control headline</h1></div>
-        <div><div class="experiment">
-          <div><div>Test Name</div><div>Table Test</div></div>
-          <div><div>Variants</div><div><a href="/variants/table-b">/variants/table-b</a></div></div>
-          <div><div>Split</div><div>${split}</div></div>
-        </div></div></main>`;
-    };
 
     it('runs a whole-page test authored in the Experiment table', async () => {
       setConsent({ analytics: true, personalization: true });
@@ -243,9 +261,7 @@ describe('scripts/experiment-loader.js', () => {
       setConsent({ analytics: true, personalization: true });
       document.body.innerHTML = `<main><div>
         <h1 id="headline">Control headline</h1>
-        <div class="section-metadata">
-          <div><div>Audience: mobile</div><div><a href="/v/hang">/v/hang</a></div></div>
-        </div>
+        ${personalize('mobile', '/v/hang')}
       </div></main>`;
       const calls = [];
       window.fetch = (url, init = {}) => {
@@ -286,9 +302,7 @@ describe('scripts/experiment-loader.js', () => {
       document.head.append(meta);
       document.body.innerHTML = `<main><div>
         <h1 id="headline">Control headline</h1>
-        <div class="section-metadata">
-          <div><div>Audience: mobile</div><div><a href="/v/section-hang">/v/section-hang</a></div></div>
-        </div>
+        ${personalize('mobile', '/v/section-hang')}
       </div></main>`;
       const calls = [];
       window.fetch = (url, init = {}) => {
@@ -325,8 +339,8 @@ describe('scripts/experiment-loader.js', () => {
       setConsent({ analytics: true, personalization: true });
       document.body.innerHTML = `<main><div>
         <h1 id="headline">Control headline</h1>
+        ${personalize('mobile', '/v/mobile')}
         <div class="section-metadata">
-          <div><div>Audience: mobile</div><div><a href="/v/mobile">/v/mobile</a></div></div>
           <div><div>Style</div><div>dark</div></div>
           <div><div>Anchor</div><div>Hero</div></div>
         </div>
@@ -352,8 +366,8 @@ describe('scripts/experiment-loader.js', () => {
       setConsent({ analytics: true, personalization: true });
       document.body.innerHTML = `<main><div>
         <h1 id="headline">Control headline</h1>
+        ${personalize('mobile', '/v/mobile')}
         <div class="section-metadata">
-          <div><div>Audience: mobile</div><div><a href="/v/mobile">/v/mobile</a></div></div>
           <div><div>Style</div><div>dark</div></div>
           <div><div>Anchor</div><div>Hero</div></div>
         </div>
@@ -385,9 +399,7 @@ describe('scripts/experiment-loader.js', () => {
       setConsent({ analytics: true, personalization: true });
       document.body.innerHTML = `<main><div>
         <h1 id="headline">Control headline</h1>
-        <div class="section-metadata">
-          <div><div>Audience: mobile</div><div><a href="/v/mobile">/v/mobile</a></div></div>
-        </div>
+        ${personalize('mobile', '/v/mobile')}
       </div></main>`;
       window.fetch = async () => new Response(
         `<html><body><main><div>
@@ -404,9 +416,6 @@ describe('scripts/experiment-loader.js', () => {
     });
 
     describe('personalize tables', () => {
-      // End Date is YYYY-MM-DD only; 30 days out stays within the 180-day cap.
-      const soon = ((d) => [d.getFullYear(), d.getMonth() + 1, d.getDate()]
-        .map((n) => `${n}`.padStart(2, '0')).join('-'))(new Date(Date.now() + 30 * 864e5));
       const personalizeSection = (id, path, extra = '') => `<main><div>
         <h1 id="headline">Control headline</h1>
         <div class="personalize">

@@ -1,4 +1,4 @@
-import { isVariantPath } from './config.js';
+import { isVariantPath, toClassName } from './config.js';
 
 let activeGuard;
 
@@ -95,6 +95,23 @@ export const carryOverSectionMeta = (main = document.querySelector('main')) => {
       }
     }
   };
+};
+
+// Section Metadata keys the plugin reads (getAllSectionMeta: the prefix
+// alone or followed by `-`, after toClassName). On .page/.live the server
+// flattens authored rows to data-* and removes the table, so the plugin never
+// sees them. Quick Edit and DA preview render raw DA markup, so strip them
+// here to match (tables only, PLAN pz-section-meta). Runs before the
+// Personalize compiler writes its own Audience rows.
+const PLUGIN_KEY = /^(experiment|audience|campaign)(-|$)/;
+
+export const stripPluginSectionMeta = (main = document.querySelector('main')) => {
+  for (const meta of main?.querySelectorAll('.section-metadata') ?? []) {
+    for (const row of [...meta.children]) {
+      if (PLUGIN_KEY.test(toClassName(row.children[0]?.textContent))) row.remove();
+    }
+    if (!meta.children.length) meta.remove();
+  }
 };
 
 const hasAuthoredContent = (section) => [...section.children]
