@@ -3,7 +3,8 @@
 // workers/website pins miniflare exactly (nonce.test.js runs in real workerd
 // through it), and wrangler pins its own miniflare exactly too. If the two
 // differ, npm installs two miniflare/workerd copies and the tests no longer
-// run on the runtime wrangler deploys with. Fails when they differ.
+// run on the runtime wrangler deploys with. Fails when they differ, or when
+// either pin is a range (^, ~) instead of an exact version.
 // Run after `npm ci --prefix workers/website`. Args: worker dir, then any
 // other worker dirs whose exact wrangler pin must equal the first one's.
 
@@ -24,6 +25,11 @@ const pkg = await readJson(join(dir, 'package.json'));
 const wrangler = await readJson(join(dir, 'node_modules/wrangler/package.json'));
 const pinned = pkg.devDependencies?.miniflare;
 const wanted = wrangler.dependencies?.miniflare;
+const EXACT = /^\d+\.\d+\.\d+(?:-[\w.]+)?$/;
+const notExact = (name, where, v) => {
+  console.error(`${where}/package.json pins ${name} "${v}", which is not an exact version. Use "x.y.z" (no ^, ~ or range).`);
+  process.exit(1);
+};
 
 if (!pinned) {
   console.error(`${dir}/package.json has no devDependencies.miniflare. Pin it exactly to "${wanted}".`);
@@ -33,9 +39,11 @@ if (pinned !== wanted) {
   console.error(`${dir}/package.json pins miniflare "${pinned}", but the installed wrangler@${wrangler.version} depends on miniflare "${wanted}". Set devDependencies.miniflare to "${wanted}" (or change wrangler), then re-lock.`);
   process.exit(1);
 }
+if (!EXACT.test(pinned)) notExact('miniflare', dir, pinned);
 console.log(`miniflare pin ${pinned} matches wrangler@${wrangler.version}.`);
 
 const pinnedWrangler = pkg.devDependencies?.wrangler;
+if (!EXACT.test(pinnedWrangler ?? '')) notExact('wrangler', dir, pinnedWrangler);
 const drifted = (await Promise.all(siblings.map(async (sib) => [sib, (await readJson(join(sib, 'package.json'))).devDependencies?.wrangler])))
   .filter(([, v]) => v !== pinnedWrangler);
 if (drifted.length) {

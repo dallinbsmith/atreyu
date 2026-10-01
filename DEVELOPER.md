@@ -259,7 +259,7 @@ All utilities live in `scripts/utils/`. Import with explicit `.js` extensions.
 | `glyphs.js` | `loadSvg(url)` | Fetches a code-owned `.svg` file and returns a fresh SVG element. Markup lives in the file, not in JS. Prefer a CSS mask unless you need a real node. |
 | `media/picture.js` | `createPicture({ src, alt, eager, breakpoints })` | Programmatically creates a responsive `<picture>` element with WebP sources and breakpoint-based sizing. |
 | `media/video.js` | `decorateVideoMedia(bg)`, `addVideoPauseControl(bg, video, onToggle)` | Picture-wrapped `.mp4` link becomes a looping muted video, gated by `shouldAnimate()`, with a pause control. |
-| `placeholders.js` | `getPlaceholders()`, `getPlaceholder(key, fallback)` | Fetches the locale-specific `/placeholders.json` spreadsheet. Returns a `Map` of key-value pairs for i18n text replacement. |
+| `placeholders.js` | `getPlaceholders()`, `getPlaceholder(key, fallback)`, `fillPlaceholder(tpl, vars)` | Fetches the locale-specific `/placeholders.json` spreadsheet. Returns a `Map` of key-value pairs for i18n text replacement. `getPlaceholder` returns `fallback` when the key is missing or its row is blank. `fillPlaceholder` replaces `{name}` tokens from `vars` in one pass; values are inserted literally (no `$&` patterns), and unknown tokens are left as-is. |
 | `script.js` | default export `(src)` | Loads an external `<script>` tag into `<head>`. Returns a promise. Deduplicates by `src`. Uses `Promise.withResolvers()`. |
 | `styles.js` | default export `(href)` | Fetches a CSS file and returns a `CSSStyleSheet` (constructable stylesheet). Caches by path. Accepts `.js` paths and swaps extension to `.css`. |
 
