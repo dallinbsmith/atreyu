@@ -18,7 +18,11 @@ const setMeta = (name, content) => {
 // file, matching production behavior, while still giving every test its own
 // call to the exported, repeatedly-callable default().
 let lazyModule;
+// Stands in for the <link rel="canonical"> EDS renders server-side on every
+// page (honoring x-forwarded-host behind the Worker); see the SEO test below.
+const SERVER_CANONICAL = 'https://frame.io/features/c2c';
 before(async () => {
+  document.head.append(Object.assign(document.createElement('link'), { rel: 'canonical', href: SERVER_CANONICAL }));
   setConfig({
     components: [], hostnames: [], linkBlocks: [], log: () => {},
   });
@@ -42,6 +46,19 @@ describe('scripts/lazy.js', () => {
   // and is a genuinely re-invokable function, not a one-shot side effect.
   it('exports a callable default, distinct from the one-shot bootstrap IIFE', () => {
     expect(lazyModule.default).to.be.a('function');
+  });
+
+  // fh-arch6 canonical-single-source: the bootstrap used to append a second,
+  // client-side canonical next to the server one. Two canonicals is a signal
+  // Google ignores, so the server tag must stay the only one, untouched (an
+  // author's Canonical metadata override lands in that same tag).
+  it('leaves the server-rendered canonical as the only one', async () => {
+    // Best-effort: the bootstrap's import chain isn't awaitable. A slower
+    // injector could land later and slip past; this failed on the old code.
+    await new Promise((resolve) => { setTimeout(resolve, 300); });
+    const links = document.head.querySelectorAll('link[rel="canonical"]');
+    expect(links).to.have.length(1);
+    expect(links[0].href).to.equal(SERVER_CANONICAL);
   });
 
   it('re-applies footer metadata on every call, not just the first — the actual regression', async () => {

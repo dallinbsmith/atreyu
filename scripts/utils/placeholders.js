@@ -15,9 +15,11 @@ export const getPlaceholders = async (ns) => {
   const url = `${prefix}/system/placeholders/${ns}.json`;
   if (cache.has(url)) return cache.get(url);
   const json = await fetchData(url);
-  const map = new Map(
-    (json?.data ?? []).map(({ Key, Text }) => [Key.toLowerCase(), Text]),
-  );
+  // Skip rows with no string Key (a blank author row, a renamed or
+  // Loc-mangled header): one bad row must not reject every lookup.
+  const map = new Map((json?.data ?? [])
+    .filter((row) => typeof row?.Key === 'string')
+    .map(({ Key, Text }) => [Key.toLowerCase(), Text]));
   // Only cache on an actual successful fetch — caching the empty map produced by
   // a transient fetchData() failure would mask every lookup for this sheet even
   // though fetchData() evicts it for a retry. A 404 (sheet absent for this

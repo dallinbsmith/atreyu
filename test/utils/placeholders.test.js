@@ -55,6 +55,14 @@ describe('getPlaceholder', () => {
     ],
     '/system/placeholders/tile-table.json': [{ Key: 'prev', Text: 'Back' }],
     '/system/placeholders/controls.json': [{ Key: 'pause', Text: 'Stop' }],
+    // A blank author row, a renamed/Loc-mangled header and a non-string key.
+    '/system/placeholders/mangled.json': [
+      { Text: 'Orphan' },
+      { key: 'lower', Text: 'Renamed' },
+      { Key: 42, Text: 'Number' },
+      null,
+      { Key: 'ok', Text: 'Fine' },
+    ],
     '/ja-jp/system/placeholders/forms.json': [{ Key: 'submit', Text: '送信' }],
   };
   const setLocale = (prefix) => {
@@ -138,6 +146,11 @@ describe('getPlaceholder', () => {
   it('falls back on a blank row or a missing key', async () => {
     expect(await getPlaceholder('forms.blank', 'Pause')).to.equal('Pause');
     expect(await getPlaceholder('forms.missing', 'Play')).to.equal('Play');
+  });
+
+  it('skips sheet rows without a string Key instead of rejecting', async () => {
+    expect(await getPlaceholder('mangled.ok', 'x')).to.equal('Fine');
+    expect(await getPlaceholder('mangled.lower', 'Code')).to.equal('Code');
   });
 
   it('defaults the fallback to an empty string', async () => {
