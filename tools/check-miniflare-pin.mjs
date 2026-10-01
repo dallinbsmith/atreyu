@@ -10,14 +10,25 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const dir = process.argv[2] ?? 'workers/website';
-const readJson = async (path) => JSON.parse(await readFile(path, 'utf8'));
+const readJson = async (path) => {
+  try {
+    return JSON.parse(await readFile(path, 'utf8'));
+  } catch (err) {
+    console.error(`Cannot read ${path} (${err.code ?? err.message}). Run \`npm ci --prefix ${dir}\` first.`);
+    return process.exit(1);
+  }
+};
 
 const pkg = await readJson(join(dir, 'package.json'));
 const wrangler = await readJson(join(dir, 'node_modules/wrangler/package.json'));
 const pinned = pkg.devDependencies?.miniflare;
 const wanted = wrangler.dependencies?.miniflare;
 
-if (!pinned || pinned !== wanted) {
+if (!pinned) {
+  console.error(`${dir}/package.json has no devDependencies.miniflare. Pin it exactly to "${wanted}".`);
+  process.exit(1);
+}
+if (pinned !== wanted) {
   console.error(`${dir}/package.json pins miniflare "${pinned}", but the installed wrangler@${wrangler.version} depends on miniflare "${wanted}". Set devDependencies.miniflare to "${wanted}" (or change wrangler), then re-lock.`);
   process.exit(1);
 }

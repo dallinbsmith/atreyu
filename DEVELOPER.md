@@ -424,6 +424,8 @@ const mockFetch = (response) => {
 
 The Worker lives in `workers/website/` and serves as the BYO CDN layer between visitors and `aem.live`.
 
+Bumping wrangler: both `wrangler` and `miniflare` are pinned exactly in `workers/website/package.json`. Set `miniflare` to the version in wrangler's own `dependencies.miniflare`, then re-lock. CI enforces this with `tools/check-miniflare-pin.mjs`.
+
 ### Local development
 
 ```bash
