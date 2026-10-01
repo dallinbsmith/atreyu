@@ -66,11 +66,15 @@ export const HEADING_SELECTOR = 'h1, h2, h3, h4, h5, h6';
 // full" line still resolves), applying the recognized value as a class and
 // removing the authored line. Shared by standalone-media.js and
 // media-with-text.js — extracted once it hit its second identical caller.
+// One regex both finds the line and captures the value, so the key, the
+// `:` and the value may sit on separate lines ("decoration\n: glassborder"):
+// `\s*` spans the newlines, and the value runs to the next `;`, `,` or newline.
+const DECORATION_LINE = /^\s*decoration\s*[:=]\s*([^;,\n]*)/i;
+
 export const parseGlassborderDecoration = (el) => {
-  const line = [...el.querySelectorAll('p')].find((p) => /^\s*decoration\s*[:=]/i.test(p.textContent));
+  const line = [...el.querySelectorAll('p')].find((p) => DECORATION_LINE.test(p.textContent));
   if (!line) return;
-  const segment = line.textContent.split(/[;,\n]/).find((p) => /^\s*decoration\s*[:=]/i.test(p));
-  const [, value] = segment.split(/[:=]/).map((s) => s?.trim());
-  if (value?.toLowerCase() === 'glassborder') el.classList.add('glassborder');
+  const [, value] = line.textContent.match(DECORATION_LINE);
+  if (value.trim().toLowerCase() === 'glassborder') el.classList.add('glassborder');
   line.remove();
 };

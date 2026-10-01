@@ -1,6 +1,7 @@
 import { getConfig } from '../../scripts/ak.js';
 import { generateId, rovingTabindex, activateTab } from '../../scripts/utils/a11y.js';
 import { createElement } from '../../scripts/utils/dom.js';
+import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 const { log } = getConfig();
 
@@ -31,6 +32,7 @@ const buildTabList = (tabItems, panels) => {
 };
 
 export default (el) => {
+  if (!guardDecorate(el, 'advancedTabsDecorated')) return;
   const tabs = el.querySelector('ul');
   if (!tabs) {
     log('Please add an unordered list to the advanced tabs block.');
@@ -42,9 +44,15 @@ export default (el) => {
 
   try {
     const currSection = el.closest('.section');
-    const tabItems = tabs.querySelectorAll('li');
     const panels = [...parent.querySelectorAll(':scope > .section')]
       .filter((section) => section !== currSection);
+    // Tab labels pair with sibling sections by order, so a label with no
+    // section left to pair with is dropped rather than crashing the block.
+    const allItems = [...tabs.querySelectorAll('li')];
+    const tabItems = allItems.slice(0, panels.length);
+    if (allItems.length > tabItems.length) {
+      log(`Advanced tabs: ${allItems.length - tabItems.length} tab(s) have no matching section and were skipped.`);
+    }
 
     const tabList = buildTabList(tabItems, panels);
 

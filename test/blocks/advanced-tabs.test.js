@@ -3,7 +3,7 @@ import decorate from '../../blocks/advanced-tabs/advanced-tabs.js';
 
 // advanced-tabs reads sibling .section elements (within the same main/
 // fragment-content) as panels, and the block's own <ul> as tab labels.
-const build = (labels) => {
+const build = (labels, panelCount = labels.length) => {
   const main = document.createElement('main');
   const currSection = document.createElement('div');
   currSection.className = 'section';
@@ -18,7 +18,7 @@ const build = (labels) => {
   block.append(ul);
   currSection.append(block);
   main.append(currSection);
-  labels.forEach((label) => {
+  labels.slice(0, panelCount).forEach((label) => {
     const panel = document.createElement('div');
     panel.className = 'section';
     panel.textContent = `${label} panel`;
@@ -73,5 +73,36 @@ describe('advanced-tabs', () => {
 
     expect(main.getAttribute('style')).to.not.exist;
     expect(main.style.display).to.not.equal('none');
+  });
+
+  it('skips tabs that have no matching section instead of throwing', () => {
+    const el = build(['A', 'B', 'C'], 2);
+    expect(() => decorate(el)).to.not.throw();
+    const tabs = [...el.querySelectorAll('[role="tab"]')];
+    expect(tabs.map((tab) => tab.textContent)).to.deep.equal(['A', 'B']);
+    expect(el.querySelectorAll('[role="tabpanel"]')).to.have.length(2);
+    tabs[1].click();
+    expect(tabs[1].getAttribute('aria-selected')).to.equal('true');
+  });
+
+  it('never leaves the parent hidden when no sibling sections exist', () => {
+    const el = build(['A'], 0);
+    const main = el.closest('main');
+    expect(() => decorate(el)).to.not.throw();
+    expect(el.querySelectorAll('[role="tab"]')).to.have.length(0);
+    expect(main.style.display).to.not.equal('none');
+  });
+
+  it('is idempotent — a second decorate() does not rebuild tabs from a <ul> inside a panel', () => {
+    const el = build(['A', 'B']);
+    const list = document.createElement('ul');
+    list.innerHTML = '<li>bullet one</li><li>bullet two</li>';
+    el.closest('main').lastElementChild.append(list);
+    decorate(el);
+    const firstTabList = el.querySelector('.tab-list');
+    decorate(el);
+    expect(el.querySelectorAll('.tab-list')).to.have.length(1);
+    expect(el.querySelector('.tab-list')).to.equal(firstTabList);
+    expect(el.querySelectorAll('[role="tab"]')).to.have.length(2);
   });
 });

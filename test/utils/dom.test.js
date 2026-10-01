@@ -1,5 +1,7 @@
 import { expect } from '@esm-bundle/chai';
-import { createElement, parseSvg, getCells } from '../../scripts/utils/dom.js';
+import {
+  createElement, parseSvg, getCells, parseGlassborderDecoration,
+} from '../../scripts/utils/dom.js';
 
 describe('utils/dom createElement', () => {
   it('creates an element with the given tag', () => {
@@ -82,5 +84,39 @@ describe('utils/dom parseSvg', () => {
   it('preserves presentation attributes (e.g. fill) on the parsed element', () => {
     const svg = parseSvg('<svg viewBox="0 0 10 10" fill="currentColor"><path d="M0 0"/></svg>');
     expect(svg.getAttribute('fill')).to.equal('currentColor');
+  });
+});
+
+describe('utils/dom parseGlassborderDecoration', () => {
+  const block = (html) => {
+    const el = document.createElement('div');
+    el.innerHTML = html;
+    return el;
+  };
+
+  it('parses a key and ":" written on separate lines instead of throwing', () => {
+    const el = block('<p>decoration\n: glassborder</p>');
+    expect(() => parseGlassborderDecoration(el)).to.not.throw();
+    expect(el.classList.contains('glassborder')).to.be.true;
+    expect(el.querySelector('p')).to.not.exist;
+  });
+
+  it('parses a value written on the line after the ":"', () => {
+    const el = block('<p>decoration:\nglassborder</p>');
+    parseGlassborderDecoration(el);
+    expect(el.classList.contains('glassborder')).to.be.true;
+  });
+
+  it('still treats a newline as a pair separator ("decoration: glassborder\\nbg: full")', () => {
+    const el = block('<p>decoration: glassborder\nbg: full</p>');
+    parseGlassborderDecoration(el);
+    expect(el.classList.contains('glassborder')).to.be.true;
+  });
+
+  it('a split line with an unrecognized value adds no class but still removes the line', () => {
+    const el = block('<p>decoration\n: sparkles</p>');
+    parseGlassborderDecoration(el);
+    expect(el.classList.contains('glassborder')).to.be.false;
+    expect(el.querySelector('p')).to.not.exist;
   });
 });
