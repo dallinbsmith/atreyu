@@ -55,6 +55,32 @@ describe('section-metadata block: authored-case values (B2)', () => {
     }
   });
 
+  it('Container: 2, 4 and 6 add .container and .container-N', async () => {
+    for (const value of ['2', '4', '6']) {
+      const el = section({ container: value });
+      // eslint-disable-next-line no-await-in-loop
+      await decorate(el);
+      expect([...el.classList]).to.have.members(['section', 'container', `container-${value}`]);
+    }
+  });
+
+  it('an unsupported Container value (3, a typo) adds nothing', async () => {
+    for (const value of ['3', 'wide', 'Wide']) {
+      const el = section({ container: value });
+      // eslint-disable-next-line no-await-in-loop
+      await decorate(el);
+      expect([...el.classList]).to.deep.equal(['section']);
+      expect(el.dataset.container).to.equal(undefined);
+    }
+  });
+
+  it('Style: container with an unsupported Container value keeps only .container', async () => {
+    const el = section({ container: '3' });
+    el.classList.add('container');
+    await decorate(el);
+    expect([...el.classList]).to.deep.equal(['section', 'container']);
+  });
+
   it('Style: container alone is unchanged', async () => {
     const el = section({});
     el.classList.add('container');
@@ -201,6 +227,18 @@ describe('section-metadata block: container widths', () => {
         const three = await contentWidth({ container: '3' });
         expect(three).to.be.closeTo(full, TOLERANCE);
       });
+
+      // Blocks are full-bleed by default; `.container` would cap them.
+      for (const value of ['3', 'wide']) {
+        it(`Container: ${value} leaves .block-content at the default width`, async () => {
+          const full = await contentWidth({ wrapper: 'block-content' });
+          const w = await contentWidth({ container: value, wrapper: 'block-content' });
+          const el = [...document.querySelectorAll('.section')].at(-1);
+          expect(w).to.be.closeTo(full, TOLERANCE);
+          expect(w).to.be.greaterThan(sizes[6] + TOLERANCE);
+          expect(el.classList.contains('container')).to.equal(false);
+        });
+      }
 
       it('centres the constrained content', async () => {
         const w = await contentWidth({ container: '2' });

@@ -116,7 +116,7 @@ Sections are `<div>` children of `<main>`, separated by `---` in the authored do
 | `background` | Image URL, CSS color, or `color-token-*` design token |
 | `grid` | Column count (2-6) applied to `.block-content` children |
 | `gap` / `spacing` | Spacing tokens (`xs`, `s`, `m`, `l`, `xl`, `xxl`) |
-| `container` | Centred content width: 2 = one third, 4 = two thirds, 6 = full content width, same on every screen size. Blocks in the section are limited to the same width, so they are no longer full-bleed. Other values are ignored (default width). Also adds the `container` class, so `Style: container` isn't needed |
+| `container` | Centred content width: 2 = one third, 4 = two thirds, 6 = full content width, same on every screen size. Blocks in the section are limited to the same width, so they are no longer full-bleed. Any other value (e.g. `3` or a typo) is ignored: no class is added and the content and blocks keep the default width (with `Style: container` the section behaves as `Style: container` alone). A supported value also adds the `container` class, so `Style: container` isn't needed |
 | `layout` | `bento` for asymmetric grid |
 | `anchor` | De-duplicated slug `id` for deep links (an `id` row wins) |
 
@@ -247,7 +247,7 @@ All utilities live in `scripts/utils/`. Import with explicit `.js` extensions.
 | `page/favicon.js` | (self-executing) | Sets favicon and apple-touch-icon from `img/favicons/`. Reads `favicon` metadata for custom name. |
 | `fetch-data.js` | `fetchData(url, options)` | Fetches JSON with automatic caching. Supports `sheet`, `limit`, and `offset` options for EDS spreadsheet endpoints. |
 | `page/footer.js` | default export `()` | Loads the global footer block from `footer` metadata or the default footer class. |
-| `fragment.js` | `loadFragment(path)`, `getReplaceEl(anchor)` | Fetches a fragment page, decorates its blocks, and returns the fragment DOM. `getReplaceEl` finds the correct ancestor to replace when inlining. |
+| `fragment.js` | `loadFragment(path)`, `getReplaceEl(anchor)` | Fetches a fragment page, decorates its blocks, and returns the fragment DOM. `getReplaceEl` finds the correct ancestor to replace when inlining. It returns `null` if the anchor is detached (nothing to insert into); the caller must log and bail, not insert. |
 | `hreflang.js` | default export `()` | Injects `<link rel="alternate" hreflang="...">` tags for all configured locales. |
 | `i18n.js` | `formatDate(value, opts)`, `DATE_ONLY` | The path for user-visible dates. Formats with `Intl.DateTimeFormat` in the page locale (`getConfig().locale.lang`, falling back to `'en'`, never the browser locale or `<html lang>`). `opts` are merged over a long-date default ("September 24, 2026") and passed to `Intl.DateTimeFormat`; a key set to `undefined` removes that default, and `dateStyle`/`timeStyle` drop the default entirely. A full `YYYY-MM-DD` string (whitespace trimmed) is a calendar day: it stays on that day in every time zone, and a caller `timeZone` is ignored for it. Only the full form is pinned: `YYYY` and `YYYY-MM` are parsed as UTC instants. Every other value (a `Date`, a timestamp, an ISO date-time) is an instant, formatted in the visitor's time zone unless `opts.timeZone` is set. Invalid input is returned unchanged; `null`, `undefined` and `''` return `''`. `DATE_ONLY` is the shared `YYYY-MM-DD` regex. |
 | `media/icons.js` | default export `(icons)` | Replaces `<span class="icon icon-name">` elements with inline SVG from `/icons/name.svg`. |
