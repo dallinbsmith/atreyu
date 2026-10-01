@@ -1,6 +1,6 @@
 # 0006. One personalization and testing engine
 
-**Status:** Accepted. The previous engine is deleted (restorable from git tag `pzn-legacy-final`).
+**Status:** Accepted. The previous engine (`pzn.js` and its audit, the `experimentation.js` shim, the `.pzn-slot` CSS) and `workers/decision-endpoint/` were removed on 2026-10-01; restore them from git tag `pzn-legacy-final` if ever needed.
 
 ## Context
 

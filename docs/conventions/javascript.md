@@ -172,7 +172,7 @@ There is no store or reactive-state library, and none should be added without a 
 - DOM and `dataset` flags are a legitimate source of truth (`data-block-status`, `data-variant`, `guardDecorate` flags, `data-behavior`, the color-scheme body class).
 - Module-scope singletons are fine for global-by-nature state (fetch caches, the video modal, the shared scroll listener). Per-instance state of a block that can appear twice on a page goes in a closure, never a module `let`.
 - The one cross-module runtime signal is consent: `consent.js` dispatches `atreyu:consent`, read through `onConsentChange` (consumer: `delayed.js`). Name the consumer before adding another event.
-- Constants that must match across the browser and a Worker (they deploy separately and can't share a module) are machine-checked: the `config-drift` ESLint rules flag a copy in a non-designated file, and `tools/config-sync/*.test.js` (`npm run test:config-sync`) checks the designated files agree. Example: the locale list in `scripts/locales.js` and `workers/website/utils/locale.js`.
+- Constants that must match across the browser and a Worker (they deploy separately and can't share a module) are machine-checked: the `config-drift` ESLint rules flag a copy in a non-designated file, and a cross-file equality test checks the designated files agree: `tools/config-sync/locales.test.js` (`npm run test:config-sync`) compares the locale list in `scripts/locales.js` with `workers/website/utils/locale.js`. Copy that test for the next shared constant.
 
 ## Security
 
