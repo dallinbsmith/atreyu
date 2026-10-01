@@ -43,7 +43,7 @@ test('isEdsPath: asset prefixes match folders only, not look-alikes or bare name
   for (const p of lookAlikes) assert.equal(isEdsPath(p), false, p);
 });
 
-test('isEdsPath: locale-prefixed paths stay on the existing origin while EDS_LOCALES is empty', () => {
+test('isEdsPath: locale-prefixed paths stay on the existing origin while no locale has a live cell', () => {
   for (const p of ['/de-de/blog/x', '/de-de/scripts/scripts.js', '/ja-jp/system/placeholders.json', '/fr-fr']) {
     assert.equal(isEdsPath(p), false, p);
   }
