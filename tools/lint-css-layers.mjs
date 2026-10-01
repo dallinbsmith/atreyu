@@ -13,8 +13,8 @@
 // asserting "this whole file's top-level content is wrapped in one specific
 // at-rule," which is a much better fit for a plain text/brace-balance check.
 //
-// Manual directory walk rather than fs/promises' glob() — that's Node 22+
-// only, and CI (.github/workflows/ci.yml) runs Node 20.
+// Manual directory walk rather than fs/promises' glob(), written when CI ran
+// Node 20, which lacks glob(). CI now runs Node 22.
 
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';

@@ -8,7 +8,7 @@ No build step. No bundler. No framework. Vanilla ES2025 served via HTTP/2 from C
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+ (wrangler and miniflare require it; CI runs 22)
 - npm 9+
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) (for Worker development)
 
@@ -423,6 +423,8 @@ const mockFetch = (response) => {
 ## Cloudflare Worker
 
 The Worker lives in `workers/website/` and serves as the BYO CDN layer between visitors and `aem.live`.
+
+Bumping wrangler: both `wrangler` and `miniflare` are pinned exactly in `workers/website/package.json`. Set `miniflare` to the version in wrangler's own `dependencies.miniflare`, then re-lock. CI enforces this with `tools/check-miniflare-pin.mjs`.
 
 ### Local development
 

@@ -81,7 +81,7 @@ jobs:
         name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - if: steps.changes.outputs.run == 'true'
@@ -95,6 +95,11 @@ jobs:
       - if: steps.changes.outputs.run == 'true'
         name: Install Worker dependencies (website)
         run: npm ci --prefix workers/website
+
+      # Exact wrangler/miniflare pins must agree; see tools/check-miniflare-pin.mjs.
+      - if: steps.changes.outputs.run == 'true'
+        name: Check miniflare pin matches wrangler (website)
+        run: node tools/check-miniflare-pin.mjs workers/website
 
       - if: steps.changes.outputs.run == 'true'
         name: Run linter
