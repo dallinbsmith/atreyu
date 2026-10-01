@@ -1,4 +1,4 @@
-import { getPlaceholder } from '../../scripts/utils/placeholders.js';
+import { getPlaceholder, fillPlaceholder } from '../../scripts/utils/placeholders.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { announce } from '../../scripts/utils/a11y.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
@@ -23,7 +23,7 @@ const buildSlide = (media, idx, total, slideLabel) => createElement('div', {
   className: 'carousel-media-slide',
   role: 'group',
   'aria-roledescription': 'slide',
-  'aria-label': slideLabel.replace('{current}', idx + 1).replace('{total}', total),
+  'aria-label': fillPlaceholder(slideLabel, { current: idx + 1, total }),
   // Flat, continuous index across the whole block (never reset per row) —
   // a repeated-list block's known off-by-index bug class.
   'data-testid': `carousel-media-slide-${idx}`,
@@ -141,7 +141,7 @@ export default async (el) => {
     clearTimeout(scrollTimer);
     scrollTimer = setTimeout(() => {
       const idx = currentIndex(viewport, slides);
-      announce(slideLabel.replace('{current}', idx + 1).replace('{total}', slides.length));
+      announce(fillPlaceholder(slideLabel, { current: idx + 1, total: slides.length }));
     }, 150);
   });
 };

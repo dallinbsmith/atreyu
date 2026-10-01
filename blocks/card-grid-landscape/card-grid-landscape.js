@@ -6,7 +6,7 @@
 // and column-unwrap both mirror carousel.js's identical pattern; `square`
 // variant just hides the logo/group-title markup in CSS.
 import { decorateTout, extractRowMedia } from '../../scripts/utils/touts.js';
-import { getPlaceholder } from '../../scripts/utils/placeholders.js';
+import { getPlaceholder, fillPlaceholder } from '../../scripts/utils/placeholders.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 import { announce } from '../../scripts/utils/a11y.js';
@@ -53,7 +53,7 @@ const activeIndex = (viewport, cards) => {
 const buildDots = (viewport, cards, label) => {
   const dots = cards.map((card, i) => {
     const dot = createElement('button', { className: 'card-grid-landscape-dot', type: 'button' });
-    dot.setAttribute('aria-label', label.replace('{current}', i + 1).replace('{total}', cards.length));
+    dot.setAttribute('aria-label', fillPlaceholder(label, { current: i + 1, total: cards.length }));
     dot.dataset.testid = `card-grid-landscape-dot-${i}`;
     dot.addEventListener('click', () => {
       card.scrollIntoView({ behavior: shouldAnimate() ? 'smooth' : 'auto', inline: 'start', block: 'nearest' });
@@ -68,7 +68,7 @@ const buildDots = (viewport, cards, label) => {
     timer = setTimeout(() => {
       const idx = activeIndex(viewport, cards);
       dots.forEach((d, i) => d.classList.toggle('is-active', i === idx));
-      announce(label.replace('{current}', idx + 1).replace('{total}', cards.length));
+      announce(fillPlaceholder(label, { current: idx + 1, total: cards.length }));
     }, 150);
   });
 
