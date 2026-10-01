@@ -2,8 +2,10 @@
 
 Migrates Falkor's existing, already-translated locale content (Sanity,
 project `s6lu43cv`, dataset `production-v4`) into DA-importable HTML, the
-build step behind [ADR-0017](../../docs/decisions/0017-translation-workflow.md),
-which explains why this content is migrated rather than re-translated.
+build item behind D-L7 (`artifacts/master-plan/locale-i18n-plan.md`,
+item B1). See `artifacts/research/locale-extraction-spike-2026-09-25.md` for
+why migrating this content (rather than re-translating from scratch) is the
+right call, and what it found about the real shape of the source data.
 
 ## Usage
 
