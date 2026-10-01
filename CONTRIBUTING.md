@@ -15,11 +15,11 @@ Commit messages: imperative summary line (`Fix carousel focus trap`), body expla
 
 ## Required checks
 
-Branch protection on `main` requires the **Lint and Test** check (`.github/workflows/ci.yml`) to pass, and the branch to be up to date with `main`. It applies to admins too.
+Branch protection on `main` requires the **Lint and Test** check (`.github/workflows/ci.yml`) to pass, the branch to be up to date with `main`, and every review conversation to be resolved. It applies to admins too.
 
 - When a PR touches no code paths (for example docs only), the job skips its steps and still reports success.
 - Lighthouse CI runs on PRs that touch blocks, scripts, styles, `head.html` or the Worker. It isn't required, but look at regressions.
-- A timezone-dependent test failure is rerun once automatically under a second timezone; a real failure fails both runs.
+- After the full suite (which runs in UTC), CI always runs the date-sensitive suites again with `TZ=America/Los_Angeles` ([conventions/testing.md](docs/conventions/testing.md)). A failure in either run fails the job; it is not a retry.
 
 ## Review
 

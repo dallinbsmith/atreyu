@@ -164,8 +164,7 @@ ruleTester.run('no-duplicate-locale-list', plugin.rules['no-duplicate-locale-lis
       errors: 1,
     },
     // Acceptance criterion: demonstrate against the real bug class this
-    // project already found and fixed once (see ref_real_locale_list.md /
-    // ref_eds_iteration_lessons.md) — a second, independently-maintained
+    // project already found and fixed once — a second, independently-maintained
     // locale-prefix list existing outside the two designated files. This
     // models that bug's shape (a second full list in a real, non-designated
     // file in this repo) rather than reproducing its exact historical

@@ -1,6 +1,6 @@
 /**
- * Cohort × locale routing manifest (docs/decisions/0015-locale-cutover-cells.md D-L5 / L-2,
- * docs/architecture/worker.md B-2). The one place that decides which
+ * Cohort × locale routing manifest (docs/decisions/0015-locale-cutover-cells.md,
+ * docs/architecture/worker.md). The one place that decides which
  * (cohort, locale) cells the strangler serves from EDS.
  *
  * Spec:

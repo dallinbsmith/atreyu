@@ -3,7 +3,7 @@
  * list, or the same environment/hostname classification logic, hand-typed a
  * second time instead of imported from this project's single source of
  * truth. This is the recurring bug class documented in
- * docs/conventions/javascript.md (P0-48): a config literal
+ * docs/conventions/javascript.md: a config literal
  * gets duplicated across files and the copies silently drift apart. Human
  * review has repeatedly missed it even with the correct pattern one line
  * away in the same diff.

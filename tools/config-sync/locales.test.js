@@ -30,7 +30,7 @@ import { VARIANT_ROOT as BROWSER_VARIANT_ROOT } from '../../scripts/utils/experi
 import { shouldGuard } from '../../scripts/utils/experiments/guard.js';
 import { ALLOWED_LOCALE_CODES } from '../eslint-rules/config-drift.js';
 // Crossing into the Worker package is sanctioned for this parity test by
-// docs/architecture/locale.md B6 (import, don't restate). The modules are pure,
+// docs/architecture/locale.md (import, don't restate). The modules are pure,
 // and the Worker's own `node --test` loads them in Node.
 // eslint-disable-next-line import/no-relative-packages -- cross-runtime parity check, read-only
 import { LOCALE_PREFIXES } from '../../workers/website/utils/locale.js';

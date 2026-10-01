@@ -1,6 +1,6 @@
 // Module-type dispatch table. Name-matched against
-// locale-extraction-spike-2026-09-25.md's mapping table, with one real
-// correction found while building this: that spike listed
+// the Sanity module -> block mapping, with one real
+// correction found while building this: the mapping listed
 // `block.calendlyButton` → the `hero-calendly` block (a whole block with its
 // own embedded-scheduling-widget JS). Real data contradicts this, on the
 // live ja-jp enterprise page, `block.calendlyButton` appears INSIDE

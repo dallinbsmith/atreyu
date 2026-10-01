@@ -1,8 +1,8 @@
 // Portable Text → DA block-table HTML, scoped to the style/mark vocabulary
-// G-2 of locale-extraction-spike-2026-09-25.md found on real Sanity content
+// found on real Sanity content
 // (project s6lu43cv, dataset production-v4). Every mapping below was checked
-// against a real authored block (a DA Library doc or a real published page
-// snapshot under artifacts/mcp-snapshots/da/), not invented from the Sanity
+// against a real authored block (a DA Library doc or a real published DA
+// page), not invented from the Sanity
 // schema in isolation. Where no real precedent was found, the TODO comment
 // says so explicitly instead of guessing.
 //

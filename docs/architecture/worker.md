@@ -64,7 +64,7 @@ So today EDS serves English `/blog`, `/glossary` and `/integrations` pages. Ever
 
 1. Add the prefixes to a cohort (or a new cohort) and the `{ cohort, locale }` entry to `CELLS`.
 2. Run `node --test workers/website/test/*.test.js`; `routing-manifest.test.js` validates the manifest.
-3. For a locale cell, meet the locale gates first ([architecture/locale.md](locale.md#before-a-locale-goes-live)).
+3. For a locale cell, meet the locale gates first ([architecture/locale.md](locale.md#before-a-locale-goes-live)). `ru-ru` and `zh-cn` also need a legal or reachability review; a test blocks them until then ([gates](locale.md#legal-and-reachability-gates)).
 4. Needs two engineering reviews and the repository owner's approval ([CONTRIBUTING.md](../../CONTRIBUTING.md#review)).
 
 ## Redirects

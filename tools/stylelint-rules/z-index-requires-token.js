@@ -30,9 +30,8 @@
  * textually separate `@media` occurrence rather than nested via `&`, not
  * because the logic was actually right.)
  *
- * Known, accepted limitations (a lint-time heuristic, not full certification
- * — see AGENTS.md's stance on pattern-matching vs.
- * certifying something safe):
+ * Known, accepted limitations (a lint-time heuristic: passing it does not
+ * certify a z-index safe):
  *  - only tracks `position: fixed` declared on the same rule or a direct
  *    ancestor rule (the real CSS-nesting parent chain) — a `position: fixed`
  *    declared only in a *sibling* nested rule (e.g. `&:focus { position:

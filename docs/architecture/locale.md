@@ -88,3 +88,14 @@ A locale goes live by adding a `{ cohort, locale }` cell to `workers/website/rou
 - Old locale URLs on the existing site have redirects where paths changed.
 - The query index and sitemap handle the locale.
 - The locale's header, footer and placeholder sheets exist in DA.
+
+### Legal and reachability gates
+
+Two locales have an extra hard gate before any cell for them is added:
+
+| Locale | Gate |
+|---|---|
+| `ru-ru` | Review against Russia's data-localization law (242-FZ) |
+| `zh-cn` | Review of reachability from mainland China (Great Firewall) |
+
+`workers/website/test/routing-manifest.test.js` fails if `CELLS` contains either locale. Remove a locale from that test only once its review is recorded as passed.

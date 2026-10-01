@@ -47,7 +47,7 @@ Code checks the environment only through `scripts/utils/env.js` (a lint rule blo
    1. `setConfig()` with hostnames, locales, `linkBlocks`, `components` and the `decorateArea` hook.
    2. Start loading fonts.
    3. `await runExperimentation()`: apply Personalize tables and run the experimentation plugin before anything is decorated (see [personalization.md](personalization.md)).
-   4. `await loadArea()`: decorate the document (header element, skip link, template), then load sections in order. Each section loads its blocks (calling `blocks/{name}/{name}.js` default export after loading its CSS) and its Section Metadata.
+   4. `await loadArea()`: decorate the document (header element, skip link, template), then load sections in order. Each section loads its blocks (its CSS loads in parallel with importing `blocks/{name}/{name}.js` and calling its default export) and its Section Metadata.
 2. **Lazy**: after the first section, `ak.js` imports `postlcp.js` (loads the header block and lazy-phase behaviours). After all sections, it imports `lazy.js`: footer, `lazy-styles.css`, favicon, JSON-LD, hreflang, delegated click tracking.
 3. **Delayed**: `lazy.js` imports `delayed.js` 3 seconds later: analytics (`segment.js`, only with analytics consent) and delayed behaviours.
 

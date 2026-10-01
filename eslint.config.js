@@ -222,7 +222,7 @@ export default defineConfig([
     },
   },
   {
-    // Locale extractor (B1, docs/architecture/locale.md): consumes raw Sanity
+    // Locale extractor (docs/architecture/locale.md): consumes raw Sanity
     // documents, whose own field-naming convention (`_type`/`_key`/`_id`) is
     // external API shape this tool doesn't control — same rationale as the
     // `test/**/*.js` override above. `no-console` is off because this is a
