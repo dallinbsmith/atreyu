@@ -4,7 +4,9 @@
 // EDS_PATHS or EDS_ASSET_PATHS has to be made here too.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import worker, { isEdsPath, EDS_PATHS, EDS_ASSET_PATHS } from '../index.js';
+import worker, {
+  isEdsPath, isTrailingSlashPage, EDS_PATHS, EDS_ASSET_PATHS,
+} from '../index.js';
 
 const COHORT = ['/blog/', '/glossary/', '/integrations/'];
 const ASSETS = ['/blocks/', '/icons/', '/img/', '/plugins/', '/scripts/', '/styles/', '/system/', '/templates/'];
@@ -17,6 +19,7 @@ test('EDS_PATHS and EDS_ASSET_PATHS match the reviewed lists', () => {
   assert.deepEqual(EDS_ASSET_PATHS, ASSETS);
 });
 
+// '/blog/' is EDS-routed so the Worker can 308 it (see the trailing-slash tests).
 test('isEdsPath: cohort pages, with and without a trailing slash', () => {
   for (const p of COHORT) {
     assert.equal(isEdsPath(p), true, p);
@@ -177,6 +180,76 @@ test('page and asset requests reach fetchFromAem with the negative-cache cap', a
     const expected = { cacheEverything: true, cacheTtlByStatus: { 404: -1, 410: -1, '500-599': -1 } };
     assert.deepEqual(inits.at(-1).cf, expected, path);
     t.mock.restoreAll();
+  }
+});
+
+// fh-arch7 #1: EDS 404s trailing-slash page paths, Falkor 308s them.
+test('trailing-slash EDS pages get a relative 308 to the slashless path, query kept', async (t) => {
+  const cases = [
+    ['/blog/', '/blog'],
+    ['/glossary/', '/glossary'],
+    ['/integrations/', '/integrations'],
+    ['/blog/some-post/', '/blog/some-post'],
+    ['/blog/?utm_source=x&a=1', '/blog?utm_source=x&a=1'],
+    ['/blog/some-post/?b=2&a=1', '/blog/some-post?b=2&a=1'],
+    ['/blog//', '/blog'],
+  ];
+  for (const [path, location] of cases) {
+    // eslint-disable-next-line no-await-in-loop
+    const { resp, target } = await route(t, path);
+    assert.equal(resp.status, 308, path);
+    assert.equal(resp.headers.get('location'), location, path);
+    assert.equal(target, undefined, `${path} must not reach EDS`);
+    t.mock.restoreAll();
+  }
+});
+
+test('trailing-slash redirect leaves assets, globals, Falkor paths and / alone', async (t) => {
+  const cases = [
+    ['/', 'legacy.example'],
+    ['/pricing/', 'legacy.example'],
+    ['/ja-jp/blog/', 'legacy.example'], // no live ja-jp cell yet: Falkor 308s it
+    ['/blog/a%2Fb/', 'legacy.example'],
+    ['/scripts/', EDS_HOST],
+    ['/system/fragments/', EDS_HOST],
+  ];
+  for (const [path, host] of cases) {
+    // eslint-disable-next-line no-await-in-loop
+    const { resp, target } = await route(t, path);
+    assert.notEqual(resp.status, 308, path);
+    assert.equal(target.hostname, host, path);
+    t.mock.restoreAll();
+  }
+  for (const path of ['/drafts/x/', '/langstore/de-de/', '/v/c2c-headline/']) {
+    // eslint-disable-next-line no-await-in-loop
+    const { resp } = await route(t, path);
+    assert.equal(resp.status, 404, path);
+    t.mock.restoreAll();
+  }
+  const { target } = await route(t, '/blog/', {}, { ...ENV, EDS_DISABLED: 'true' });
+  assert.equal(target.hostname, 'legacy.example');
+});
+
+test('trailing-slash redirect stays same-host for hostile paths and keeps the method', async (t) => {
+  const cases = [
+    ['/blog/\\evil.com/', {}],
+    ['/blog//evil.com/', {}],
+    ['/blog/x/', { method: 'HEAD' }],
+    ['/blog/x/', { method: 'POST', body: 'a=1' }],
+  ];
+  for (const [path, init] of cases) {
+    // eslint-disable-next-line no-await-in-loop
+    const { resp } = await route(t, path, init);
+    assert.equal(resp.status, 308, path);
+    assert.equal(new URL(resp.headers.get('location'), 'https://frame.io').host, 'frame.io', path);
+    t.mock.restoreAll();
+  }
+});
+
+test('isTrailingSlashPage: locale-prefixed pages yes, locale asset folders no', () => {
+  for (const p of ['/ja-jp/blog/', '/ja-jp/integrations/x/', '/blog//']) assert.equal(isTrailingSlashPage(p), true, p);
+  for (const p of ['/', '/blog', '/ja-jp/scripts/', '/ja-jp/system/fragments/', '/img/', '/.rum/1/', '//evil.com/.rum/', '/pricing/.optel/a/']) {
+    assert.equal(isTrailingSlashPage(p), false, p);
   }
 });
 
