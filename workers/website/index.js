@@ -18,20 +18,7 @@ import { isVariantPage, fetchVariant } from './handlers/variants.js';
 import { matchLocalePrefix, stripLocale } from './utils/locale.js';
 import { checkRequiredEnv } from './utils/env-guard.js';
 import { isMediaPath } from './utils/media.js';
-
-// Phase 1 cohort only (master-plan/implementation-plan.md, "Migration Cohort Phases").
-// Grows as each phase ships: Phase 2 adds /customers/ + /resources/, Phase 3 adds
-// / + /enterprise + /demo, Phase 4 adds /pricing. Do not pre-populate ahead of ship.
-export const EDS_PATHS = Object.freeze(['/blog/', '/glossary/', '/integrations/']);
-
-// Which locales actually have confirmed, live, translated content on the EDS origin
-// right now — a second axis from EDS_PATHS (cohort), not a duplicate of it. Phase 1
-// is English-only: the GLAAS -> DA translation pipeline doesn't exist yet, so a
-// locale-prefixed path (e.g. /de-de/blog/x) strips to a real EDS_PATHS match but
-// there is no /de-de/blog/x page on the EDS origin — it must keep falling through to
-// the existing origin. This is a subset of LOCALE_PREFIXES by construction (every
-// entry here must also appear there); it never gets ahead of what's actually shipped.
-const EDS_LOCALES = [];
+import { ROUTING_MANIFEST, assertValidManifest, matchCohort } from './routing-manifest.js';
 
 // EDS code and shared-content prefixes (F-76). An EDS page served through this
 // Worker loads its code from its own origin: head.html's /scripts/ and /styles/,
@@ -41,8 +28,9 @@ const EDS_LOCALES = [];
 // origin, which 404s every one. Decision record:
 // - Not cohort-gated: these are site-wide, not pages, so they don't grow per phase.
 // - Prefix-only (no bare '/scripts' match, unlike EDS_PATHS): they are folders.
-// - Same EDS_LOCALES gate as pages, so /de-de/system/placeholders.json follows
-//   /de-de pages once that locale ships and stays on the existing origin until then.
+// - Locale-gated like pages: /de-de/system/placeholders.json reaches EDS once
+//   /de-de has any live cell (routing-manifest.js) and stays on the existing
+//   origin until then.
 // - Collision check (2026-09-24): Falkor (origin/develop) serves /_next/, /api/,
 //   favicon.*, icon-*.png, manifest.json, robots.txt, sitemap.xml, and CMS slugs via
 //   [lang]/[[...slug]]. frame.io's sitemap has no page under any prefix below, and
@@ -60,16 +48,43 @@ export const EDS_ASSET_PATHS = Object.freeze([
 // needs one, so these stay on the existing origin rather than reach EDS.
 const ENCODED_SEPARATOR = /%2f|%5c/i;
 
-export const isEdsPath = (pathname) => {
-  if (ENCODED_SEPARATOR.test(pathname)) return false;
-  const localePrefix = matchLocalePrefix(pathname);
-  if (localePrefix && !EDS_LOCALES.includes(localePrefix)) return false;
-
-  const path = stripLocale(pathname);
-  return EDS_PATHS.some((p) => path.startsWith(p))
-    || EDS_PATHS.map((p) => p.slice(0, -1)).includes(path)
-    || EDS_ASSET_PATHS.some((p) => path.startsWith(p));
+// Builds isEdsPath for a manifest (tests inject their own). `isCellLive(cell,
+// env)` is the per-request seam for a runtime kill switch (R-L1): it can only
+// filter the manifest's cells, so env may remove cells but never add one; the
+// manifest is the ceiling. English code assets are not cohort-gated.
+// A throwing predicate (e.g. a malformed env var) counts as "not live", so the
+// request falls back to the existing origin instead of a 500.
+export const createIsEdsPath = (manifest, isCellLive = () => true) => {
+  const { cohorts, cells } = assertValidManifest(manifest, undefined, EDS_ASSET_PATHS);
+  const live = (cell, env) => {
+    try {
+      return isCellLive(cell, env);
+    } catch {
+      return false;
+    }
+  };
+  return (pathname, env = {}) => {
+    if (ENCODED_SEPARATOR.test(pathname)) return false;
+    const locale = matchLocalePrefix(pathname) ?? '';
+    const path = stripLocale(pathname);
+    const localeCells = cells.filter((cell) => cell.locale === locale && live(cell, env));
+    if (EDS_ASSET_PATHS.some((p) => path.startsWith(p))) return locale === '' || localeCells.length > 0;
+    const cohort = matchCohort(cohorts, path);
+    return cohort !== undefined && localeCells.some((cell) => cell.cohort === cohort);
+  };
 };
+
+// R-L1 lands here: pass the kill-switch predicate as the second argument
+// (e.g. cell.locale not in env.EDS_LOCALES_DISABLED). Don't read env elsewhere.
+export const isEdsPath = createIsEdsPath(ROUTING_MANIFEST);
+
+// Which pages EDS serves is decided per (cohort × locale) cell in
+// routing-manifest.js. EDS_PATHS is derived from it (after validation above):
+// the prefixes of every cohort with a live English cell (read-only view, kept
+// for tests and docs).
+export const EDS_PATHS = Object.freeze(ROUTING_MANIFEST.cells
+  .filter(({ locale }) => locale === '')
+  .flatMap(({ cohort }) => ROUTING_MANIFEST.cohorts[cohort]));
 
 // `global: true` marks a ROUTES entry as Worker-owned regardless of cohort status
 // (drafts denial, langstore denial, schedules, dasc) — the strangler below must
@@ -242,7 +257,7 @@ export default {
     // falls back to the existing origin, using the original request — not one
     // already rewritten to the EDS hostname by formatRequest below.
     if (!isRUMRequest(url) && !isGlobalRoute(url.pathname)
-      && (env.EDS_DISABLED === 'true' || !isEdsPath(url.pathname))) {
+      && (env.EDS_DISABLED === 'true' || !isEdsPath(url.pathname, env))) {
       return fetchFromExistingOrigin({ url, env, request: req });
     }
 
