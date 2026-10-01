@@ -1,5 +1,5 @@
-// Full-bleed hero: picture cell → background (optional looping mp4),
-// remaining cells → foreground. Cell-level, not row-level (F-66).
+// Picture/video media becomes the full-bleed background while the content
+// cell remains the accessible foreground.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
 import { createElement, getCells, HEADING_SELECTOR } from '../../scripts/utils/dom.js';

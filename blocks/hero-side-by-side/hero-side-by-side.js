@@ -1,10 +1,5 @@
-// Vanilla port of Falkor's HeroSideBySide module — a two-column hero
-// (eyebrow/title/body/CTAs next to a video or image), verified against 2
-// real instances in the live Sanity dataset (features/workflow-management,
-// homepage). Reuses the same video-behind-poster-picture convention as
-// hero.js/hero-screen.js (scripts/utils/media/video.js) and the same text/media
-// two-column grid idiom as the body-content side-by-side block — kept as
-// its own block per the no-nested-blocks rule, not a variant of either.
+// Two-column hero reuses the shared video-behind-picture convention and
+// side-by-side text/media DOM order; keep one responsive DOM.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
 import {
@@ -18,9 +13,8 @@ export default (el) => {
   // same cells and re-wire a second click listener onto the video link.
   if (!guardDecorate(el, 'heroSideBySideDecorated')) return;
 
-  // Cell, not row: a picture cell with a sibling text cell must not sweep
-  // that sibling into `.hero-side-by-side-media` (overflow:hidden + abs
-  // picture would clip it). Same F-66 pattern as hero.js / glow-reveal.
+  // Cell, not row: a picture cell with sibling text must not sweep the whole
+  // row into the media slot.
   const cells = getCells(el);
   const picCell = cells.find((c) => c.querySelector('picture'));
   const extra = cells.filter((c) => c !== picCell);

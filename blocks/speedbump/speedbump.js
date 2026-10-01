@@ -1,11 +1,5 @@
-// Vanilla port of Falkor's Speedbump module — a full-bleed rounded media card
-// with text over it, optionally clickable as a whole card. Real content
-// (checked directly against the live Sanity dataset, 2026-09-15): 55 real
-// instances, 28 of which embed exactly one link in the content — Falkor's own
-// extraction logic (getLinkFromPortableText) only promotes that link to a
-// whole-card link when there is EXACTLY one; 2+ links leaves them as plain
-// inline links instead, so this mirrors that same one-link-only rule rather
-// than guessing at multi-link intent.
+// Full-bleed media card promotes the authored link to wrap the card; keep
+// the static media/text structure usable without motion.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import {
   createElement, getCells, HEADING_SELECTOR,
@@ -16,8 +10,8 @@ import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 export default (el) => {
   if (!guardDecorate(el, 'speedbump')) return;
 
-  // Cell, not row: a picture cell with a sibling text cell must not sweep
-  // that sibling into the media wrapper. Same F-66 pattern as hero.js.
+  // Cell, not row: a picture cell with sibling text must not sweep the whole
+  // row into the media slot.
   const cells = getCells(el);
   const picCell = cells.find((c) => c.querySelector('picture'));
   const extra = cells.filter((c) => c !== picCell);

@@ -1,10 +1,5 @@
-// Vanilla port of Falkor's HeroScreen module — a centered hero (eyebrow/
-// title/body/CTAs) with a glowing product "screen" (video or image) below
-// it. Real content (checked directly against the live Sanity dataset,
-// 2026-09-08) always uses this centered/stacked shape, not a side-by-side
-// layout. Media authoring/decoration reuses the same picture-wrapped-in-
-// mp4-link convention as hero.js (see scripts/utils/media/video.js) rather than
-// inventing a second one; the glow treatment matches glow-reveal's.
+// Centered hero keeps text first, then the product screen below the content;
+// optional video is decorated with the shared video-behind-picture helper.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
 import { createElement, classifyCtaParagraphs, getCells } from '../../scripts/utils/dom.js';

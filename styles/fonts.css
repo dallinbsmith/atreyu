@@ -29,7 +29,6 @@
   src: local("Arial");
 }
 
-/* Web fonts */
 @font-face {
   font-family: FrameGothic;
   font-style: normal;
@@ -94,21 +93,8 @@
     U+FFFD;
 }
 
-/* Real production font — "PP Neue Machina Inktrap" (Pangram Pangram Foundry),
-   sourced directly from frame.io's own production CDN
-   (https://frame.io/_next/static/media/19874d4df76220a9-s.p.woff). Used here
-   under the same brand font license: this migration project is frame.io's
-   own intended successor site, and this specific use was explicitly
-   authorized by the user (2026-09-22) — this is NOT a default pattern to
-   repeat for other third-party/brand assets without the same explicit
-   authorization each time.
-   Single Regular (400) weight only, confirmed via fc-scan — no weight range
-   like FrameGothic/Montserrat above. Container is WOFF, not WOFF2 (confirmed
-   via `file`: "Web Open Font Format" magic bytes "wOFF", not "wOF2" — the
-   "version 2.0" `file` reports is the internal CFF table format, unrelated
-   to the WOFF/WOFF2 container distinction).
-   Full licensing/authorization record: see THIRD_PARTY_LICENSES.md at the
-   repo root — this comment is a summary, that file is the durable record. */
+/* Used with explicit user authorization; not a precedent for other brand
+   assets. Record: THIRD_PARTY_LICENSES.md. WOFF, weight 400 only. */
 @font-face {
   font-family: NeueMachinaInktrap;
   font-style: normal;

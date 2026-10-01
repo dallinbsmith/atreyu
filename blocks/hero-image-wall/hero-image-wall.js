@@ -1,8 +1,5 @@
-// Hero variant: a tiled wall of images behind foreground text content.
-// Cell-level classification (F-66): any cell containing a <picture> is a
-// wall tile; everything else is foreground text, mirroring hero.js.
-// No wireVideoModalLinks here (unlike hero.js's foreground) — this variant's
-// tiles are static images, not a video-modal trigger surface.
+// Foreground text stays in DOM order; wall images are decorative backdrop
+// content around it.
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { createElement, getCells, HEADING_SELECTOR } from '../../scripts/utils/dom.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';

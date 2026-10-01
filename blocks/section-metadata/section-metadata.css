@@ -154,7 +154,6 @@
       width: 100%;
     }
 
-    /* Pre-defined layouts */
     &.layout-bento {
       .block-content {
         --grid-container-width: 83.4%;
