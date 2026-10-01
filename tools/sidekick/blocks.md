@@ -112,9 +112,11 @@ The block reads `data-*` attributes from the section element. EDS sets them on t
 
 **Section-level experiments and audiences: tables only** (decided 2026-09-25, PLAN.md `pz-section-meta`). Personalize a section with a Personalize table placed in that section; its compiler builds the table the plugin reads, in the browser. Never write `Audience` or `Experiment` rows in Section Metadata. There is no section-level A/B test: an Experiment table always tests the whole page. The Experiments panel lists each section's Personalize table and warns when a page has one of the reserved keys.
 
-The block also exports `setColorScheme(section)` and `getColorScheme(section)`, which calculate whether a section background is light or dark (using relative luminance) and apply `light-scheme` or `dark-scheme` classes to child elements.
+After a colour background is applied, the block calls `setColorScheme(section)` from `scripts/utils/color-scheme.js`, which calculates whether the section background is light or dark (using relative luminance) and applies `light-scheme` or `dark-scheme` classes to child elements.
 
-**Dependencies**: `scripts/utils/media/picture.js` (`createPicture`) -- dynamically imported only when the background is an image URL.
+**Dependencies**:
+- `scripts/utils/color-scheme.js` (`setColorScheme`)
+- `scripts/utils/media/picture.js` (`createPicture`) -- dynamically imported only when the background is an image URL.
 
 **Example**:
 
@@ -161,7 +163,7 @@ The language selector lazy-loads a sub-fragment from `/system/fragments/nav/head
 **Dependencies**:
 - `scripts/ak.js` (`getConfig`)
 - `scripts/utils/fragment.js` (`loadFragmentWithFallback`)
-- `blocks/section-metadata/section-metadata.js` (`setColorScheme`)
+- `scripts/utils/color-scheme.js` (`setColorScheme`)
 
 **Example**:
 

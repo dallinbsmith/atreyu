@@ -7,10 +7,10 @@ change, say so rather than deleting it — that's still useful signal.
 
 What's already automated (you don't need to manually check these — CI/lint
 does): duplicate locale/env config, block CSS not wrapped in `@layer blocks`,
-blocks importing from scripts/utils/ in the wrong direction, a block file over
-the 200-line backstop (blank lines and comments not counted), ESLint/Stylelint
-rules generally. Everything below this line is NOT currently automated — it
-depends on you actually checking.
+scripts/utils/ importing from blocks/ (the wrong direction), a block importing
+another block's files, a block file over the 200-line backstop (blank lines and
+comments not counted), ESLint/Stylelint rules generally. Everything below this
+line is NOT currently automated — it depends on you actually checking.
 -->
 
 ## What changed and why
