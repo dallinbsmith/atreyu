@@ -27,7 +27,7 @@ const loadSidekick = async () => {
 // against the fresh, undecorated nodes — exactly like header already does via
 // postlcp.js's real, re-invokable default export. Pulled out into a real
 // default export here so ak.js's loadArea() can call it the same way on every
-// run, not just the first. SEO injection (jsonld.js/hreflang.js/canonical.js)
+// run, not just the first. SEO injection (jsonld.js/hreflang.js)
 // deliberately stays in the one-shot IIFE below: jsonld.js's module-scope
 // `graph` array only ever appends (see jsonld.js), so re-running it here
 // would duplicate JSON-LD entries rather than refresh them — a separate,
@@ -65,7 +65,8 @@ export default async () => {
   import('./utils/page/favicon.js');
   import('./utils/seo/jsonld.js').then(({ default: jsonld }) => jsonld()).catch((ex) => log(ex));
   import('./utils/seo/hreflang.js').then(({ default: hreflang }) => hreflang()).catch((ex) => log(ex));
-  import('./utils/seo/canonical.js').then(({ default: canonical }) => canonical()).catch((ex) => log(ex));
+  // No client canonical: EDS renders a self-referencing one server-side
+  // (x-forwarded-host behind the Worker, or the Canonical metadata override).
   import('./utils/analytics/delegated-click.js');
 
   setTimeout(() => import('./delayed.js'), 3000);
