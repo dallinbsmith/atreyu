@@ -26,7 +26,7 @@ import ENV from '../env.js';
 import { statusOf, toClassName, VARIANT_ROOT } from './config.js';
 import { cellValue } from './block.js';
 import { withCampaigns } from './audiences.js';
-import { findConfigBlocks, removeConfigBlock } from './guard.js';
+import { findConfigBlocks, isPluginKey, removeConfigBlock } from './guard.js';
 import { DATE_ONLY } from '../date-only.js';
 
 export const MAX_RULES = 3;
@@ -38,7 +38,7 @@ const warn = (quiet, table, message) => {
   if (!quiet) console.warn(`Personalize table: ${table.name || 'unnamed'}: ${message}`);
 };
 
-const isAudienceKey = (key) => key === 'audience' || key.startsWith('audience-');
+const isAudienceKey = (key) => isPluginKey(key, ['audience']);
 
 // First link (several would reach the plugin as an array), else the first
 // non-blank paragraph (trim() also strips &nbsp;), else the cell. Pathname

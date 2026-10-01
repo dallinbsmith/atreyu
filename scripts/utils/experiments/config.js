@@ -6,14 +6,6 @@ import locales from '../../locales.js';
 
 export const ACTIVE = ['active', 'on', 'true'];
 const KNOWN_STATUS = [...ACTIVE, 'inactive', 'off', 'false'];
-const SECTION_IGNORED_FIELDS = new Map([
-  ['start-date', 'Start Date'],
-  ['end-date', 'End Date'],
-  ['requires-consent', 'Requires Consent'],
-  ['variant-name', 'Variant Name'],
-  ['variant-names', 'Variant Names'],
-  ['optimizing-target', 'Optimizing Target'],
-]);
 
 // Variant pages live here. The production Worker serves them only to the
 // plugin's fetch and 404s direct visits (workers/website/handlers/variants.js,
@@ -54,13 +46,6 @@ const toProps = (meta) => Object.entries(meta).reduce((props, [rawKey, value]) =
   return props;
 }, {});
 
-const sectionIgnoredFields = (meta) => [...new Set(Object.keys(meta)
-  .map((rawKey) => toClassName(rawKey))
-  .filter((key) => key.startsWith('experiment-'))
-  .map((key) => key.slice('experiment-'.length))
-  .filter((key) => SECTION_IGNORED_FIELDS.has(key))
-  .map((key) => SECTION_IGNORED_FIELDS.get(key)))];
-
 const toPath = (page, pagePath) => {
   try {
     return new URL(page, `https://placeholder${pagePath}`).pathname;
@@ -73,7 +58,7 @@ const toDate = (value) => (value ? new Date(value) : null);
 
 // `meta` maps raw metadata keys ("Experiment Variants", "experiment-variants")
 // to values (string or string[]).
-export const readExperiment = (meta, pagePath = '/', { scope = 'page' } = {}) => {
+export const readExperiment = (meta, pagePath = '/') => {
   const props = toProps(meta);
   const id = toClassName(Array.isArray(props.value) ? props.value[0] : props.value);
   if (!id) return null;
@@ -86,8 +71,7 @@ export const readExperiment = (meta, pagePath = '/', { scope = 'page' } = {}) =>
   const shares = props.split
     ? pages.map((_, i) => splits[i] ?? 0)
     : pages.map(() => 100 / (pages.length + 1));
-  const ignoredAtSection = scope === 'section' ? sectionIgnoredFields(meta) : [];
-  const labels = (scope === 'section' ? [props.name] : [props.name, props.variantNames, props.variantName])
+  const labels = [props.name, props.variantNames, props.variantName]
     .map(toList)
     .find((l) => l.length) ?? [];
   const challengers = pages.map((path, i) => ({
@@ -100,11 +84,10 @@ export const readExperiment = (meta, pagePath = '/', { scope = 'page' } = {}) =>
     label: props.label || `Experiment ${props.value}`,
     status: props.status || 'active',
     audiences: toList(props.audiences ?? props.audience).map(toClassName),
-    startDate: scope === 'section' ? null : toDate(props.startDate),
-    endDate: scope === 'section' ? null : toDate(props.endDate),
+    startDate: toDate(props.startDate),
+    endDate: toDate(props.endDate),
     variants: [{ name: 'control', label: 'Control', path: pagePath, split: 100 - taken }, ...challengers],
     splitCount: props.split ? splits.length : null,
-    ignoredAtSection,
   };
 };
 
@@ -127,14 +110,10 @@ const splitIssues = (cfg, add) => {
   if (control.split < 0) add('error', 'Splits add up to more than 100%.');
 };
 
-export const validate = (cfg, { audiences = [], variantRoot, scope = 'page' } = {}) => {
+export const validate = (cfg, { audiences = [], variantRoot } = {}) => {
   const issues = [];
   const add = (level, message) => issues.push({ level, message });
   const [control, ...challengers] = cfg.variants;
-  const ignoredAtSection = scope === 'section' ? [...(cfg.ignoredAtSection ?? [])].sort() : [];
-  for (const field of ignoredAtSection) {
-    add('warn', `${field} is ignored by plugin at section scope.`);
-  }
   if (!challengers.length) add('error', 'No variants: set Experiment Variants.');
   splitIssues(cfg, add);
   if (challengers.some((v) => v.path === control.path)) add('warn', 'A variant points at the control page itself.');

@@ -5,6 +5,7 @@ import {
   findConfigBlocks,
   removeConfigBlock,
   removeLeftoverConfigBlocks,
+  stripPluginSectionMeta,
   withVariantTimeout,
 } from '../../../scripts/utils/experiments/guard.js';
 
@@ -354,6 +355,39 @@ describe('scripts/utils/experiments/guard.js', () => {
     expect(section.querySelectorAll('.section-metadata')).to.have.length(1);
     expect(section.textContent).to.contain('light');
     expect(section.textContent).not.to.contain('dark');
+  });
+
+  const rows = (keys) => keys.map((k) => `<div><div>${k}</div><div>v</div></div>`).join('');
+  const keysOf = (meta) => [...meta.children].map((row) => row.children[0].textContent);
+
+  it('strips every key the plugin reads at section scope, keeps the rest', () => {
+    document.body.innerHTML = `<main><div><p>Hi</p><div class="section-metadata">${rows([
+      'Style', 'Experiment', 'Experiment Variants', ' experiment-split ', 'Audience', 'Audience: Mobile',
+      'Campaign: Launch', 'campaign', 'Anchor', 'Audiences', 'Experiments', 'Campaigns', 'Variant', 'Layout',
+    ])}</div></div></main>`;
+    stripPluginSectionMeta(document.querySelector('main'));
+    expect(keysOf(document.querySelector('.section-metadata')))
+      .to.deep.equal(['Style', 'Anchor', 'Audiences', 'Experiments', 'Campaigns', 'Variant', 'Layout']);
+  });
+
+  it('removes a section-metadata table it empties, but keeps the section', () => {
+    document.body.innerHTML = `<main><div><p>Hi</p><div class="section-metadata">${rows([
+      'Experiment', 'Audience: mobile',
+    ])}</div></div><div><div class="section-metadata">${rows(['Style'])}</div></div></main>`;
+    stripPluginSectionMeta(document.querySelector('main'));
+    const sections = document.querySelectorAll('main > div');
+    expect(sections).to.have.length(2);
+    expect(sections[0].querySelector('.section-metadata')).to.equal(null);
+    expect(sections[0].textContent).to.equal('Hi');
+    expect(keysOf(sections[1].querySelector('.section-metadata'))).to.deep.equal(['Style']);
+  });
+
+  it('strip is a no-op without main or section metadata (.page/.live)', () => {
+    document.body.innerHTML = '<main><div data-audience="Mobile"><p>Hi</p></div></main>';
+    const before = document.body.innerHTML;
+    stripPluginSectionMeta(document.querySelector('main'));
+    stripPluginSectionMeta(null);
+    expect(document.body.innerHTML).to.equal(before);
   });
 
   it('removes leftover config blocks and any section they leave empty', () => {

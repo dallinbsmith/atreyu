@@ -1,4 +1,4 @@
-import { isVariantPath } from './config.js';
+import { isVariantPath, toClassName } from './config.js';
 
 let activeGuard;
 
@@ -95,6 +95,21 @@ export const carryOverSectionMeta = (main = document.querySelector('main')) => {
       }
     }
   };
+};
+
+// Keys (toClassName'd) the plugin reads in Section Metadata. .page/.live
+// flatten authored rows to data-*, so the plugin never sees them; strip them
+// from raw DA markup (Quick Edit, dapreview) to match (PLAN pz-section-meta).
+export const isPluginKey = (key, prefixes = ['experiment', 'audience', 'campaign']) => prefixes
+  .some((p) => key === p || key.startsWith(`${p}-`));
+
+export const stripPluginSectionMeta = (main = document.querySelector('main')) => {
+  for (const meta of main?.querySelectorAll('.section-metadata') ?? []) {
+    for (const row of [...meta.children]) {
+      if (isPluginKey(toClassName(row.children[0]?.textContent))) row.remove();
+    }
+    if (!meta.children.length) meta.remove();
+  }
 };
 
 const hasAuthoredContent = (section) => [...section.children]
