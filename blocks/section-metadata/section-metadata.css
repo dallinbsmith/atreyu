@@ -103,7 +103,8 @@
 
     /* `Container: N` = N sixths of the content area, centred, at every
        viewport: 2 = 4 of 12 columns, 4 = 8, 6 = all 12. Any other value
-       keeps the default width. `--grid-column-width` is declared on `:root`
+       keeps the default width. Sizes must match CONTAINER_SIZES in
+       section-metadata.js. `--grid-column-width` is declared on `:root`
        as an unresolved calc (1/12 of 83.4%, or of 1120px from 1440px up).
        Only the var() is substituted here; the % in it resolves against the
        section where it is used, like the default `.default-content` width. */
