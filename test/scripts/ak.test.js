@@ -109,6 +109,44 @@ describe('ak.js decorateButton — data-testid on markdown-emphasis buttons', ()
   });
 });
 
+describe('ak.js decorateLink — same-site hostnames match exactly', () => {
+  const link = (href, prefix = '') => {
+    const a = document.createElement('a');
+    a.href = href;
+    decorateLink({
+      hostnames: ['frame.io', 'www.frame.io'],
+      linkBlocks: [],
+      locales: { '': {}, '/ja-jp': {} },
+      locale: { prefix },
+      log: () => {},
+    }, a);
+    return a.getAttribute('href');
+  };
+
+  it('relativizes frame.io and www.frame.io links', () => {
+    expect(link('https://frame.io/pricing')).to.equal('/pricing');
+    expect(link('https://www.frame.io/pricing')).to.equal('/pricing');
+  });
+
+  // localizeUrl rebuilds from the original origin, so the result is absolute
+  // again (todo localize-abs-prod-url). Pinned so fixing that flips this test.
+  it('localizes a relativized frame.io link on a locale page', () => {
+    expect(link('https://frame.io/pricing', '/ja-jp')).to.equal('https://frame.io/ja-jp/pricing');
+  });
+
+  it('keeps app/accounts.frame.io absolute and unlocalized, on any locale', () => {
+    for (const prefix of ['', '/ja-jp']) {
+      expect(link('https://app.frame.io/', prefix)).to.equal('https://app.frame.io/');
+      expect(link('https://accounts.frame.io/welcome/?signup_as_v4_account=true', prefix))
+        .to.equal('https://accounts.frame.io/welcome/?signup_as_v4_account=true');
+    }
+  });
+
+  it('does not match a lookalike host', () => {
+    expect(link('https://evilframe.io/x', '/ja-jp')).to.equal('https://evilframe.io/x');
+  });
+});
+
 describe('ak.js slugifyUnique — extracted, shared doc-wide de-dup slugifier', () => {
   // Extracted from decorateSection()'s `anchor` branch (real second consumer:
   // header-subcategories.js's decorateSubcategories()) — the anchor tests

@@ -42,9 +42,10 @@ describe('fragment', () => {
       meta.content = '/ja-jp';
       document.head.append(meta);
       setConfig({
-        components: [], hostnames: [], linkBlocks: [], log: () => {}, locales: { '/ja-jp': {} },
+        components: [], hostnames: [], linkBlocks: [], log: () => {}, locales: { '/ja-jp': {}, '/de-de': {} },
       });
     });
+    after(() => document.head.querySelector('meta[name="locale"]')?.remove());
 
     it('normal decoration: fetches the locale-prefixed path and replaces the anchor with fragment content', async () => {
       const requested = [];
@@ -57,6 +58,39 @@ describe('fragment', () => {
       expect(requested[0]).to.include('/ja-jp/system/fragments/foo');
       expect(document.body.textContent).to.include('Hello');
       expect(document.body.contains(a)).to.be.false;
+    });
+
+    it('an already-localized anchor is not prefixed twice: locale path, then root', async () => {
+      const requested = [];
+      restoreFetch = stubFetch(async (url) => {
+        requested.push(url);
+        return new Response('not found', { status: 404 });
+      });
+      await decorate(block('/ja-jp/system/fragments/nav/header/features'));
+      expect(requested).to.deep.equal([
+        '/ja-jp/system/fragments/nav/header/features',
+        '/system/fragments/nav/header/features',
+      ]);
+    });
+
+    it('only strips the prefix at a path boundary', async () => {
+      const requested = [];
+      restoreFetch = stubFetch(async (url) => {
+        requested.push(url);
+        return new Response('not found', { status: 404 });
+      });
+      await decorate(block('/ja-jpx/system/fragments/a'));
+      expect(requested).to.deep.equal(['/ja-jp/ja-jpx/system/fragments/a', '/ja-jpx/system/fragments/a']);
+    });
+
+    it('uses a path under another locale as-is', async () => {
+      const requested = [];
+      restoreFetch = stubFetch(async (url) => {
+        requested.push(url);
+        return new Response('not found', { status: 404 });
+      });
+      await decorate(block('/de-de/system/fragments/a'));
+      expect(requested).to.deep.equal(['/de-de/system/fragments/a']);
     });
 
     it('locale fallback: falls back to the root path when the locale-prefixed path 404s', async () => {
@@ -137,6 +171,25 @@ describe('fragment', () => {
       await decorate(a);
       expect(logged).to.include('Fragment anchor detached: /system/fragments/orphan');
       expect(document.body.textContent).to.not.include('Orphan');
+    });
+  });
+
+  describe('without a locale prefix', () => {
+    before(() => {
+      document.head.querySelector('meta[name="locale"]')?.remove();
+      setConfig({
+        components: [], hostnames: [], linkBlocks: [], log: () => {}, locales: { '': {}, '/ja-jp': {} },
+      });
+    });
+
+    it('requests the root path once', async () => {
+      const requested = [];
+      restoreFetch = stubFetch(async (url) => {
+        requested.push(url);
+        return new Response('not found', { status: 404 });
+      });
+      await decorate(block('/system/fragments/nav/header/features'));
+      expect(requested).to.deep.equal(['/system/fragments/nav/header/features']);
     });
   });
 });

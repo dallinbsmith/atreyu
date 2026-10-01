@@ -275,7 +275,7 @@ const decorateHash = (a, url) => {
 export const decorateLink = (config, a) => {
   try {
     const url = new URL(a.href);
-    const hostMatch = config.hostnames.some((host) => url.hostname.endsWith(host));
+    const hostMatch = config.hostnames.includes(url.hostname);
     if (hostMatch) a.href = a.href.replace(url.origin, '');
 
     const isRelative = a.getAttribute('href').startsWith('/');

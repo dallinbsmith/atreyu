@@ -6,10 +6,10 @@ import locales from './locales.js';
 import { isAuthoringPreviewAllowed } from './utils/security/preview-origin.js';
 
 // frame.io is the canonical production host (ARCHITECTURE-DECISIONS.md); www.frame.io
-// permanently redirects to it. Deliberately excludes blog/app/accounts.frame.io and
-// other real subdomains — those are separate platforms (DA-CONTENT-STRUCTURE.md) and
-// must stay absolute links, not get relativized as if they were this site.
-const hostnames = ['frame.io'];
+// permanently redirects to it, so it is this site too. ak.js matches hostnames exactly:
+// blog/app/accounts.frame.io and other real subdomains are separate platforms
+// (DA-CONTENT-STRUCTURE.md) and must stay absolute links, not get relativized.
+const hostnames = ['frame.io', 'www.frame.io'];
 
 const linkBlocks = [
   { fragment: '/system/fragments/' },
