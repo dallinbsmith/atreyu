@@ -1,4 +1,4 @@
-import { getPlaceholder } from '../../scripts/utils/placeholders.js';
+import { getPlaceholder, fillPlaceholder } from '../../scripts/utils/placeholders.js';
 
 // Every user-facing string this block needs, resolved once via a single
 // Promise.all and handed to form.js — which passes the result down into
@@ -32,12 +32,12 @@ export const getMessages = async () => {
     successMsg,
     sendingText,
     errorMsg,
-    selectPlaceholder: (label) => selectPlaceholderTpl.replace('{label}', label),
+    selectPlaceholder: (label) => fillPlaceholder(selectPlaceholderTpl, { label }),
     required: requiredMsg,
     requiredCheckbox: requiredCheckboxMsg,
     invalidEmail: invalidEmailMsg,
     invalidValue: invalidValueMsg,
     patternMismatch: patternMismatchMsg,
-    tooShort: (min) => tooShortTpl.replace('{min}', min),
+    tooShort: (min) => fillPlaceholder(tooShortTpl, { min }),
   };
 };

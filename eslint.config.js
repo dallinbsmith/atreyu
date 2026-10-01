@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
 import preferArrow from 'eslint-plugin-prefer-arrow-functions';
@@ -7,6 +8,10 @@ import noUnsanitized from 'eslint-plugin-no-unsanitized';
 import sonarjs from 'eslint-plugin-sonarjs';
 import { recommended, source, test } from '@adobe/eslint-config-helix';
 import configDrift from './tools/eslint-rules/config-drift.js';
+
+const BLOCK_DIRS = readdirSync(new URL('./blocks', import.meta.url), { withFileTypes: true })
+  .filter((d) => d.isDirectory())
+  .map((d) => d.name);
 
 export default defineConfig([
   globalIgnores([
@@ -71,7 +76,21 @@ export default defineConfig([
           target: './scripts/utils',
           from: './blocks',
           message: 'scripts/utils/ must not import from blocks/ — dependency flows one direction: blocks -> utils (see .claude/rules/scripts.md).',
-        }],
+        },
+        // blocks.md Structure: a block's files are private to its own
+        // directory. One zone per block, derived from blocks/ itself rather
+        // than a hand-kept list, so a new block is covered on creation.
+        // Resolved paths, so `./x.js` and nested `../x.js` inside the block
+        // stay allowed. No allow-list: the last cross-block import
+        // (header-actions -> section-metadata setColorScheme) moved to
+        // scripts/utils/color-scheme.js. Add any future exception here as an
+        // explicit `except` entry with a comment saying why.
+        ...BLOCK_DIRS.map((name) => ({
+          target: `./blocks/${name}`,
+          from: './blocks',
+          except: [`./${name}`],
+          message: 'Blocks must not import another block\'s files — move shared code to scripts/utils/ (see .claude/rules/blocks.md Structure).',
+        }))],
       }],
 
       indent: ['error', 2, {

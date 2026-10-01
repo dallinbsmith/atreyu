@@ -55,6 +55,14 @@ describe('form', () => {
     expect(el.querySelector('input[type="email"]')).to.exist;
   });
 
+  it('select placeholder inserts an author label containing $-patterns literally', async () => {
+    // A string replacer would expand `$&` into the matched `{label}` token.
+    const label = "Q&A $& $` $' $$";
+    const el = block('/api/submit', [[label, 'select', 'One, Two']]);
+    await decorate(el);
+    expect(el.querySelector('select option').textContent).to.equal(`Select ${label}`);
+  });
+
   it('defaults submit button text to "Submit" with no override row', async () => {
     const el = block('/api/submit', [['Email', 'email']]);
     await decorate(el);

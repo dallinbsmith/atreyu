@@ -1,3 +1,4 @@
+import { fillPlaceholder } from '../../scripts/utils/placeholders.js';
 import { announce } from '../../scripts/utils/a11y.js';
 import { createElement } from '../../scripts/utils/dom.js';
 import {
@@ -24,10 +25,11 @@ export const initTileModal = (items, labels) => {
     nameEl.textContent = item.name;
     detailEl.textContent = item.detail;
     linkEl.href = item.href;
-    linkEl.textContent = item.linkText || labels.visit.replace('{name}', () => item.name);
+    linkEl.textContent = item.linkText || fillPlaceholder(labels.visit, { name: item.name });
     linkEl.hidden = !item.href;
-    counterEl.textContent = labels.counter
-      .replace('{current}', current + 1).replace('{total}', items.length);
+    counterEl.textContent = fillPlaceholder(labels.counter, {
+      current: current + 1, total: items.length,
+    });
     prevBtn.disabled = current === 0;
     nextBtn.disabled = current === items.length - 1;
   };
@@ -69,9 +71,8 @@ export const initTileModal = (items, labels) => {
     triggerEl = trigger;
     setSlide(index);
     releaseFocus = openModal(modal, '.tt-modal-close');
-    announce(labels.opened
-      .replace('{name}', () => items[index].name)
-      .replace('{current}', index + 1)
-      .replace('{total}', items.length));
+    announce(fillPlaceholder(labels.opened, {
+      name: items[index].name, current: index + 1, total: items.length,
+    }));
   };
 };
