@@ -63,6 +63,53 @@ describe('fetchData', () => {
     expect(fetchCalls.length).to.equal(1);
   });
 
+  it('keeps a 404 cached — a sequential second call does not refetch', async () => {
+    mockFetch({ ok: false, status: 404 });
+
+    const url = 'https://example.com/data-404-cached.json';
+    expect(await fetchData(url)).to.be.null;
+    expect(await fetchData(url)).to.be.null;
+    expect(fetchCalls.length).to.equal(1);
+  });
+
+  it('keeps a 410 cached like a 404', async () => {
+    mockFetch({ ok: false, status: 410 });
+
+    const url = 'https://example.com/data-410-cached.json';
+    expect(await fetchData(url)).to.be.null;
+    expect(await fetchData(url)).to.be.null;
+    expect(fetchCalls.length).to.equal(1);
+  });
+
+  it('retries a 500 on a sequential second call', async () => {
+    mockFetch({ ok: false, status: 500 });
+
+    const url = 'https://example.com/data-500-retry.json';
+    expect(await fetchData(url)).to.be.null;
+    expect(await fetchData(url)).to.be.null;
+    expect(fetchCalls.length).to.equal(2);
+  });
+
+  it('retries a network error on a sequential second call, and recovers', async () => {
+    mockFetchReject(new Error('Network failure'));
+
+    const url = 'https://example.com/data-network-retry.json';
+    expect(await fetchData(url)).to.be.null;
+    const payload = { data: [{ recovered: true }] };
+    mockFetch({ ok: true, json: () => Promise.resolve(payload) });
+    expect(await fetchData(url)).to.deep.equal(payload);
+    expect(fetchCalls.length).to.equal(2);
+  });
+
+  it('shares one request between concurrent callers, including on failure', async () => {
+    mockFetch({ ok: false, status: 500 });
+
+    const url = 'https://example.com/data-concurrent.json';
+    const results = await Promise.all([fetchData(url), fetchData(url), fetchData(url)]);
+    expect(results).to.deep.equal([null, null, null]);
+    expect(fetchCalls.length).to.equal(1);
+  });
+
   it('handles sheet option as a string', async () => {
     const payload = { data: [] };
     mockFetch({ ok: true, json: () => Promise.resolve(payload) });

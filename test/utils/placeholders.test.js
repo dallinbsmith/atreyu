@@ -70,6 +70,7 @@ describe('getPlaceholder', () => {
     console.warn = (msg) => warnings.push(msg);
     window.fetch = (url) => {
       calls.push(url);
+      if (url.endsWith('/flaky.json')) return Promise.resolve(new Response('', { status: 503 }));
       return Promise.resolve(sheets[url]
         ? new Response(JSON.stringify({ data: sheets[url] }))
         : new Response('', { status: 404 }));
@@ -120,10 +121,18 @@ describe('getPlaceholder', () => {
     expect(calls).to.deep.equal(['/system/placeholders/controls.json']);
   });
 
-  it('does not cache a failed fetch', async () => {
-    await getPlaceholder('nav.main', 'Main');
-    await getPlaceholder('nav.main', 'Main');
-    expect(count('/system/placeholders/nav.json')).to.equal(2);
+  it('does not cache a transient failure', async () => {
+    await getPlaceholder('flaky.main', 'Main');
+    await getPlaceholder('flaky.main', 'Main');
+    expect(count('/system/placeholders/flaky.json')).to.equal(2);
+  });
+
+  it('fetches a missing (404) sheet once across staggered calls', async () => {
+    setLocale('/ja-jp');
+    expect(await getPlaceholder('pricing.monthly', 'Monthly')).to.equal('Monthly');
+    expect(await getPlaceholder('pricing.yearly', 'Yearly')).to.equal('Yearly');
+    expect(await getPlaceholder('pricing.monthly', 'Monthly')).to.equal('Monthly');
+    expect(count('/ja-jp/system/placeholders/pricing.json')).to.equal(1);
   });
 
   it('falls back on a blank row or a missing key', async () => {

@@ -20,7 +20,7 @@ line is NOT currently automated — it depends on you actually checking.
 ## Checklist
 
 ### Caching & async correctness
-- [ ] No cache stores a failed/empty/null result indistinguishably from a real success. (Found 3 times independently — `fetch-data.js`, `icons.js`, `placeholders.js` — before all three were fixed to delete/skip the cache entry on failure so a later call retries.)
+- [ ] No cache stores a failed/empty/null result indistinguishably from a real success. (Found 3 times independently — `fetch-data.js`, `icons.js`, `placeholders.js` — before all three were fixed to delete/skip the cache entry on a transient failure so a later call retries. A definitive 404/410 is deliberately kept as a cached `null` in `fetch-data.js`, which is still distinguishable from data.)
 - [ ] Every new `fetch()` has a timeout (`AbortSignal.timeout()` in browser code; a manual `AbortController` + `clearTimeout` in Worker code specifically, per `workers/website/handlers/aem.js`/`redirects.js` — Worker instances are more resource-constrained, so early cancellation matters there in a way it doesn't in a browser tab) and a defined fail-open/fail-closed behavior, not an unbounded wait.
 - [ ] No Worker code reads or writes visitor-specific data (IP, resolved segment, cookie value) to a module-level binding — Cloudflare reuses Worker instances across requests from different visitors. Shared *config* caches (like `redirects.js`'s TTL cache) are fine; visitor data is not.
 

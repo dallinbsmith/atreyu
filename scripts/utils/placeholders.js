@@ -19,8 +19,9 @@ export const getPlaceholders = async (ns) => {
     (json?.data ?? []).map(({ Key, Text }) => [Key.toLowerCase(), Text]),
   );
   // Only cache on an actual successful fetch — caching the empty map produced by
-  // a failed/transient fetchData() call would permanently mask every placeholder
-  // lookup for this sheet, even though fetchData()'s own cache allows a retry.
+  // a transient fetchData() failure would mask every lookup for this sheet even
+  // though fetchData() evicts it for a retry. A 404 (sheet absent for this
+  // locale) needs no entry here: fetchData() keeps that null cached itself.
   if (json) cache.set(url, map);
   return map;
 };
