@@ -66,10 +66,15 @@ const handleBackground = async (background, section) => {
 // `Style: container`.
 const BASE_CLASS_TYPES = new Set(['grid', 'container']);
 
+// Container sizes the CSS defines. Any other value (`3`, a typo) adds no
+// class: a bare `.container` would cap full-bleed blocks for nothing.
+const ALLOWED_VALUES = new Map([['container', new Set(['2', '4', '6'])]]);
+
 const handleLayout = (value, section, type) => {
   delete section.dataset[type];
   const name = toClassName(value);
   if (!name || name === '0') return;
+  if (ALLOWED_VALUES.has(type) && !ALLOWED_VALUES.get(type).has(name)) return;
   if (BASE_CLASS_TYPES.has(type)) section.classList.add(type);
   section.classList.add(`${type}-${name}`);
 };
