@@ -1,6 +1,6 @@
 import { getConfig } from '../../scripts/ak.js';
 import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
-import { setColorScheme } from '../section-metadata/section-metadata.js';
+import { setColorScheme } from '../../scripts/utils/color-scheme.js';
 import { createElement } from '../../scripts/utils/dom.js';
 import { getPlaceholder } from '../../scripts/utils/placeholders.js';
 import { toggleMenu, openMobileNav, closeMobileNav } from './header-menu-state.js';
