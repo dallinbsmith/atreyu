@@ -291,3 +291,18 @@ test('dasc still forwards if-none-match and passes a 304 through with its valida
   assert.equal(resp.status, 304);
   assert.equal(resp.headers.get('etag'), '"list-v1"');
 });
+
+// fh-arch7 #4: with the client canonical gone (#158), EDS builds the canonical
+// (and og:url) from x-forwarded-host, so it must carry the visitor's host.
+test('EDS requests carry x-forwarded-host from the incoming host', async (t) => {
+  const seen = [];
+  t.mock.method(globalThis, 'fetch', async (input) => {
+    if (input instanceof Request && new URL(input.url).pathname !== '/redirects.json') seen.push(input);
+    return new Response('ok', { headers: { 'content-type': 'text/plain' } });
+  });
+  await worker.fetch(new Request('https://frame.io/blog', { headers: { host: 'frame.io' } }), ENV);
+  const req = seen.at(-1);
+  assert.equal(new URL(req.url).hostname, 'main--atreyu--dallinbsmith.aem.live');
+  assert.equal(req.headers.get('x-forwarded-host'), 'frame.io');
+  assert.equal(req.headers.get('x-byo-cdn-type'), 'cloudflare');
+});
