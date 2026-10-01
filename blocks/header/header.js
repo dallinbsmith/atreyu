@@ -1,4 +1,3 @@
-import { getConfig } from '../../scripts/ak.js';
 import { loadFragmentWithFallback } from '../../scripts/utils/fragment.js';
 import { createElement } from '../../scripts/utils/dom.js';
 import { decorateNavSection } from './header-nav.js';
@@ -83,8 +82,7 @@ const decorateHeaderContent = async (fragment) => {
 export default async (el) => {
   if (!guardDecorate(el, 'headerDecorated')) return;
 
-  const { locale } = getConfig();
-  const fragment = await loadFragmentWithFallback([`${locale.prefix}${HEADER_PATH}`, HEADER_PATH]);
+  const fragment = await loadFragmentWithFallback(HEADER_PATH);
   fragment.classList.add('header-content');
   await decorateHeaderContent(fragment);
   el.append(fragment);

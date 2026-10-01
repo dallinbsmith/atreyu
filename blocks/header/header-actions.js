@@ -23,11 +23,7 @@ const decorateLanguage = (btn) => {
     if (!section) return;
     let menu = section.querySelector('.language.menu');
     if (!menu) {
-      const { locale } = getConfig();
-      pending ??= loadFragmentWithFallback([
-        `${locale.prefix}${HEADER_PATH}/languages`,
-        `${HEADER_PATH}/languages`,
-      ]);
+      pending ??= loadFragmentWithFallback(`${HEADER_PATH}/languages`);
       let fragment;
       try { fragment = await pending; } catch (ex) {
         pending = null;

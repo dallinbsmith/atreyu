@@ -1,4 +1,4 @@
-import { loadArea } from '../ak.js';
+import { getConfig, loadArea } from '../ak.js';
 
 const replaceDotMedia = (path, doc) => {
   const resetAttributeBase = (tag, attr) => {
@@ -33,33 +33,50 @@ export const loadFragment = async (path) => {
   fragment.append(...sections);
 
   const container = applyPageStyles(fragment);
-
-  await loadArea({ area: fragment });
-
-  fragment.remove();
-  container.remove();
+  try {
+    await loadArea({ area: fragment });
+  } finally {
+    fragment.remove();
+    container.remove();
+  }
 
   return fragment;
 };
 
-// Bug-squash fix, 2026-08-28: header/footer request a locale-prefixed nav
-// fragment (e.g. /ja-jp/system/fragments/nav/header), but only the root,
-// unprefixed fragments are actually authored in DA — loadFragment() throws
-// on the 404 with nothing upstream to catch it, so the one real translated
-// page (/ja-jp/features/c2c.html) currently has no working nav at all. Tries
-// each path in order, falling back to the next on failure; throws only if
-// every path fails, same failure mode loadFragment() already has today.
-export const loadFragmentWithFallback = async (paths) => {
-  for (const path of paths) {
+// The one locale → root fallback rule for every fragment surface (header,
+// footer, language menu, fragment block, schedule): the current locale's copy
+// first, then the root copy, since most fragments are only authored at root.
+// The current locale prefix is stripped first (ak.js decorateLink has usually
+// localized the href already) on a path boundary, so /ja-jpx is not /ja-jp.
+// A path under another locale (authored on purpose) or an absolute/off-site
+// URL is used as-is (the same skip rules as ak.js localizeUrl; keep them in
+// sync). Root locale: just [path].
+export const localeCandidates = (path) => {
+  const { locale: { prefix }, locales = {} } = getConfig();
+  const bare = prefix && path.startsWith(`${prefix}/`) ? path.slice(prefix.length) : path;
+  const sitePath = bare.startsWith('/') && !bare.startsWith('//');
+  const otherLocale = Object.keys(locales).some((key) => key && bare.startsWith(`${key}/`));
+  return sitePath && !otherLocale ? [...new Set([`${prefix}${bare}`, bare])] : [bare];
+};
+
+// Bug-squash fix, 2026-08-28: only the root, unprefixed nav fragments are
+// actually authored in DA, and loadFragment() throws on the locale 404 with
+// nothing upstream to catch it. Tries each localeCandidates(path) in order,
+// falling back to the next on failure; throws only if every path fails, with
+// each candidate's error as a cause.
+export const loadFragmentWithFallback = async (path) => {
+  const paths = localeCandidates(path);
+  const errors = [];
+  for (const candidate of paths) {
     try {
       // eslint-disable-next-line no-await-in-loop -- fallback paths are tried
       // in order, only as needed; not a parallelizable batch of independent work.
-      return await loadFragment(path);
-    } catch {
-      // try the next path
+      return await loadFragment(candidate);
+    } catch (ex) {
+      errors.push(ex);
     }
   }
-  throw Error(`Couldn't fetch any of: ${paths.join(', ')}`);
+  throw new AggregateError(errors, `Couldn't fetch any of: ${paths.join(', ')}`);
 };
 
 export const getReplaceEl = (a) => {
