@@ -10,7 +10,11 @@
 const ORIGIN_FETCH_TIMEOUT_MS = 10_000;
 
 export const fetchFromExistingOrigin = async ({ url, env, request }) => {
-  const originUrl = new URL(`${url.pathname}${url.search}`, `https://${env.LEGACY_ORIGIN}`);
+  // Assign the path rather than resolving it: as a relative URL, '//evil.com/'
+  // or '/\\evil.com/' would replace the host (SSRF, content served as frame.io).
+  const originUrl = new URL(`https://${env.LEGACY_ORIGIN}`);
+  originUrl.pathname = url.pathname;
+  originUrl.search = url.search;
   const req = new Request(originUrl, request);
   // Host is a forbidden header name under Fetch's request guard, so this may no-op;
   // the actual outbound Host is determined by originUrl's hostname above.
