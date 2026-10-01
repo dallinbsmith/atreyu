@@ -1,4 +1,4 @@
-// B6b (locale-i18n-plan.md): checks whether a migrated locale page's path
+// Redirect continuity (docs/architecture/locale.md): checks whether a migrated locale page's path
 // actually needs a redirect, instead of assuming it does or building a
 // speculative redirect map. Reasoning behind this file, not just what it
 // does: the existing Worker-side redirect system

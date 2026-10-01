@@ -24,7 +24,7 @@ export default (el) => {
   // than one column (children of rows are cells), so a row that pairs the
   // picture cell with a sibling text cell must not sweep that sibling cell
   // away along with the picture. Mirrors hero.js's cells/bgCell/contentCells
-  // pattern (see F-66 in eds-poc-findings.md).
+  // pattern (see docs/conventions/blocks.md Row Classification).
   const cells = getCells(el);
   const picCell = cells.find((c) => c.querySelector('picture'));
   const pic = picCell?.querySelector('picture');

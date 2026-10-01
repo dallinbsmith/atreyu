@@ -6,7 +6,8 @@ import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
 export default (el) => {
   // Guard re-decoration: prepending a fresh .toi-media each run would re-wrap
-  // the already-wrapped media in a second .toi-media. See scripts.md Block Lifecycle.
+  // the already-wrapped media in a second .toi-media.
+  // See docs/conventions/javascript.md Block lifecycle.
   if (!guardDecorate(el, 'toi')) return;
   // Media = whichever picture/video/img the author placed anywhere in the
   // cell. querySelector walks document order (parent-before-child), so a

@@ -1,6 +1,6 @@
 // module.pothole AND module.potholeV4 → the `pothole` block (site/blocks/
 // pothole, absorbed the former pothole-v4 folder as a variant on
-// 2026-09-28, see .claude/rules/blocks.md). Both Sanity module types share
+// 2026-09-28, see docs/conventions/blocks.md). Both Sanity module types share
 // one transformer here, confirmed real and near-identical on the ja-jp
 // case-studies/xfinity (module.pothole) and enterprise/video-workflows
 // (module.potholeV4) pages: same `content.content` Portable Text

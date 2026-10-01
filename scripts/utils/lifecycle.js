@@ -1,4 +1,4 @@
-// Shared block-lifecycle primitives — see .claude/rules/scripts.md's
+// Shared block-lifecycle primitives — see docs/conventions/javascript.md's
 // "Block Lifecycle" section for the full rationale.
 
 // Idempotency guard, replacing each block's own hand-rolled

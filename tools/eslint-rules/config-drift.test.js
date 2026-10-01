@@ -32,9 +32,9 @@
  *
  * "Round 3" cases (search "Round 3") cover a third review pass: an env-word
  * array iterated via `.some()`/`.every()`/`.find()` (the exact shape of
- * scripts/utils/env.js's own logic, and CLAUDE.md's preferred house style
+ * scripts/utils/env.js's own logic, and docs/conventions/javascript.md's preferred house style
  * over manual loops), and compound/logical assignment (`||=`, `??=`, etc. —
- * also named CLAUDE.md house style) in the locale-list spread tracker.
+ * also named docs/conventions/javascript.md house style) in the locale-list spread tracker.
  */
 
 import { RuleTester } from 'eslint';
@@ -146,7 +146,7 @@ ruleTester.run('no-duplicate-locale-list', plugin.rules['no-duplicate-locale-lis
       errors: 1,
     },
     // Round 2, item 3: no-substitution template literals. This project's
-    // own CLAUDE.md recommends template literals as house style for string
+    // own docs/conventions/javascript.md recommends template literals as house style for string
     // building, so an author following that convention for a locale array
     // must not silently defeat the rule.
     {
@@ -164,8 +164,7 @@ ruleTester.run('no-duplicate-locale-list', plugin.rules['no-duplicate-locale-lis
       errors: 1,
     },
     // Acceptance criterion: demonstrate against the real bug class this
-    // project already found and fixed once (see ref_real_locale_list.md /
-    // ref_eds_iteration_lessons.md) — a second, independently-maintained
+    // project already found and fixed once — a second, independently-maintained
     // locale-prefix list existing outside the two designated files. This
     // models that bug's shape (a second full list in a real, non-designated
     // file in this repo) rather than reproducing its exact historical
@@ -262,7 +261,7 @@ ruleTester.run('no-inline-env-check', plugin.rules['no-inline-env-check'], {
     // Round 3, item 1: env-word array iterated via .some(), the exact shape
     // of scripts/utils/env.js's own real internal logic
     // (`['--', 'local'].some((check) => host.includes(check))`) and the
-    // natural way CLAUDE.md's preferred .some()/.every() house style would
+    // natural way docs/conventions/javascript.md's preferred .some()/.every() house style would
     // reproduce it outside the designated file.
     {
       filename: 'blocks/foo/foo.js',

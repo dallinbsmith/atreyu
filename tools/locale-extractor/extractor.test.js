@@ -134,7 +134,7 @@ assert.deepEqual(renderPortableText([]), []);
 
 // --- newly implemented modules (hero, glow-reveal, cardGridNav, faq,
 // carousel, pothole dual-dispatch), grounded in fixtures/ja-jp-batch2.json
-// (real data, prioritized by real page-count per locale-i18n-plan.md) ----
+// (real data, prioritized by real page-count per docs/architecture/locale.md) ----
 
 {
   const warnings = [];

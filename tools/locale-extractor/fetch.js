@@ -1,7 +1,7 @@
 // Read-only Sanity fetch, via plain `fetch()` against Sanity's public GROQ
 // HTTP API, not the `@sanity/client` SDK, matching this project's no-build/
-// minimal-dependency conventions (CLAUDE.md). Targets the real production
-// source confirmed in locale-extraction-spike-2026-09-25.md: project
+// minimal-dependency conventions (docs/conventions/javascript.md). Targets the real production
+// source: project
 // `s6lu43cv`, dataset `production-v4`, `published` perspective.
 //
 // `SANITY_TOKEN` env var is optional, the spike's queries all worked

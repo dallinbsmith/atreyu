@@ -15,7 +15,7 @@ line is NOT currently automated — it depends on you actually checking.
 
 ## What changed and why
 
-<!-- One or two sentences. Link the artifacts/ or memory doc if this traces back to a real decision. -->
+<!-- One or two sentences. Link the docs/decisions/ record if this traces back to a decision. -->
 
 ## Checklist
 
@@ -40,9 +40,9 @@ line is NOT currently automated — it depends on you actually checking.
 
 ### Code organization
 - [ ] Edited `scripts/ak.js`, `scripts/lazy.js` or `scripts/postlcp.js`? Updated its `scripts/AK-PATCHES.md` row and classification.
-- [ ] Block structure follows `blocks.md` Structure, not line count: one directory per block, the default export is the only export other code relies on, and a file that mixes concerns is split into sibling files in the block's folder. The 200-line lint backstop only catches files that went badly wrong.
+- [ ] Block structure follows `docs/conventions/blocks.md` Structure, not line count: one directory per block, the default export is the only export other code relies on, and a file that mixes concerns is split into sibling files in the block's folder. The 200-line lint backstop only catches files that went badly wrong.
 - [ ] Before writing a new small helper (slugify, clamp, a DOM-builder), grep for one that might already exist — `slugify()` and index-clamping logic were each independently reimplemented twice before being unified.
-- [ ] A new asset (icon, image, media file) goes in the right place per `.claude/rules/assets.md`: `icons/{name}.svg` only for author-typed `:iconname:` icons, flat in the block's own folder for block-exclusive fixed media, `img/{category}/` for anything else shared and code-driven.
+- [ ] A new asset (icon, image, media file) goes in the right place per `docs/conventions/assets.md`: `icons/{name}.svg` only for author-typed `:iconname:` icons, flat in the block's own folder for block-exclusive fixed media, `img/{category}/` for anything else shared and code-driven.
 
 ### Verification (can't be automated — needs an actual human/agent look)
 - [ ] Any CSS, animation, or layout change was actually rendered in a real browser, not just reasoned through from the CSS spec. Lint and unit tests verify syntax, not what it looks like.

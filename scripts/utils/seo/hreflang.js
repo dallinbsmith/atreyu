@@ -8,8 +8,8 @@ import { getConfig, getMetadata } from '../../ak.js';
 // same broken /query-index.json (content-bus error) — once that's fixed and
 // helix-query.yaml has one index per locale, retire this file and the
 // per-page "Translations" metadata field entirely. See
-// artifacts/master-plan/DA-CONTENT-STRUCTURE.md's "Hreflang gate" section for
-// the full research trail.
+// docs/architecture/locale.md's "hreflang" section for current behavior and
+// docs/decisions/README.md (Open questions) for the undecided source.
 //
 // Gated on a real, author-maintained per-page "translations" metadata field —
 // a comma-separated list of locale prefixes with a confirmed, published

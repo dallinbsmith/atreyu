@@ -258,7 +258,7 @@
   /* Hover card — appended to document.body so must be outside .quote-interactive scope.
      Escapes this block's own stacking context (position: fixed + body-appended), so it
      needs the shared global token, not a block-local-looking raw number — see
-     .claude/rules/css.md's "Z-Index and Stacking Contexts" section. */
+     docs/conventions/css.md's "Z-Index and Stacking Contexts" section. */
   @media (width >= 768px) {
     .qi-hover {
       position: fixed;

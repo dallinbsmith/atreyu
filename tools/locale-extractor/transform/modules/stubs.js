@@ -1,5 +1,5 @@
 // Stubbed module transformers, real target DA block shape is known (see
-// each comment, sourced from Library docs / blocks.md), but this pass did not
+// each comment, sourced from Library docs / docs/conventions/blocks.md), but this pass did not
 // pull live Sanity field data for these module types, unlike heroScreen/
 // spacer/logoWall above. Writing a detailed transform against a guessed
 // field shape would be worse than an honest stub: a wrong-but-confident

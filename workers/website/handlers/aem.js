@@ -197,7 +197,7 @@ const isSystemPath = (pathname) => stripLocale(pathname).startsWith(SYSTEM_ROOT)
 //     own sstats.adobe.com calls, which the connect-src entry above now
 //     also permits). Their scripts still load via 'strict-dynamic' but
 //     their other beacons are blocked. Whether EDS should run those at all
-//     is a consent/marketing decision (PLAN.md P4.1), not something to
+//     is a consent/marketing decision (docs/decisions/0010-consent-model.md), not something to
 //     widen the CSP for silently.
 // - object-src 'none': no plugin content is used; default-src 'self' would
 //   otherwise allow same-origin <object>/<embed>.

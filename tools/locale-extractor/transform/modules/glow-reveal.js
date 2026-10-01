@@ -1,5 +1,5 @@
 // module.heroTransitionV4 → the `glow-reveal` block (site/blocks/
-// glow-reveal, renamed from `hero-transition-v4` per .claude/rules/
+// glow-reveal, renamed from `hero-transition-v4` per docs/conventions/
 // blocks.md). Real shape confirmed on the ja-jp enterprise/agencies page:
 // no `content` field at all, just `media.glow` + `media.media.image`. This
 // module really is only ever a single image (matching glow-reveal.js's own

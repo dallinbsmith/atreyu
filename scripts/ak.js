@@ -52,7 +52,7 @@ export const [setConfig, getConfig] = (() => {
       // produces a config missing hostnames/locales/linkBlocks/components, so
       // an early reader (decorateLink/loadBlock) would throw and poison the
       // singleton. Safe today by load order — warn (non-prod) so a future
-      // import-order regression is loud, not silent. See scripts.md's Global
+      // import-order regression is loud, not silent. See docs/conventions/javascript.md's Global
       // State & Data Flow. ENV is the designated env classifier, not an inline
       // hostname check (config-drift/no-inline-env-check).
       // eslint-disable-next-line no-console -- this warning IS the diagnostic (dev-only)
@@ -128,7 +128,7 @@ export const loadBlock = async (block) => {
   // Edit's content-change callback re-runs loadPage() -> loadArea() on
   // the live document) re-invokes every already-decorated block's
   // default(el) a second time on the exact same el — most blocks guard
-  // themselves individually against this (see scripts.md's Block
+  // themselves individually against this (see docs/conventions/javascript.md's Block
   // Lifecycle section), but nothing forced that, and this is the one
   // place that can guarantee it for every block, guarded or not.
   const status = block.dataset.blockStatus;
@@ -230,7 +230,7 @@ const decorateButton = (link) => {
   const toReplace = [isEm, isStrong, isStrike].find((el) => el?.parentNode === trueParent);
   if (toReplace) toReplace.replaceWith(link);
 
-  // Primary test/analytics selector (see scripts.md's Selectors & Data
+  // Primary test/analytics selector (see docs/conventions/javascript.md's Selectors & Data
   // Attributes) — derived from the nearest real block, not author-typed.
   // Only instrumented when a block ancestor exists; a plain-content button
   // (outside any named block) has no stable block prefix to key off.

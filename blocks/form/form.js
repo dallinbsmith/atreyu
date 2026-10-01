@@ -19,7 +19,7 @@ export default async (el) => {
   const rows = [...el.querySelectorAll(':scope > div')];
   // The endpoint row is the only single-column row in this block's authoring
   // convention (every field row has 2+ columns) — classified by shape, not
-  // position, per blocks.md's Row Classification rule.
+  // position, per docs/conventions/blocks.md's Row Classification rule.
   const endpointRow = rows.find((r) => r.children.length === 1);
   const endpoint = endpointRow?.children[0]?.textContent.trim();
   const fieldRows = rows.filter((r) => r !== endpointRow);

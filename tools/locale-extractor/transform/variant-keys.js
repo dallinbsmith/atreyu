@@ -1,4 +1,4 @@
-// Implements D2 from locale-personalization-codesign-2026-09-25.md: the
+// Personalization is English-only (docs/decisions/0011-english-only-personalization.md): the
 // extractor carries BASE content only. A module's `variantKeys` (e.g.
 // `largeEnterprise`, `largeEnterpriseReturningVisitor`, confirmed real on the
 // ja-jp enterprise page's heroScreen module) are audience tags with no

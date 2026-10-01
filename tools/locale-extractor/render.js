@@ -1,6 +1,6 @@
 // Assembles a full DA-importable page from a fetched Sanity `page` document.
 // Output shape matches a real authored page exactly (confirmed against
-// artifacts/mcp-snapshots/da/pages/features-c2c.html): `<body><header></header>
+// the published /features/c2c page in DA): `<body><header></header>
 // <main>{one <div> per section}</main><footer></footer></body>`, no Library
 // Metadata table (that's a Library-doc-only convention, not a real page's).
 import { transformModule } from './transform/index.js';

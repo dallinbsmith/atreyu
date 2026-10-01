@@ -202,7 +202,7 @@ describe('experiments-panel/sources.js', () => {
 });
 
 // PLUGIN_ATTR, through its only caller. Keep in step with the reserved-keys
-// rule in tools/sidekick/blocks.md.
+// rule in docs/authoring/section-metadata.md.
 describe('sectionKeyIssues reserved keys (B2)', () => {
   const flagged = (attr) => sectionKeyIssues(`<main><div ${attr}="x"><p>a</p></div></main>`).length > 0;
   const cases = [

@@ -1,4 +1,4 @@
-// Cohort × locale cell manifest (routing-manifest.js; locale-i18n-plan.md
+// Cohort × locale cell manifest (routing-manifest.js; docs/decisions/0015-locale-cutover-cells.md
 // D-L5/L-2, fh-arch6 B-2). Injected manifests go through createIsEdsPath, so
 // nothing here mutates the Worker's real routing state.
 import { test } from 'node:test';
@@ -122,8 +122,9 @@ test('an invalid manifest throws when isEdsPath is built, so it fails at load', 
   assert.throws(() => assertValidManifest(bad), /unknown locale/);
 });
 
-// R-L2 (242-FZ) and R-L3 (GFW reachability) are hard gates (locale-i18n-plan.md
-// §2, Wave 3). Remove a locale here only with the recorded sign-off.
+// ru-ru (242-FZ review) and zh-cn (GFW reachability review) are hard gates
+// (docs/architecture/locale.md, "Before a locale goes live"). Remove a locale
+// here only with the recorded sign-off.
 test('no live cell for a legally gated locale', () => {
   const gated = ['/ru-ru', '/zh-cn'];
   assert.deepEqual(CELLS.filter(({ locale }) => gated.includes(locale)), []);

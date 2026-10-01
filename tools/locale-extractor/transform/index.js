@@ -1,6 +1,6 @@
 // Module-type dispatch table. Name-matched against
-// locale-extraction-spike-2026-09-25.md's mapping table, with one real
-// correction found while building this: that spike listed
+// the Sanity module -> block mapping, with one real
+// correction found while building this: the mapping listed
 // `block.calendlyButton` → the `hero-calendly` block (a whole block with its
 // own embedded-scheduling-widget JS). Real data contradicts this, on the
 // live ja-jp enterprise page, `block.calendlyButton` appears INSIDE
@@ -55,7 +55,7 @@ export const MODULE_TRANSFORMERS = {
 };
 
 // Never silently drop an unrecognized module type (same "fail loud over
-// fabricating partial state" discipline as scripts.md's Global State
+// fabricating partial state" discipline as docs/conventions/javascript.md's Global State
 // section), an unknown type becomes a visible HTML comment in the output
 // and a warning, not a missing section nobody notices until a real author
 // complains content is gone.

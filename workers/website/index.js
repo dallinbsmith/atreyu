@@ -122,7 +122,7 @@ const ROUTES = [
   // array order previously didn't actually honor that for the redirect
   // route specifically. fetchRedirect now only runs once none of these
   // match, so a content author can never author their way past them.
-  // langstore denial added 2026-09-01 (localization-game-plan-2026-09.md §6):
+  // langstore denial added 2026-09-01 (docs/architecture/locale.md):
   // DA's Loc app stages translation-in-progress content under /langstore/{locale}/
   // — this path must never fall through to the legacy origin undefined, and must
   // never be treated as real page content once the EDS_PATHS cohort grows.

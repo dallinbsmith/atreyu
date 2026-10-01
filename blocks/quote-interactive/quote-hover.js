@@ -10,7 +10,7 @@ const EASE = 'power2.out';
 // block's own subtree, so it (and its listeners/rAF) survive a DA Quick Edit
 // DOM swap and would duplicate on re-decoration. Nothing re-runs against the
 // OLD el to clean it up, so the teardown handle can't hang off el — it lives
-// here and is aborted before each new run. See scripts.md's Block Lifecycle.
+// here and is aborted before each new run. See docs/conventions/javascript.md's Block lifecycle.
 let teardownHover = null;
 
 const buildCard = () => {

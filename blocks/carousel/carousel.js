@@ -71,7 +71,7 @@ const makeNavButton = (label, dir, viewport) => {
 // Never placed in the Eager/first-section path today (Falkor's module.carousel
 // is customer-story content, never hero content) — if that ever changes,
 // this await-before-render shape (matching pricing.js's identical pattern)
-// would need revisiting per scripts.md's eager-phase network-call rule.
+// would need revisiting per docs/conventions/javascript.md's eager-phase network-call rule.
 export default async (el) => {
   if (!guardDecorate(el, 'carousel')) return;
 

@@ -9,7 +9,7 @@ Insert. It shows what the plugin will actually do, using the same parsing rules 
   - every test on the current page: whole-page (head metadata or an Experiment table), and each
     section's Personalize table with the rules the compiler serves under production rules (or,
     when it serves none, the table's valid rows as the compiler reads them).
-    Section-level config is tables only (PLAN.md `pz-section-meta`): authored Section Metadata is
+    Section-level config is tables only (`docs/decisions/0012-section-personalization-tables-only.md`): authored Section Metadata is
     flattened on the server, so the panel never reads it as a test;
   - where each test is configured (page doc or metadata sheet);
   - status, audiences, dates, and variants with their effective split;
@@ -30,7 +30,7 @@ Insert. It shows what the plugin will actually do, using the same parsing rules 
   - duplicate test ids across sheet rows;
   - page metadata silently overriding a sheet row;
   - section metadata keys reserved for the plugin (the rule and list: "Keys you must not use in
-    Section Metadata" in `tools/sidekick/blocks.md`; the check: `sectionKeyIssues` in `sources.js`).
+    Section Metadata" in `docs/authoring/section-metadata.md`; the check: `sectionKeyIssues` in `sources.js`).
 
   A test with an error-level problem is shown as "Blocked".
 
@@ -42,7 +42,7 @@ for the sitewide view, or `&view=build` for the form).
 ### Option A (recommended): DA editor sidebar, via DA Config
 
 Self-service in the UI, which is how the Library was registered (the admin API returns 403 on
-this org; see F-51/F-56 in `artifacts/research/eds-poc-findings.md`). Open
+this org). Open
 `https://da.live/config#/dallinbsmith/atreyu/`, go to the `library` sheet, and add a row:
 
 | title | path | format | ref |

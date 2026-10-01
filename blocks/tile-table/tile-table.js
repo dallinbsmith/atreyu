@@ -30,7 +30,7 @@ const buildTile = (item, i, openModal) => {
 export default async (el) => {
   // Guard re-decoration: replaceChildren(grid) below means a second pass would
   // read the grid's own tile <button>s as name/detail/link cells and rebuild
-  // from garbage. See scripts.md Block Lifecycle.
+  // from garbage. See docs/conventions/javascript.md Block lifecycle.
   if (!guardDecorate(el, 'tileTable')) return;
   const items = [...el.children].filter((r) => r.textContent.trim()).map(rowToItem);
   const [prev, next, close, closed, visit, counter, opened] = await Promise.all([

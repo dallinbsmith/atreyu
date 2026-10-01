@@ -1,4 +1,4 @@
-// Dev-mode-only diagnostic (see scripts.md's Selectors & Data Attributes
+// Dev-mode-only diagnostic (see docs/conventions/javascript.md's Selectors & Data Attributes
 // section): a lightweight substitute for a full ESLint AST rule, which
 // would need same-function flow inspection rather than this project's
 // existing node-local pattern-matching lint rules. Runs once lazy.js has

@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 #
-# Pre-commit guard (P0-48 follow-up). Fast local feedback before a bad
-# commit happens, not just a CI check after the fact — the one part of
-# Bank of America's abandoned ue-compat anti-drift effort that this
-# project's own research (ref_eds_iteration_lessons.md) found was
-# genuinely good, even though the rest of that idea died unshipped.
+# Pre-commit guard: fast local lint feedback before a bad commit, not only a CI failure after it.
 #
 # Wired up automatically by `npm install` via package.json's "prepare"
 # script, which points `core.hooksPath` at this directory — no husky or

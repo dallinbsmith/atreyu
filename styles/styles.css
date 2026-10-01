@@ -107,7 +107,7 @@
        here — use raw -1/0/1/2/3 directly, contained by that block's own
        `isolation: isolate`/`overflow: hidden`. Reach for a token below only
        when an element uses `position: fixed` or is appended outside its own
-       block's DOM subtree (e.g. document.body) — see .claude/rules/css.md's
+       block's DOM subtree (e.g. document.body) — see docs/conventions/css.md's
        "Z-Index and Stacking Contexts" section. Stylelint enforces this: any
        raw z-index on a position: fixed element (tools/stylelint-rules/
        z-index-requires-token.js) is a lint error, not just a documented

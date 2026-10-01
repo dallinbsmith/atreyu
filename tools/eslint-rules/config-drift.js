@@ -3,7 +3,7 @@
  * list, or the same environment/hostname classification logic, hand-typed a
  * second time instead of imported from this project's single source of
  * truth. This is the recurring bug class documented in
- * artifacts/master-plan/implementation-plan.md (P0-48): a config literal
+ * docs/conventions/javascript.md: a config literal
  * gets duplicated across files and the copies silently drift apart. Human
  * review has repeatedly missed it even with the correct pattern one line
  * away in the same diff.
@@ -24,7 +24,7 @@
  *    `.some()`/`.every()`/`.find()` whose callback re-checks the per-element
  *    param with `.includes()`/`.startsWith()`/`.endsWith()` (the exact shape
  *    of this file's own designated classifier's internal logic, and the
- *    natural way CLAUDE.md's preferred `.some()`/`.every()` house style
+ *    natural way docs/conventions/javascript.md's preferred `.some()`/`.every()` house style
  *    would reproduce it) — outside the one designated classifier,
  *    scripts/utils/env.js. It does NOT flag any of these forms when the
  *    other operand is provably the imported binding for that classifier's
@@ -118,7 +118,7 @@ const isDesignatedFile = (filename, cwd, allowlist) => {
 };
 
 // A plain string Literal, or a TemplateLiteral with zero interpolations
-// (e.g. `/de-de`) — which this project's own CLAUDE.md recommends as house
+// (e.g. `/de-de`) — which this project's own docs/conventions/javascript.md recommends as house
 // style ("Template literals for string building"), so a duplicate list
 // written that way must not silently evade detection.
 const literalStringValue = (node) => {
@@ -221,7 +221,7 @@ const noDuplicateLocaleList = {
         recordBinding(variable, node.init);
       },
       AssignmentExpression: (node) => {
-        // Compound/logical assignment (CLAUDE.md house style: `??=`/`||=`
+        // Compound/logical assignment (docs/conventions/javascript.md house style: `??=`/`||=`
         // over manual guards) is tracked the same as plain `=` — the RHS
         // literal's count simply overwrites the binding's tracked count.
         // This is a deliberate simplification, not a model of `||=`'s real

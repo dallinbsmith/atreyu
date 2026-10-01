@@ -65,7 +65,7 @@ export default defineConfig([
         ignore: ['^https?://'],
       }],
 
-      // scripts.md: "Utilities should not import from blocks — dependency
+      // docs/conventions/javascript.md: "Utilities should not import from blocks — dependency
       // flows one direction: blocks -> utils." True by convention only until
       // now (an architect-agent audit found zero violations today, but
       // nothing would have caught one) — same rationale as the config-drift
@@ -75,9 +75,9 @@ export default defineConfig([
         zones: [{
           target: './scripts/utils',
           from: './blocks',
-          message: 'scripts/utils/ must not import from blocks/ — dependency flows one direction: blocks -> utils (see .claude/rules/scripts.md).',
+          message: 'scripts/utils/ must not import from blocks/ — dependency flows one direction: blocks -> utils (see docs/conventions/javascript.md).',
         },
-        // blocks.md Structure: a block's files are private to its own
+        // docs/conventions/blocks.md Structure: a block's files are private to its own
         // directory. One zone per block, derived from blocks/ itself rather
         // than a hand-kept list, so a new block is covered on creation.
         // Resolved paths, so `./x.js` and nested `../x.js` inside the block
@@ -89,7 +89,7 @@ export default defineConfig([
           target: `./blocks/${name}`,
           from: './blocks',
           except: [`./${name}`],
-          message: 'Blocks must not import another block\'s files — move shared code to scripts/utils/ (see .claude/rules/blocks.md Structure).',
+          message: 'Blocks must not import another block\'s files — move shared code to scripts/utils/ (see docs/conventions/blocks.md Structure).',
         }))],
       }],
 
@@ -141,7 +141,7 @@ export default defineConfig([
       // prevent-abbreviations, no-array-for-each, ...) actively fights this
       // project's own documented conventions (the `export default (el) => {}`
       // block contract is an anonymous default export; `el`/`idx` abbreviations
-      // and `.forEach()` one-liners are established style per linting.md).
+      // and `.forEach()` one-liners are established style per docs/conventions/javascript.md).
       // These seven don't conflict with anything documented and each directly
       // enforces a convention this project's own style guide already states in
       // prose: array methods over manual loops, modern DOM APIs, ES2025 idioms.
@@ -153,7 +153,7 @@ export default defineConfig([
       'unicorn/prefer-optional-catch-binding': 'error',
       'unicorn/prefer-add-event-listener': 'error',
       // Matches this project's own documented style: "`at(-1)` for
-      // last-element access" (CLAUDE.md) — not yet enforced anywhere.
+      // last-element access" (docs/conventions/javascript.md) — not yet enforced anywhere.
       'unicorn/prefer-array-last-methods': 'error',
 
       // eslint-plugin-promise's recommended set, minus `param-names` (bikeshed
@@ -222,7 +222,7 @@ export default defineConfig([
     },
   },
   {
-    // Locale extractor (B1, locale-i18n-plan.md): consumes raw Sanity
+    // Locale extractor (docs/architecture/locale.md): consumes raw Sanity
     // documents, whose own field-naming convention (`_type`/`_key`/`_id`) is
     // external API shape this tool doesn't control — same rationale as the
     // `test/**/*.js` override above. `no-console` is off because this is a
@@ -234,7 +234,7 @@ export default defineConfig([
     },
   },
   {
-    // Backstop only, not the block-size rule. The real rule (blocks.md
+    // Backstop only, not the block-size rule. The real rule (docs/conventions/blocks.md
     // Structure) is concerns-based and enforced in review: one directory per
     // block, the default export as the only public contract, helpers
     // split into sibling files once a file mixes concerns, shared utils

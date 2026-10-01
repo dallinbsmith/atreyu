@@ -18,7 +18,7 @@ export const decorateSubcategories = (menu) => {
     // A heading anchor id may already exist (server-slugified) elsewhere on
     // the page; only mint one here if it doesn't, same "linking id, not a
     // styling class" discipline as decorateSection()'s `anchor` key —
-    // see scripts.md's "Identifying Elements" section. getRootNode() (not
+    // see docs/conventions/javascript.md's "Identifying elements" section. getRootNode() (not
     // bare document): header.js decorates this fragment entirely while
     // still detached from `document` (see slugifyUnique's own comment) —
     // two subcategory headings in the same still-detached header can only
