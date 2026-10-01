@@ -8,7 +8,7 @@
 //
 // Usage:
 //   node tools/locale-extractor/cli.js --locale ja-jp --slug enterprise \
-//     --out dir --emit-pzn-hooks --check-redirects
+//     --out dir --check-redirects
 //
 // Without --slug, pulls every page/pageVariant for that locale (the full
 // wave, 28 pages for ja-jp per the spike). With --slug, pulls one page,
@@ -30,14 +30,16 @@ import { checkRedirectContinuity } from './check-redirect-continuity.js';
 import { collectReferenceIds } from './collect-reference-ids.js';
 
 // Flags that take a value (--locale ja-jp) vs. flags that are just a
-// presence check (--emit-pzn-hooks). Declarative lookup by flag position
+// presence check. Declarative lookup by flag position
 // instead of a manual index-walking loop, each flag is independent of the
 // others, so nothing needs to track how many tokens the previous flag ate.
 const VALUE_FLAGS = { '--locale': 'locale', '--slug': 'slug', '--out': 'out' };
-const BOOLEAN_FLAGS = { '--emit-pzn-hooks': 'emitPznHooks', '--check-redirects': 'checkRedirects' };
+const BOOLEAN_FLAGS = { '--check-redirects': 'checkRedirects' };
+const KNOWN_FLAGS = new Set([...Object.keys(VALUE_FLAGS), ...Object.keys(BOOLEAN_FLAGS)]);
 
 const parseArgs = (argv) => {
-  const args = { out: 'tools/locale-extractor/out', emitPznHooks: false, checkRedirects: false };
+  const args = { out: 'tools/locale-extractor/out', checkRedirects: false };
+  args.unknown = argv.filter((arg) => arg.startsWith('--') && !KNOWN_FLAGS.has(arg));
   Object.entries(VALUE_FLAGS).forEach(([flag, key]) => {
     const index = argv.indexOf(flag);
     if (index !== -1) args[key] = argv[index + 1];
@@ -66,8 +68,13 @@ const reportRedirectContinuity = async (pages) => {
 
 const run = async () => {
   const args = parseArgs(process.argv.slice(2));
+  if (args.unknown.length) {
+    console.error(`Unknown option(s): ${args.unknown.join(', ')}`);
+    process.exitCode = 1;
+    return;
+  }
   if (!args.locale) {
-    console.error('Usage: node tools/locale-extractor/cli.js --locale <bcp47> [--slug <slug>] [--out <dir>] [--emit-pzn-hooks] [--check-redirects]');
+    console.error('Usage: node tools/locale-extractor/cli.js --locale <bcp47> [--slug <slug>] [--out <dir>] [--check-redirects]');
     process.exitCode = 1;
     return;
   }
@@ -94,7 +101,7 @@ const run = async () => {
   await mkdir(outDir, { recursive: true });
 
   for (const page of pages) {
-    const { html, warnings } = renderPage(page, { emitPznHooks: args.emitPznHooks, resolvedRefs });
+    const { html, warnings } = renderPage(page, { resolvedRefs });
     const slug = page.slug?.current ?? page._id;
     const file = path.join(outDir, `${slug}.html`);
     // A slug can itself contain a "/" (e.g. "features/workflow-management",

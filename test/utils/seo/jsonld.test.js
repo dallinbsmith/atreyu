@@ -2,7 +2,7 @@ import { expect } from '@esm-bundle/chai';
 
 // jsonld.js keeps a module-level `graph` + a <head> script singleton, so each
 // test imports a fresh copy (cache-busted specifier = distinct module instance),
-// same isolation approach as pzn.test.js.
+// same isolation approach as other cache-busted module tests.
 let importCounter = 0;
 const freshJsonld = () => {
   importCounter += 1;

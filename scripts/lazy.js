@@ -19,42 +19,24 @@ const loadSidekick = async () => {
 // Bug-squash fix, 2026-09-18: this used to live in the one-shot IIFE below,
 // which only ever runs once per page load — ak.js's `import('./lazy.js')`
 // call re-resolves the already-cached module on every later loadArea() call
-// (DA Quick Edit's loadPage() -> loadArea() re-run) WITHOUT re-executing any
-// top-level code; ES modules evaluate their top-level body exactly once per
-// specifier, ever. Footer and pzn.js's `data-pzn` slots both live on DOM
-// nodes that get wholesale-replaced by Quick Edit's `document.body.innerHTML`
-// swap (see scripts.md's Block Lifecycle notes) and need to re-decorate
-// against the fresh, undecorated nodes — exactly like header already does via
-// postlcp.js's real, re-invokable default export. Pulled out into a real
-// default export here so ak.js's loadArea() can call it the same way on every
-// run, not just the first. SEO injection (jsonld.js/hreflang.js)
+// (DA Quick Edit's loadPage() -> loadArea() re-run) without re-executing any
+// top-level code. Footer decoration must run against fresh, undecorated nodes
+// after Quick Edit swaps `document.body.innerHTML`, so ak.js calls this real
+// default export on every loadArea() run. SEO injection (jsonld.js/hreflang.js)
 // deliberately stays in the one-shot IIFE below: jsonld.js's module-scope
 // `graph` array only ever appends (see jsonld.js), so re-running it here
-// would duplicate JSON-LD entries rather than refresh them — a separate,
-// pre-existing gap, not something to paper over as a side effect of this fix.
+// would duplicate JSON-LD entries rather than refresh them.
 export default async () => {
   const { log } = getConfig();
   await import('./utils/page/footer.js').then(({ default: footer }) => footer()).catch((ex) => log(ex));
 
-  // adobe/aem-experimentation v2 owns `experiment*` metadata (our own
-  // experimentation.js swap was removed).
+  // adobe/aem-experimentation v2 owns `experiment*` metadata.
   // This call only loads its preview/simulation panel (never in prod).
   // Header, footer and nav are not personalized by policy (foundation
   // hardening A2 = iii). Not enforced: the plugin's `experiment-manifest`
   // fragment path can still target them and gets only loadArea(), not the
   // blocks' own decoration.
   await runExperimentationLazy();
-
-  // P0-44 personalization, graduated out of site/spike/ on 2026-08-28. Gated
-  // to non-production environments deliberately, not as a placeholder: the
-  // decision endpoint it calls is still mocked/undeployed, the real Segment
-  // write key isn't in place yet, and no real page has `data-pzn` metadata
-  // authored — none of that is ready for real visitor traffic.
-  if (ENV !== 'prod') {
-    import('./utils/analytics/pzn.js')
-      .then(({ decoratePznSlots }) => decoratePznSlots())
-      .catch((ex) => log(ex));
-  }
 };
 
 (() => {
@@ -76,15 +58,6 @@ export default async () => {
     loadSidekick();
     import('./utils/analytics/testid-audit.js')
       .then(({ default: auditTestids }) => auditTestids())
-      .catch((ex) => log(ex));
-
-    // Personalization collision audit — reuses pzn.js's memoized loadVariants()
-    // (populated by decoratePznSlots in the exported default above), so it adds
-    // no fetch. Warns when two variant rows share a placement+segment but target
-    // different selectors (a silently dead element), never on an intentional
-    // same-selector weighted split.
-    import('./utils/analytics/pzn-audit.js')
-      .then(({ default: auditPzn }) => auditPzn())
       .catch((ex) => log(ex));
   }
 })();

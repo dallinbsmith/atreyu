@@ -38,9 +38,8 @@ const decorateNavItem = (li) => {
   // locked open, the others unresponsive" was this, not a JS state bug; the
   // real `.is-open` toggle was already working correctly). Fix: never toggle
   // `display` on an element that also carries `.section` — wrap it in a new
-  // element that carries `.mega-menu` alone, same "give the toggled/measured
-  // element an uncontested wrapper" pattern pzn.js's `getOrCreateSlot`
-  // already uses for the identical class of problem.
+  // element that carries `.mega-menu` alone, giving the toggled/measured
+  // element an uncontested wrapper.
   const menu = resolved && createElement('div', { className: 'mega-menu' });
   if (menu) {
     // Real-browser measurement gap (2026-09-21): production repeats the

@@ -6,12 +6,12 @@
 import { transformModule } from './transform/index.js';
 import { resolveVariantKeys } from './transform/variant-keys.js';
 
-export const renderPage = (page, { emitPznHooks = false, resolvedRefs = new Map() } = {}) => {
+export const renderPage = (page, { resolvedRefs = new Map() } = {}) => {
   const warnings = [];
   const sectionsHtml = (page.sections ?? []).map((section) => {
     const modulesHtml = (section.modules ?? []).map((module) => {
       const blockHtml = transformModule(module, { warnings, resolvedRefs });
-      const { dropped, metadataHtml } = resolveVariantKeys(module, { emitPznHooks });
+      const { dropped, metadataHtml } = resolveVariantKeys(module);
       if (dropped.length) {
         warnings.push(`Dropped variantKeys [${dropped.join(', ')}] on ${module._type} "${module._key}" (per D2, base content only, no locale-baked segment).`);
       }

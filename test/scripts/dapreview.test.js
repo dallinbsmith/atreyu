@@ -28,7 +28,7 @@ describe('dapreview', () => {
     const soon = ((d) => [d.getFullYear(), d.getMonth() + 1, d.getDate()]
       .map((n) => `${n}`.padStart(2, '0')).join('-'))(new Date(Date.now() + 30 * 864e5));
     const raw = `<div>
-      <p id="pzn-control">Control</p>
+      <p id="personalize-control">Control</p>
       <div class="personalize">
         <div><div>Audience: mobile</div><div><a href="/v/p/home/mobile">/v/p/home/mobile</a></div></div>
         <div><div>End Date</div><div>${soon}</div></div>
@@ -36,7 +36,7 @@ describe('dapreview', () => {
     </div>`;
     const main = document.querySelector('main') ?? document.body.appendChild(document.createElement('main'));
     const snapshot = () => {
-      const section = document.querySelector('#pzn-control').closest('main > div');
+      const section = document.querySelector('#personalize-control').closest('main > div');
       return { personalize: document.querySelectorAll('.personalize').length, data: { ...section.dataset } };
     };
     main.innerHTML = raw;

@@ -18,8 +18,6 @@ npm run locale-extractor -- --locale ja-jp
 
 # Options:
 #   --out <dir>          output directory (default: tools/locale-extractor/out)
-#   --emit-pzn-hooks     emit empty `pzn:` Section Metadata markers instead of
-#                        silently dropping personalization variantKeys (D2)
 #   --check-redirects    B6b: check each page's live Falkor path before writing it
 ```
 
@@ -216,9 +214,8 @@ the bare path with no locale prefix at all
   all crashed `renderSpan`'s `.find()` call, because a `= []` default
   parameter only covers `undefined`, never `null`. Fixed in
   `transform/portable-text.js`.
-- **Personalization variantKeys are dropped by default (D2)**, never
-  locale-baked into a segment. Pass `--emit-pzn-hooks` to get an empty,
-  future-usable Section Metadata hook instead of a silent drop.
+- **Personalization variantKeys are always dropped (D2)**, never
+  locale-baked into a segment; the extractor logs which keys it dropped.
 - **`module.bentos` is done (2026-10-01), and surfaced the single biggest
   CSS-coverage gap found in this whole build.** Real `cards[]` mixes two
   distinct Sanity card shapes at runtime: a plain `card` (media + title6/
