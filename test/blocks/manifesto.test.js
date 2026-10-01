@@ -205,6 +205,7 @@ describe('manifesto', () => {
     });
     afterEach(() => {
       deactivateObservers();
+      flushScrollFrames();
       window.IntersectionObserver = realIO;
     });
 
@@ -222,7 +223,9 @@ describe('manifesto', () => {
       const el = block(picture(), statement);
       decorate(el);
       flushScrollFrames();
-      const p = Number(el.style.getPropertyValue('--progress'));
+      const progress = el.style.getPropertyValue('--progress');
+      expect(progress).to.not.equal('');
+      const p = Number(progress);
       expect(p).to.be.a('number').and.not.be.NaN;
       expect(p).to.be.at.least(0);
       expect(p).to.be.at.most(1);

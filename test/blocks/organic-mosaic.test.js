@@ -189,6 +189,7 @@ describe('organic-mosaic', () => {
     });
     afterEach(() => {
       deactivateObservers();
+      flushScrollFrames();
       window.IntersectionObserver = realIO;
     });
 

@@ -163,6 +163,7 @@ describe('image-cloud', () => {
     });
     afterEach(() => {
       deactivateObservers();
+      flushScrollFrames();
       window.IntersectionObserver = realIO;
     });
 

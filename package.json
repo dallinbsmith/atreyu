@@ -14,10 +14,10 @@
     "test:config-sync": "node tools/config-sync/locales.test.js && node tools/config-sync/panel-no-ak.test.js",
     "test:locale-extractor": "node tools/locale-extractor/extractor.test.js",
     "locale-extractor": "node tools/locale-extractor/cli.js",
-    "test": "wtr \"./test/**/*.test.(js|html)\" --config ./web-test-runner.config.mjs --coverage --concurrent-browsers 4 --concurrency 2",
+    "test": "wtr \"./test/**/*.test.(js|html)\" --coverage --concurrent-browsers 4 --concurrency 2",
     "test:watch": "npm test -- --watch",
-    "test:file": "wtr --config ./web-test-runner.config.mjs --coverage --concurrency 2",
-    "test:file:watch": "wtr --config ./web-test-runner.config.mjs --coverage --concurrency 2 --watch",
+    "test:file": "wtr --coverage --concurrency 2",
+    "test:file:watch": "wtr --coverage --concurrency 2 --watch",
     "build:lit": "esbuild --format=esm --minify ./scripts/vendor/lit/src/index.js --bundle --outfile=./scripts/vendor/lit/dist/index.js",
     "lighthouse": "lhci autorun",
     "lighthouse:mobile": "lhci autorun --collect.settings.preset=perf"

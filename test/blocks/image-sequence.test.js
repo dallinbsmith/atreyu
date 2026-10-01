@@ -85,6 +85,7 @@ describe('image-sequence', () => {
 
   afterEach(() => {
     deactivateObservers();
+    flushScrollFrames();
     window.IntersectionObserver = originalIO;
     sinon.restore();
     document.body.innerHTML = '';
