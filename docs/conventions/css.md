@@ -2,6 +2,8 @@
 
 Applies to `styles/**`, `blocks/**/*.css` and `experiments-panel/*.css`. Run `npm run lint` (Stylelint plus the layer check) before committing.
 
+Comment convention follows [JavaScript comments](javascript.md#comments): explain current constraints/why, not history; no dates, bug-squash narratives or review/plan IDs.
+
 ## File architecture
 
 | File | Phase | Holds |

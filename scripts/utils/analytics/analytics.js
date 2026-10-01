@@ -73,16 +73,10 @@ const enrich = (properties) => ({
   ...properties,
 });
 
-// Bug-squash fix, 2026-08-28: track() used to forward/queue unconditionally,
-// relying only on `provider` being unset as a proxy for "not ready yet" —
-// not "consent currently denied." Two real bugs followed from that: (1)
-// revoking analytics consent after granting it did nothing, since the
-// already-set provider closure was never re-checked on later calls; (2) an
-// event queued while consent was already granted, then later flushed by
-// setAnalyticsProvider, was forwarded unconditionally even if consent had
-// since been revoked in the window before the provider was set. Checking
-// live consent on every send (not just once at setup) closes both: nothing
-// is ever queued or forwarded except in the moment analytics consent is
+// Consent is checked on every send, not only during provider setup: a user may
+// revoke analytics after the provider exists, or while queued events are waiting
+// for setAnalyticsProvider(). Nothing is queued or forwarded unless analytics
+// consent is live at that moment.
 // actually true, and revocation takes effect on the very next call.
 export const track = (event, properties = {}) => {
   if (!Object.values(EVENTS).includes(event)) {

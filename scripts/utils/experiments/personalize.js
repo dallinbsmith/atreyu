@@ -67,7 +67,7 @@ export const readPersonalizeTable = (block) => [...block.children].reduce((table
 }, { name: '', owner: '', status: 'active', endDate: '', rows: [] });
 
 // Exclusive end: local midnight after the End Date's day (DST-safe), or null.
-// The round-trip rejects impossible dates (2026-02-30) that Date rolls over.
+// The round-trip rejects impossible dates that Date would otherwise roll over.
 export const toEnd = (value) => {
   const [, y, m, d] = value.match(DATE_ONLY)?.map(Number) ?? [];
   const day = new Date(y, m - 1, d);

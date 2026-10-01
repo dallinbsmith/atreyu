@@ -8,7 +8,7 @@
     "lint:js": "eslint .",
     "lint:css": "stylelint blocks/**/*.css styles/*.css experiments-panel/*.css",
     "lint:css-layers": "node tools/lint-css-layers.mjs",
-    "lint": "npm run lint:js && npm run lint:css && npm run lint:css-layers",
+    "lint": "npm run lint:js && npm run lint:css && npm run lint:css-layers && npm run lint:comments",
     "test:eslint-rules": "node tools/eslint-rules/config-drift.test.js",
     "test:stylelint-rules": "node tools/stylelint-rules/z-index-requires-token.test.js",
     "test:config-sync": "node tools/config-sync/locales.test.js && node tools/config-sync/panel-no-ak.test.js",
@@ -20,7 +20,8 @@
     "test:file:watch": "wtr --coverage --concurrency 2 --watch",
     "build:lit": "esbuild --format=esm --minify ./scripts/vendor/lit/src/index.js --bundle --outfile=./scripts/vendor/lit/dist/index.js",
     "lighthouse": "lhci autorun",
-    "lighthouse:mobile": "lhci autorun --collect.settings.preset=perf"
+    "lighthouse:mobile": "lhci autorun --collect.settings.preset=perf",
+    "lint:comments": "node tools/check-comments.mjs"
   },
   "repository": {
     "type": "git",

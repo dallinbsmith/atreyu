@@ -3,9 +3,8 @@
 // shouldAnimate() (reduced-motion/save-data/low-end stays on the static
 // poster frame — the link is unwrapped, not removed, so the picture itself
 // survives). A `data-title="...data-focal:x,y"` on the `img` sets a custom
-// object-position focal point. Extracted from hero.js (2026-09-08) once
-// hero-screen.js needed the identical behavior — see docs/conventions/blocks.md's
-// code-organization rule on checking for reuse before reimplementing.
+// object-position focal point. Shared here because multiple blocks need the
+// same behavior; see docs/conventions/blocks.md's code-organization rule.
 //
 // WCAG 2.2.2: shouldAnimate() only gates whether the video starts — any
 // continuous motion still needs a user-operable pause control, so every

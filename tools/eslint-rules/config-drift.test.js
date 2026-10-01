@@ -1,5 +1,5 @@
 /**
- * RuleTester coverage for tools/eslint-rules/config-drift.js (P0-48).
+ * RuleTester coverage for tools/eslint-rules/config-drift.js.
  *
  * Node-only. RuleTester and this rule's own import/path resolution rely on
  * Node APIs the browser test runner (web-test-runner, `npm test`) doesn't

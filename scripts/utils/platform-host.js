@@ -2,12 +2,9 @@
  * Platform-domain markers — is a given hostname part of this project's own
  * AEM/DA/EDS platform (vs. a genuinely external link)?
  *
- * AUTHORITATIVE single source for this specific question. Split out of
- * blocks/fragment/fragment.js during the P0-48 config-drift-guard follow-up,
- * after a reviewer flagged that file's inline
- * `['.da.', '.aem.', 'local'].some((host) => hostname.includes(host))` as
- * worth a second look, since `'local'` overlaps textually with
- * scripts/utils/env.js's vocabulary.
+ * AUTHORITATIVE single source for this specific question. Keep this separate
+ * from inline checks because `'local'` overlaps textually with
+ * scripts/utils/env.js's deploy-tier vocabulary.
  *
  * Decision: this stays separate from env.js, it does not get folded in.
  * env.js answers "which deploy tier is the CURRENT page running in"

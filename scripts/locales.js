@@ -1,7 +1,5 @@
-// AUTHORITATIVE for the browser runtime. Verified 2026-08-20 against Falkor's real
-// source of truth (tokens/languages.js) and live HTTP checks against frame.io. Real
-// prefixes are full BCP47 codes (e.g. /pt-br, not /pt) — there is no Hindi locale
-// and no Dutch locale.
+// AUTHORITATIVE for the browser runtime. Prefixes are full BCP47 codes (e.g.
+// /pt-br, not /pt); there is no Hindi locale and no Dutch locale.
 //
 // This list cannot literally share a module with workers/website/utils/locale.js
 // (that file runs in the Cloudflare Worker isolate; this one ships to the browser

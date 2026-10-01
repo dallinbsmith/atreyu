@@ -28,10 +28,9 @@ describe('speedbump', () => {
     expect(el.querySelector('.speedbump-content').textContent).to.include('Body copy');
   });
 
-  // F-66: a picture cell with a sibling text cell IN THE SAME ROW must not
-  // sweep that sibling into the media wrapper — the recurring bug class this
-  // project has hit three times in other blocks. getCells flattens rows
-  // before classification, so this must stay correct across refactors.
+  // A picture cell with a sibling text cell in the same row must not sweep that
+  // sibling into the media wrapper. getCells flattens rows before
+  // classification, so this must stay correct across refactors.
   it('a picture cell with a sibling text cell in the same row keeps the text in content', () => {
     const el = block([[img, '<h2>Title</h2><p>Caption</p>']]);
     decorate(el);

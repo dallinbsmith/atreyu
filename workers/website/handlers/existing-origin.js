@@ -1,12 +1,8 @@
 // Strangler fail-safe: proxies any request not yet migrated to EDS to the existing
 // production origin (currently Vercel). Builds a fresh request from the original,
 // unmodified url/request rather than reusing an EDS-rewritten request object.
-//
-// Bug-squash fix: this is the fallback for every path outside the current EDS_PATHS
-// cohort — the highest-traffic fetch in the Worker — but had no timeout or error
-// handling, unlike handlers/aem.js and handlers/redirects.js. A hung legacy origin
-// had no bound beyond Cloudflare's platform-level kill, surfacing as a generic
-// error page instead of a controlled 502. Matches those files' timeout pattern.
+// This high-traffic fallback must have a timeout and controlled 502, matching
+// handlers/aem.js and handlers/redirects.js.
 const ORIGIN_FETCH_TIMEOUT_MS = 10_000;
 
 export const fetchFromExistingOrigin = async ({ url, env, request }) => {

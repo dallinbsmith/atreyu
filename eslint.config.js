@@ -124,15 +124,14 @@ export default defineConfig([
       // no nested ternaries (inherited from Helix, enforced here explicitly)
       'no-nested-ternary': 'error',
 
-      // F-22: reactive/stateful blocks (e.g. pricing) are where correctness
-      // risk concentrates — cap cyclomatic complexity as a lint-time signal
+      // Reactive/stateful blocks are where correctness risk concentrates; cap
+      // cyclomatic complexity as a lint-time signal
       // instead of leaving it to review alone. Was present but disabled (0);
       // this just turns on the max Helix already suggested.
       complexity: ['error', 20],
 
-      // config-drift guard (P0-48): catch a locale-prefix list or an
-      // environment/hostname classification re-implemented outside this
-      // project's designated single-source files.
+      // Catch locale-prefix lists or environment/hostname classification
+      // re-implemented outside this project's designated single-source files.
       'config-drift/no-duplicate-locale-list': 'error',
       'config-drift/no-inline-env-check': 'error',
 
@@ -188,7 +187,7 @@ export default defineConfig([
 
       // SonarSource's cognitive-complexity (not cyclomatic — weights nesting,
       // which is the more honest proxy for "can a human follow this"). Same
-      // F-22 rationale as the `complexity` rule above, measuring a different,
+      // Same rationale as the `complexity` rule above, measuring a different,
       // complementary thing rather than duplicating it. 15 is sonarjs's own
       // documented default, not an arbitrary pick.
       'sonarjs/cognitive-complexity': ['error', 15],
@@ -239,8 +238,8 @@ export default defineConfig([
     // block, the default export as the only public contract, helpers
     // split into sibling files once a file mixes concerns, shared utils
     // reused first. Line count doesn't measure that, so this cap sits well
-    // above today's largest block file (100 counted lines, 2026-09-25) and
-    // only catches a file that has plainly grown past one concern without
+    // above current block files and only catches a file that has plainly grown
+    // past one concern without
     // anyone splitting it. It replaced a 100-line cap that pushed files to
     // be compressed to fit rather than split by concern. No file-level
     // disables exist; don't add one, split the file instead.

@@ -1,10 +1,7 @@
 // module.pothole AND module.potholeV4 → the `pothole` block (site/blocks/
-// pothole, absorbed the former pothole-v4 folder as a variant on
-// 2026-09-28, see docs/conventions/blocks.md). Both Sanity module types share
-// one transformer here, confirmed real and near-identical on the ja-jp
-// case-studies/xfinity (module.pothole) and enterprise/video-workflows
-// (module.potholeV4) pages: same `content.content` Portable Text
-// convention. One real field difference: module.pothole's media lives at
+// pothole). Both Sanity module types share one transformer because they use
+// the same `content.content` Portable Text convention. One field difference:
+// module.pothole's media lives at
 // `module.image.image`, while module.potholeV4 (like hero/heroScreen) uses
 // `module.media.media.image`. Different field names, same extendedImage
 // shape underneath, resolved via the same renderImage() either way.

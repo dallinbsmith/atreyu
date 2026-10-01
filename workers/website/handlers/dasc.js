@@ -8,12 +8,9 @@ export default async ({ url, env, request }) => {
   const href = `https://da-sc.adobeaem.workers.dev/live/${env.AEM_ORG}/${env.AEM_SITE}${url.pathname}`;
 
   try {
-    // Bug-squash fix: `new Request(href, request)` forwarded every header from the
-    // AEM-formatted request — including Authorization (set for aem.live when
-    // ORIGIN_AUTHENTICATION is configured) plus x-forwarded-host/x-push-invalidation —
-    // to this unrelated third-party host. Build a minimal request instead: only the
-    // method, plus if-none-match since the 304 branch below depends on it reaching
-    // the origin as a real conditional request.
+    // Build a minimal request so AEM-only headers (Authorization,
+    // x-forwarded-host, x-push-invalidation) are not forwarded to this
+    // unrelated third-party host. Keep if-none-match for the 304 branch.
     const ifNoneMatch = request.headers.get('if-none-match');
     const listReq = new Request(href, {
       method: request.method,

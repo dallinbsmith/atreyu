@@ -68,14 +68,9 @@ describe('utils/dom getCells', () => {
 });
 
 describe('utils/dom parseSvg', () => {
-  // Regression for a real, silent-failure bug (2026-09-09): DOMParser's XML
-  // mode only assigns the correct SVG namespace when the markup itself
-  // carries an explicit xmlns — a hand-written inline SVG constant (the
-  // real use case for this function) never does, so parsing it that way
-  // produced an element that quietly didn't render as SVG at all (zero
-  // intrinsic size, fill="currentColor" ignored) while every other test
-  // still passed. Asserting the namespace directly is what would have
-  // caught it.
+  // DOMParser's XML mode only assigns the correct SVG namespace when the markup
+  // carries an explicit xmlns. Inline SVG constants usually do not, so assert
+  // the namespace directly.
   it('assigns the real SVG namespace even when the markup has no xmlns attribute', () => {
     const svg = parseSvg('<svg viewBox="0 0 10 10" fill="currentColor"><path d="M0 0"/></svg>');
     expect(svg.namespaceURI).to.equal('http://www.w3.org/2000/svg');

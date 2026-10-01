@@ -30,6 +30,14 @@ Not enforced, but expected in review:
 - `Map`/`Set`/`WeakMap` for dynamic keys or DOM-element associations.
 - Don't use `using`/`Symbol.dispose`: Safari has no stable support, and without a build step it is a syntax error there.
 
+## Comments
+
+Comments explain the current why: a constraint, non-obvious invariant, platform quirk, security reason or concise upstream-divergence note that tells a maintainer what not to "fix." Keep them to about five lines or less.
+
+Do not use comments for what the code already says, dated history, "Bug-squash fix" narratives, review/plan/finding IDs, people's names, or "previously this did X." History belongs in git log, PR descriptions and `docs/decisions/`.
+
+Keep security rationale (SSRF, CSP, XSS sanitization), links to `docs/` and external specs/issues, JSDoc on exported functions, upstream-divergence notes that prevent accidental reversal, and justified `eslint-disable` lines.
+
 ## Loading phases (E-L-D)
 
 Every page loads in three phases. The model is described in [architecture/overview.md](../architecture/overview.md#loading-phases-e-l-d). The rules:

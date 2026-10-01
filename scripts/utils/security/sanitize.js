@@ -7,11 +7,8 @@
 // removed, and only after that is anything moved into the real DOM.
 const DANGEROUS_TAGS = 'script, style, iframe, object, embed, link';
 const URL_ATTRS = new Set(['href', 'src', 'xlink:href', 'formaction']);
-// Security-audit fix, 2026-09-02: this was previously built via
-// ['java', 'script:'].join('') to dodge a `no-script-url` lint false-positive,
-// but that made the literal ungrep-able for a human reviewer auditing this
-// sanitizer's coverage. Written as a literal + scoped suppression instead —
-// grep-able, still lint-clean.
+// Keep the dangerous scheme literal grep-able for sanitizer reviews; this is a
+// comparison value, not a navigable URL sink.
 // eslint-disable-next-line no-script-url -- sanitizer comparing, not a sink
 const SCRIPT_SCHEME = 'javascript:';
 

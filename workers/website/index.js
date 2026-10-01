@@ -20,7 +20,7 @@ import { checkRequiredEnv } from './utils/env-guard.js';
 import { isMediaPath } from './utils/media.js';
 import { ROUTING_MANIFEST, assertValidManifest, matchCohort } from './routing-manifest.js';
 
-// EDS code and shared-content prefixes (F-76). An EDS page served through this
+// EDS code and shared-content prefixes. An EDS page served through this
 // Worker loads its code from its own origin: head.html's /scripts/ and /styles/,
 // ak.js's /blocks/ and /templates/ (codeBase), /plugins/experimentation/, icons.js's
 // /icons/, CSS masks and favicons under /img/, and /system/ (placeholders.json,
@@ -31,10 +31,7 @@ import { ROUTING_MANIFEST, assertValidManifest, matchCohort } from './routing-ma
 // - Locale-gated like pages: /de-de/system/placeholders.json reaches EDS once
 //   /de-de has any live cell (routing-manifest.js) and stays on the existing
 //   origin until then.
-// - Collision check (2026-09-24): Falkor (origin/develop) serves /_next/, /api/,
-//   favicon.*, icon-*.png, manifest.json, robots.txt, sitemap.xml, and CMS slugs via
-//   [lang]/[[...slug]]. frame.io's sitemap has no page under any prefix below, and
-//   live frame.io 404s each of them. Re-check before adding a prefix here.
+// - Re-check existing-origin collisions before adding a prefix here.
 // - No /fonts/: fonts live under /styles/fonts/. No /tools/, /widgets/ or
 //   /experiments-panel/: marker hrefs and authoring-only code, never fetched here.
 export const EDS_ASSET_PATHS = Object.freeze([
@@ -54,7 +51,7 @@ const isRUMRequest = (url) => /\/\.(rum|optel)\/.*/.test(url.pathname);
 const ENCODED_SEPARATOR = /%2f|%5c/i;
 
 // Builds isEdsPath for a manifest (tests inject their own). `isCellLive(cell,
-// env)` is the per-request seam for a runtime kill switch (R-L1): it can only
+// env)` is the per-request seam for a runtime kill switch: it can only
 // filter the manifest's cells, so env may remove cells but never add one; the
 // manifest is the ceiling. English code assets are not cohort-gated.
 // A throwing predicate (e.g. a malformed env var) counts as "not live", so the
@@ -79,7 +76,7 @@ export const createIsEdsPath = (manifest, isCellLive = () => true) => {
   };
 };
 
-// R-L1 lands here: pass the kill-switch predicate as the second argument
+// Runtime kill switches belong in the predicate passed as the second argument
 // (e.g. cell.locale not in env.EDS_LOCALES_DISABLED). Don't read env elsewhere.
 export const isEdsPath = createIsEdsPath(ROUTING_MANIFEST);
 
@@ -91,11 +88,8 @@ export const EDS_PATHS = Object.freeze(ROUTING_MANIFEST.cells
   .filter(({ locale }) => locale === '')
   .flatMap(({ cohort }) => ROUTING_MANIFEST.cohorts[cohort]));
 
-// Trailing-slash pages (fh-arch7 #1). Pages are authored as /blog, not
-// /blog/index, so EDS 404s /blog/ and /blog/x/; Falkor answers every such path
-// with a 308 to the slashless URL, relative Location, query kept (curl,
-// 2026-10-01). ROUTES only sees EDS-routed paths, globals and RUM beacons;
-// beacons are excluded here, so Falkor-bound pages are untouched. Asset
+// Pages are authored without trailing slash (/blog, not /blog/index). Match the
+// existing origin's slashless redirect for routed EDS pages. Asset
 // folders are never redirected. All trailing slashes go in one hop. Collapsing
 // leading slashes is defense in depth: Location can never start with '//'.
 export const isTrailingSlashPage = (pathname) => pathname.length > 1 && pathname.endsWith('/')
@@ -112,17 +106,8 @@ const redirectTrailingSlash = ({ url, savedSearch }) => new Response(null, {
 // functions so the exemption can never drift out of sync with what these routes
 // actually match.
 const ROUTES = [
-  // Bug-squash fix, 2026-08-28: these `global: true` routes must run
-  // before fetchRedirect, not after. redirects.json is DA-managed content —
-  // a redirect entry whose Source normalizes to a path one of these
-  // would otherwise match (most seriously /drafts/*) returns a 301 and the
-  // loop below returns immediately, so drafts-deny (or the schedules/dasc
-  // handlers) never gets reached at all. `global: true` already documents
-  // the intent that these are Worker-owned regardless of cohort status; the
-  // array order previously didn't actually honor that for the redirect
-  // route specifically. fetchRedirect now only runs once none of these
-  // match, so a content author can never author their way past them.
-  // langstore denial added 2026-09-01 (docs/architecture/locale.md):
+  // Global routes must run before content-authored redirects so authors cannot
+  // bypass Worker-owned handlers such as drafts, schedules, dasc or variants.
   // DA's Loc app stages translation-in-progress content under /langstore/{locale}/
   // — this path must never fall through to the legacy origin undefined, and must
   // never be treated as real page content once the EDS_PATHS cohort grows.
@@ -228,12 +213,9 @@ const formatRequest = (env, request, url) => {
   aemUrl.port = '';
   aemUrl.protocol = 'https:';
   const req = new Request(aemUrl, request);
-  // No If-Modified-Since to AEM (checked with curl, 2026-09-24). AEM's 404 for
-  // a not-yet-published page carries the same Last-Modified that the page's
-  // 200 has once published. After publish, aem.live answers that date with a
-  // 304 (while the path still 404s, it answers 404). A browser holding the old
-  // 404 would get the 304 and keep showing it, and a 304 skips
-  // capErrorCaching (handlers/aem.js).
+  // Do not send If-Modified-Since to AEM. A browser holding an old unpublished
+  // 404 could revalidate it into a 304 and keep showing the cached 404 after
+  // the page is published; a 304 also skips capErrorCaching (handlers/aem.js).
   // Trade-off: aem.live HTML and JSON carry Last-Modified but no ETag, and
   // aem.live ignores If-None-Match even for code assets, whose 200s do carry
   // an ETag. So after this, the origin never answers a browser with a 304:
