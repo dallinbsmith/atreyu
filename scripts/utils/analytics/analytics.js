@@ -76,8 +76,7 @@ const enrich = (properties) => ({
 // Consent is checked on every send, not only during provider setup: a user may
 // revoke analytics after the provider exists, or while queued events are waiting
 // for setAnalyticsProvider(). Nothing is queued or forwarded unless analytics
-// consent is live at that moment.
-// actually true, and revocation takes effect on the very next call.
+// consent is live at that moment; revoking takes effect on the next call.
 export const track = (event, properties = {}) => {
   if (!Object.values(EVENTS).includes(event)) {
     import('../error.js')

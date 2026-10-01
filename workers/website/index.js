@@ -31,7 +31,8 @@ import { ROUTING_MANIFEST, assertValidManifest, matchCohort } from './routing-ma
 // - Locale-gated like pages: /de-de/system/placeholders.json reaches EDS once
 //   /de-de has any live cell (routing-manifest.js) and stays on the existing
 //   origin until then.
-// - Re-check existing-origin collisions before adding a prefix here.
+// - Existing origin owns /_next/, /api/, favicon.*, icon-*.png, manifest.json,
+//   robots.txt, sitemap.xml and CMS slugs; re-check before adding a prefix.
 // - No /fonts/: fonts live under /styles/fonts/. No /tools/, /widgets/ or
 //   /experiments-panel/: marker hrefs and authoring-only code, never fetched here.
 export const EDS_ASSET_PATHS = Object.freeze([
@@ -89,9 +90,11 @@ export const EDS_PATHS = Object.freeze(ROUTING_MANIFEST.cells
   .flatMap(({ cohort }) => ROUTING_MANIFEST.cohorts[cohort]));
 
 // Pages are authored without trailing slash (/blog, not /blog/index). Match the
-// existing origin's slashless redirect for routed EDS pages. Asset
-// folders are never redirected. All trailing slashes go in one hop. Collapsing
-// leading slashes is defense in depth: Location can never start with '//'.
+// existing origin's slashless redirect for routed EDS pages. ROUTES only sees
+// EDS-routed paths, globals and RUM beacons, so existing-origin pages are
+// untouched. Asset folders are never redirected. All trailing slashes go in one
+// hop. Collapsing leading slashes is defense in depth: Location can never start
+// with '//'.
 export const isTrailingSlashPage = (pathname) => pathname.length > 1 && pathname.endsWith('/')
   && !isRUMRequest({ pathname }) && !isEdsAssetPath(stripLocale(pathname));
 

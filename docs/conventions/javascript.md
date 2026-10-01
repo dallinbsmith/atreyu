@@ -38,6 +38,8 @@ Do not use comments for what the code already says, dated history, "Bug-squash f
 
 Keep security rationale (SSRF, CSP, XSS sanitization), links to `docs/` and external specs/issues, JSDoc on exported functions, upstream-divergence notes that prevent accidental reversal, and justified `eslint-disable` lines.
 
+`npm run lint:comments` enforces the high-signal bans. If a legitimate example must include a banned token (for example a date-parsing fixture), keep the exception narrow and put `check-comments: allow` in that same comment.
+
 ## Loading phases (E-L-D)
 
 Every page loads in three phases. The model is described in [architecture/overview.md](../architecture/overview.md#loading-phases-e-l-d). The rules:

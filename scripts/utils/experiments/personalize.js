@@ -1,6 +1,6 @@
-// The authoring "Personalize" table (P1.3). Never rendered: it compiles,
-// before the plugin runs, to `Audience: <id>` section-metadata rows, the only
-// supported source of them (tables only: authors never write these rows by hand).
+// The authoring "Personalize" table is never rendered: before the plugin runs,
+// it compiles to `Audience: <id>` section-metadata rows, the only supported
+// source of them (tables only: authors never write these rows by hand).
 // Rows: Name, Audience: <id> -> /v/... (1-3), Status (active | inactive;
 // missing or empty = active, like block.js readExperimentBlock), End Date
 // (required), Owner.
@@ -146,7 +146,7 @@ const writeRules = (section, rules) => {
 };
 
 // Returns the plan `{ section, name, owner, rules: [{ id, path }] }[]` of the
-// tables that compiled to at least one rule (consumed by P5 events).
+// tables that compiled to at least one rule (consumed by analytics events).
 // Preview mode is any non-prod URL with an `audience` param, whatever its
 // value. `quiet` silences the warnings off prod (prod never warns): the
 // experiments panel's preview compile runs on a parsed copy and must not log.

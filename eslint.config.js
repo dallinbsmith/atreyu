@@ -233,16 +233,16 @@ export default defineConfig([
     },
   },
   {
-    // Backstop only, not the block-size rule. The real rule (docs/conventions/blocks.md
-    // Structure) is concerns-based and enforced in review: one directory per
-    // block, the default export as the only public contract, helpers
-    // split into sibling files once a file mixes concerns, shared utils
-    // reused first. Line count doesn't measure that, so this cap sits well
-    // above current block files and only catches a file that has plainly grown
-    // past one concern without
-    // anyone splitting it. It replaced a 100-line cap that pushed files to
-    // be compressed to fit rather than split by concern. No file-level
-    // disables exist; don't add one, split the file instead.
+    // Backstop only, not the block-size rule. The real rule
+    // (docs/conventions/blocks.md Structure) is concerns-based and enforced in
+    // review: one directory per block, the default export as the only public
+    // contract, helpers split into sibling files once a file mixes concerns,
+    // shared utils reused first. Line count doesn't measure that, so this cap
+    // sits well above current block files and only catches a file that has
+    // plainly grown past one concern without anyone splitting it. It replaced a
+    // 100-line cap that pushed files to be compressed to fit rather than split
+    // by concern. No file-level disables exist; don't add one, split the file
+    // instead.
     files: ['blocks/**/*.js'],
     rules: {
       'max-lines': ['error', { max: 200, skipBlankLines: true, skipComments: true }],

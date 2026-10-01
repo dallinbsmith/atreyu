@@ -13,9 +13,9 @@ const DEFAULTS = { year: 'numeric', month: 'long', day: 'numeric' };
 const getLang = () => getConfig().locale?.lang || 'en';
 
 // A full `YYYY-MM-DD` string (surrounding whitespace trimmed) is a calendar
-// day with no zone. Native Date parsing treats date-only strings as UTC midnight,
-// which renders as
-// the 23rd west of UTC, so pin the day to UTC midnight and format it in UTC.
+// day with no zone. Native Date parsing treats date-only strings as UTC
+// midnight, which renders as the previous day west of UTC, so pin the day to
+// UTC midnight and format it in UTC.
 // A caller's `timeZone` is ignored for it. Only the full form is pinned: a
 // partial `YYYY` or `YYYY-MM` goes through `new Date`, which parses it as a
 // UTC instant, so like any instant it can show the previous day west of UTC.

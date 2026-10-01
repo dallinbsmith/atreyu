@@ -43,7 +43,8 @@ const ORIGIN_FETCH_TIMEOUT_MS = 10_000;
 // Negative-cache cap. AEM may send long CDN TTLs because it expects publish
 // purges to clear Cloudflare. Until purge credentials are live, never store
 // 404/410/5xx responses at the edge: validators on stale 404s can turn a later
-// publish into a repeated 304/404 loop. Other statuses keep AEM's own TTL.
+// publish into a repeated 304/404 loop. Use -1, not 0: 0 still stores the
+// response and its validators. Other statuses keep AEM's own TTL.
 // Only applies when the route caches (cache: true); GET/HEAD only per the docs.
 // capErrorCaching below handles downstream CDNs and browsers.
 export const CACHE_TTL_BY_STATUS = Object.freeze({ 404: -1, 410: -1, '500-599': -1 });
@@ -83,10 +84,12 @@ const isSystemPath = (pathname) => stripLocale(pathname).startsWith(SYSTEM_ROOT)
 
 // Content-Security-Policy for EDS HTML responses.
 //
-// Security rationale: do not trust shared AEM tenant hosts in script-src or
-// frame-ancestors; authoring code loads by same-origin imports. Calendly only
-// needs frame-src, scripts rely on nonce + strict-dynamic, and OneTrust/Segment
-// stay limited to observed connect/img needs. object-src stays 'none'.
+// connect-src/img-src keep *.aem.live/*.aem.page for da.js fetches during
+// ?dapreview, and *.hlx.page for the RUM sendBeacon; only script-src and
+// frame-ancestors drop them. Not allowed on purpose: Segment device-mode
+// destinations, Adobe Launch, profiles.segment.com — widening is a consent
+// decision (docs/decisions/0010-consent-model.md). Hosts are observed, not
+// proven complete.
 export const CONSENT_ANALYTICS_CSP = Object.freeze({
   connect: Object.freeze([
     'https://cdn.cookielaw.org',

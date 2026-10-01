@@ -9,7 +9,7 @@
     "lint:css": "stylelint blocks/**/*.css styles/*.css experiments-panel/*.css",
     "lint:css-layers": "node tools/lint-css-layers.mjs",
     "lint": "npm run lint:js && npm run lint:css && npm run lint:css-layers && npm run lint:comments",
-    "test:eslint-rules": "node tools/eslint-rules/config-drift.test.js",
+    "test:eslint-rules": "node tools/check-comments.test.mjs && node tools/eslint-rules/config-drift.test.js",
     "test:stylelint-rules": "node tools/stylelint-rules/z-index-requires-token.test.js",
     "test:config-sync": "node tools/config-sync/locales.test.js && node tools/config-sync/panel-no-ak.test.js",
     "test:locale-extractor": "node tools/locale-extractor/extractor.test.js",
@@ -43,6 +43,7 @@
     "@web/test-runner": "^0.18.0",
     "@web/test-runner-commands": "0.9.0",
     "chai": "4.4.1",
+    "esbuild": "^0.25.10",
     "eslint": "^9.39.2",
     "eslint-plugin-chai-friendly": "^1.1.0",
     "eslint-plugin-import": "^2.32.0",
@@ -51,13 +52,13 @@
     "eslint-plugin-promise": "^7.3.0",
     "eslint-plugin-sonarjs": "^4.2.0",
     "eslint-plugin-unicorn": "^65.0.1",
+    "espree": "^10.4.0",
     "globals": "^16.0.0",
+    "lit": "^3.3.1",
     "sinon": "^21.0.1",
     "stylelint": "^17.1.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-declaration-strict-value": "^1.12.1",
-    "stylelint-value-no-unknown-custom-properties": "^6.1.1",
-    "esbuild": "^0.25.10",
-    "lit": "^3.3.1"
+    "stylelint-value-no-unknown-custom-properties": "^6.1.1"
   }
 }
