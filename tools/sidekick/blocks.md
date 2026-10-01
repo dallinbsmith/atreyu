@@ -506,7 +506,7 @@ The block receives a link element (`<a>`) pointing to a `.json` endpoint. The JS
 | `fragment` | Yes | URL path to the fragment to display |
 | `name` | No | Event name (used in log messages) |
 
-An event without `start` and `end` is treated as the default fallback. Events are evaluated in reverse order (last match wins). The matching fragment is loaded and inlined, replacing the schedule block.
+An event without `start` and `end` is treated as the default fallback. Events are evaluated in reverse order (last match wins). The matching fragment is loaded and inlined, replacing the schedule block. On a locale page the locale copy of the event fragment is tried first, then the root copy (`localeCandidates`).
 
 In non-production environments, the schedule date can be simulated via:
 - `localStorage.setItem('aem-schedule', unixTimestampInSeconds)`
@@ -515,9 +515,9 @@ In non-production environments, the schedule date can be simulated via:
 In production, if no matching event is found, the block is removed entirely.
 
 **Dependencies**:
-- `scripts/ak.js` (`getConfig`, `localizeUrl`)
+- `scripts/ak.js` (`getConfig`)
 - `scripts/utils/env.js` -- determines environment (prod/stage/dev)
-- `scripts/utils/fragment.js` (`loadFragment`, `getReplaceEl`)
+- `scripts/utils/fragment.js` (`loadFragmentWithFallback`, `getReplaceEl`, `replaceElWithFragment`)
 
 **Example**:
 

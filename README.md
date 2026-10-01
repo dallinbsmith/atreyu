@@ -20,7 +20,7 @@ Only a handful of pages are fully built and content-complete:
 Falkor/Sanity's real locale model — what this migration needs to match, not a hypothetical feature list:
 - **10 region-qualified locales, no bare-language codes**: `en-us` (default, unprefixed), `de-de`, `es-es`, `fr-fr`, `it-it`, `ja-jp`, `ko-kr`, `pt-br`, `ru-ru`, `zh-cn`.
 - **One independent document per locale**, not a shared doc with field overrides — required to ever support genuine per-locale content divergence, not just translation.
-- **Localized header & footer — real, implemented**: `blocks/header/header.js` and `blocks/footer/footer.js` both resolve their nav fragment via `loadFragmentWithFallback([`${locale.prefix}${path}`, path])`, trying the locale-prefixed fragment first and falling back to the `en-us` default.
+- **Localized header & footer — real, implemented**: `blocks/header/header.js` and `blocks/footer/footer.js` both resolve their nav fragment via `loadFragmentWithFallback(path)` (candidates from `localeCandidates` in `scripts/utils/fragment.js`), trying the locale-prefixed fragment first and falling back to the `en-us` default.
 - **Localized 404 — not yet built.** `404.html` is a single hardcoded English-only static page today. Falkor's real equivalent renders a fully-authored, per-locale `404-content` page through its normal page pipeline; matching that is a real, scoped gap, not done yet.
 - **Do-not-translate (`#_dnt`)** is an EDS-native convention (`scripts/ak.js`), not something Falkor/Sanity has any equivalent of — kept here because it's real and implemented, not because it matches the source system.
 

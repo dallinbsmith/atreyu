@@ -1,6 +1,6 @@
-import { getConfig, localizeUrl } from '../../scripts/ak.js';
+import { getConfig } from '../../scripts/ak.js';
 import ENV from '../../scripts/utils/env.js';
-import { loadFragment, getReplaceEl, replaceElWithFragment } from '../../scripts/utils/fragment.js';
+import { loadFragmentWithFallback, getReplaceEl, replaceElWithFragment } from '../../scripts/utils/fragment.js';
 import { getScheduleSim } from '../../scripts/scheduler/schedule-sim.js';
 
 const config = getConfig();
@@ -13,14 +13,14 @@ const removeSchedule = (a) => {
   config.log(`Could not load: ${a.href}`);
 };
 
+// Locale copy first, root fallback (localeCandidates), like every other
+// fragment surface: an untranslated event fragment still renders on locale pages.
 const loadLocalizedEvent = async (event) => {
-  const url = new URL(event.fragment);
-  const localized = localizeUrl({ config, url });
-  const path = localized?.pathname || url.pathname;
+  if (!event?.fragment) return null;
   try {
-    return await loadFragment(path);
+    return await loadFragmentWithFallback(new URL(event.fragment, window.location.origin).pathname);
   } catch {
-    config.log(`Error fetching ${path} fragment`);
+    config.log(`Error fetching ${event.fragment} fragment`);
     return null;
   }
 };
@@ -30,7 +30,8 @@ const loadEvent = async (a, event, defEvent) => {
     a.remove();
     return;
   }
-  const fragment = await loadLocalizedEvent(event) ?? await loadLocalizedEvent(defEvent);
+  const fragment = await loadLocalizedEvent(event)
+    ?? (event === defEvent ? null : await loadLocalizedEvent(defEvent));
   if (!fragment) {
     removeSchedule(a);
     return;
