@@ -83,7 +83,7 @@ export default async (el) => {
   }
 
   // English fallback; getPlaceholder fails open to it when the JSON 404s.
-  const playLabel = await getPlaceholder('videoplaylistplay', 'Watch the Video');
+  const playLabel = await getPlaceholder('media.watchVideo', 'Watch the Video');
 
   const cards = items.map(
     (item, i) => buildCard(item, i, i === 0, playLabel),

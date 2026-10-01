@@ -2,7 +2,7 @@ import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import decorate from '../../blocks/logo-wall/logo-wall.js';
 
-// getPlaceholder (placeholders.json) and loadPartnerLogo (/img/partners/*.svg)
+// getPlaceholder (placeholders/controls.json) and loadPartnerLogo (/img/partners/*.svg)
 // both hit the real (404-ing) test server and gracefully fall back to their
 // English defaults / empty icon — same pattern already relied on by
 // form.test.js/carousel.test.js, no fetch stubbing needed here.

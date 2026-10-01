@@ -54,8 +54,8 @@ const buildRow = (row) => {
 // the clone INTO the scroller, so both copies sit inside the animated element.
 const animate = async (el, built) => {
   const [pause, play] = await Promise.all([
-    getPlaceholder('logoTileWallPause', 'Pause'),
-    getPlaceholder('logoTileWallPlay', 'Play'),
+    getPlaceholder('controls.pause', 'Pause'),
+    getPlaceholder('controls.play', 'Play'),
     Promise.all(built.flatMap(({ loads }) => loads)),
   ]);
   for (const { scroller, track } of built) {

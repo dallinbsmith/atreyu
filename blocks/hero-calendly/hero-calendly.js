@@ -27,7 +27,7 @@ const THEMES = {
 
 const showFallback = async (widget) => {
   widget.textContent = await getPlaceholder(
-    'heroCalendlyUnavailable',
+    'forms.schedulerUnavailable',
     'This scheduling widget is not available right now.',
   );
 };

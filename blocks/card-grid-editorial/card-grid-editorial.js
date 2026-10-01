@@ -60,8 +60,8 @@ export default async (el) => {
 
   cards.slice(DEFAULT_VISIBLE).forEach((card) => card.classList.add('cge-hidden'));
   const [more, less] = await Promise.all([
-    getPlaceholder('cardGridEditorialShowMore', 'Show more'),
-    getPlaceholder('cardGridEditorialShowLess', 'Show less'),
+    getPlaceholder('controls.showMore', 'Show more'),
+    getPlaceholder('controls.showLess', 'Show less'),
   ]);
 
   const toggle = createElement('button', {

@@ -94,10 +94,10 @@ export default async (el) => {
   if (!mediaCells.length) return;
 
   const [regionLabel, prevLabel, nextLabel, slideLabel] = await Promise.all([
-    getPlaceholder('carouselLabel', 'Carousel'),
-    getPlaceholder('carouselPrev', 'Previous slide'),
-    getPlaceholder('carouselNext', 'Next slide'),
-    getPlaceholder('carouselSlidePosition', '{current} of {total}'),
+    getPlaceholder('controls.carousel', 'Carousel'),
+    getPlaceholder('controls.prevSlide', 'Previous slide'),
+    getPlaceholder('controls.nextSlide', 'Next slide'),
+    getPlaceholder('controls.slidePosition', '{current} of {total}'),
   ]);
 
   const slides = mediaCells.map((cell, idx) => {

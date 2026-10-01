@@ -21,7 +21,7 @@ const block = (endpoint, fieldRows) => {
 };
 
 // Only intercepts calls to the block's own configured endpoint — the
-// placeholders.json lookup (getPlaceholder, invoked by every decorate() call
+// placeholders/forms.json lookup (getPlaceholder, invoked by every decorate() call
 // below) is left to hit the real (404-ing) test server and gracefully fall
 // back to the English default strings, matching how carousel.test.js and
 // pricing rely on that same fallback without stubbing fetch at all.

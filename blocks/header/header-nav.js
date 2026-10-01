@@ -85,7 +85,7 @@ export const decorateNavSection = async (section) => {
   navList.classList.add('main-nav-list');
 
   const nav = createElement('nav', {
-    'aria-label': await getPlaceholder('headerNav', 'Main'),
+    'aria-label': await getPlaceholder('nav.main', 'Main'),
   }, navList);
   navContent.append(nav);
 

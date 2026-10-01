@@ -79,10 +79,10 @@ export default async (el) => {
   if (rows.length < 3) return;
 
   const [regionLabel, prevLabel, nextLabel, slideLabel] = await Promise.all([
-    getPlaceholder('carouselLabel', 'Carousel'),
-    getPlaceholder('carouselPrev', 'Previous slide'),
-    getPlaceholder('carouselNext', 'Next slide'),
-    getPlaceholder('carouselSlidePosition', '{current} of {total}'),
+    getPlaceholder('controls.carousel', 'Carousel'),
+    getPlaceholder('controls.prevSlide', 'Previous slide'),
+    getPlaceholder('controls.nextSlide', 'Next slide'),
+    getPlaceholder('controls.slidePosition', '{current} of {total}'),
   ]);
 
   rows.forEach((row, idx) => buildSlide(row, idx, rows.length, slideLabel));

@@ -29,8 +29,8 @@ const setBackgroundFocus = (img) => {
 
 export const addVideoPauseControl = async (bg, video, onToggle) => {
   const [pause, play] = await Promise.all([
-    getPlaceholder('videoPause', 'Pause'),
-    getPlaceholder('videoPlay', 'Play'),
+    getPlaceholder('controls.pause', 'Pause'),
+    getPlaceholder('controls.play', 'Play'),
   ]);
   addPauseToggle(bg, video, {
     className: 'video-pause-toggle',

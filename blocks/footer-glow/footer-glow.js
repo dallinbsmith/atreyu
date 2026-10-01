@@ -41,8 +41,8 @@ export default (el) => {
     // control. Only wired here, in the branch that actually builds the
     // video — the static-poster branch above has nothing to pause.
     const [pause, play] = await Promise.all([
-      getPlaceholder('footerGlowPause', 'Pause'),
-      getPlaceholder('footerGlowPlay', 'Play'),
+      getPlaceholder('controls.pause', 'Pause'),
+      getPlaceholder('controls.play', 'Play'),
     ]);
     addPauseToggle(el, video, {
       className: 'footer-glow-toggle',

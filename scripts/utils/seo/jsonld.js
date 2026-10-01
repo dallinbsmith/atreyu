@@ -114,7 +114,7 @@ const buildBreadcrumbs = async () => {
   const segments = pathname.split('/').filter(Boolean);
   if (!segments.length) return null;
 
-  const homeLabel = await getPlaceholder('breadcrumb_home', 'Home');
+  const homeLabel = await getPlaceholder('nav.breadcrumbHome', 'Home');
   const items = [
     { '@type': 'ListItem', position: 1, name: homeLabel, item: SITE.url },
     ...segments.map((segment, idx) => ({
