@@ -59,11 +59,8 @@ export const localeCandidates = (path) => {
   return sitePath && !otherLocale ? [...new Set([`${prefix}${bare}`, bare])] : [bare];
 };
 
-// Bug-squash fix, 2026-08-28: only the root, unprefixed nav fragments are
-// actually authored in DA, and loadFragment() throws on the locale 404 with
-// nothing upstream to catch it. Tries each localeCandidates(path) in order,
-// falling back to the next on failure; throws only if every path fails, with
-// each candidate's error as a cause.
+// Locale-specific fragments are optional. Try each candidate in order and only
+// throw after every fallback fails, preserving each candidate error as a cause.
 export const loadFragmentWithFallback = async (path) => {
   const paths = localeCandidates(path);
   const errors = [];
@@ -123,7 +120,7 @@ export const replaceElWithFragment = (elToReplace, fragment, path) => {
     : [fragment];
   for (const [idx, child] of children.entries()) {
     // `||=`: an authored section id (Id/Anchor section metadata) wins over the
-    // generated one (B2). Nothing decodes the generated id; lazyhash only
+    // generated one. Nothing decodes the generated id; lazyhash only
     // scrolls to whatever id the hash names.
     if (path?.startsWith('/')) child.id ||= btoa(encodeURIComponent(`${path}/${idx + 1}/${instance}`));
     elToReplace.after(child);

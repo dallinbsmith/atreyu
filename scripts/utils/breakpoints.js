@@ -4,9 +4,8 @@
 //
 // CSS files still hardcode the same pixel values (styles/styles.css and every
 // block's own .css) because the CSS-side centralizer, @custom-media, is not
-// yet production-viable: as of 2026-09, per web-platform-dx, Chrome, Edge,
-// Firefox, and Safari all list it as "Not supported" (Firefox 148 has it
-// behind `layout.css.custom-media.enabled`, off by default). CSS custom
+// yet production-viable: web-platform-dx still lists it as unsupported in
+// stable engines (Firefox keeps it behind an off-by-default flag). CSS custom
 // properties can't help either — they can't appear inside media query
 // conditions. So CSS keeps hardcoded pixels that MUST match these numbers
 // (768 md, 1240 lg, 1440 grid cap). This module owns the JS side.

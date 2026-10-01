@@ -434,7 +434,7 @@ describe('scripts/utils/experiments/personalize.js', () => {
       const audienceAttr = compiledSection.getAttribute('data-audience:-mobile');
       const handWritten = await decorated(`<main><div>${content}${meta([row('Audience: mobile', link('/v/p/home/mobile'))])}</div></main>`);
       expect(compiled.calls).to.deep.equal([]);
-      // B2: the server's attribute name (toMetaName) and value (absolute href)
+      // The server's attribute name (toMetaName) and value (absolute href)
       expect(audienceAttr).to.equal(new URL('/v/p/home/mobile', window.location.href).href);
       expect(document.querySelector('#control').textContent).to.equal('Control');
       expect(compiled).to.deep.equal(handWritten);

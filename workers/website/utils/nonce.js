@@ -5,13 +5,11 @@
  * the `nonce="aem"` marker via HTMLRewriter, so the Content-Security-Policy
  * header can use 'nonce-{value}' 'strict-dynamic' instead of 'unsafe-inline'.
  *
- * Decision (2026-09-24, security review of #108, Medium #1): only elements
- * that carry the marker are trusted. This is Adobe's own EDS model
- * (https://www.aem.live/docs/csp): trusted scripts are marked
- * `nonce="aem"` in head.html / 404.html, and whoever enforces the policy
- * replaces the marker value with a random nonce. Previously every <script>
- * in the origin HTML was stamped, which also trusted any script that came
- * from content rather than from this repo's code.
+ * Only elements that carry the marker are trusted. This is Adobe's EDS CSP
+ * model (https://www.aem.live/docs/csp): trusted scripts are marked
+ * `nonce="aem"` in head.html / 404.html, and the policy enforcer replaces the
+ * marker with a random nonce. Do not stamp every script in origin HTML, because
+ * authored content must not become trusted code.
  * - Marked `<script>` and `<link>` (modulepreload/preload) get the nonce;
  *   the marker value is replaced, never appended to.
  * - Everything else is left exactly as the origin sent it, including a

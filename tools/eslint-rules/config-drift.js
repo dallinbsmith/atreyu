@@ -2,11 +2,8 @@
  * Local ESLint plugin: catches config-value drift — the same locale-prefix
  * list, or the same environment/hostname classification logic, hand-typed a
  * second time instead of imported from this project's single source of
- * truth. This is the recurring bug class documented in
- * docs/conventions/javascript.md: a config literal
- * gets duplicated across files and the copies silently drift apart. Human
- * review has repeatedly missed it even with the correct pattern one line
- * away in the same diff.
+ * truth. Config literals duplicated across files silently drift apart; this
+ * rule makes the single-source requirement executable.
  *
  * Two rules:
  *  - no-duplicate-locale-list: flags an array/object literal containing 3+
@@ -84,7 +81,7 @@ import path from 'node:path';
 // package.json, name "website", built/deployed independently via wrangler)
 // and a relative import across that boundary is exactly what this repo's
 // `import/no-relative-packages` lint rule exists to forbid (its one sanctioned
-// exception is the tools/config-sync/locales.test.js parity test, per B6). It
+// exception is the tools/config-sync/locales.test.js parity test). It
 // also can't be imported from scripts/locales.js — ESLint loads this rule as a
 // Node module outside the browser code's module graph, and the rule should not
 // depend on it. So this list is hand-typed a third time. It's exported so

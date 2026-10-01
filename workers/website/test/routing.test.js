@@ -1,5 +1,5 @@
-// Routing table for the strangler (backlog P0-17, F-76): which paths the Worker
-// serves from EDS and which fall through to the existing (Falkor) origin.
+// Routing table for the strangler: which paths the Worker serves from EDS and
+// which fall through to the existing origin.
 // The expected lists are written out by hand on purpose, so any change to
 // EDS_PATHS or EDS_ASSET_PATHS has to be made here too.
 import { test } from 'node:test';
@@ -183,7 +183,7 @@ test('page and asset requests reach fetchFromAem with the negative-cache cap', a
   }
 });
 
-// fh-arch7 #1: EDS 404s trailing-slash page paths, Falkor 308s them.
+// EDS-routed pages should match the existing origin's slashless redirect.
 test('trailing-slash EDS pages get a relative 308 to the slashless path, query kept', async (t) => {
   const cases = [
     ['/blog/', '/blog'],
@@ -292,8 +292,8 @@ test('dasc still forwards if-none-match and passes a 304 through with its valida
   assert.equal(resp.headers.get('etag'), '"list-v1"');
 });
 
-// fh-arch7 #4: with the client canonical gone (#158), EDS builds the canonical
-// (and og:url) from x-forwarded-host, so it must carry the visitor's host.
+// EDS builds the canonical and og:url from x-forwarded-host, so it must carry
+// the visitor's host.
 test('EDS requests carry x-forwarded-host from the incoming host', async (t) => {
   const seen = [];
   t.mock.method(globalThis, 'fetch', async (input) => {

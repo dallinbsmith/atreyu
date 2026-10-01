@@ -2,9 +2,7 @@
 /* eslint-disable no-console -- CLI script; console output is the reporting mechanism */
 // docs/conventions/css.md: "Every block's CSS file must wrap its entire contents in
 // `@layer blocks { }` — this is enforced, not optional." That line was true
-// in prose since the beginning but had zero automated enforcement until this
-// script — one of 29 files had never actually done it, found only by a manual
-// audit (2026-09-02). This closes the gap: a block CSS file that omits the
+// in prose before this script automated it. A block CSS file that omits the
 // wrapper now fails CI, the same way tools/eslint-rules/config-drift.js
 // closes the equivalent gap for duplicated locale/env config.
 //

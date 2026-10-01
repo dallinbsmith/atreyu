@@ -3,8 +3,8 @@ import { setViewport } from '@web/test-runner-commands';
 import decorate from '../../blocks/section-metadata/section-metadata.js';
 import { loadStyle } from '../../scripts/ak.js';
 
-// B2: EDS flattens section metadata on the server and keeps values as
-// authored, so the block receives `Bento`, `3 col`, `Color-Token-Accent`.
+// EDS flattens section metadata on the server and keeps values as authored, so
+// the block receives `Bento`, `3 col`, `Color-Token-Accent`.
 const section = (attrs) => {
   const el = document.createElement('div');
   el.className = 'section';

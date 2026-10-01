@@ -99,7 +99,7 @@ export const carryOverSectionMeta = (main = document.querySelector('main')) => {
 
 // Keys (toClassName'd) the plugin reads in Section Metadata. .page/.live
 // flatten authored rows to data-*, so the plugin never sees them; strip them
-// from raw DA markup (Quick Edit, dapreview) to match (PLAN pz-section-meta).
+// from raw DA markup (Quick Edit, dapreview) to match.
 export const isPluginKey = (key, prefixes = ['experiment', 'audience', 'campaign']) => prefixes
   .some((p) => key === p || key.startsWith(`${p}-`));
 

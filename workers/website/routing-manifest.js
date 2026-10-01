@@ -10,7 +10,7 @@
  *   otherwise a LOCALE_PREFIXES entry ('/ja-jp'). No cell = existing origin.
  * - A locale's shared assets (/de-de/system/…) reach EDS once it has any live
  *   cell; until then they stay on the existing origin with its pages.
- * - CELLS is the governed ceiling. A runtime switch (R-L1) may only remove
+ * - CELLS is the governed ceiling. A runtime switch may only remove
  *   cells, never add one (docs/architecture/worker.md, runtime switches).
  * - An invalid manifest throws at module load, so tests and the upload fail
  *   instead of routing on a typo.
@@ -27,7 +27,7 @@ export const COHORTS = Object.freeze({
 });
 
 // Live cells. Today: English Phase 1 only, no locale cells. A locale cell goes
-// in only after the D-L5 activation gate (coverage, hreflang, sign-off).
+// in only after coverage, hreflang and sign-off are ready.
 export const CELLS = Object.freeze([
   Object.freeze({ cohort: 'phase1', locale: '' }),
 ]);

@@ -43,7 +43,7 @@ describe('dapreview', () => {
     await loadPage();
     const first = snapshot();
     expect(first.personalize).to.equal(0);
-    // B2: the server's attribute name (toMetaName) and value (absolute href)
+    // The server's attribute name (toMetaName) and value (absolute href)
     expect(document.querySelector('main > div').getAttribute('data-audience:-mobile'))
       .to.equal(new URL('/v/p/home/mobile', window.location.href).href);
 

@@ -75,7 +75,7 @@ const run = async () => {
     'no fixed ancestor anywhere in the chain, nested rule',
   );
 
-  // Regression (found by review, 2026-09-08): a position: fixed ancestor
+  // Regression coverage: a position: fixed ancestor
   // whose OWN z-index is already a token properly contains its nested
   // children — this is exactly header.css's real `.language` mega-menu
   // submenu shape and must NOT be flagged. The first version of this rule

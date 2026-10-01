@@ -26,13 +26,10 @@ const brandSection = `<p><a href="/">
 const navSection = '<ul><li><p><a href="/features">Features</a></p></li>'
   + '<li><p><a href="/pricing">Pricing</a></p></li></ul>';
 
-// Real bug found authoring actual nav content, 2026-09-21: these fixtures
-// used to hand-author the mega-menu's ALREADY-RESOLVED shape
-// (`.fragment-content > .section > .default-content`) directly inside the
-// header fragment's own HTML, never exercising the real nested-fragment-link
-// resolution path (blocks/fragment/fragment.js -> scripts/utils/fragment.js's
-// replaceElWithFragment) at all. That assumed shape was wrong — every
-// mega-menu authored in real DA content resolves to a single top-level
+// These fixtures exercise the nested-fragment-link resolution path
+// (blocks/fragment/fragment.js -> scripts/utils/fragment.js's
+// replaceElWithFragment), not a hand-authored already-resolved shape. Mega-menu
+// content authored in DA resolves to a single top-level
 // section, which replaceElWithFragment UNWRAPS (discards its own
 // `.fragment-content` wrapper, splices the bare section in place) — so
 // production shipped a permanently-open, unstyled mega-menu with these
@@ -124,12 +121,8 @@ const tick = (ms = 50) => new Promise((r) => { setTimeout(r, ms); });
 
 describe('header', () => {
   before(() => {
-    // Real bug found authoring actual nav content, 2026-09-21: `linkBlocks: []`
-    // here meant the fragment auto-block pattern (scripts.js's real
-    // `{ fragment: '/system/fragments/' }`) could never match anything, so
-    // every mega-menu test below was silently exercising zero real fragment
-    // resolution — matching real production config closes that gap, not
-    // just the hand-authored-fixture one.
+    // Match production config so the fragment auto-block pattern can resolve
+    // the mega-menu fragments under test.
     setConfig({
       components: ['fragment', 'schedule'],
       hostnames: [],
@@ -294,8 +287,7 @@ describe('header', () => {
     // <ul>), so it must be left completely untouched rather than deleted
     // wholesale along with its real content. Flatten target is
     // .mega-menu-links (header-nav.js's wrapper for flattened content,
-    // sibling of .mega-menu-heading), not .mega-menu itself — see Fix 3
-    // (2026-09-21 parity pass).
+    // sibling of .mega-menu-heading), not .mega-menu itself.
     expect(el.querySelector('.mega-menu-links').children).to.have.length(1);
   });
 
@@ -316,8 +308,8 @@ describe('header', () => {
     await decorate(el);
 
     // Flatten target is .mega-menu-links (header-nav.js's wrapper for the
-    // flattened content, sibling of the real .mega-menu-heading — see Fix 3,
-    // 2026-09-21 parity pass), not .mega-menu itself.
+    // flattened content, sibling of the real .mega-menu-heading), not
+    // .mega-menu itself.
     const menu = el.querySelector('.mega-menu');
     const links = menu.querySelector('.mega-menu-links');
     expect(links.children).to.have.length(1);

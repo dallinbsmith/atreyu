@@ -16,16 +16,10 @@ const loadSidekick = async () => {
   }
 };
 
-// Bug-squash fix, 2026-09-18: this used to live in the one-shot IIFE below,
-// which only ever runs once per page load — ak.js's `import('./lazy.js')`
-// call re-resolves the already-cached module on every later loadArea() call
-// (DA Quick Edit's loadPage() -> loadArea() re-run) without re-executing any
-// top-level code. Footer decoration must run against fresh, undecorated nodes
-// after Quick Edit swaps `document.body.innerHTML`, so ak.js calls this real
-// default export on every loadArea() run. SEO injection (jsonld.js/hreflang.js)
-// deliberately stays in the one-shot IIFE below: jsonld.js's module-scope
-// `graph` array only ever appends (see jsonld.js), so re-running it here
-// would duplicate JSON-LD entries rather than refresh them.
+// DA Quick Edit can swap in fresh footer nodes after this module is cached, so
+// ak.js calls this export on each document load. SEO injection stays one-shot:
+// jsonld.js appends to module-scope state, so re-running it would duplicate
+// JSON-LD entries instead of refreshing them.
 export default async () => {
   const { log } = getConfig();
   await import('./utils/page/footer.js').then(({ default: footer }) => footer()).catch((ex) => log(ex));

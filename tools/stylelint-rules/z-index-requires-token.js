@@ -23,12 +23,8 @@
  * mega-menu submenu, nested inside `header { position: fixed; z-index:
  * var(--z-index-nav); ... }`) — once the ancestor has actually established
  * global-tier containment via a token, everything nested inside it is by
- * definition local to that already-safe context, matching docs/conventions/css.md's own
- * step-zero rule. (Fixed 2026-09-08 after a review found the first version of
- * this rule flagged exactly this real, already-correct pattern — it only
- * escaped detection by accident of header.css's `.language` rule living in a
- * textually separate `@media` occurrence rather than nested via `&`, not
- * because the logic was actually right.)
+ * definition local to that already-safe context, matching docs/conventions/css.md's
+ * step-zero rule.
  *
  * Known, accepted limitations (a lint-time heuristic: passing it does not
  * certify a z-index safe):

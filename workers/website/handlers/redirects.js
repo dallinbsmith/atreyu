@@ -1,11 +1,8 @@
 import { stripLocale, matchLocalePrefix } from '../utils/locale.js';
 
 let redirectMap = null;
-// Backend-audit fix, 2026-09-02: matchWildcard used to rescan `[...redirectMap]`
-// and re-filter by `.endsWith('/*')` on every single unmatched request. Derived
-// once here, alongside redirectMap itself, on the same TTL refresh cadence —
-// same pattern as redirectMap/lastFetch/lastFetchOk, not a second cache with
-// its own invalidation logic.
+// Derived with redirectMap on the same TTL refresh cadence, so wildcard
+// matching does not rescan every redirect entry on every unmatched request.
 let wildcardEntries = [];
 let lastFetch = 0;
 let lastFetchOk = true;
@@ -66,22 +63,15 @@ const matchWildcard = (path) => {
   const entry = wildcardEntries.find(([src]) => path.startsWith(src.slice(0, -1)));
   if (!entry) return null;
   const [src, dest] = entry;
-  // Bug found and fixed 2026-08-28, separately from the locale-reprefixing
-  // fix in the default export below: replacing the literal 2-char '/*'
-  // dropped dest's own slash — '/legacy/*' -> '/modern/*' on '/legacy/foo'
-  // produced '/modernfoo' instead of '/modern/foo'. Replacing just the '*'
-  // preserves the slash dest already has immediately before the wildcard.
+  // Replace only the wildcard, preserving the slash the destination carries
+  // immediately before it.
   return dest.replace('*', path.slice(src.length - 1));
 };
 
 // Single source of truth for "is this a same-site relative path" — used by both
 // the open-redirect guard below and the locale-reprefixing logic in the default
-// export. Security-audit fix, 2026-09-02: normalizes backslashes before checking,
-// since a dest of '/\evil.com' previously passed `startsWith('/') &&
-// !startsWith('//')` as "safe" but browsers normalize '\' to '/' per the WHATWG
-// URL spec, so `new URL('/\\evil.com', origin).hostname` actually resolves to
-// 'evil.com' — a real open-redirect bypass, verified against Node's URL parser
-// (same algorithm browsers use).
+// export. Normalize backslashes before checking: browsers treat '\' like '/'
+// during URL parsing, so '/\evil.com' must be rejected like '//evil.com'.
 const isRelativePath = (path) => {
   const normalized = path.replace(/\\/g, '/');
   return normalized.startsWith('/') && !normalized.startsWith('//');
@@ -112,16 +102,8 @@ export default async ({ request }) => {
 
   if (!dest || !isSafeRedirectDest(dest, requestUrl)) return null;
 
-  // Bug-squash fix, 2026-08-28: normalize() strips the locale prefix so the
-  // request path matches redirects.json's Source keys (authored without
-  // locale prefixes), but `dest` was returned exactly as authored, with the
-  // stripped prefix never re-applied — a /de-de/old-page visitor landed on
-  // the unprefixed English /new-page instead of /de-de/new-page, for every
-  // redirect entry, across all 9 non-default locales. Re-apply the same
-  // prefix that was stripped — only for same-site relative destinations
-  // (isSafeRedirectDest's `//`/cross-host branch isn't a page path to
-  // re-prefix) and only if the author didn't already hardcode a locale
-  // prefix into the destination themselves.
+  // Re-apply the stripped locale only to same-site relative destinations, and
+  // only when the authored destination does not already include a locale.
   const localizedDest = locale && isRelativePath(dest) && !matchLocalePrefix(dest)
     ? `${locale}${dest}`
     : dest;

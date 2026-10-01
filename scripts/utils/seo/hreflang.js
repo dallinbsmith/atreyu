@@ -15,9 +15,7 @@ import { getConfig, getMetadata } from '../../ak.js';
 // a comma-separated list of locale prefixes with a confirmed, published
 // translation of THIS page (e.g. "ja-jp, fr-fr"). getConfig().locales lists
 // every locale the site *could* serve, not which ones actually have a
-// translated page yet — emitting hreflang for an unconfirmed locale is a real
-// SEO error (P0-23: Google expects a confirmed translation at the alternate
-// URL, not a 404).
+// translated page yet. Only emit hreflang for confirmed translations.
 const injectHreflang = () => {
   const { locales, locale } = getConfig();
   const { origin, pathname } = window.location;

@@ -1,6 +1,6 @@
-// Cohort × locale cell manifest (routing-manifest.js; docs/decisions/0015-locale-cutover-cells.md
-// D-L5/L-2, fh-arch6 B-2). Injected manifests go through createIsEdsPath, so
-// nothing here mutates the Worker's real routing state.
+// Cohort × locale cell manifest (routing-manifest.js;
+// docs/decisions/0015-locale-cutover-cells.md). Injected manifests go through
+// createIsEdsPath, so nothing here mutates the Worker's real routing state.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createIsEdsPath } from '../index.js';

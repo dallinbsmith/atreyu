@@ -356,7 +356,7 @@ describe('ak.js decorateSection — author-set anchor id', () => {
     await loadArea({ area });
     const [first, second] = area.querySelectorAll('.section');
     expect(first.dataset.experimentVariants).to.equal('/variant-b');
-    // B2: same attribute name the server writes (each invalid character → '-')
+    // Same attribute name the server writes (each invalid character → '-')
     expect(first.getAttribute('data-campaign:-launch')).to.equal('/launch');
     // the throw used to abort decorateSections for every remaining section
     expect(second.dataset.note).to.equal('still decorated');

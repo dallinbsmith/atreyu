@@ -420,8 +420,7 @@ assert.equal(renderImage({}), null);
 }
 
 {
-  // Real finding (2026-10-01, confirmed on the live ja-jp features/
-  // workflow-management page): a reference points at the EN-US canonical
+  // A reference can point at the EN-US canonical
   // document even from a ja-jp page. Naively using that path would send a
   // Japanese visitor to English. A same-slug ja-jp sibling exists here, so
   // the resolver must redirect to IT, not the raw en-us resolution.
@@ -506,8 +505,8 @@ assert.equal(renderImage({}), null);
 
 {
   // Real scenario found on the live ja-jp features/workflow-management page
-  // (2026-10-01): confirms the fix actually fires end-to-end through
-  // card-grid-nav, not just the resolver in isolation.
+  // Confirms the fallback warning fires end-to-end through card-grid-nav, not
+  // just the resolver in isolation.
   const resolvedRefs = new Map([['3677ff69-565a-48fd-aaeb-b207b869cbb0', { path: '/en-us/features/workflow-management', crossLocale: true }]]);
   const warnings = [];
   const html = transformModule(batch2.cardGridNav, { warnings, resolvedRefs });
@@ -515,7 +514,7 @@ assert.equal(renderImage({}), null);
   assert.ok(warnings.some((w) => w.includes('out of their locale')), 'but flags the cross-locale fallback so a reviewer catches it before it ships');
 }
 
-// --- check-redirect-continuity.js (B6b) ---------------------------------
+// --- check-redirect-continuity.js ----------------------------------------
 // Mocked fetch, not a live network call, so this suite stays hermetic. The
 // real live check is run manually via `--check-redirects` on the CLI, not
 // as part of this test file.

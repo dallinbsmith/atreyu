@@ -17,20 +17,9 @@ export const createElement = (tag, attrs, ...children) => {
   return el;
 };
 
-// Parses an SVG markup string into a real element. Deliberately parses as
-// 'text/html', not 'image/svg+xml': confirmed live (2026-09-09) that
-// DOMParser's XML mode only assigns the SVG element the correct
-// http://www.w3.org/2000/svg namespace when the markup itself carries an
-// explicit xmlns attribute — real standalone .svg files always have one
-// (media/icons.js fetches real files directly, unaffected; partner-logo.js goes
-// through sanitizeMarkup(), which already parses as 'text/html'), but a
-// hand-written inline SVG string constant (the actual use case here) never
-// does. Without the right namespace the element doesn't render as SVG at all
-// (no intrinsic sizing, presentation attributes like fill="currentColor" do
-// nothing) — a real, silent-failure regression this rule found in
-// tile-modal.js/youtube.js before this fix. HTML parsing assigns the correct
-// namespace either way, no xmlns required, since foreign-content (svg/math)
-// handling is baked into the HTML parsing algorithm itself.
+// Parses SVG snippets as HTML so inline constants without an xmlns still get
+// the SVG namespace. XML mode only does that when the markup declares xmlns;
+// HTML foreign-content parsing handles svg/math either way.
 export const parseSvg = (markup) => new DOMParser().parseFromString(markup, 'text/html').querySelector('svg');
 
 // A block's row/cell shape is fixed by the platform's own document model

@@ -19,7 +19,7 @@
 // assumes (/{locale}/{slug}, unchanged from the Sanity slug) and reports
 // anything that doesn't already resolve there as-is. See
 // check-redirect-continuity.js's header comment for why this, not a
-// speculative redirect map, is the real scope of B6b.
+// speculative redirect map, is the real scope.
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import {

@@ -38,20 +38,15 @@ describe('scripts/lazy.js', () => {
     document.head.querySelector('meta[name="footer"]')?.remove();
   });
 
-  // Bug-squash fix, 2026-09-18: lazy.js used to be a bare top-level IIFE with
-  // no export — ak.js's `import('./lazy.js')` on a second loadArea() call
-  // (DA Quick Edit's re-render) resolved the already-cached module without
-  // re-running anything, so footer never re-decorated past the first
-  // page load. A real default export is the fix; this pins that it exists
-  // and is a genuinely re-invokable function, not a one-shot side effect.
+  // The default export is intentionally re-invokable: DA Quick Edit can trigger
+  // another document load after this module is cached, and footer decoration
+  // must run against the fresh nodes.
   it('exports a callable default, distinct from the one-shot bootstrap IIFE', () => {
     expect(lazyModule.default).to.be.a('function');
   });
 
-  // fh-arch6 canonical-single-source: the bootstrap used to append a second,
-  // client-side canonical next to the server one. Two canonicals is a signal
-  // Google ignores, so the server tag must stay the only one, untouched (an
-  // author's Canonical metadata override lands in that same tag).
+  // The server-rendered canonical is the single source of truth; two canonicals
+  // are a signal Google ignores.
   it('leaves the server-rendered canonical as the only one', async () => {
     // Best-effort: the bootstrap's import chain isn't awaitable. A slower
     // injector could land later and slip past; this failed on the old code.

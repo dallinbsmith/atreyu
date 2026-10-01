@@ -7,7 +7,7 @@ import { generateNonce } from '../utils/nonce.js';
 
 const EDS = 'https://main--atreyu--dallinbsmith.aem.live';
 const req = (path = '/blog/x') => new Request(`${EDS}${path}`);
-// What AEM sends with x-push-invalidation: enabled (curl, 2026-09-24).
+// What AEM sends with x-push-invalidation: enabled.
 const AEM_HEADERS = {
   'content-type': 'text/plain',
   'cache-control': 'max-age=7200, must-revalidate',

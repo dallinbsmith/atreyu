@@ -3,9 +3,9 @@ import { loadArea } from '../../scripts/ak.js';
 import { promoteAnchors } from '../../scripts/scripts.js';
 import { sectionKeyIssues } from '../../experiments-panel/sources.js';
 
-// B2. Importing scripts.js runs loadPage(), which installs the real config,
-// including the decorateArea hook. loadArea({ area }) then runs the real
-// hook, ak.js decorateSections and the real section-metadata block.
+// Importing scripts.js runs loadPage(), which installs the real config,
+// including the decorateArea hook. loadArea({ area }) then runs the real hook,
+// ak.js decorateSections and the real section-metadata block.
 const PROBE_URL = new URL('./fixtures/section-metadata/probe.plain.html', import.meta.url);
 
 const mount = (html) => {
