@@ -17,6 +17,23 @@ line is NOT currently automated — it depends on you actually checking.
 
 <!-- One or two sentences. Link the docs/decisions/ record if this traces back to a decision. -->
 
+## Test URLs
+
+<!-- The AEM Code Sync PSI check reads the After URL. Use the affected path, not only the home page. `<branch>` is the branch name lowercased with `/` and other non-alphanumerics replaced by `-`, for example `docs/environments-model` becomes `docs-environments-model`. -->
+
+Test URLs:
+- Before: `https://main--atreyu--<owner>.aem.live/<path>`
+- After: `https://<branch>--atreyu--<owner>.aem.live/<path>`
+
+Branch preview with preview content, if needed: `https://<branch>--atreyu--<owner>.aem.page/<path>`.
+
+## Evidence
+
+<!-- For UI changes, paste links, screenshots, or summaries. Say N/A for docs-only or non-visual changes. -->
+
+- Lighthouse or PSI result:
+- axe result:
+
 ## Checklist
 
 ### Caching & async correctness
@@ -30,10 +47,12 @@ line is NOT currently automated — it depends on you actually checking.
 - [ ] If a function returns a cleanup/unsubscribe handle (an `IntersectionObserver.disconnect()`, an event listener remover), either call it somewhere real or leave a comment explaining why discarding it is currently safe — don't just drop it silently.
 
 ### Content & copy
+- [ ] Does this need a DA content or Library change shipped at the same time?
 - [ ] No hardcoded user-facing English string in block/utility JS (button labels, ARIA announcements, badge text) — route it through `getPlaceholder(key, fallback)`. (Found in `logo-wall.js`, `pricing.js`, `jsonld.js`'s breadcrumb label.)
 - [ ] No hardcoded color, spacing, or radius value that duplicates an existing design token — reference the token instead. Stylelint's `color-no-hex` catches literal hex colors; it does not catch duplicated `rgb()`/spacing values, so this still needs an eyeball check.
 
 ### Security
+- [ ] New URL parameter or environment-dependent behaviour? Which gate does it use (`env.js` tier, `isAuthoringPreviewAllowed`, consent, or another named gate)?
 - [ ] Any new sanitizer, allowlist, or auth-adjacent logic has real test coverage — `sanitize.js` and `embed-allowlist.js` shipped with zero tests for a full session before this was caught.
 - [ ] Any new Worker route doesn't reuse a `Request`/header set that was built for a *different* origin — `dasc.js` once forwarded the AEM-authenticated request's `Authorization` header to an unrelated third-party host this way.
 - [ ] Any new redirect/URL-safety check normalizes backslashes before a `startsWith('/') && !startsWith('//')`-style same-origin check — browsers treat a leading `\` as `/`, which bypassed exactly this check once in `redirects.js`.

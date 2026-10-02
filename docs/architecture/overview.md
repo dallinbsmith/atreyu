@@ -30,14 +30,19 @@ The Worker is not yet in front of frame.io; see [status.md](../status.md).
 
 ## Hosts and environments
 
+Atreyu uses one EDS site and three tiers: dev, stage and prod. See [environments.md](environments.md) and [ADR 0019](../decisions/0019-environments.md).
+
+The tier name and the `env.js` value differ on EDS hosts: branch previews and `main--atreyu--<owner>.aem.live` report `stage`. See [environments.md](environments.md).
+
 | Host | What it is | `env.js` value |
 |---|---|---|
-| `localhost:3000` | `aem up` local dev server | `dev` (host contains `local`) |
-| `{branch}--atreyu--dallinbsmith.aem.page` | Preview: the branch's code with previewed content | `stage` (host contains `--`) |
-| `main--atreyu--dallinbsmith.aem.live` | Live: `main` code with published content. The Worker's EDS origin | `stage` |
+| `localhost:3000` | `aem up` local dev server | `dev` |
+| `{branch}--atreyu--<owner>.aem.page` | Preview: the branch's code with previewed content | `stage` |
+| `main--atreyu--<owner>.aem.live` | Live: `main` code with published content. The Worker's EDS origin | `stage` |
+| A dedicated staging host | Planned staging Worker in front of `main--atreyu--<owner>.aem.live` | `stage`, after the Worker tier change |
 | `frame.io` | Production. Canonical host ([ADR-0005](../decisions/0005-canonical-host.md)); currently still served by the existing site | `prod` |
 
-Code checks the environment only through `scripts/utils/env.js` (a lint rule blocks inline host checks). In `dev`/`stage`, `lazy.js` also loads the Sidekick integration, the content scheduler and the `data-testid` audit.
+Code checks the tier only through `scripts/utils/env.js` (a lint rule blocks inline host checks). In non-prod, `lazy.js` also loads the Sidekick integration, the content scheduler and the `data-testid` audit. Authoring previews are a separate gate through `isAuthoringPreviewAllowed`.
 
 ## Loading phases (E-L-D)
 

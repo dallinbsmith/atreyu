@@ -13,8 +13,16 @@ Legend: **Built** = merged to `main` and tested. **In progress** = partly built.
 | Personalization and experimentation | Built; zero production reach until consent and the Worker are in place |
 | Worker and routing | Built and tested; deployed to `workers.dev` only, not in front of frame.io |
 | Content migration | A handful of real pages; most landing pages are placeholders |
+| Environments and repository | Environment model decided; Worker tier and staging noindex planned; repository move planned |
 
 Nothing on frame.io is served by EDS yet.
+
+## Environments and repository
+
+**Planned / decided**
+- Environment model decided: one EDS site with dev, stage and prod ([ADR 0019](decisions/0019-environments.md), [architecture](architecture/environments.md)).
+- Worker tier metadata and staging noindex are planned.
+- Moving the repository to the company GitHub org is planned.
 
 ## Foundation
 
