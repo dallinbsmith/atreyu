@@ -53,7 +53,7 @@
     "espree": "^11.2.0",
     "globals": "^16.0.0",
     "lit": "^3.3.3",
-    "sinon": "^21.0.1",
+    "sinon": "^22.1.0",
     "stylelint": "^17.15.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-declaration-strict-value": "^1.12.1",
