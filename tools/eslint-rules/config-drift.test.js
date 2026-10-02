@@ -17,9 +17,8 @@
  * `currentEnv.includes('prod')` to be exempt the same way `ENV === 'prod'`
  * is, on the theory that a bare identifier is a bare identifier either way.
  * Implemented literally, that would also exempt `host.includes('stage')`
- * when `host` is a plain variable — which is the *exact* shape of
- * scripts/utils/env.js's own real internal logic, i.e. exactly the bug this
- * rule exists to catch. Instead, both branches now trace whether the
+ * when `host` is a plain variable — exactly the host-shape check this rule
+ * exists to catch. Instead, both branches now trace whether the
  * identifier is actually bound to an import of the designated classifier
  * file; that closes the asymmetry (both branches use the same check) without
  * gutting detection of the core case.
@@ -205,9 +204,9 @@ ruleTester.run('no-inline-env-check', plugin.rules['no-inline-env-check'], {
       filename: 'blocks/foo/foo.js',
       code: "const ok = x.includes('foo');",
     },
-    // Round 3, item 1 exemption path: the same .some() shape, but checking
-    // the imported classifier binding rather than a raw hostname — must
-    // stay exempt, same as the direct .includes()/=== cases above.
+    // Exemption path: the same .some() shape, but checking the imported
+    // classifier binding rather than a raw hostname — must stay exempt,
+    // same as the direct .includes()/=== cases above.
     {
       filename: 'blocks/schedule/schedule.js',
       code: "import ENV from '../../scripts/utils/env.js';\nconst maybe = ['prod', 'stage'].some((w) => ENV.includes(w));",
@@ -258,18 +257,15 @@ ruleTester.run('no-inline-env-check', plugin.rules['no-inline-env-check'], {
       code: "const isStage = location.host === 'stage';",
       errors: 1,
     },
-    // Round 3, item 1: env-word array iterated via .some(), the exact shape
-    // of scripts/utils/env.js's own real internal logic
-    // (`['--', 'local'].some((check) => host.includes(check))`) and the
-    // natural way docs/conventions/javascript.md's preferred .some()/.every() house style would
+    // Env-word array iterated via .some(), a natural way
+    // docs/conventions/javascript.md's preferred .some()/.every() house style would
     // reproduce it outside the designated file.
     {
       filename: 'blocks/foo/foo.js',
       code: "const isStage = (host) => ['stage', 'staging'].some((marker) => host.includes(marker));",
       errors: 1,
     },
-    // Round 3, item 1: .every() / .find() variants, plus a `return`-bodied
-    // (not implicit-return) callback.
+    // .every() / .find() variants, plus a `return`-bodied callback.
     {
       filename: 'blocks/foo/foo.js',
       code: "const isProd = (host) => ['prod', 'production'].every((marker) => { return host.startsWith(marker); });",

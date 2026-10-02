@@ -11,6 +11,7 @@ const KEY = 'unified-decisioning-experiments';
 const PLUGIN_CONSENT_KEY = 'experimentation-consented';
 const realFetch = window.fetch;
 const realMatchMedia = window.matchMedia;
+const originalPath = `${window.location.pathname}${window.location.search}`;
 let tracked;
 let clock;
 
@@ -68,6 +69,7 @@ describe('scripts/experiment-loader.js', () => {
   afterEach(() => {
     window.fetch = realFetch;
     window.matchMedia = realMatchMedia;
+    window.history.replaceState({}, '', originalPath);
     clock?.restore();
     clock = null;
   });
@@ -153,10 +155,24 @@ describe('scripts/experiment-loader.js', () => {
 
     it('never tracks a forced ?experiment= preview', () => {
       setConsent({ analytics: true });
-      window.history.replaceState({}, '', '?experiment=hero-test/challenger-1');
-      trackExposures([exp()]);
-      window.history.replaceState({}, '', window.location.pathname);
-      expect(tracked).to.have.length(0);
+      try {
+        window.history.replaceState({}, '', '?experiment=hero-test/challenger-1');
+        trackExposures([exp()]);
+        expect(tracked).to.have.length(0);
+      } finally {
+        window.history.replaceState({}, '', originalPath);
+      }
+    });
+
+    it('never tracks a forced ?audience= preview', () => {
+      setConsent({ analytics: true });
+      try {
+        window.history.replaceState({}, '', '?audience=mobile');
+        trackExposures([exp({ resolvedAudiences: ['mobile'] })]);
+        expect(tracked).to.have.length(0);
+      } finally {
+        window.history.replaceState({}, '', originalPath);
+      }
     });
   });
 
@@ -213,6 +229,26 @@ describe('scripts/experiment-loader.js', () => {
       const exposure = tracked.find((t) => t.event === 'experiment');
       expect(exposure.props.variantName).to.equal('challenger-1');
       expect(localStorage.getItem(KEY)).to.contain('challenger-1');
+    });
+
+    it('does not track forced previews even if the URL changes before the plugin finishes', async () => {
+      setConsent({ analytics: true, personalization: true });
+      try {
+        window.history.replaceState({}, '', '?experiment=table-test/challenger-1');
+        window.fetch = async () => {
+          window.history.replaceState({}, '', window.location.pathname);
+          return new Response(
+            '<html><body><main><div><h1 id="headline">Challenger headline</h1></div></main></body></html>',
+            { status: 200, headers: { 'content-type': 'text/html' } },
+          );
+        };
+        pageWithTable('100');
+        await runExperimentation();
+        expect(document.querySelector('#headline').textContent).to.equal('Challenger headline');
+        expect(tracked.find((t) => t.event === 'experiment')).to.equal(undefined);
+      } finally {
+        window.history.replaceState({}, '', originalPath);
+      }
     });
 
     it('without personalization consent, never runs the plugin or writes storage', async () => {
@@ -532,10 +568,10 @@ describe('scripts/experiment-loader.js', () => {
       // ?audience= is a preview param, so the plugin runs without consent;
       // fetch is stubbed (an unstubbed /v/ fetch hits the WTR dev server).
       [
-        { prod: true, headline: 'Control headline', warned: false },
+        { prod: true, headline: 'Served /v/p/home/mobile', warned: false },
         { prod: false, headline: 'Served /v/p/home/mobile', warned: true },
       ].forEach(({ prod, headline, warned }) => {
-        it(`passes the prod flag (${prod}): inactive ?audience= preview ${prod ? 'off, no warnings' : 'on, warnings'}`, async () => {
+        it(`passes the prod flag (${prod}): inactive ?audience= preview on, ${warned ? 'warnings' : 'no warnings'}`, async () => {
           const isProd = sinon.stub(config, 'isProd').returns(prod);
           const warn = sinon.stub(console, 'warn');
           try {

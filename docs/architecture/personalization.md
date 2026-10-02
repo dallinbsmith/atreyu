@@ -35,7 +35,7 @@ Author-facing instructions: [authoring/personalization.md](../authoring/personal
 9. **Consent gate:** stop (and clear stored assignments) unless `hasConsent('personalization')` or the URL has `?experiment=` or `?audience=`.
 10. Run plugin `loadEager` with the audience catalog, inside `withVariantTimeout` (a variant fetch slower than 1000 ms is aborted and the original content stays).
 11. Persist assignments to `localStorage` (`unified-decisioning-experiments`) only with consent.
-12. Track one `EVENTS.EXPERIMENT` event per running test (skipped for previews).
+12. Track one `EVENTS.EXPERIMENT` event per running test. Forced previews skip Segment exposure events; the vendored plugin still emits RUM checkpoints for forced `experiment`/`audience` runs.
 
 Any error is logged and the page renders the control.
 
@@ -59,7 +59,7 @@ Enforced by `scripts/utils/experiments/personalize.js`:
 |---|---|
 | `Name` | Label for the panel and warnings |
 | `Audience: <id>` → link | 1 to 3 rows (`MAX_RULES`). Unknown audiences, duplicates and paths not under `/v/` are dropped. Locale-prefixed variant paths (`/de-de/v/…`) are dropped: personalization is English-only ([ADR-0011](../decisions/0011-english-only-personalization.md)) |
-| `Status` | `active` (default when blank) or `inactive`. Inactive rules only apply to non-production `?audience=` previews |
+| `Status` | `active` (default when blank) or `inactive`. Inactive rules only apply to `?audience=` previews, which work on every host |
 | `End Date` | Required, `YYYY-MM-DD`, at most 180 days ahead (`MAX_DAYS`). Runs through the end of that day in the visitor's time zone. Missing, invalid or past → all rules dropped |
 | `Owner` | Label for the panel |
 

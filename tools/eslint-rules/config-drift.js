@@ -248,9 +248,8 @@ const isEnvLiteral = (node) => {
 const SUBSTRING_METHODS = ['includes', 'startsWith', 'endsWith'];
 const ITERATION_METHODS_WITH_CALLBACK = ['some', 'every', 'find'];
 
-// `['stage', 'staging'].some((marker) => host.includes(marker))` is the same
-// shape as scripts/utils/env.js's own real internal logic — the env-word
-// literals live in the iterated array, not as the .includes() argument, so
+// `['stage', 'staging'].some((marker) => host.includes(marker))` keeps the
+// env-word literals in the iterated array, not as the .includes() argument, so
 // the direct-literal check above doesn't see them. Only the callback's
 // simple, common shapes are inspected (an implicit-return expression, or a
 // single top-level `return`, optionally one `||`/`&&` level deep) —

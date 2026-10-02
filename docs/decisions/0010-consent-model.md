@@ -11,6 +11,6 @@
 ## Consequences
 
 - Today `scripts/experiment-loader.js` stops unless `hasConsent('personalization')` is true or the URL is a preview, and nothing grants that consent in production. Production reach is zero until the consent work ships.
-- `scripts/utils/analytics/segment.js` has a placeholder write key; events don't send until a real key is set.
+- `scripts/utils/analytics/segment.js` has a placeholder write key; Segment does not load until prod has a real key.
 - Open: a written legal ruling (instead of parity with the current site); which Segment device-mode destinations load on EDS pages (never add `unsafe-eval` to CSP for them); verifying the OneTrust callback names and hosts.
 - A visitor whose variant fetch times out is currently counted as control. Fix before reading results.

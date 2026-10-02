@@ -21,7 +21,7 @@ Nothing on frame.io is served by EDS yet.
 
 **Planned / decided**
 - Environment model decided: one EDS site with dev, stage and prod ([ADR 0019](decisions/0019-environments.md), [architecture](architecture/environments.md)).
-- Worker tier metadata and staging noindex are planned.
+- Worker-set tier attributes and staging noindex are planned.
 - Moving the repository to the company GitHub org is planned.
 
 ## Foundation
@@ -73,7 +73,7 @@ Before the third locale: generate the locale lists from one manifest and write a
 
 **Blocked**
 - Production Cloudflare account (the Worker can't front frame.io without it).
-- Loading the consent manager and analytics in production. `segment.js` still has a placeholder write key.
+- Loading the consent manager and analytics in production. `segment.js` stays off while prod has only the placeholder write key.
 - Removing the consent gate from the loader (decided, waiting on the consent manager).
 - Choosing the first production page to personalize.
 

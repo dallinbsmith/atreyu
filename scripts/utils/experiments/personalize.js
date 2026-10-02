@@ -13,7 +13,7 @@
 //   can't be bypassed. Later tables in the section are ignored.
 // - Every table is removed; a section left with only metadata goes too
 //   (guard.js removeConfigBlock) and compiles to nothing.
-// - Inactive is kept only for non-prod ?audience= previews. Ended, missing
+// - Inactive is kept only for ?audience= previews. Ended, missing
 //   or invalid End Dates are dropped everywhere.
 // - End Date is YYYY-MM-DD only, what the panel's date picker writes
 //   (toDateInput). Anything else drops the rules: free-form Date parsing was
@@ -147,8 +147,8 @@ const writeRules = (section, rules) => {
 
 // Returns the plan `{ section, name, owner, rules: [{ id, path }] }[]` of the
 // tables that compiled to at least one rule (consumed by analytics events).
-// Preview mode is any non-prod URL with an `audience` param, whatever its
-// value. `quiet` silences the warnings off prod (prod never warns): the
+// Preview mode is any URL with an `audience` param, whatever its value.
+// `quiet` silences the warnings off prod (prod never warns): the
 // experiments panel's preview compile runs on a parsed copy and must not log.
 export const applyPersonalizeTables = (doc = document, {
   prod = ENV === 'prod',
@@ -157,7 +157,7 @@ export const applyPersonalizeTables = (doc = document, {
   quiet: quietOption = false,
 } = {}) => {
   const quiet = prod || quietOption;
-  const preview = !prod && new URLSearchParams(search).has('audience');
+  const preview = new URLSearchParams(search).has('audience');
   const owners = new Map();
   for (const block of findConfigBlocks(doc.querySelector('main'), ['personalize'])) {
     const section = block.closest('main > div');

@@ -1,12 +1,16 @@
-// Deploy-tier classifier for the CURRENT page's own hostname (prod/stage/
-// dev). Not the same question as "does this OTHER hostname belong to the
-// AEM/DA platform" — see scripts/utils/platform-host.js for that; the two
-// happen to both check for the substring 'local' but answer independent
-// questions and are intentionally not consolidated.
-export const classifyEnv = (host = window.location.host) => {
-  if (!['--', 'local'].some((check) => host.includes(check))) return 'prod';
-  if (['--'].some((check) => host.includes(check))) return 'stage';
-  return 'dev';
+import {
+  AEM_AUTHORING_HOST_PATTERN,
+  LOOPBACK_HOST_PATTERN,
+  hostnameOf,
+} from './security/preview-origin.js';
+
+// Deploy-tier classifier for this page. Until the Worker owns a signal authors
+// cannot create, custom hosts fail closed to production.
+export const classifyEnv = (host = globalThis.window?.location?.host ?? '') => {
+  const hostname = hostnameOf(host);
+  if (LOOPBACK_HOST_PATTERN.test(hostname)) return 'dev';
+  if (AEM_AUTHORING_HOST_PATTERN.test(hostname)) return 'stage';
+  return 'prod';
 };
 
 export const isProdEnv = (env = classifyEnv()) => env === 'prod';

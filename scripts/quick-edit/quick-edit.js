@@ -1,5 +1,10 @@
 import { loadPage } from '../scripts.js';
-import { isAuthoringPreviewAllowed, resolvePreviewOrigin } from '../utils/security/preview-origin.js';
+import {
+  hostnameOf,
+  isAuthoringPreviewAllowed,
+  LOOPBACK_HOST_PATTERN,
+  resolvePreviewOrigin,
+} from '../utils/security/preview-origin.js';
 
 const importMap = {
   imports: {
@@ -15,11 +20,11 @@ const addImportmap = () => {
   document.head.appendChild(importmapEl);
 };
 
-// creates sidekick payload when loading QE from query param
-const generateSidekickPayload = () => {
-  let { hostname } = window.location;
-  if (hostname === 'localhost') {
-    hostname = document.querySelector('meta[property="hlx:proxyUrl"]').content;
+// Creates sidekick payload when loading QE from query param.
+export const generateSidekickPayload = (loc = window.location, doc = document) => {
+  let hostname = hostnameOf(loc.host ?? loc.hostname);
+  if (LOOPBACK_HOST_PATTERN.test(hostname)) {
+    hostname = doc.querySelector('meta[property="hlx:proxyUrl"]').content;
   }
   const parts = hostname.split('.')[0].split('--');
   const [, repo, owner] = parts;
@@ -27,7 +32,7 @@ const generateSidekickPayload = () => {
   return {
     detail: {
       config: { mountpoint: `https://content.da.live/${owner}/${repo}/` },
-      location: { pathname: window.location.pathname },
+      location: { pathname: loc.pathname },
     },
   };
 };

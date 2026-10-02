@@ -98,6 +98,12 @@ Comment-only cleanup, no row: comments in `ak.js` and `lazy.js` were shortened t
 | P1 | default export | `runBehaviors('lazy')` before the header loads | Convention | Runs the behavior registry's lazy phase. | No |
 | P2 | default export | Arrow function | Style | House lint style. | No |
 
+## scripts/utils/env.js
+
+| # | Function | Change | Class | Why | PR |
+| --- | --- | --- | --- | --- | --- |
+| E1 | `classifyEnv` | Uses loopback as `dev`, the shared Adobe EDS host pattern as `stage`, and a fail-closed `prod` fallback for every other host | Convention | Custom-host staging needs a future Worker-owned signal authors cannot create; until then unknown hosts must not open non-prod tools. | No |
+
 ## scripts/scripts.js
 
 This is author-kit's intended project configuration file, so most changes are expected.
