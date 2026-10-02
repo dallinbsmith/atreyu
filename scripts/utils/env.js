@@ -1,12 +1,22 @@
-// Deploy-tier classifier for the CURRENT page's own hostname (prod/stage/
-// dev). Not the same question as "does this OTHER hostname belong to the
-// AEM/DA platform" — see scripts/utils/platform-host.js for that; the two
-// happen to both check for the substring 'local' but answer independent
-// questions and are intentionally not consolidated.
-export const classifyEnv = (host = window.location.host) => {
-  if (!['--', 'local'].some((check) => host.includes(check))) return 'prod';
-  if (['--'].some((check) => host.includes(check))) return 'stage';
-  return 'dev';
+import { AEM_AUTHORING_HOST_PATTERN } from './security/preview-origin.js';
+
+const VALID_TIERS = new Set(['prod', 'stage', 'dev']);
+const LOOPBACK_HOST_PATTERN = /^(127\.0\.0\.1|.*localhost.*)$/i;
+
+const hostnameOf = (host = globalThis.window?.location?.hostname ?? '') => host.split(':').at(0) ?? '';
+
+const tierMeta = (doc = globalThis.document) => {
+  const tier = doc?.head?.querySelector('meta[name="deploy-tier"]')?.content?.trim().toLowerCase();
+  return VALID_TIERS.has(tier) ? tier : null;
+};
+
+// Deploy-tier classifier for this page. Adobe EDS hosts ignore authored meta
+// because authors can create meta tags there; custom hosts trust Worker meta.
+export const classifyEnv = (host, doc) => {
+  const hostname = hostnameOf(host);
+  if (LOOPBACK_HOST_PATTERN.test(hostname)) return 'dev';
+  if (AEM_AUTHORING_HOST_PATTERN.test(hostname)) return 'stage';
+  return tierMeta(doc) ?? 'prod';
 };
 
 export const isProdEnv = (env = classifyEnv()) => env === 'prod';

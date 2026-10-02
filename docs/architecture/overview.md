@@ -36,13 +36,14 @@ The tier name and the `env.js` value differ on EDS hosts: branch previews and `m
 
 | Host | What it is | `env.js` value |
 |---|---|---|
-| `localhost:3000` | `aem up` local dev server | `dev` |
+| `localhost:3000`, `127.0.0.1:3000`, `[::1]:3000` | Local dev servers | `dev` |
 | `{branch}--atreyu--<owner>.aem.page` | Preview: the branch's code with previewed content | `stage` |
 | `main--atreyu--<owner>.aem.live` | Live: `main` code with published content. The Worker's EDS origin | `stage` |
-| A dedicated staging host | Planned staging Worker in front of `main--atreyu--<owner>.aem.live` | `stage`, after the Worker tier change |
+| `*.hlx.page`, `*.hlx.live`, `*.aem.reviews`, `*.local` | Non-canonical/non-EDS host shapes | `prod` (fail closed) |
+| custom Worker host | Planned Worker-set attribute on `<html>` not implemented yet | `prod` (fail closed today) |
 | `frame.io` | Production. Canonical host ([ADR-0005](../decisions/0005-canonical-host.md)); currently still served by the existing site | `prod` |
 
-Code checks the tier only through `scripts/utils/env.js` (a lint rule blocks inline host checks). In non-prod, `lazy.js` also loads the Sidekick integration, the content scheduler and the `data-testid` audit. Authoring previews are a separate gate through `isAuthoringPreviewAllowed`.
+Code checks the tier only through `scripts/utils/env.js` (a lint rule blocks inline host checks). Loopback is `dev`; Adobe EDS branch hosts are `stage`; every other host fails closed to `prod`. A future Worker PR will add a Worker-set attribute on `<html>` that authors cannot create for staging custom hosts. In non-prod, `lazy.js` also loads the Sidekick integration, the content scheduler and the `data-testid` audit. Authoring previews are a separate gate through `isAuthoringPreviewAllowed`.
 
 ## Loading phases (E-L-D)
 
@@ -54,7 +55,7 @@ Code checks the tier only through `scripts/utils/env.js` (a lint rule blocks inl
    3. Probe for experiment signals; if present, import the loader/plugin and run experimentation before anything is decorated (see [personalization.md](personalization.md)).
    4. `await loadArea()`: decorate the document (header element, skip link, template), then load sections in order. Each section loads its blocks (its CSS loads in parallel with importing `blocks/{name}/{name}.js` and calling its default export) and its Section Metadata.
 2. **Lazy**: after the first section, `ak.js` imports `postlcp.js` (loads the header block and lazy-phase behaviours). After all sections, it imports `lazy.js`: footer, `lazy-styles.css`, favicon, JSON-LD, hreflang, delegated click tracking.
-3. **Delayed**: `lazy.js` imports `delayed.js` 3 seconds later: analytics (`segment.js`, only with analytics consent) and delayed behaviours.
+3. **Delayed**: `lazy.js` imports `delayed.js` 3 seconds later: analytics (`segment.js`, only with analytics consent and a real write key) and delayed behaviours.
 
 Performance rules for each phase are in [conventions/javascript.md](../conventions/javascript.md#loading-phases-e-l-d).
 

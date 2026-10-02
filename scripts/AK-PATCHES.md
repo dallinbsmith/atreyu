@@ -98,6 +98,12 @@ Comment-only cleanup, no row: comments in `ak.js` and `lazy.js` were shortened t
 | P1 | default export | `runBehaviors('lazy')` before the header loads | Convention | Runs the behavior registry's lazy phase. | No |
 | P2 | default export | Arrow function | Style | House lint style. | No |
 
+## scripts/utils/env.js
+
+| # | Function | Change | Class | Why | PR |
+| --- | --- | --- | --- | --- | --- |
+| E1 | `classifyEnv` | Uses localhost/loopback as `dev`, the shared Adobe EDS host pattern as `stage`, and `deploy-tier` meta on custom hosts with a fail-closed `prod` fallback | Convention | Frame.io's Worker is the source of truth for custom-host tier, while Adobe EDS hosts ignore author-controlled meta. | No |
+
 ## scripts/scripts.js
 
 This is author-kit's intended project configuration file, so most changes are expected.

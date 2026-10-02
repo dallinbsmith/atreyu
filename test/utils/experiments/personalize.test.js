@@ -156,11 +156,11 @@ describe('scripts/utils/experiments/personalize.js', () => {
       expect(warn.calledWithMatch(/Status "inactive" is not active/)).to.equal(true);
     });
 
-    it('keeps an inactive table for a non-prod ?audience= preview only', () => {
+    it('keeps an inactive table for a ?audience= preview on every host', () => {
       expect(rulesFor(baseRows({ status: 'inactive' }), { search: '?audience=mobile' }).rows)
         .to.deep.equal([['Audience: mobile', '/v/p/home/mobile']]);
       expect(rulesFor(baseRows({ status: 'inactive' }), { search: '?audience=mobile', prod: true }).rows)
-        .to.deep.equal([]);
+        .to.deep.equal([['Audience: mobile', '/v/p/home/mobile']]);
       expect(rulesFor(baseRows({ status: 'inactive' }), { search: '?experiment=x' }).rows).to.deep.equal([]);
     });
 

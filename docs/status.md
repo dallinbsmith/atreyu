@@ -73,7 +73,7 @@ Before the third locale: generate the locale lists from one manifest and write a
 
 **Blocked**
 - Production Cloudflare account (the Worker can't front frame.io without it).
-- Loading the consent manager and analytics in production. `segment.js` still has a placeholder write key.
+- Loading the consent manager and analytics in production. `segment.js` stays off while its write key is a placeholder.
 - Removing the consent gate from the loader (decided, waiting on the consent manager).
 - Choosing the first production page to personalize.
 

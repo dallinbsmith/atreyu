@@ -105,7 +105,7 @@ export default (el, { signal } = {}) => {
 | `color-scheme.js` | `getColorScheme`, `setColorScheme` | Light/dark from computed background luminance |
 | `date-only.js` | `DATE_ONLY` | `YYYY-MM-DD` regex; no imports, safe for the panel |
 | `dom.js` | `createElement`, `parseSvg`, `getCells`, `classifyCtaParagraphs`, `HEADING_SELECTOR`, `parseGlassborderDecoration` | `createElement(tag, attrs, ...children)` sets attributes, not properties; `false`/`null` omit the attribute, so pass ARIA state as `'true'`/`'false'` strings |
-| `env.js` | default (`'prod'`/`'stage'`/`'dev'`), `classifyEnv`, `isProdEnv` | `--` in host = stage, `local` = dev, anything else = prod. Don't inline host checks (lint rule `config-drift/no-inline-env-check`) |
+| `env.js` | default (`'prod'`/`'stage'`/`'dev'`), `classifyEnv`, `isProdEnv` | Localhost/loopback = `dev`; Adobe EDS branch hosts = `stage`; custom hosts read `deploy-tier` meta and otherwise fail closed to `prod`. Don't inline host checks (lint rule `config-drift/no-inline-env-check`) |
 | `error.js` | default `(ex, el)` | Logs; in non-prod wraps the failing element in `.has-error` |
 | `experiments/*` | see [personalization](../architecture/personalization.md) | |
 | `fetch-data.js` | `fetchData(url, { sheet, limit, offset })` | See [Shared fetches](#shared-fetches) |

@@ -59,7 +59,7 @@ Enforced by `scripts/utils/experiments/personalize.js`:
 |---|---|
 | `Name` | Label for the panel and warnings |
 | `Audience: <id>` → link | 1 to 3 rows (`MAX_RULES`). Unknown audiences, duplicates and paths not under `/v/` are dropped. Locale-prefixed variant paths (`/de-de/v/…`) are dropped: personalization is English-only ([ADR-0011](../decisions/0011-english-only-personalization.md)) |
-| `Status` | `active` (default when blank) or `inactive`. Inactive rules only apply to non-production `?audience=` previews |
+| `Status` | `active` (default when blank) or `inactive`. Inactive rules only apply to `?audience=` previews, which work on every host |
 | `End Date` | Required, `YYYY-MM-DD`, at most 180 days ahead (`MAX_DAYS`). Runs through the end of that day in the visitor's time zone. Missing, invalid or past → all rules dropped |
 | `Owner` | Label for the panel |
 

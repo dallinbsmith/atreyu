@@ -158,6 +158,14 @@ describe('scripts/experiment-loader.js', () => {
       window.history.replaceState({}, '', window.location.pathname);
       expect(tracked).to.have.length(0);
     });
+
+    it('never tracks a forced ?audience= preview', () => {
+      setConsent({ analytics: true });
+      window.history.replaceState({}, '', '?audience=mobile');
+      trackExposures([exp({ resolvedAudiences: ['mobile'] })]);
+      window.history.replaceState({}, '', window.location.pathname);
+      expect(tracked).to.have.length(0);
+    });
   });
 
   describe('assignment stickiness', () => {
@@ -532,10 +540,10 @@ describe('scripts/experiment-loader.js', () => {
       // ?audience= is a preview param, so the plugin runs without consent;
       // fetch is stubbed (an unstubbed /v/ fetch hits the WTR dev server).
       [
-        { prod: true, headline: 'Control headline', warned: false },
+        { prod: true, headline: 'Served /v/p/home/mobile', warned: false },
         { prod: false, headline: 'Served /v/p/home/mobile', warned: true },
       ].forEach(({ prod, headline, warned }) => {
-        it(`passes the prod flag (${prod}): inactive ?audience= preview ${prod ? 'off, no warnings' : 'on, warnings'}`, async () => {
+        it(`passes the prod flag (${prod}): inactive ?audience= preview on, ${warned ? 'warnings' : 'no warnings'}`, async () => {
           const isProd = sinon.stub(config, 'isProd').returns(prod);
           const warn = sinon.stub(console, 'warn');
           try {

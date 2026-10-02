@@ -16,7 +16,7 @@
 // lint rule is trusting when it allows callers to pass the result straight
 // into `import()`.
 const REF_PATTERN = /^[a-z0-9-]+$/i;
-const AEM_AUTHORING_HOST_PATTERN = /^[a-z0-9-]+--[a-z0-9-]+--[a-z0-9-]+\.aem\.(page|live)$/i;
+export const AEM_AUTHORING_HOST_PATTERN = /^[a-z0-9-]+--[a-z0-9-]+--[a-z0-9-]+\.aem\.(page|live)$/i;
 const LOCALHOST_PATTERN = /^localhost(?::\d+)?$/i;
 
 export const isAuthoringPreviewAllowed = (host = window.location.host) => (
