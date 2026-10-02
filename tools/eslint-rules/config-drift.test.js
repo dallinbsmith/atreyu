@@ -184,6 +184,10 @@ ruleTester.run('no-inline-env-check', plugin.rules['no-inline-env-check'], {
       filename: 'scripts/utils/env.js',
       code: "const classify = (host) => { if (host.includes('stage')) return 'stage'; return 'prod'; };",
     },
+    {
+      filename: 'workers/website/utils/deploy-tier.js',
+      code: "export const isProdTier = (env) => env.DEPLOY_TIER === 'prod';",
+    },
     // The correct, expected way to consume the classifier: import it, then
     // compare the imported binding. Must not be flagged (this is real,
     // shipped code in blocks/schedule/schedule.js, scripts/lazy.js, etc).

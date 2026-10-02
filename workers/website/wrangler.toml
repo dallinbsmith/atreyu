@@ -15,10 +15,21 @@ keep_vars = true
 # environment has a zone route and AEM's push-invalidation purge credentials
 # are configured and verified (plan items P3.3/P3.4).
 
-vars = { AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu", PUSH_INVALIDATION = "disabled" }
+# Vars are not inherited by [env.*] blocks, so each environment lists all of
+# them. utils/env-guard.js fails every request with a 500 if a required one
+# is missing or invalid.
+# Deploy only with --env (npm run deploy:*): the top level is the dev tier.
+# Zone routes belong under [env.production] only (test/utils.test.js).
+# DEPLOY_TIER (dev | stage | prod) is the Worker's tier. Anything but prod
+# adds x-robots-tag noindex to every response, serves a Disallow-all
+# robots.txt, and tells the client its tier through <html data-deploy-tier>.
+# AEM_ORG/AEM_SITE name the EDS code origin (main--{site}--{org}.aem.live);
+# DA_ORG/DA_SITE name the DA content path (handlers/dasc.js). They can differ.
+
+vars = { DEPLOY_TIER = "dev", AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu", DA_ORG = "dallinbsmith", DA_SITE = "atreyu", PUSH_INVALIDATION = "disabled" }
 
 [env.staging]
-vars = { AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu", PUSH_INVALIDATION = "disabled" }
+vars = { DEPLOY_TIER = "stage", AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu", DA_ORG = "dallinbsmith", DA_SITE = "atreyu", PUSH_INVALIDATION = "disabled" }
 
 [env.production]
-vars = { AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu", PUSH_INVALIDATION = "disabled" }
+vars = { DEPLOY_TIER = "prod", AEM_ORG = "dallinbsmith", AEM_SITE = "atreyu", DA_ORG = "dallinbsmith", DA_SITE = "atreyu", PUSH_INVALIDATION = "disabled" }

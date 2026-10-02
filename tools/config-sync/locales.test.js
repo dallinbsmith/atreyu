@@ -1,5 +1,6 @@
 /**
- * Cross-runtime parity for the locale list and the variant-path rules.
+ * Cross-runtime parity for the locale list, the variant-path rules and the
+ * deploy tiers.
  *
  * The browser (scripts/) and the website Worker (workers/website/) each keep
  * their own copy, because they can't share a module: one ships as static
@@ -18,6 +19,8 @@
  *  3. A path table run through the browser's guard.js shouldGuard and the
  *     Worker's isVariantPage. They must agree, except for real media-bus paths
  *     under /v/ (asserted explicitly below).
+ *  4. DEPLOY_TIERS is the same in scripts/utils/env.js and
+ *     workers/website/utils/deploy-tier.js (same values, same order).
  *
  * Node-only. Run from the `site/` package root:
  *   node tools/config-sync/locales.test.js
@@ -28,12 +31,15 @@ import assert from 'node:assert/strict';
 import locales from '../../scripts/locales.js';
 import { VARIANT_ROOT as BROWSER_VARIANT_ROOT } from '../../scripts/utils/experiments/config.js';
 import { shouldGuard } from '../../scripts/utils/experiments/guard.js';
+import { DEPLOY_TIERS as BROWSER_TIERS } from '../../scripts/utils/env.js';
 import { ALLOWED_LOCALE_CODES } from '../eslint-rules/config-drift.js';
 // Crossing into the Worker package is sanctioned for this parity test by
 // docs/architecture/locale.md (import, don't restate). The modules are pure,
 // and the Worker's own `node --test` loads them in Node.
 // eslint-disable-next-line import/no-relative-packages -- cross-runtime parity check, read-only
 import { LOCALE_PREFIXES } from '../../workers/website/utils/locale.js';
+// eslint-disable-next-line import/no-relative-packages -- cross-runtime parity check, read-only
+import { DEPLOY_TIERS as WORKER_TIERS } from '../../workers/website/utils/deploy-tier.js';
 // eslint-disable-next-line import/no-relative-packages -- cross-runtime parity check, read-only
 import { VARIANT_ROOT as WORKER_VARIANT_ROOT, isVariantPage } from '../../workers/website/handlers/variants.js';
 
@@ -120,5 +126,13 @@ for (const [path, browser, worker] of TABLE) {
     assert.equal(got.browser, got.worker, `Browser and Worker disagree on '${path}': guard ${got.browser}, Worker ${got.worker}.`);
   }
 }
+
+// 4. Deploy tiers. The Worker writes data-deploy-tier from its list; the
+// browser accepts only values in its own.
+assert.deepEqual(
+  [...BROWSER_TIERS],
+  [...WORKER_TIERS],
+  'Deploy tier lists drifted between scripts/utils/env.js and workers/website/utils/deploy-tier.js (DEPLOY_TIERS).',
+);
 
 delete globalThis.window;

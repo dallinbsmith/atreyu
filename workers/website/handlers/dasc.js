@@ -5,7 +5,8 @@ const TIMEOUT_MS = 5000;
 const FALLBACK_BODY = '{"data":[]}';
 
 export default async ({ url, env, request }) => {
-  const href = `https://da-sc.adobeaem.workers.dev/live/${env.AEM_ORG}/${env.AEM_SITE}${url.pathname}`;
+  // DA content org/site, not the EDS code org (AEM_ORG/AEM_SITE): the two can differ.
+  const href = `https://da-sc.adobeaem.workers.dev/live/${env.DA_ORG}/${env.DA_SITE}${url.pathname}`;
 
   try {
     // Build a minimal request so AEM-only headers (Authorization,

@@ -11,8 +11,8 @@ Atreyu uses one EDS site and three tiers. See [ADR 0019](../decisions/0019-envir
 | Tier | Purpose | Code | Content | Edge | Host | Code writers | Content writers | Tier value | Debug surface | Analytics | Robots |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | dev | Build and review one change. Preview draft content. | Any branch, or local files through `aem up`. | Preview partition. | None, or local Worker dev. | `localhost`; `https://{branch}--atreyu--<owner>.aem.page/<path>` | Contributors with repo write access. | Contributors with DA path access. | `dev` on localhost, `stage` on EDS branch hosts. | On. Authoring tools only on authoring hosts. | Off: Segment requires prod and a real key. | EDS noindex on platform hosts. |
-| stage | Rehearse Worker releases, routing cells, consent, analytics, and published content. | `main`. | Live partition. Published content only. | Staging Worker. | A dedicated staging host (planned). | Protected PR merge to `main`. | Publishers. | `stage`. | On for QA, except authoring tools stay authoring-host only. | Off today: custom staging hosts classify as prod until the planned Worker signal, and Segment also requires a real key. | Noindex and `Disallow: /` planned in the Worker. |
-| prod | Serve visitors. | `main`. | Live partition. Published content only. | Production Worker. | `https://frame.io/` | Protected PR merge to `main`. | Publishers. | `prod`. | Off. | Production destination after consent and a real key. | Indexable, except system paths. |
+| stage | Rehearse Worker releases, routing cells, consent, analytics, and published content. | `main`. | Live partition. Published content only. | Staging Worker. | A dedicated staging host (planned). | Protected PR merge to `main`. | Publishers. | `stage` (Worker `DEPLOY_TIER`). | On for QA, except authoring tools stay authoring-host only. | Off: Segment requires prod and a real key. | Worker sends `x-robots-tag: noindex, nofollow` on every response and a `Disallow: /` `robots.txt`. |
+| prod | Serve visitors. | `main`. | Live partition. Published content only. | Production Worker. | `https://frame.io/` | Protected PR merge to `main`. | Publishers. | `prod` (Worker `DEPLOY_TIER`). | Off. | Production destination after consent and a real key. | Indexable, except system paths. |
 
 Merge to `main` updates `main--atreyu--<owner>.aem.live` within minutes. The code gate is the PR. Staging is not an unreleased-code tier.
 
@@ -33,19 +33,23 @@ New parameters must name their gate in the PR.
 
 ## Host classification
 
-Today `scripts/utils/env.js` classifies only hostnames:
+`scripts/utils/env.js` classifies in this order:
 
-| Host | Today | Planned Worker tier signal |
-|---|---|---|
-| `localhost:3000`, `localhost:8787`, `127.0.0.1:3000`, `[::1]:3000` | `dev`. | `dev`. |
-| `{branch}--atreyu--<owner>.aem.page` | `stage`. | `stage`; EDS host pattern wins. |
-| `main--atreyu--<owner>.aem.live` | `stage`. | `stage`; EDS host pattern wins. |
-| `*.hlx.page`, `*.hlx.live`, `*.aem.reviews`, `*.local` | `prod` (fail closed). | `prod` unless the host also gets a Worker-set signal. |
-| Worker staging on `workers.dev` | `prod`, because the host has no EDS branch marker. | A Worker-set attribute on `<html>` that authors cannot create says `stage`. Until that Worker and client change lands together, it is `prod`. Missing signals fail closed to `prod`. |
-| Dedicated staging host | `prod`, because the host has no EDS branch marker. | A Worker-set attribute on `<html>` that authors cannot create says `stage`. Until that Worker and client change lands together, it is `prod`. Missing signals fail closed to `prod`. |
-| `frame.io` | `prod`. | A Worker-set attribute on `<html>` that authors cannot create says `prod`. Missing signals are still `prod`. |
+1. Loopback is `dev`.
+2. An Adobe EDS host (`*--*--*.aem.page` or `*--*--*.aem.live`) is `stage`. The tier attribute is ignored.
+3. Any other host uses `<html data-deploy-tier>` when it is `dev`, `stage` or `prod`. The Worker sets it from `DEPLOY_TIER` on EDS HTML and removes any upstream value.
+4. Otherwise `prod` (fail closed).
 
-Do not use page or bulk metadata for tier: authors can create metadata. The future custom-host signal must be set by the Worker on `<html>` and read by the client in the same change.
+| Host | Tier |
+|---|---|
+| `localhost:3000`, `localhost:8787`, `127.0.0.1:3000`, `[::1]:3000` | `dev`. |
+| `{branch}--atreyu--<owner>.aem.page` | `stage`. |
+| `main--atreyu--<owner>.aem.live` | `stage`. |
+| `*.hlx.page`, `*.hlx.live`, `*.aem.reviews`, `*.local` | `prod`: no Worker sets the attribute there. |
+| Staging Worker (`workers.dev` today, a dedicated staging host later) | `stage`, from the Worker attribute. Missing or invalid: `prod`. |
+| `frame.io` (production Worker) | `prod`, from the Worker attribute. Missing or invalid: still `prod`. |
+
+The tier is never read from page or bulk metadata, or from any `<meta>`: authors can create those. The Worker sets it on EDS HTML and strips it from existing-site HTML; authors cannot create it. Worker details: [worker.md](worker.md#deploy-tier).
 
 Segment has its own gate: it loads only on prod, only after analytics consent, and only when a real write key replaces the placeholder. Stage/dev traffic must not reach the prod Segment source.
 

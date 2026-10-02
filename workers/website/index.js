@@ -17,6 +17,7 @@ import { fetchFromExistingOrigin } from './handlers/existing-origin.js';
 import { isVariantPage, fetchVariant } from './handlers/variants.js';
 import { matchLocalePrefix, stripLocale } from './utils/locale.js';
 import { checkRequiredEnv } from './utils/env-guard.js';
+import { isProdTier, robotsDisallowAll, withNoindex } from './utils/deploy-tier.js';
 import { isMediaPath } from './utils/media.js';
 import { ROUTING_MANIFEST, assertValidManifest, matchCohort } from './routing-manifest.js';
 
@@ -239,53 +240,63 @@ const formatRequest = (env, request, url) => {
   return req;
 };
 
+const route = async (req, env) => {
+  const url = new URL(req.url);
+
+  const portResp = getPortRedirect(req, url);
+  if (portResp) return portResp;
+
+  if (url.hostname === 'blog.frame.io') {
+    return new Response(null, {
+      status: 301,
+      headers: { location: `https://frame.io/blog${url.pathname}${url.search}` },
+    });
+  }
+
+  const rumResp = getRUMRequest(req, url);
+  if (rumResp) return rumResp;
+
+  // Strangler check: RUM/telemetry beacons and Worker-owned global routes
+  // (drafts denial, schedules, dasc — see ROUTES' `global: true` entries) always
+  // fall through to the EDS pipeline instead of the legacy origin, regardless of
+  // cohort status. Everything else not yet migrated (or the kill switch is set)
+  // falls back to the existing origin, using the original request — not one
+  // already rewritten to the EDS hostname by formatRequest below.
+  if (!isRUMRequest(url) && !isGlobalRoute(url.pathname)
+    && (env.EDS_DISABLED === 'true' || !isEdsPath(url.pathname, env))) {
+    return fetchFromExistingOrigin({ url, env, request: req });
+  }
+
+  // formatSearchParams normalizes/filters url.search (and mutates `url` in place) —
+  // it must run before formatRequest builds the outbound/cached request from `url`,
+  // otherwise the cache key snapshots the raw, unfiltered query string and every
+  // distinct query permutation fragments the CDN cache.
+  const savedSearch = formatSearchParams(url);
+
+  const request = formatRequest(env, req, url);
+
+  for (const { match, handler, cache } of ROUTES) {
+    if (match(url.pathname)) {
+      // eslint-disable-next-line no-await-in-loop
+      const resp = await handler({ url, env, request, cache, savedSearch });
+      if (resp) return resp;
+    }
+  }
+
+  return new Response('Not Found', { status: 404 });
+};
+
+// Non-prod Workers (DEPLOY_TIER dev or stage) are never indexable: every
+// response gets x-robots-tag noindex, and /robots.txt disallows everything
+// whichever origin would have served it. This sits outside ROUTES on
+// purpose: a global route would pull /robots.txt off the existing origin in
+// prod too. Prod responses are left exactly as the routes produce them.
 export default {
   fetch: async (req, env) => {
     const envResp = checkRequiredEnv(env);
     if (envResp) return envResp;
-
-    const url = new URL(req.url);
-
-    const portResp = getPortRedirect(req, url);
-    if (portResp) return portResp;
-
-    if (url.hostname === 'blog.frame.io') {
-      return new Response(null, {
-        status: 301,
-        headers: { location: `https://frame.io/blog${url.pathname}${url.search}` },
-      });
-    }
-
-    const rumResp = getRUMRequest(req, url);
-    if (rumResp) return rumResp;
-
-    // Strangler check: RUM/telemetry beacons and Worker-owned global routes
-    // (drafts denial, schedules, dasc — see ROUTES' `global: true` entries) always
-    // fall through to the EDS pipeline instead of the legacy origin, regardless of
-    // cohort status. Everything else not yet migrated (or the kill switch is set)
-    // falls back to the existing origin, using the original request — not one
-    // already rewritten to the EDS hostname by formatRequest below.
-    if (!isRUMRequest(url) && !isGlobalRoute(url.pathname)
-      && (env.EDS_DISABLED === 'true' || !isEdsPath(url.pathname, env))) {
-      return fetchFromExistingOrigin({ url, env, request: req });
-    }
-
-    // formatSearchParams normalizes/filters url.search (and mutates `url` in place) —
-    // it must run before formatRequest builds the outbound/cached request from `url`,
-    // otherwise the cache key snapshots the raw, unfiltered query string and every
-    // distinct query permutation fragments the CDN cache.
-    const savedSearch = formatSearchParams(url);
-
-    const request = formatRequest(env, req, url);
-
-    for (const { match, handler, cache } of ROUTES) {
-      if (match(url.pathname)) {
-        // eslint-disable-next-line no-await-in-loop
-        const resp = await handler({ url, env, request, cache, savedSearch });
-        if (resp) return resp;
-      }
-    }
-
-    return new Response('Not Found', { status: 404 });
+    if (isProdTier(env)) return route(req, env);
+    const isRobots = new URL(req.url).pathname === '/robots.txt';
+    return withNoindex(isRobots ? robotsDisallowAll() : await route(req, env));
   },
 };

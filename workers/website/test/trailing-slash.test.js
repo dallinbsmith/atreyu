@@ -6,7 +6,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../index.js';
 
-const ENV = { AEM_ORG: 'dallinbsmith', AEM_SITE: 'atreyu', LEGACY_ORIGIN: 'legacy.example' };
+const ENV = {
+  AEM_ORG: 'dallinbsmith', AEM_SITE: 'atreyu', DA_ORG: 'dallinbsmith', DA_SITE: 'atreyu', LEGACY_ORIGIN: 'legacy.example', DEPLOY_TIER: 'prod',
+};
 
 test('a redirects.json entry wins over the trailing-slash 308 (one hop, not two)', async (t) => {
   t.mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({

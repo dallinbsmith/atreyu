@@ -35,6 +35,65 @@ describe('preview-origin security gates', () => {
     }
   });
 
+  describe('Worker-set data-deploy-tier', () => {
+    const html = document.documentElement;
+    const meta = document.createElement('meta');
+    meta.name = 'deploy-tier';
+    afterEach(() => {
+      delete html.dataset.deployTier;
+      meta.remove();
+    });
+
+    it('is honoured on a custom host', () => {
+      for (const tier of ['dev', 'stage', 'prod']) {
+        html.dataset.deployTier = tier;
+        expect(classifyEnv('stage.frame.io')).to.equal(tier);
+        expect(classifyEnv('ak-website-staging.example.workers.dev')).to.equal(tier);
+      }
+    });
+
+    it('reads the root element passed in', () => {
+      const root = document.createElement('html');
+      root.dataset.deployTier = 'stage';
+      expect(classifyEnv('stage.frame.io', root)).to.equal('stage');
+      expect(classifyEnv('stage.frame.io', null)).to.equal('prod');
+    });
+
+    it('falls back to prod when invalid or missing', () => {
+      for (const bad of ['', 'staging', 'STAGE', 'qa', ' dev', 'production']) {
+        html.dataset.deployTier = bad;
+        expect(classifyEnv('stage.frame.io'), bad).to.equal('prod');
+      }
+      delete html.dataset.deployTier;
+      expect(classifyEnv('stage.frame.io')).to.equal('prod');
+      expect(classifyEnv('frame.io')).to.equal('prod');
+    });
+
+    it('is ignored on EDS hosts and loopback', () => {
+      html.dataset.deployTier = 'prod';
+      expect(classifyEnv('main--atreyu--dallinbsmith.aem.live')).to.equal('stage');
+      expect(classifyEnv('feature--atreyu--dallinbsmith.aem.page')).to.equal('stage');
+      expect(classifyEnv('localhost:3000')).to.equal('dev');
+      expect(classifyEnv('127.0.0.1:8787')).to.equal('dev');
+      html.dataset.deployTier = 'dev';
+      expect(classifyEnv('main--atreyu--dallinbsmith.aem.live')).to.equal('stage');
+    });
+
+    it('never honours a deploy-tier meta, on any host', () => {
+      for (const tier of ['dev', 'stage']) {
+        meta.content = tier;
+        document.head.append(meta);
+        expect(classifyEnv('frame.io')).to.equal('prod');
+        expect(classifyEnv('stage.frame.io')).to.equal('prod');
+        expect(classifyEnv('main--atreyu--dallinbsmith.aem.live')).to.equal('stage');
+        expect(classifyEnv('localhost:3000')).to.equal('dev');
+      }
+      meta.content = 'dev';
+      html.dataset.deployTier = 'prod';
+      expect(classifyEnv('stage.frame.io')).to.equal('prod');
+    });
+  });
+
   it('classifies loopback as dev', () => {
     expect(classifyEnv('localhost:3000')).to.equal('dev');
     expect(classifyEnv('LOCALHOST:3000')).to.equal('dev');
