@@ -3,8 +3,7 @@
  * AEM/DA/EDS platform (vs. a genuinely external link)?
  *
  * AUTHORITATIVE single source for this specific question. Keep this separate
- * from inline checks because `'local'` overlaps textually with
- * scripts/utils/env.js's deploy-tier vocabulary.
+ * from deploy-tier logic even where host shapes overlap.
  *
  * Decision: this stays separate from env.js, it does not get folded in.
  * env.js answers "which deploy tier is the CURRENT page running in"
@@ -15,9 +14,8 @@
  * fragment link is same-site (and should be treated as a relative path)
  * or a truly external URL. The two questions are independent: a link could
  * point at a same-platform hostname on a different tier than the current
- * page, or an external hostname while the current page is itself on
- * 'local'. Merging them would conflate two unrelated classification axes
- * just because they happen to share the substring 'local'.
+ * page, or an external hostname while the current page is itself on loopback.
+ * Merging them would conflate two unrelated classification axes.
  */
 export const PLATFORM_HOST_MARKERS = ['.da.', '.aem.', 'local'];
 

@@ -6,22 +6,14 @@ import {
 } from '../../../scripts/utils/security/preview-origin.js';
 
 describe('preview-origin security gates', () => {
-  const setDeployTier = (content) => {
-    document.head.querySelector('meta[name="deploy-tier"]')?.remove();
-    if (!content) return;
-    const meta = document.createElement('meta');
-    meta.name = 'deploy-tier';
-    meta.content = content;
-    document.head.append(meta);
-  };
-
-  afterEach(() => {
-    setDeployTier('');
-  });
-
   it('classifies production hosts as prod', () => {
     expect(classifyEnv('frame.io')).to.equal('prod');
     expect(classifyEnv('www.frame.io')).to.equal('prod');
+    expect(classifyEnv('notlocalhost.example')).to.equal('prod');
+    expect(classifyEnv('localhost.attacker.net')).to.equal('prod');
+    expect(classifyEnv('main--atreyu--dallinbsmith.hlx.page')).to.equal('prod');
+    expect(classifyEnv('feature--atreyu--dallinbsmith.aem.reviews')).to.equal('prod');
+    expect(classifyEnv('main--atreyu--dallinbsmith.local')).to.equal('prod');
   });
 
   it('classifies AEM page/live branch hosts as stage', () => {
@@ -29,32 +21,22 @@ describe('preview-origin security gates', () => {
     expect(classifyEnv('feature--atreyu--dallinbsmith.aem.page')).to.equal('stage');
   });
 
-  it('ignores forged deploy-tier meta on AEM page/live hosts', () => {
-    setDeployTier('prod');
+  it('ignores forged deploy-tier meta', () => {
+    const meta = document.createElement('meta');
+    meta.name = 'deploy-tier';
+    meta.content = 'dev';
+    document.head.append(meta);
     expect(classifyEnv('main--atreyu--dallinbsmith.aem.live')).to.equal('stage');
     expect(classifyEnv('feature--atreyu--dallinbsmith.aem.page')).to.equal('stage');
+    expect(classifyEnv('stage.frame.io')).to.equal('prod');
+    meta.remove();
   });
 
-  it('classifies localhost as dev', () => {
+  it('classifies loopback as dev', () => {
     expect(classifyEnv('localhost:3000')).to.equal('dev');
+    expect(classifyEnv('LOCALHOST:3000')).to.equal('dev');
     expect(classifyEnv('127.0.0.1:3000')).to.equal('dev');
-  });
-
-  it('uses valid deploy-tier meta on custom hosts', () => {
-    for (const tier of ['stage', 'dev', 'prod']) {
-      setDeployTier(tier);
-      expect(classifyEnv('stage.frame.io')).to.equal(tier);
-    }
-  });
-
-  it('fails closed to prod on custom hosts with missing or invalid deploy-tier meta', () => {
-    expect(classifyEnv('stage.frame.io')).to.equal('prod');
-    setDeployTier('preview');
-    expect(classifyEnv('stage.frame.io')).to.equal('prod');
-  });
-
-  it('fails closed to prod when document is unavailable', () => {
-    expect(classifyEnv('stage.frame.io', null)).to.equal('prod');
+    expect(classifyEnv('[::1]:3000')).to.equal('dev');
   });
 
   it('gates authoring imports on prod but allows page/live/local environments', () => {
@@ -67,6 +49,8 @@ describe('preview-origin security gates', () => {
     expect(isAuthoringPreviewAllowed('feature--atreyu--dallinbsmith.aem.page')).to.equal(true);
     expect(isAuthoringPreviewAllowed('localhost')).to.equal(true);
     expect(isAuthoringPreviewAllowed('localhost:3000')).to.equal(true);
+    expect(isAuthoringPreviewAllowed('127.0.0.1:3000')).to.equal(true);
+    expect(isAuthoringPreviewAllowed('[::1]:3000')).to.equal(true);
   });
 
   it('resolves only trusted preview origins', () => {

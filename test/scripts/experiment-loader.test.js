@@ -11,6 +11,7 @@ const KEY = 'unified-decisioning-experiments';
 const PLUGIN_CONSENT_KEY = 'experimentation-consented';
 const realFetch = window.fetch;
 const realMatchMedia = window.matchMedia;
+const originalPath = `${window.location.pathname}${window.location.search}`;
 let tracked;
 let clock;
 
@@ -68,6 +69,7 @@ describe('scripts/experiment-loader.js', () => {
   afterEach(() => {
     window.fetch = realFetch;
     window.matchMedia = realMatchMedia;
+    window.history.replaceState({}, '', originalPath);
     clock?.restore();
     clock = null;
   });
@@ -153,18 +155,24 @@ describe('scripts/experiment-loader.js', () => {
 
     it('never tracks a forced ?experiment= preview', () => {
       setConsent({ analytics: true });
-      window.history.replaceState({}, '', '?experiment=hero-test/challenger-1');
-      trackExposures([exp()]);
-      window.history.replaceState({}, '', window.location.pathname);
-      expect(tracked).to.have.length(0);
+      try {
+        window.history.replaceState({}, '', '?experiment=hero-test/challenger-1');
+        trackExposures([exp()]);
+        expect(tracked).to.have.length(0);
+      } finally {
+        window.history.replaceState({}, '', originalPath);
+      }
     });
 
     it('never tracks a forced ?audience= preview', () => {
       setConsent({ analytics: true });
-      window.history.replaceState({}, '', '?audience=mobile');
-      trackExposures([exp({ resolvedAudiences: ['mobile'] })]);
-      window.history.replaceState({}, '', window.location.pathname);
-      expect(tracked).to.have.length(0);
+      try {
+        window.history.replaceState({}, '', '?audience=mobile');
+        trackExposures([exp({ resolvedAudiences: ['mobile'] })]);
+        expect(tracked).to.have.length(0);
+      } finally {
+        window.history.replaceState({}, '', originalPath);
+      }
     });
   });
 
@@ -221,6 +229,26 @@ describe('scripts/experiment-loader.js', () => {
       const exposure = tracked.find((t) => t.event === 'experiment');
       expect(exposure.props.variantName).to.equal('challenger-1');
       expect(localStorage.getItem(KEY)).to.contain('challenger-1');
+    });
+
+    it('does not track forced previews even if the URL changes before the plugin finishes', async () => {
+      setConsent({ analytics: true, personalization: true });
+      try {
+        window.history.replaceState({}, '', '?experiment=table-test/challenger-1');
+        window.fetch = async () => {
+          window.history.replaceState({}, '', window.location.pathname);
+          return new Response(
+            '<html><body><main><div><h1 id="headline">Challenger headline</h1></div></main></body></html>',
+            { status: 200, headers: { 'content-type': 'text/html' } },
+          );
+        };
+        pageWithTable('100');
+        await runExperimentation();
+        expect(document.querySelector('#headline').textContent).to.equal('Challenger headline');
+        expect(tracked.find((t) => t.event === 'experiment')).to.equal(undefined);
+      } finally {
+        window.history.replaceState({}, '', originalPath);
+      }
     });
 
     it('without personalization consent, never runs the plugin or writes storage', async () => {

@@ -1,8 +1,21 @@
 import { expect } from '@esm-bundle/chai';
-import { isRealSegmentWriteKey, loadSegment } from '../../../scripts/utils/analytics/segment.js';
+import sinon from 'sinon';
+import {
+  isRealSegmentWriteKey,
+  loadSegment,
+  resetSegmentForTest,
+} from '../../../scripts/utils/analytics/segment.js';
 
 describe('scripts/utils/analytics/segment.js', () => {
+  let append;
+
+  beforeEach(() => {
+    append = sinon.stub(document.head, 'appendChild');
+  });
+
   afterEach(() => {
+    append.restore();
+    resetSegmentForTest();
     delete window.analytics;
     document.head.querySelectorAll('script[src*="cdn.segment.com/analytics.js"]').forEach((script) => script.remove());
   });
@@ -14,17 +27,18 @@ describe('scripts/utils/analytics/segment.js', () => {
     expect(isRealSegmentWriteKey('real_write_key')).to.equal(true);
   });
 
-  it('does not create the Segment stub or script when no real key is configured', () => {
+  it('does not create the Segment stub or script when no real key is configured or the tier is not prod', () => {
     loadSegment();
-    loadSegment('');
+    loadSegment('', 'prod');
+    loadSegment('real_write_key', 'stage');
     expect(window.analytics).to.equal(undefined);
-    expect(document.head.querySelector('script[src*="cdn.segment.com/analytics.js"]')).to.equal(null);
+    expect(append.called).to.equal(false);
   });
 
-  it('loads Segment when a real write key is configured', () => {
-    loadSegment('real_write_key');
+  it('loads Segment on prod when a real write key is configured', () => {
+    loadSegment('real_write_key', 'prod');
     expect(window.analytics.invoked).to.equal(true);
-    const script = document.head.querySelector('script[src*="cdn.segment.com/analytics.js"]');
+    const [script] = append.firstCall.args;
     expect(script.src).to.contain('/real_write_key/');
   });
 });

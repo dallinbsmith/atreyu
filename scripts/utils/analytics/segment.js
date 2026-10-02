@@ -1,3 +1,5 @@
+import { isProdEnv } from '../env.js';
+
 // Segment's own standard public browser snippet — no npm package, no bundler,
 // matching this project's no-build-step architecture (Falkor's `@frameio/
 // segment-ot` is Frame.io's internal package, not portable here). A write key
@@ -22,12 +24,15 @@ export const isRealSegmentWriteKey = (writeKey = SEGMENT_WRITE_KEY) => (
   !PLACEHOLDER_WRITE_KEYS.has(writeKey?.trim?.() ?? '')
 );
 
+export const resetSegmentForTest = () => { loaded = false; };
+
 // Defines the queueing stub on window.analytics immediately (so nothing
 // upstream has to wait), then loads the real library async — calls made
 // before it arrives are queued on the stub and replayed once it's ready.
-export const loadSegment = (writeKey = SEGMENT_WRITE_KEY) => {
+export const loadSegment = (writeKey, env) => {
+  const key = writeKey ?? SEGMENT_WRITE_KEY;
   if (loaded || window.analytics?.invoked) return;
-  if (!isRealSegmentWriteKey(writeKey)) return;
+  if (!isRealSegmentWriteKey(key) || !isProdEnv(env)) return;
   loaded = true;
 
   const stub = [];
@@ -42,6 +47,6 @@ export const loadSegment = (writeKey = SEGMENT_WRITE_KEY) => {
 
   const script = document.createElement('script');
   script.async = true;
-  script.src = `https://cdn.segment.com/analytics.js/v1/${writeKey}/analytics.min.js`;
+  script.src = `https://cdn.segment.com/analytics.js/v1/${key}/analytics.min.js`;
   document.head.appendChild(script);
 };

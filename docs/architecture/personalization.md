@@ -35,7 +35,7 @@ Author-facing instructions: [authoring/personalization.md](../authoring/personal
 9. **Consent gate:** stop (and clear stored assignments) unless `hasConsent('personalization')` or the URL has `?experiment=` or `?audience=`.
 10. Run plugin `loadEager` with the audience catalog, inside `withVariantTimeout` (a variant fetch slower than 1000 ms is aborted and the original content stays).
 11. Persist assignments to `localStorage` (`unified-decisioning-experiments`) only with consent.
-12. Track one `EVENTS.EXPERIMENT` event per running test (skipped for previews).
+12. Track one `EVENTS.EXPERIMENT` event per running test. Forced previews skip Segment exposure events; the vendored plugin still emits RUM checkpoints for forced `experiment`/`audience` runs.
 
 Any error is logged and the page renders the control.
 

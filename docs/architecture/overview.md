@@ -55,7 +55,7 @@ Code checks the tier only through `scripts/utils/env.js` (a lint rule blocks inl
    3. Probe for experiment signals; if present, import the loader/plugin and run experimentation before anything is decorated (see [personalization.md](personalization.md)).
    4. `await loadArea()`: decorate the document (header element, skip link, template), then load sections in order. Each section loads its blocks (its CSS loads in parallel with importing `blocks/{name}/{name}.js` and calling its default export) and its Section Metadata.
 2. **Lazy**: after the first section, `ak.js` imports `postlcp.js` (loads the header block and lazy-phase behaviours). After all sections, it imports `lazy.js`: footer, `lazy-styles.css`, favicon, JSON-LD, hreflang, delegated click tracking.
-3. **Delayed**: `lazy.js` imports `delayed.js` 3 seconds later: analytics (`segment.js`, only with analytics consent and a real write key) and delayed behaviours.
+3. **Delayed**: `lazy.js` imports `delayed.js` 3 seconds later: analytics (`segment.js`, only on prod with analytics consent and a real write key) and delayed behaviours.
 
 Performance rules for each phase are in [conventions/javascript.md](../conventions/javascript.md#loading-phases-e-l-d).
 

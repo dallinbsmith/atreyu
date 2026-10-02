@@ -78,8 +78,8 @@ export const persistAssignments = () => {
   clearAssignments();
 };
 
-export const trackExposures = (experiments = []) => {
-  if (isPreview()) return;
+export const trackExposures = (experiments = [], { preview = isPreview() } = {}) => {
+  if (preview) return;
   const anonId = getVisitorId();
   for (const ns of experiments.filter((e) => e.config?.run)) {
     const { type, config: exp, el, servedExperience } = ns;
@@ -110,6 +110,7 @@ const compilePersonalizeTables = (doc) => {
 };
 
 export const runExperimentation = async (doc = document, { pluginPromise = null } = {}) => {
+  const preview = isPreview();
   // Always, even without consent: config tables must never render.
   applyExperimentBlock(doc);
   stripPluginSectionMeta(doc.querySelector('main'));
@@ -119,7 +120,7 @@ export const runExperimentation = async (doc = document, { pluginPromise = null 
     catchImportError(pluginPromise, getConfig().log);
     return null;
   }
-  if (!hasConsent('personalization') && !isPreview()) {
+  if (!hasConsent('personalization') && !preview) {
     clearAssignments();
     catchImportError(pluginPromise, getConfig().log);
     return null;
@@ -143,7 +144,7 @@ export const runExperimentation = async (doc = document, { pluginPromise = null 
       removeLeftoverConfigBlocks(main);
     }
     persistAssignments();
-    trackExposures((window.aem || window.hlx).experiments);
+    trackExposures((window.aem || window.hlx).experiments, { preview });
     return plugin;
   } catch (ex) {
     await getConfig().log(ex);

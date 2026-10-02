@@ -258,10 +258,8 @@ ruleTester.run('no-inline-env-check', plugin.rules['no-inline-env-check'], {
       code: "const isStage = location.host === 'stage';",
       errors: 1,
     },
-    // Round 3, item 1: env-word array iterated via .some(), the exact shape
-    // of scripts/utils/env.js's own real internal logic
-    // (`['--', 'local'].some((check) => host.includes(check))`) and the
-    // natural way docs/conventions/javascript.md's preferred .some()/.every() house style would
+    // Round 3, item 1: env-word array iterated via .some(), a natural way
+    // docs/conventions/javascript.md's preferred .some()/.every() house style would
     // reproduce it outside the designated file.
     {
       filename: 'blocks/foo/foo.js',

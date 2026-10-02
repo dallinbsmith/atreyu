@@ -17,11 +17,20 @@
 // into `import()`.
 const REF_PATTERN = /^[a-z0-9-]+$/i;
 export const AEM_AUTHORING_HOST_PATTERN = /^[a-z0-9-]+--[a-z0-9-]+--[a-z0-9-]+\.aem\.(page|live)$/i;
-const LOCALHOST_PATTERN = /^localhost(?::\d+)?$/i;
+export const LOOPBACK_HOST_PATTERN = /^(localhost|127\.0\.0\.1|\[::1\])$/i;
 
-export const isAuthoringPreviewAllowed = (host = window.location.host) => (
-  LOCALHOST_PATTERN.test(host) || AEM_AUTHORING_HOST_PATTERN.test(host)
-);
+export const hostnameOf = (host = globalThis.window?.location?.host ?? '') => {
+  try {
+    return new URL(`http://${host}`).hostname;
+  } catch {
+    return '';
+  }
+};
+
+export const isAuthoringPreviewAllowed = (host = globalThis.window?.location?.host ?? '') => {
+  const hostname = hostnameOf(host);
+  return LOOPBACK_HOST_PATTERN.test(hostname) || AEM_AUTHORING_HOST_PATTERN.test(hostname);
+};
 
 export const resolvePreviewOrigin = (ref, {
   onOrigin, localOrigin, branchHost, treatEmptyAsOn = false,
