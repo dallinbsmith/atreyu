@@ -62,12 +62,12 @@ const buildView = (slides, ariaLabel) => {
 // Desktop: panels are display:none and openModal(i) is the actual UX —
 // activateTab still runs so aria-selected stays consistent at both
 // widths, and screen-reader semantics are the same everywhere.
-const wire = (el, { tabWrap, stage, tablist, tabs }, slides) => {
+const wire = (el, { tabWrap, stage, tablist, tabs }, slides, signal) => {
   el.replaceChildren(el.firstElementChild, tabWrap, stage);
   decorateRichText(el);
   const mql = window.matchMedia(MQ_MD);
-  initHover(el, tabs, slides, mql);
-  const openModal = initModal(tabs, slides);
+  initHover(el, tabs, slides, mql, { signal });
+  const openModal = initModal(tabs, slides, signal);
   tabs.forEach((tab, i) => tab.addEventListener('click', () => {
     activateTab(tabs, stage.children, i);
     if (mql.matches) openModal(i);
@@ -76,12 +76,12 @@ const wire = (el, { tabWrap, stage, tablist, tabs }, slides) => {
   rovingTabindex(tablist, tabs, { orientation: 'horizontal' });
 };
 
-export default (el) => {
-  if (!guardDecorate(el, 'qi')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'qi')) return;
   const [head, ...rows] = el.children;
   head?.classList.add('qi-head');
   if (!rows.length) return;
   const slides = rows.map(extractSlide);
   const headingText = head?.querySelector(HEADING_SELECTOR)?.textContent.trim();
-  wire(el, buildView(slides, headingText || 'Customer quotes by industry'), slides);
+  wire(el, buildView(slides, headingText || 'Customer quotes by industry'), slides, signal);
 };

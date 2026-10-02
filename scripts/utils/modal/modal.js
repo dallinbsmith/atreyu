@@ -7,11 +7,11 @@ import { trapFocus } from '../a11y.js';
 // additional keydown handling (arrow-key slide navigation, etc.) stays a
 // separate listener at the call site — this only owns the two interactions
 // every modal in this codebase needs.
-export const wireModalClose = (modal, backdrop, close) => {
-  backdrop.addEventListener('click', close);
+export const wireModalClose = (modal, backdrop, close, { signal } = {}) => {
+  backdrop.addEventListener('click', close, { signal });
   modal.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') close();
-  });
+  }, { signal });
 };
 
 // The rest of the open/close choreography every modal in this codebase also
@@ -21,12 +21,28 @@ export const wireModalClose = (modal, backdrop, close) => {
 // time. Each modal keeps its own open-guard, build-vs-reuse decision,
 // announce() message, and any entrance/exit animation at the call site —
 // those genuinely differ per modal.
-export const openModal = (modal, closeSelector) => {
+export const openModal = (modal, closeSelector, { signal, onAbort } = {}) => {
+  if (signal?.aborted) return () => {};
   document.body.append(modal);
   document.body.style.overflow = 'hidden';
   const release = trapFocus(modal);
-  modal.querySelector(closeSelector).focus();
-  return release;
+  let done = false;
+  let abort = () => {};
+  const releaseAll = () => {
+    if (done) return;
+    done = true;
+    signal?.removeEventListener('abort', abort);
+    release();
+  };
+  abort = () => {
+    releaseAll();
+    modal.remove();
+    document.body.style.overflow = '';
+    onAbort?.();
+  };
+  signal?.addEventListener('abort', abort, { once: true });
+  modal.querySelector(closeSelector)?.focus();
+  return releaseAll;
 };
 
 // release must run before trigger.focus() — trapFocus marks every sibling

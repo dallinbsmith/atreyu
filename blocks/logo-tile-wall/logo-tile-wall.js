@@ -70,11 +70,10 @@ const animate = async (el, built) => {
   addPauseToggle(el, el, { className: 'ltw-toggle', labels: { pause, play } });
 };
 
-export default (el) => {
-  // Idempotent under DA Quick-Edit re-decoration. onReveal's observer
-  // self-unobserves after firing, so there is no out-of-subtree handle to tear
-  // down via a module-scope AbortController here (contrast quote-hover.js).
-  if (!guardDecorate(el, 'logoTileWall')) return;
+export default (el, { signal } = {}) => {
+  // Idempotent under DA Quick-Edit re-decoration; the block signal disconnects
+  // onReveal's observer.
+  if (signal?.aborted || !guardDecorate(el, 'logoTileWall')) return;
   const built = [...el.children].map(buildRow).filter(({ track }) => track.children.length);
   // Clear the raw authored rows even when nothing survives the filter, so an
   // all-empty wall doesn't leave unstyled <div>s on the page (see logo-wall.js).
@@ -82,5 +81,5 @@ export default (el) => {
   if (!built.length) return;
   onReveal(el, ({ immediate }) => {
     if (!immediate) animate(el, built);
-  }, { rootMargin: '50% 0px' });
+  }, { rootMargin: '50% 0px', signal });
 };

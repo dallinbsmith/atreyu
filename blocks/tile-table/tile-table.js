@@ -27,11 +27,11 @@ const buildTile = (item, i, openModal) => {
   return tile;
 };
 
-export default async (el) => {
+export default async (el, { signal } = {}) => {
   // Guard re-decoration: replaceChildren(grid) below means a second pass would
   // read the grid's own tile <button>s as name/detail/link cells and rebuild
   // from garbage. See docs/conventions/javascript.md Block lifecycle.
-  if (!guardDecorate(el, 'tileTable')) return;
+  if (signal?.aborted || !guardDecorate(el, 'tileTable')) return;
   const items = [...el.children].filter((r) => r.textContent.trim()).map(rowToItem);
   const [prev, next, close, closed, visit, counter, opened] = await Promise.all([
     getPlaceholder('tile-table.prev', 'Previous'),
@@ -42,9 +42,10 @@ export default async (el) => {
     getPlaceholder('tile-table.counter', '{current} of {total}'),
     getPlaceholder('tile-table.opened', '{name}, partner {current} of {total}'),
   ]);
+  if (signal?.aborted) return;
   const openModal = initTileModal(items, {
     prev, next, close, closed, visit, counter, opened,
-  });
+  }, signal);
   const grid = createElement('div', { className: 'tt-grid' });
   grid.append(...items.map((item, i) => buildTile(item, i, openModal)));
   el.replaceChildren(grid);

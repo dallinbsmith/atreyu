@@ -13,8 +13,8 @@ import { createElement, getCells } from '../../scripts/utils/dom.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 
-export default (el) => {
-  if (!guardDecorate(el, 'floatingActionButton')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'floatingActionButton')) return;
 
   const cells = getCells(el);
   const link = [...el.querySelectorAll('a')].find((a) => WISTIA_RE.test(a.href));
@@ -46,7 +46,7 @@ export default (el) => {
     createElement('span', { className: 'fab-label' }, label),
     createElement('span', { className: 'fab-icon', 'aria-hidden': 'true' }),
   );
-  button.addEventListener('click', () => openVideoModal(wistiaId, label, button));
+  button.addEventListener('click', () => openVideoModal(wistiaId, label, button, { signal }));
 
   el.replaceChildren(button);
 

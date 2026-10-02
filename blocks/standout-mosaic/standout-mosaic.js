@@ -81,8 +81,8 @@ const buildCards = (cardCells) => {
   return wrap;
 };
 
-export default (el) => {
-  if (!guardDecorate(el, 'standoutMosaic')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'standoutMosaic')) return;
   const cells = getCells(el);
   const titleCell = cells.find((c) => c.querySelector(HEADING_SELECTOR));
   const pictureCells = cells.filter((c) => c !== titleCell && c.querySelector('picture'));
@@ -114,7 +114,6 @@ export default (el) => {
   // effect. Tradeoff: no reaction to a cross-breakpoint resize (fine for a
   // scroll module — a resize past md is a rare, reload-adjacent event).
   // trackScrollProgress itself also self-gates (no-op + no observer under
-  // reduced motion / save-data). Disposer discarded deliberately: `el` lives for
-  // the page lifetime (EDS full-page load, no client routing) — matches pothole.
-  if (window.matchMedia('(min-width: 768px)').matches) trackScrollProgress(el);
+  // reduced motion / save-data), and the block signal handles teardown.
+  if (window.matchMedia('(min-width: 768px)').matches) trackScrollProgress(el, undefined, { signal });
 };

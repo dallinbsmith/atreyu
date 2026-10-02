@@ -12,9 +12,11 @@ const close = () => {
   if (!modal) return;
   closeModal(modal, releaseTrap, trigger);
   modal = null;
+  releaseTrap = null;
+  trigger = null;
 };
 
-const buildModal = (wistiaId, title) => {
+const buildModal = (wistiaId, title, signal) => {
   const el = document.createElement('div');
   el.className = 'video-modal';
   el.setAttribute('role', 'dialog');
@@ -28,7 +30,7 @@ const buildModal = (wistiaId, title) => {
   closeBtn.type = 'button';
   closeBtn.className = 'video-modal-close';
   closeBtn.setAttribute('aria-label', 'Close');
-  closeBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', close, { signal });
 
   const iframe = document.createElement('iframe');
   iframe.className = 'video-modal-iframe';
@@ -42,28 +44,35 @@ const buildModal = (wistiaId, title) => {
   content.append(closeBtn, iframe);
   el.append(backdrop, content);
 
-  wireModalClose(el, backdrop, close);
+  wireModalClose(el, backdrop, close, { signal });
 
   return el;
 };
 
-export const openVideoModal = (wistiaId, title, triggerEl) => {
-  if (modal) return;
-  modal = buildModal(wistiaId, title);
+export const openVideoModal = (wistiaId, title, triggerEl, { signal } = {}) => {
+  if (signal?.aborted || modal) return;
+  modal = buildModal(wistiaId, title, signal);
   trigger = triggerEl;
-  releaseTrap = openModal(modal, '.video-modal-close');
+  releaseTrap = openModal(modal, '.video-modal-close', {
+    signal,
+    onAbort: () => {
+      modal = null;
+      releaseTrap = null;
+      trigger = null;
+    },
+  });
   announce(`${title || 'Video'} opened`);
 };
 
 // Finds a Wistia link inside `container` and wires it to open the modal
 // instead of navigating — shared by any block with a "Watch the Video" CTA
 // (hero.js, hero-screen.js) rather than each reimplementing the same find/wire.
-export const wireVideoModalLinks = (container) => {
+export const wireVideoModalLinks = (container, { signal } = {}) => {
   const link = [...container.querySelectorAll('a')].find((a) => WISTIA_RE.test(a.href));
   if (!link) return;
   const [, id] = link.href.match(WISTIA_RE);
   link.addEventListener('click', (e) => {
     e.preventDefault();
-    openVideoModal(id, link.textContent.trim(), link);
-  });
+    openVideoModal(id, link.textContent.trim(), link, { signal });
+  }, { signal });
 };

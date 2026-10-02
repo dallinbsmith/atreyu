@@ -40,7 +40,7 @@ const playControl = (playLabel) => createElement(
   createElement('span', { className: 'visually-hidden' }, playLabel),
 );
 
-const buildCard = (item, index, featured, playLabel) => {
+const buildCard = (item, index, featured, playLabel, signal) => {
   const variant = featured ? 'video-playlist-featured' : 'video-playlist-thumb';
   const testid = `video-playlist-item-${index}`;
   const info = createElement(
@@ -69,12 +69,12 @@ const buildCard = (item, index, featured, playLabel) => {
   }
 
   const btn = createElement('button', { type: 'button', className: variant, 'data-testid': testid }, ...cardKids);
-  btn.addEventListener('click', () => openVideoModal(item.wistiaId, item.title || playLabel, btn));
+  btn.addEventListener('click', () => openVideoModal(item.wistiaId, item.title || playLabel, btn, { signal }));
   return btn;
 };
 
-export default async (el) => {
-  if (!guardDecorate(el, 'videoPlaylist')) return;
+export default async (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'videoPlaylist')) return;
 
   const items = [...el.children].map(readItem).filter((it) => it.poster || it.title);
   if (!items.length) {
@@ -86,7 +86,7 @@ export default async (el) => {
   const playLabel = await getPlaceholder('media.watchVideo', 'Watch the Video');
 
   const cards = items.map(
-    (item, i) => buildCard(item, i, i === 0, playLabel),
+    (item, i) => buildCard(item, i, i === 0, playLabel, signal),
   );
   const list = createElement(
     'ul',

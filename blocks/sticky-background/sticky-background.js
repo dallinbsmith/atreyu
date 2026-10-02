@@ -62,20 +62,19 @@ const buildSection = (row, s) => {
   return section;
 };
 
-export default (el) => {
+export default (el, { signal } = {}) => {
   const [mediaRow, ...sectionRows] = [...el.children];
   // Check content BEFORE marking decorated, so a media-only block a later
   // Quick-Edit fills in with sections can still re-decorate.
   if (!mediaRow || !sectionRows.length) return;
-  if (!guardDecorate(el, 'stickyBackground')) return;
+  if (signal?.aborted || !guardDecorate(el, 'stickyBackground')) return;
   // createElement drops the null children that buildSection returns for empty rows.
   const sections = createElement('div', { className: 'sbg-sections' }, ...sectionRows.map((row, s) => buildSection(row, s)));
   const inner = createElement('div', { className: 'sbg-inner' }, buildMedia(mediaRow), sections);
   el.replaceChildren(inner);
   // trackScrollProgress is a no-op under !shouldAnimate() (reduced motion /
   // save-data / low-power): no progress-driven JS motion runs, --sbg-edge stays
-  // unset (0), and CSS renders the fully-visible resting state. The cleanup
-  // handle is intentionally discarded — el lives for the page lifetime (EDS is
-  // full-page-load, no client routing), matching pothole.js.
-  trackScrollProgress(el, (p) => el.style.setProperty('--sbg-edge', edgeProgress(p).toFixed(4)));
+  // unset (0), and CSS renders the fully-visible resting state. The block
+  // signal disconnects the shared scroll observer during re-decoration sweeps.
+  trackScrollProgress(el, (p) => el.style.setProperty('--sbg-edge', edgeProgress(p).toFixed(4)), { signal });
 };

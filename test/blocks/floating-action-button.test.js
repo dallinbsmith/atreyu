@@ -56,6 +56,18 @@ describe('floating-action-button', () => {
     expect(modal.querySelector('iframe').src).to.include('abc123');
   });
 
+  it('aborting the block signal removes an open video modal', () => {
+    const controller = new AbortController();
+    const el = block(['Watch the demo', link(WISTIA, '')]);
+    decorate(el, { signal: controller.signal });
+    el.querySelector('.fab-button').click();
+    expect(document.querySelector('.video-modal')).to.exist;
+
+    controller.abort();
+    expect(document.querySelector('.video-modal')).to.not.exist;
+    expect(document.body.style.overflow).to.equal('');
+  });
+
   it('passes the label as the modal accessible name (title)', () => {
     const el = block(['Watch the demo', link(WISTIA, '')]);
     decorate(el);

@@ -75,8 +75,8 @@ const buildStage = (el, text, video) => {
   }, text));
 };
 
-export default (el) => {
-  if (!guardDecorate(el, 'imgSeq')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'imgSeq')) return;
   el.classList.add('prompter');
 
   const text = el.querySelector(`${HEADING_SELECTOR}, p`);
@@ -91,6 +91,6 @@ export default (el) => {
   el.classList.add('prompter-scrub');
   splitWords(text);
   if (video) prepareScrub(video);
-  // Cleanup discarded: no client routing, so `el` lives for the page lifetime.
-  trackScrollProgress(el, video ? scrubOnProgress(video) : undefined);
+  // The block signal disconnects the shared scroll observer on re-decoration.
+  trackScrollProgress(el, video ? scrubOnProgress(video) : undefined, { signal });
 };

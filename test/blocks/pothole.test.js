@@ -44,6 +44,7 @@ const img = '<picture><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAA
 // hero-cards-transition.test.js/footer-glow.test.js.
 class FakeIntersectionObserver {
   constructor() {
+    this.disconnected = false;
     FakeIntersectionObserver.instances.push(this);
   }
 
@@ -51,7 +52,7 @@ class FakeIntersectionObserver {
 
   unobserve() {}
 
-  disconnect() {}
+  disconnect() { this.disconnected = true; }
 }
 FakeIntersectionObserver.instances = [];
 
@@ -267,6 +268,17 @@ describe('pothole', () => {
       decorate(el);
       expect(FakeIntersectionObserver.instances).to.have.length(1);
       expect(el.querySelector('.pothole-content h2')?.textContent).to.equal('Title');
+    });
+
+    it('aborting the block signal disconnects the scroll-progress observer', () => {
+      sinon.stub(navigator, 'hardwareConcurrency').value(8);
+      const controller = new AbortController();
+      const el = block([img, '<h2>Title</h2><p><a href="/a">Go</a></p>']);
+
+      decorate(el, { signal: controller.signal });
+      expect(FakeIntersectionObserver.instances).to.have.length(1);
+      controller.abort();
+      expect(FakeIntersectionObserver.instances[0].disconnected).to.be.true;
     });
   });
 });

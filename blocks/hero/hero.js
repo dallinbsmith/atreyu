@@ -20,8 +20,8 @@ const decorateForeground = (fg, hero) => {
   hero.classList.toggle('hero-text-end', textIdx !== 0);
 };
 
-export default (el) => {
-  if (!guardDecorate(el, 'heroDecorated')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'heroDecorated')) return;
 
   const cells = getCells(el);
   const bgCell = cells.find((c) => c.querySelector('picture'));
@@ -30,7 +30,7 @@ export default (el) => {
   const fg = createElement('div', { className: 'hero-foreground' }, ...extra);
   decorateRichText(fg);
   decorateForeground(fg, el);
-  wireVideoModalLinks(fg);
+  wireVideoModalLinks(fg, { signal });
 
   const bg = bgCell && createElement('div', { className: 'hero-background' }, ...bgCell.children);
   if (bg) decorateVideoMedia(bg);

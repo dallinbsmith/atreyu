@@ -36,6 +36,9 @@ const DESKTOP = '(width >= 768px)';
 const ariaBlocks = new Set();
 let ariaMq;
 const runAria = () => { for (const apply of ariaBlocks) apply(); };
+const pruneAriaListener = () => {
+  if (!ariaBlocks.size) ariaMq?.removeEventListener('change', runAria);
+};
 
 const attr = (node, name, value) => (value == null
   ? node.removeAttribute(name) : node.setAttribute(name, value));
@@ -91,8 +94,8 @@ const makeNav = (label, dir, viewport) => {
   return btn;
 };
 
-export default async (el) => {
-  if (!guardDecorate(el, 'carouselWithTouts')) return;
+export default async (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'carouselWithTouts')) return;
   const data = parseSlides(el);
   if (!data.length) return;
 
@@ -102,6 +105,7 @@ export default async (el) => {
     getPlaceholder('controls.nextSlide', 'Next slide'),
     getPlaceholder('controls.slidePosition', '{current} of {total}'),
   ]);
+  if (signal?.aborted) return;
 
   const slides = data.map((d, i) => buildSlide(d, i));
   const label = (i) => fillPlaceholder(slideLabel, { current: i + 1, total: slides.length });
@@ -139,12 +143,19 @@ export default async (el) => {
   // do not stack window listeners; a detached instance evicts itself here.
   const setAria = (node, on, ...vals) => ['role', 'aria-roledescription', 'aria-label'].forEach((name, i) => attr(node, name, on ? vals[i] : null));
   const applyMode = () => {
-    if (!el.isConnected && ariaBlocks.delete(applyMode)) return;
+    if (!el.isConnected && ariaBlocks.delete(applyMode)) {
+      pruneAriaListener();
+      return;
+    }
     setAria(el, ariaMq.matches, 'region', 'carousel', regionLabel);
     slides.forEach((s, i) => setAria(s, ariaMq.matches, 'group', 'slide', label(i)));
   };
   (ariaMq ??= window.matchMedia(DESKTOP)).addEventListener('change', runAria);
   ariaBlocks.add(applyMode);
+  signal?.addEventListener('abort', () => {
+    ariaBlocks.delete(applyMode);
+    pruneAriaListener();
+  }, { once: true });
   applyMode();
 
   // One media slide fills the viewport at a time (snap start), so the settled
@@ -155,6 +166,7 @@ export default async (el) => {
   // arrows, trackpad and pagination-click scrolls all funnel through it, so
   // reduced-motion / save-data users still get highlight + aria-current + announce.
   let scrollTimer;
+  signal?.addEventListener('abort', () => { clearTimeout(scrollTimer); }, { once: true });
   viewport.addEventListener('scroll', () => {
     clearTimeout(scrollTimer);
     scrollTimer = setTimeout(() => {

@@ -6,10 +6,10 @@ import { createElement, classifyCtaParagraphs, getCells } from '../../scripts/ut
 import { decorateVideoMedia } from '../../scripts/utils/media/video.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
-export default (el) => {
+export default (el, { signal } = {}) => {
   // Idempotency guard — a second decorate() would re-find cells and re-wire
   // a second click listener onto the same still-present video link.
-  if (!guardDecorate(el, 'heroScreenDecorated')) return;
+  if (signal?.aborted || !guardDecorate(el, 'heroScreenDecorated')) return;
 
   // Cell, not row (`el.children` / getCells — not `:scope > div`). A picture
   // cell with a sibling text cell must not sweep that sibling into media.
@@ -19,7 +19,7 @@ export default (el) => {
 
   const content = createElement('div', { className: 'hero-screen-content' }, ...extra);
   classifyCtaParagraphs(content, 'hero-screen-cta');
-  wireVideoModalLinks(content);
+  wireVideoModalLinks(content, { signal });
 
   const media = picCell && createElement(
     'div',

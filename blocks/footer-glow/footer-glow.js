@@ -5,8 +5,8 @@ import { createElement } from '../../scripts/utils/dom.js';
 
 const asset = (file) => new URL(file, import.meta.url).href;
 
-export default (el) => {
-  if (!guardDecorate(el, 'footerGlow')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'footerGlow')) return;
 
   // Row-scoped, not whole-block: this is a single optional override row
   // (video link + poster image), so we only ever look inside it — never at
@@ -49,5 +49,5 @@ export default (el) => {
       labels: { pause, play },
       onToggle: (paused) => (paused ? video.pause() : video.play()),
     });
-  });
+  }, { signal });
 };

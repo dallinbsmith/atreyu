@@ -25,6 +25,12 @@ const rows = [
   ['Globex', 'Review tool', '/globex', 'Learn'],
 ];
 
+afterEach(() => {
+  document.querySelector('.tt-modal-close')?.click();
+  document.body.innerHTML = '';
+  document.body.style.overflow = '';
+});
+
 describe('tile-table', () => {
   it('builds one tile per authored row inside a single grid', async () => {
     const el = block(rows);
@@ -45,6 +51,18 @@ describe('tile-table', () => {
     expect(el.querySelectorAll('.tt-grid')).to.have.length(1);
     expect(el.querySelectorAll('.tt-tile')).to.have.length(2);
     expect(el.querySelector('.tt-label')?.textContent).to.equal('Acme');
+  });
+
+  it('aborting the block signal removes an open body modal', async () => {
+    const controller = new AbortController();
+    const el = block(rows);
+    await decorate(el, { signal: controller.signal });
+    el.querySelector('.tt-tile').click();
+    expect(document.querySelector('.tt-modal')).to.exist;
+
+    controller.abort();
+    expect(document.querySelector('.tt-modal')).to.not.exist;
+    expect(document.body.style.overflow).to.equal('');
   });
 
   // Graceful degradation: a row authored with only a name cell (no detail/link

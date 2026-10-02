@@ -7,8 +7,8 @@ import {
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
-export default (el) => {
-  if (!guardDecorate(el, 'speedbump')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'speedbump')) return;
 
   // Cell, not row: a picture cell with sibling text must not sweep the whole
   // row into the media slot.
@@ -59,5 +59,5 @@ export default (el) => {
   // Sets --progress (0..1) on el as it scrolls through the viewport; CSS reads
   // it on the media <img> for the parallax shift. No-op under reduced motion
   // (--progress stays unset, CSS's var(--progress, 0) fallback keeps it still).
-  trackScrollProgress(el);
+  trackScrollProgress(el, undefined, { signal });
 };

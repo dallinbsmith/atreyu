@@ -5,8 +5,8 @@ import { wireVideoModalLinks } from '../../scripts/utils/modal/video-modal.js';
 import { getCells, createElement, parseGlassborderDecoration } from '../../scripts/utils/dom.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
-export default (el) => {
-  if (!guardDecorate(el, 'standaloneMedia')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'standaloneMedia')) return;
 
   parseGlassborderDecoration(el);
 
@@ -16,7 +16,7 @@ export default (el) => {
   const media = createElement('div', { className: 'standalone-media-media' }, ...(cell?.children ?? []));
 
   decorateVideoMedia(media);
-  wireVideoModalLinks(media);
+  wireVideoModalLinks(media, { signal });
 
   el.replaceChildren(media);
 };
