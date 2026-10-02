@@ -1,5 +1,40 @@
 version: 2
 updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directory: /workers/website
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    groups:
+      worker-runtime-tools:
+        update-types:
+          - major
+          - minor
+          - patch
+        patterns:
+          - wrangler
+          - miniflare
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+
   # plugins/experimentation is vendored upstream (adobe/aem-experimentation).
   # It has no runtime deps and its lockfile is never installed or served, so
   # updates belong upstream; bumping it here only diverges the vendored copy.

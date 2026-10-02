@@ -20,10 +20,10 @@ Use the PR Test URLs unless the change can only be tested locally.
 
 | Gate | Target |
 |---|---|
-| Lighthouse mobile Performance | 95 or higher |
-| Lighthouse Accessibility | 100 |
-| Lighthouse Best Practices | 95 or higher |
-| Lighthouse SEO | 100 |
+| PSI mobile Performance | 95 or higher |
+| PSI Accessibility | 100 |
+| PSI Best Practices | 95 or higher |
+| PSI SEO | 100 |
 | Largest Contentful Paint | 2.5 s or less |
 | Total Blocking Time | 200 ms or less in lab data |
 | Interaction to Next Paint | 200 ms or less in field data once live |
@@ -33,7 +33,7 @@ Use the PR Test URLs unless the change can only be tested locally.
 | Breakpoints | 768, 1240, and 1440 px checked when layout changes |
 | Browsers | Latest Chrome, Safari, Firefox, Edge, iOS Safari, and Android Chrome for high-risk UI changes |
 
-Evidence is PSI from the Test URLs plus a manual Lighthouse mobile run.
+Evidence is AEM Code Sync PSI from the Test URLs plus the manual browser checks relevant to the change.
 
 ## Blocks
 
