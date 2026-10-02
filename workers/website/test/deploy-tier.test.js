@@ -19,7 +19,10 @@ const EDS_HTML = [
   '<script nonce="aem" src="/scripts/ak.js" type="module"></script>',
   '</head><body><main>page</main></body></html>',
 ].join('');
-const LEGACY_HTML = '<!DOCTYPE html><html lang="en" data-deploy-tier="dev"><head></head><body>legacy</body></html>';
+// Carries a nonce marker and odd spacing to prove that path does no nonce
+// rewrite and changes nothing but the attribute.
+const LEGACY_HTML = '<!DOCTYPE html><html lang="en" data-deploy-tier="dev"><head><script nonce="aem" src="/x.js"></script></head><body  class=a>legacy &amp; <b>x</b></body></html>';
+const LEGACY_JS = 'var s = \'<html data-deploy-tier="dev">\';';
 const JS = 'document.documentElement.outerHTML = \'<html data-deploy-tier="dev">\';';
 
 const upstream = (req) => {
@@ -28,6 +31,7 @@ const upstream = (req) => {
     if (pathname === '/robots.txt') {
       return new Response('User-agent: *\nAllow: /\nSitemap: https://frame.io/sitemap.xml', { headers: { 'content-type': 'text/plain' } });
     }
+    if (pathname.endsWith('.js')) return new Response(LEGACY_JS, { headers: { 'content-type': 'text/javascript' } });
     return new Response(LEGACY_HTML, { headers: { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'all' } });
   }
   if (host === EDS_HOST) {
@@ -80,9 +84,17 @@ test('workerd: stage Worker', { timeout: 120_000 }, async (t) => {
       assert.ok(html.includes(`<script nonce="${nonce}" src="/scripts/ak.js"`), html);
     });
 
-    await t.test('legacy-origin HTML is passed through untouched', async () => {
-      const html = await (await get('/pricing')).text();
-      assert.equal(html, LEGACY_HTML);
+    await t.test('legacy-origin HTML has the tier attribute removed and is otherwise unchanged', async () => {
+      const resp = await get('/pricing');
+      const html = await resp.text();
+      assert.deepEqual(tiersOf(html), []);
+      assert.equal(html, LEGACY_HTML.replace(' data-deploy-tier="dev"', ''));
+      assert.equal(resp.headers.has('content-security-policy'), false);
+      assert.equal(resp.headers.get('x-robots-tag'), 'noindex, nofollow');
+    });
+
+    await t.test('legacy-origin non-HTML is not rewritten', async () => {
+      assert.equal(await (await get('/legacy.js')).text(), LEGACY_JS);
     });
 
     await t.test('non-HTML EDS responses are not rewritten', async () => {
@@ -119,7 +131,7 @@ test('workerd: dev Worker is noindex with a dev tier attribute', { timeout: 120_
   });
 });
 
-test('workerd: prod Worker is unchanged apart from the tier attribute', { timeout: 120_000 }, async () => {
+test('workerd: prod Worker is unchanged apart from the tier attribute and its removal from existing-site HTML', { timeout: 120_000 }, async () => {
   await withWorker('prod', async (get) => {
     const page = await get('/blog/x');
     assert.equal(page.headers.has('x-robots-tag'), false, "AEM's x-robots-tag is still stripped");
@@ -131,7 +143,8 @@ test('workerd: prod Worker is unchanged apart from the tier attribute', { timeou
 
     const legacy = await get('/pricing');
     assert.equal(legacy.headers.get('x-robots-tag'), 'all');
-    assert.equal(await legacy.text(), LEGACY_HTML);
+    assert.equal(legacy.headers.has('content-security-policy'), false);
+    assert.equal(await legacy.text(), LEGACY_HTML.replace(' data-deploy-tier="dev"', ''));
 
     const robots = await get('/robots.txt');
     assert.equal(await robots.text(), 'User-agent: *\nAllow: /\nSitemap: https://frame.io/sitemap.xml');

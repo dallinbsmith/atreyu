@@ -123,3 +123,29 @@ test('wrangler.toml sets every required var, with the expected DEPLOY_TIER, in e
     assert.equal(checkRequiredEnv({ ...vars, LEGACY_ORIGIN: 'legacy.example' }), null, name);
   }
 });
+
+// A plain `wrangler deploy` (no --env) publishes the top-level config, which
+// is DEPLOY_TIER dev. Zone routes must therefore live only under
+// [env.production], and every deploy script must name an environment.
+test('zone routes appear only under [env.production]', () => {
+  const toml = readFileSync(new URL('../wrangler.toml', import.meta.url), 'utf8');
+  let section = 'top-level';
+  toml.split('\n').forEach((line) => {
+    const header = line.match(/^\[\[?([^\]]+)\]\]?/);
+    if (header) {
+      const [, name] = header;
+      if (/(^|\.)routes$/.test(name)) assert.match(name, /^env\.production\.routes$/, line);
+      section = name;
+    }
+    if (/^\s*routes?\s*=/.test(line)) {
+      assert.equal(section, 'env.production', `route outside [env.production]: ${line}`);
+    }
+  });
+});
+
+test('every npm deploy script passes --env', () => {
+  const { scripts } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const deploys = Object.entries(scripts).filter(([name, cmd]) => name.startsWith('deploy') || /wrangler\s+(deploy|publish)/.test(cmd));
+  assert.ok(deploys.length > 0);
+  for (const [name, cmd] of deploys) assert.match(cmd, /\s--env[\s=]\S+/, name);
+});

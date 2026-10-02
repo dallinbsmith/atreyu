@@ -68,6 +68,8 @@ Prerequisites: Cloudflare access to the account that owns the Worker (`npx wrang
    npm run deploy:production    # wrangler deploy --env production, only after staging is checked
    ```
 
+   Never run plain `wrangler deploy` (no `--env`). It publishes the top-level config, which is `DEPLOY_TIER = "dev"`: a noindex Worker with a `Disallow: /` robots.txt. Zone routes live only under `[env.production]`, and a test fails if a route appears anywhere else or an npm deploy script omits `--env`.
+
    If the upload fails with `Invalid routing manifest`, `routing-manifest.js` failed validation at module load; the listed errors name the bad entries. The previous version keeps serving. `cd workers/website && npm test` reproduces it locally.
 4. Smoke-check the deployed URL with the table in step 4 above. On staging, `<html>` must say `data-deploy-tier="stage"` and every response must carry `x-robots-tag: noindex, nofollow`. On production, `data-deploy-tier="prod"`, no Worker `x-robots-tag` on pages, and `/robots.txt` comes from the existing site.
 

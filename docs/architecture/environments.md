@@ -49,7 +49,7 @@ New parameters must name their gate in the PR.
 | Staging Worker (`workers.dev` today, a dedicated staging host later) | `stage`, from the Worker attribute. Missing or invalid: `prod`. |
 | `frame.io` (production Worker) | `prod`, from the Worker attribute. Missing or invalid: still `prod`. |
 
-The tier is never read from page or bulk metadata, or from any `<meta>`: authors can create those. Only the Worker can set the `<html>` attribute. Worker details: [worker.md](worker.md#deploy-tier).
+The tier is never read from page or bulk metadata, or from any `<meta>`: authors can create those. The Worker sets it on EDS HTML and strips it from existing-site HTML; authors cannot create it. Worker details: [worker.md](worker.md#deploy-tier).
 
 Segment has its own gate: it loads only on prod, only after analytics consent, and only when a real write key replaces the placeholder. Stage/dev traffic must not reach the prod Segment source.
 

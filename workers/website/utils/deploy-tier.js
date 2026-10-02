@@ -1,7 +1,8 @@
 // DEPLOY_TIER (wrangler.toml, one per environment) is the only source of the
 // Worker's tier. utils/env-guard.js rejects any other value, so every request
 // that reaches a handler has a valid tier.
-// Keep DEPLOY_TIERS in sync with scripts/utils/env.js.
+// Must equal DEPLOY_TIERS in scripts/utils/env.js
+// (tools/config-sync/locales.test.js checks it).
 export const DEPLOY_TIERS = Object.freeze(['dev', 'stage', 'prod']);
 
 export const isDeployTier = (value) => DEPLOY_TIERS.includes(value);
@@ -21,6 +22,12 @@ export const stampDeployTier = (rewriter, tier) => rewriter.on('html', {
     el.removeAttribute(TIER_ATTRIBUTE);
     if (isDeployTier(tier)) el.setAttribute(TIER_ATTRIBUTE, tier);
   },
+});
+
+// Existing-site HTML: remove only, set nothing, so that origin can never
+// supply a tier even if it later loads the shared client scripts.
+export const stripDeployTier = (rewriter) => rewriter.on('html', {
+  element: (el) => { el.removeAttribute(TIER_ATTRIBUTE); },
 });
 
 // Non-prod Workers must never be indexed, whichever origin answered.

@@ -4,8 +4,9 @@ import {
   hostnameOf,
 } from './security/preview-origin.js';
 
-// Keep in sync with workers/website/utils/deploy-tier.js.
-const TIERS = ['dev', 'stage', 'prod'];
+// Must equal DEPLOY_TIERS in workers/website/utils/deploy-tier.js
+// (tools/config-sync/locales.test.js checks it).
+export const DEPLOY_TIERS = Object.freeze(['dev', 'stage', 'prod']);
 
 // Deploy-tier classifier for this page. Loopback and EDS hosts are classified
 // by hostname alone. Any other host is served by the Worker, which sets
@@ -21,9 +22,12 @@ export const classifyEnv = (
   if (LOOPBACK_HOST_PATTERN.test(hostname)) return 'dev';
   if (AEM_AUTHORING_HOST_PATTERN.test(hostname)) return 'stage';
   const tier = root?.dataset?.deployTier;
-  return TIERS.includes(tier) ? tier : 'prod';
+  return DEPLOY_TIERS.includes(tier) ? tier : 'prod';
 };
 
-export const isProdEnv = (env = classifyEnv()) => env === 'prod';
+// Classified once per page load; isProdEnv() with no argument uses it.
+const ENV = classifyEnv();
 
-export default classifyEnv();
+export const isProdEnv = (env = ENV) => env === 'prod';
+
+export default ENV;

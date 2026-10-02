@@ -18,6 +18,8 @@ keep_vars = true
 # Vars are not inherited by [env.*] blocks, so each environment lists all of
 # them. utils/env-guard.js fails every request with a 500 if a required one
 # is missing or invalid.
+# Deploy only with --env (npm run deploy:*): the top level is the dev tier.
+# Zone routes belong under [env.production] only (test/utils.test.js).
 # DEPLOY_TIER (dev | stage | prod) is the Worker's tier. Anything but prod
 # adds x-robots-tag noindex to every response, serves a Disallow-all
 # robots.txt, and tells the client its tier through <html data-deploy-tier>.

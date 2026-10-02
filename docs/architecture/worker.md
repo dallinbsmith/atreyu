@@ -9,11 +9,11 @@ Current state: deployed to `workers.dev` only, not in front of frame.io. See [st
 `index.js` default export, in order:
 
 1. **Env check.** If `AEM_ORG`, `AEM_SITE`, `DA_ORG`, `DA_SITE`, `LEGACY_ORIGIN` or `DEPLOY_TIER` is missing, or `DEPLOY_TIER` isn't `dev`, `stage` or `prod`, every request gets a 500 with a request id (`utils/env-guard.js`).
-2. **Non-prod tier.** When `DEPLOY_TIER` isn't `prod`, `/robots.txt` is answered by the Worker and every response leaving the Worker gets `x-robots-tag: noindex, nofollow` ([Deploy tier](#deploy-tier)).
+2. **Non-prod tier.** When `DEPLOY_TIER` isn't `prod`, `/robots.txt` is answered by the Worker and every response (except the env-check 500) gets `x-robots-tag: noindex, nofollow` ([Deploy tier](#deploy-tier)).
 3. **Port redirect.** A request with a port, on a host other than `localhost`, gets a 301 to the same URL without the port.
 4. **`blog.frame.io`** → 301 to `https://frame.io/blog{path}{query}`.
 5. **RUM** (`/.rum/…`, `/.optel/…`): methods other than GET, POST, OPTIONS get 405.
-6. **Strangler decision.** The request goes to the existing site (`handlers/existing-origin.js`) unless it is RUM, matches a *global* route (below), or is an EDS path. With `EDS_DISABLED=true`, nothing except RUM and global routes is treated as an EDS path. The existing-site fetch copies path and query, sets `host` to `LEGACY_ORIGIN`, times out after 10 s and returns 502 on failure.
+6. **Strangler decision.** The request goes to the existing site (`handlers/existing-origin.js`) unless it is RUM, matches a *global* route (below), or is an EDS path. With `EDS_DISABLED=true`, nothing except RUM and global routes is treated as an EDS path. The existing-site fetch copies path and query, sets `host` to `LEGACY_ORIGIN`, times out after 10 s and returns 502 on failure. On `text/html` responses it removes any `data-deploy-tier` from `<html>`.
 7. **Query cleanup** for the EDS request: media keeps `format`, `height`, `optimize`, `width`; `.json` keeps `limit`, `offset`, `sheet`; HTML drops the query. Parameters are sorted. The original query is kept for redirects.
 8. **Rewrite to the EDS origin**: host becomes `main--{AEM_SITE}--{AEM_ORG}.aem.live`; headers `x-forwarded-host`, `x-byo-cdn-type: cloudflare`, `x-push-invalidation: enabled` (only when `PUSH_INVALIDATION` isn't `disabled`) and `authorization: token {ORIGIN_AUTHENTICATION}` (only when set).
 9. **Routes**, first non-null response wins:
@@ -85,8 +85,8 @@ So today EDS serves English `/blog`, `/glossary` and `/integrations` pages. Ever
 
 `DEPLOY_TIER` (`dev`, `stage` or `prod`) is set per environment in `wrangler.toml`: top level (`wrangler dev`) `dev`, `[env.staging]` `stage`, `[env.production]` `prod`. There is no default in code; a missing or unknown value fails every request with a 500.
 
-- **Tier attribute.** EDS HTML responses (route 8, and variant pages through it) get `<html data-deploy-tier="{DEPLOY_TIER}">`. Any upstream `data-deploy-tier` is removed first. Existing-site responses and non-HTML responses are not rewritten. `scripts/utils/env.js` reads the attribute only on hosts that are neither loopback nor an EDS host (`*--*--*.aem.page|live`); a missing or invalid value means `prod`. Authors can create `<meta>` tags through page or bulk metadata, so the tier is never read from one. See [environments.md](environments.md#host-classification).
-- **Robots.** On `dev` and `stage`, every response gets `x-robots-tag: noindex, nofollow` (replacing any other value, including `/system/`'s `noindex`), and `/robots.txt` returns `User-agent: *` / `Disallow: /` as `text/plain` without reaching either origin. On `prod`, nothing changes: EDS responses have AEM's `x-robots-tag` removed (except `/system/`, which gets `noindex`), and `/robots.txt` goes to the existing site.
+- **Tier attribute.** EDS HTML responses (route 8, and variant pages through it) get `<html data-deploy-tier="{DEPLOY_TIER}">`. Any upstream `data-deploy-tier` is removed first. Existing-site HTML has `data-deploy-tier` removed and nothing set (no nonce, no CSP), so that origin can never supply a tier. Non-HTML responses are not rewritten. `scripts/utils/env.js` reads the attribute only on hosts that are neither loopback nor an EDS host (`*--*--*.aem.page|live`); a missing or invalid value means `prod`. Authors can create `<meta>` tags through page or bulk metadata, so the tier is never read from one. See [environments.md](environments.md#host-classification).
+- **Robots.** On `dev` and `stage`, every response (except the env-check 500) gets `x-robots-tag: noindex, nofollow` (replacing any other value, including `/system/`'s `noindex`), and `/robots.txt` returns `User-agent: *` / `Disallow: /` as `text/plain` without reaching either origin. On `prod`, nothing changes: EDS responses have AEM's `x-robots-tag` removed (except `/system/`, which gets `noindex`), and `/robots.txt` goes to the existing site.
 
 ## Edge cache
 
