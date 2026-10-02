@@ -38,7 +38,7 @@
     "@adobe/eslint-config-helix": "^3.0.32",
     "@esm-bundle/chai": "4.3.4-fix.0",
     "@web/dev-server-import-maps": "^0.3.0",
-    "@web/test-runner": "^0.18.0",
+    "@web/test-runner": "^1.0.0",
     "@web/test-runner-commands": "1.0.1",
     "chai": "6.2.2",
     "esbuild": "^0.28.2",
