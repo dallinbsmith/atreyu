@@ -1,8 +1,12 @@
 import {
   getConfig, loadArea, loadStyle, setConfig, slugifyUnique,
 } from './ak.js';
-import { runExperimentation } from './experiment-loader.js';
 import locales from './locales.js';
+import {
+  catchImportError,
+  hasExperimentSignal,
+  removeLeftoverConfigBlocks,
+} from './utils/experiments/signals.js';
 import { isAuthoringPreviewAllowed } from './utils/security/preview-origin.js';
 
 // frame.io is the canonical production host (docs/decisions/0005-canonical-host.md); www.frame.io
@@ -56,10 +60,37 @@ const loadFonts = () => {
     .catch((ex) => getConfig().log(ex));
 };
 
+const defaultLoadLoader = () => import('./experiment-loader.js');
+
+const defaultLoadPlugin = () => (
+  // eslint-disable-next-line import/no-relative-packages -- parallel plugin import, no bundler
+  import('../plugins/experimentation/src/index.js')
+);
+
+export const loadExperimentation = async (doc = document, {
+  loadLoader = defaultLoadLoader,
+  loadPlugin = defaultLoadPlugin,
+} = {}) => {
+  if (!hasExperimentSignal(doc)) return null;
+  let pluginPromise = null;
+  try {
+    const loaderPromise = loadLoader();
+    pluginPromise = loadPlugin();
+    catchImportError(pluginPromise, () => {});
+    const { runExperimentation } = await loaderPromise;
+    return await runExperimentation(doc, { pluginPromise });
+  } catch (ex) {
+    catchImportError(pluginPromise, getConfig().log);
+    removeLeftoverConfigBlocks(doc.querySelector('main'));
+    await getConfig().log(ex);
+    return null;
+  }
+};
+
 export const loadPage = async () => {
   setConfig({ hostnames, locales, linkBlocks, components, decorateArea });
   loadFonts();
-  await runExperimentation();
+  await loadExperimentation();
   await loadArea();
 };
 await loadPage();

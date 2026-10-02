@@ -204,6 +204,21 @@ export default defineConfig([
     extends: [recommended, promise.configs['flat/recommended']],
   },
   source,
+  {
+    files: ['scripts/scripts.js', 'scripts/lazy.js', 'scripts/ak.js'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: [{
+          name: './experiment-loader.js',
+          message: 'Probe raw experiment signals, then dynamic-import the loader only when needed.',
+        }],
+        patterns: [{
+          group: ['../plugins/experimentation/**'],
+          message: 'Experimentation plugin imports must stay dynamic so plain pages do not ship the vendored graph.',
+        }],
+      }],
+    },
+  },
   test,
   {
     files: ['test/**/*.js'],

@@ -3,7 +3,7 @@
 // the plugin, turns the rows into the same head <meta> tags page metadata
 // produces, and removes the table, so the plugin sees nothing new.
 import { toClassName } from './config.js';
-import { removeConfigBlock } from './guard.js';
+import { findConfigBlocks, removeConfigBlock } from './signals.js';
 
 const ID_KEYS = new Set(['experiment', 'name', 'test', 'test-name', 'id', 'test-id']);
 
@@ -28,8 +28,7 @@ export const readExperimentBlock = (block) => [...block.children]
   .map((row) => [metaName(row.children[0].textContent), cellValue(row.children[1])])
   .filter(([name, value]) => name && value);
 
-export const findExperimentBlocks = (doc) => [...doc.querySelectorAll('main .experiment')]
-  .filter((block) => block.classList[0] === 'experiment');
+export const findExperimentBlocks = (doc) => findConfigBlocks(doc.querySelector('main'), ['experiment']);
 
 // The first table wins; every table is removed so none ever renders. When the
 // table defines a test it replaces all other experiment metadata on the page.

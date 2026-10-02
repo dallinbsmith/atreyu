@@ -2,7 +2,12 @@ import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 // Contract tests must import the vendored plugin directly.
 // eslint-disable-next-line import/no-relative-packages
-import { loadEager } from '../../../plugins/experimentation/src/index.js';
+import { DEFAULT_OPTIONS, loadEager } from '../../../plugins/experimentation/src/index.js';
+import { config as loaderConfig } from '../../../scripts/experiment-loader.js';
+import {
+  EXPERIMENT_META_SELECTOR,
+  PLUGIN_KEY_PREFIXES,
+} from '../../../scripts/utils/experiments/signals.js';
 import { controlSection, responseMap, variantHtml } from './fixtures/plugin-contract.js';
 
 const ASSIGNMENT_KEY = 'unified-decisioning-experiments';
@@ -15,8 +20,10 @@ let clock;
 const clearMeta = () => {
   document.head.querySelectorAll([
     'meta[name^="audience"]',
+    'meta[name^="campaign"]',
     'meta[name^="experiment"]',
     'meta[property^="audience"]',
+    'meta[property^="campaign"]',
     'meta[property^="experiment"]',
   ].join(', ')).forEach((meta) => meta.remove());
 };
@@ -90,6 +97,21 @@ describe('vendored aem-experimentation plugin contract', () => {
     document.body.innerHTML = '';
     window.hlx = undefined;
     delete window.aem;
+  });
+
+  it('pins plugin metadata prefixes used by the eager signal probe', () => {
+    const pluginPrefixes = [
+      DEFAULT_OPTIONS.experimentsMetaTagPrefix,
+      DEFAULT_OPTIONS.audiencesMetaTagPrefix,
+      DEFAULT_OPTIONS.campaignsMetaTagPrefix,
+    ];
+    expect([...PLUGIN_KEY_PREFIXES].sort()).to.deep.equal([...pluginPrefixes].sort());
+    for (const prefix of pluginPrefixes) {
+      expect(EXPERIMENT_META_SELECTOR).to.contain(`[name^="${prefix}"]`);
+      expect(EXPERIMENT_META_SELECTOR).to.contain(`[property^="${prefix}:"]`);
+    }
+    expect(Object.keys(loaderConfig).filter((key) => key.endsWith('MetaTagPrefix')))
+      .to.deep.equal([]);
   });
 
   it('pins: audience rank follows section metadata object key order', async () => {

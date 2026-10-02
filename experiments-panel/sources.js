@@ -1,6 +1,6 @@
 import { readExperiment, matchesPattern, toClassName } from '../scripts/utils/experiments/config.js';
 import { findExperimentBlocks, readExperimentBlock } from '../scripts/utils/experiments/block.js';
-import { findConfigBlocks, removeConfigBlock } from '../scripts/utils/experiments/guard.js';
+import { findConfigBlocks, removeConfigBlock } from '../scripts/utils/experiments/signals.js';
 import { applyPersonalizeTables } from '../scripts/utils/experiments/personalize.js';
 import { readValues } from './personalize-table.js';
 

@@ -26,7 +26,7 @@ import ENV from '../env.js';
 import { statusOf, toClassName, VARIANT_ROOT } from './config.js';
 import { cellValue } from './block.js';
 import { withCampaigns } from './audiences.js';
-import { findConfigBlocks, isPluginKey, removeConfigBlock } from './guard.js';
+import { findConfigBlocks, isPluginKey, removeConfigBlock } from './signals.js';
 import { DATE_ONLY } from '../date-only.js';
 
 export const MAX_RULES = 3;

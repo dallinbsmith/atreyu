@@ -84,9 +84,9 @@ Comment-only cleanup, no row: comments in `ak.js` and `lazy.js` were shortened t
 
 | # | Function | Change | Class | Why | PR |
 | --- | --- | --- | --- | --- | --- |
-| L1 | module imports | Imports `getConfig`, `loadStyle` and `runExperimentationLazy` | Convention | Supports L3 and L4. | No |
+| L1 | module imports | Imports `getConfig` and `loadStyle`; `runExperimentationLazy` is dynamically imported from the default export on non-production hosts | Convention | Keeps the experimentation loader out of production lazy graphs on pages without authoring UI. | No |
 | L2 | `loadSidekick` | Path `../tools/sidekick/` becomes `./sidekick/`, plus `.catch` | Convention | Repo layout. | No |
-| L3 | default export (new) | Re-runnable: footer and experimentation panel | Mixed | Re-running the footer is an upstream fix (goes with ak.js 23). Experimentation is project code. | Footer part only |
+| L3 | default export (new) | Re-runnable: footer, and the experimentation panel through a non-production dynamic import | Mixed | Re-running the footer is an upstream fix (goes with ak.js 23). The panel import is project code and must not make production pages fetch experimentation bytes after LCP. | Footer part only |
 | L4 | bootstrap IIFE | Adds `lazy-styles.css`, JSON-LD, hreflang, delegated click, `delayed.js` after 3 s, and `testid-audit` (not prod) | Convention | SEO, analytics and dev audits. SEO stays one-shot because `jsonld.js` only appends. | No |
 | L5 | bootstrap IIFE | Utility paths move to `utils/page/` and `utils/seo/`; scheduler moves to `./scheduler/` | Convention | Repo layout. | No |
 | L6 | `loadSidekick`, bootstrap IIFE | `async function` and the named `(function loadLazy() {…}())` IIFE become arrow functions | Style | House lint style. | No |
@@ -107,7 +107,7 @@ This is author-kit's intended project configuration file, so most changes are ex
 | S1 | `hostnames`, `locales` | `hostnames` set to `frame.io` and `www.frame.io` (exact matches, see `ak.js` row 27); `locales` from `scripts/locales.js` | Convention | Site configuration; one source for the locale list. | No |
 | S2 | `linkBlocks` | Fragment path `/fragments/` becomes `/system/fragments/` | Convention | Content structure. | No |
 | S3 | `loadFonts` (new), `loadPage` | Font CSS with a `fonts-loaded` session flag and `prefers-reduced-data` | Convention | Font loading strategy. | No |
-| S4 | `loadPage` | `await runExperimentation()` before `loadArea()` | Convention | Experimentation plugin. | No |
+| S4 | `loadExperimentation` (new), `loadPage` | Probe raw experiment signals before `loadArea()`; only signal-bearing pages dynamically import `experiment-loader.js`, while the vendored plugin import starts in parallel with the loader | Convention | Plain pages have no config to strip or variants to swap, so they should not ship the experimentation graph. Signal-bearing pages still finish before `loadArea()` to avoid flicker; non-consented visitors may download the side-effect-free plugin before the loader stops. | No |
 | S5 | `loadAuthoringPreviews` (was the `da` IIFE) | Gated by `isAuthoringPreviewAllowed(host)`, has an injectable importer, and moves paths from `../tools/` to `./` | Mixed | The host gate is generic hardening (don't load `dapreview` or Quick Edit on arbitrary hosts). The importer and paths are project-specific. | Host gate only |
 | S6 | `loadPage`, top level | `async function loadPage` becomes an arrow export; upstream's comments ("Blocks with self-managed styles", "How to decorate an area before loading it") deleted | Style | House lint style. | No |
 | S7 | `promoteAnchors` (new), `decorateArea` | Server-flattened `data-anchor` becomes a de-duplicated slug `id` (via `slugifyUnique`, rooted at the section's root node) unless the section already has an `id`; `data-anchor` is removed. Runs in `decorateArea`, before `ak.js` decorates sections. Same selector as `decorateSections` (`main > div` or `:scope > div`). | Convention | Plan B2: keeps the authored `Anchor` key working now that EDS flattens section metadata on the server. Rule 1 below: a project convention in a `scripts.js` hook, not in `ak.js`. | No |
