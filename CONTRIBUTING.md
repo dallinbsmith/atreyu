@@ -4,11 +4,13 @@ Read [docs/README.md](docs/README.md) first. Coding rules are in [docs/conventio
 
 ## Branches and pull requests
 
-1. Branch from `main`: `feat/…`, `fix/…`, `docs/…`, `chore/…`. Keep a branch to one change.
+**Pushing a branch publishes it.** Every file not excluded by `.hlxignore` is publicly fetchable at the branch preview URL. Never commit secrets, customer data, private operational details, or unreleased announcements.
+
+1. Branch from `main`: `feat/…`, `fix/…`, `docs/…`, or `chore/…` plus a short slug. Branch names become public hostnames in `<branch>--atreyu--<owner>`, which must fit in a 63-character DNS label. `<owner>` is defined in [environments.md](docs/architecture/environments.md#owner-placeholder). Keep branch names under about 40 characters. Keep a branch to one change.
 2. `npm install` once per clone. It sets `core.hooksPath` to `.githooks`, so a pre-commit hook runs ESLint on your staged `.js` files.
-3. Before pushing: `npm run lint` and `npm test` pass. Check visual changes in a browser.
+3. Before pushing: `npm run lint` and relevant tests pass. Check visual changes in a browser.
 4. Push and open a PR against `main`. Fill in the PR template (`.github/PULL_REQUEST_TEMPLATE.md`); if a checklist item doesn't apply, say so rather than deleting it.
-5. Share the branch preview, `https://{branch}--atreyu--dallinbsmith.aem.page/{path}`, for anything visible.
+5. Share Test URLs for anything visible: Before `https://main--atreyu--<owner>.aem.live/<path>` and After `https://<branch>--atreyu--<owner>.aem.live/<path>`. This After URL feeds the AEM Code Sync PSI check. `<branch>` is the branch name lowercased with `/` and other non-alphanumerics replaced by `-`, for example `docs/environments-model` becomes `docs-environments-model`. Use the `.aem.page` branch preview too when preview content is needed.
 6. Merge when approved and green. The PR merging to `main` is the release for code ([docs/runbooks/releasing.md](docs/runbooks/releasing.md)).
 
 Commit messages: imperative summary line (`Fix carousel focus trap`), body explaining why when it isn't obvious.
@@ -35,6 +37,8 @@ Branch protection on `main` requires the **Lint and Test** check (`.github/workf
 
 `.github/CODEOWNERS` requests the owner's review automatically. GitHub does not currently enforce a review count or code-owner approval on `main`; the table above is the rule regardless.
 
+Planned: two layered rulesets on `main`. One will require CI for everyone with no bypass. The other will require approval and code-owner review for everyone except the repository owner, whose bypass is audited.
+
 Reviewers check correctness against the conventions, tests for new behaviour, and that docs changed with the code. A PR that changes behaviour described in `docs/` updates the doc in the same PR.
 
 ## The AK-PATCHES rule
@@ -44,4 +48,5 @@ Reviewers check correctness against the conventions, tests for new behaviour, an
 ## Docs
 
 - Docs live in `docs/`. Verify every claim against the code; name files and symbols that exist.
+- Before final review, check the [definition of done](docs/contributing/definition-of-done.md).
 - Don't link to anything outside this repository that a contributor can't open.

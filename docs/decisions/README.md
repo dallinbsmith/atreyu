@@ -22,6 +22,7 @@ Short records of decisions that are made. Each has a status: **Accepted**, **On 
 | [0016](0016-block-names-are-a-contract.md) | Block names and tokens are a content contract | Accepted |
 | [0017](0017-translation-workflow.md) | Translation workflow | Accepted |
 | [0018](0018-single-writer-during-dual-run.md) | One writable source per page and locale during migration | Accepted, not enforced |
+| [0019](0019-environments.md) | Environment model: one EDS site, three tiers | Accepted, partly implemented |
 
 ## Open questions
 
