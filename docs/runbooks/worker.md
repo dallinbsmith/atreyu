@@ -22,7 +22,7 @@ For `workers/website/` (Worker name `ak-website`). How it routes: [architecture/
    # ORIGIN_AUTHENTICATION=<token, only if the EDS origin is protected>
    ```
 
-   `AEM_ORG`, `AEM_SITE` and `PUSH_INVALIDATION` come from `wrangler.toml`.
+   `DEPLOY_TIER` (`dev` locally), `AEM_ORG`, `AEM_SITE`, `DA_ORG`, `DA_SITE` and `PUSH_INVALIDATION` come from `wrangler.toml`.
 
 3. Run it:
 
@@ -35,7 +35,9 @@ For `workers/website/` (Worker name `ak-website`). How it routes: [architecture/
 
    | Request | Expect |
    |---|---|
-   | `/blog`, `/glossary/...`, `/integrations/...` | Served from EDS (`main--atreyu--dallinbsmith.aem.live`); HTML has a `Content-Security-Policy` header with a nonce |
+   | `/blog`, `/glossary/...`, `/integrations/...` | Served from EDS (`main--atreyu--dallinbsmith.aem.live`); HTML has a `Content-Security-Policy` header with a nonce and `<html data-deploy-tier="dev">` |
+   | Any path | `x-robots-tag: noindex, nofollow` (not on production) |
+   | `/robots.txt` | `User-agent: *` / `Disallow: /` (not on production) |
    | `/blog/` | 308 to `/blog` |
    | `/pricing`, `/features/c2c`, `/ja-jp/blog` | Proxied to `LEGACY_ORIGIN` (no cell) |
    | `/v/anything` from the address bar | 404 |
@@ -57,7 +59,7 @@ For `workers/website/` (Worker name `ak-website`). How it routes: [architecture/
 Prerequisites: Cloudflare access to the account that owns the Worker (`npx wrangler login`, or a `CLOUDFLARE_API_TOKEN` in the environment), and owner approval. There is no CI deploy; deploys are manual.
 
 1. Merge the change to `main` (CI green).
-2. Make sure the target environment has `LEGACY_ORIGIN` set in the Cloudflare dashboard (Worker → Settings → Variables). `keep_vars = true` in `wrangler.toml` keeps dashboard variables across deploys.
+2. Check the required variables. `DEPLOY_TIER`, `DA_ORG` and `DA_SITE` are required and are set in `wrangler.toml` for every environment (`[env.staging]` `stage`, `[env.production]` `prod`), alongside `AEM_ORG` and `AEM_SITE`. `LEGACY_ORIGIN` must be set in the Cloudflare dashboard (Worker → Settings → Variables); `keep_vars = true` keeps dashboard variables across deploys. A missing variable, or a `DEPLOY_TIER` other than `dev`, `stage` or `prod`, fails closed: every request returns 500 "Server misconfigured" until it is fixed. Don't override `DEPLOY_TIER` in the dashboard.
 3. Deploy from an up-to-date `main`:
 
    ```sh
@@ -67,11 +69,12 @@ Prerequisites: Cloudflare access to the account that owns the Worker (`npx wrang
    ```
 
    If the upload fails with `Invalid routing manifest`, `routing-manifest.js` failed validation at module load; the listed errors name the bad entries. The previous version keeps serving. `cd workers/website && npm test` reproduces it locally.
-4. Smoke-check the deployed URL with the table in step 4 above.
+4. Smoke-check the deployed URL with the table in step 4 above. On staging, `<html>` must say `data-deploy-tier="stage"` and every response must carry `x-robots-tag: noindex, nofollow`. On production, `data-deploy-tier="prod"`, no Worker `x-robots-tag` on pages, and `/robots.txt` comes from the existing site.
 
 ### Rules
 
 - `PUSH_INVALIDATION` stays `disabled` until that environment has a zone route and AEM's purge credentials are configured and verified. Enabling it earlier makes EDS send 2-day edge-cache headers that nothing purges, so edits stay stale for up to two days.
+- Don't route staging and production through the same Cloudflare zone until the edge cache key includes the forwarded host; EDS canonical and `og:url` depend on it ([worker.md → Edge cache](../architecture/worker.md#edge-cache)).
 - Never configure a CSP on the EDS origin as well (`headers.json`): with two policies, every script is blocked.
 - To bump `wrangler`, also bump `miniflare` to the exact version that wrangler release depends on; `node tools/check-miniflare-pin.mjs workers/website` (also in CI) checks it.
 

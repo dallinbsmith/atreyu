@@ -1,4 +1,7 @@
-import { generateNonce, addNonceToScripts } from '../utils/nonce.js';
+/* global HTMLRewriter */
+
+import { generateNonce, stampNonce } from '../utils/nonce.js';
+import { stampDeployTier } from '../utils/deploy-tier.js';
 import { stripLocale } from '../utils/locale.js';
 
 // Mutates the redirect response in place. It deliberately returns nothing so
@@ -127,7 +130,15 @@ export const buildCsp = (nonce) => {
   ].join('; ');
 };
 
-export const fetchFromAem = async ({ request, cache, savedSearch }) => {
+// The edge cache stores the origin response as AEM sent it. Everything
+// tier-specific (the <html> tier attribute here, non-prod x-robots-tag and
+// robots.txt in index.js) is applied after the fetch, so a cached object
+// never carries one Worker's tier. It does carry host-specific output: AEM
+// builds canonical, og:url and og:image from x-forwarded-host (see
+// docs/architecture/worker.md#edge-cache).
+export const fetchFromAem = async ({
+  request, env, cache, savedSearch,
+}) => {
   // Convert origin failures into controlled gateway responses instead of
   // letting an exception escape the ROUTES loop.
   const controller = new AbortController();
@@ -168,14 +179,19 @@ export const fetchFromAem = async ({ request, cache, savedSearch }) => {
     resp.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     resp.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
-    return addNonceToScripts(resp, nonce);
+    // One pass: nonce markers and the Worker's tier on <html>.
+    return stampDeployTier(stampNonce(new HTMLRewriter(), nonce), env.DEPLOY_TIER).transform(resp);
   }
 
   return resp;
 };
 
-export const fetchSchedule = async ({ request, cache, savedSearch }) => {
-  const resp = await fetchFromAem({ request, cache, savedSearch });
+export const fetchSchedule = async ({
+  request, env, cache, savedSearch,
+}) => {
+  const resp = await fetchFromAem({
+    request, env, cache, savedSearch,
+  });
 
   if (resp.status === 301 || resp.status === 304) return resp;
 

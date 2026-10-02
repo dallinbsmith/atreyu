@@ -22,8 +22,9 @@
  *    param with `.includes()`/`.startsWith()`/`.endsWith()` (the exact shape
  *    of this file's own designated classifier's internal logic, and the
  *    natural way docs/conventions/javascript.md's preferred `.some()`/`.every()` house style
- *    would reproduce it) — outside the one designated classifier,
- *    scripts/utils/env.js. It does NOT flag any of these forms when the
+ *    would reproduce it) — outside the designated classifiers,
+ *    scripts/utils/env.js (browser) and workers/website/utils/deploy-tier.js
+ *    (Worker). It does NOT flag any of these forms when the
  *    other operand is provably the imported binding for that classifier's
  *    default export (e.g. `import ENV from '.../utils/env.js'; ENV ===
  *    'prod'`), which is the normal, correct way callers consume it. That
@@ -97,7 +98,8 @@ const MIN_LOCALE_MATCHES = 3;
 
 // Posix-relative to the `site/` package root (where eslint.config.js lives).
 const LOCALE_SOURCE_FILES = ['workers/website/utils/locale.js', 'scripts/locales.js'];
-const ENV_SOURCE_FILES = ['scripts/utils/env.js'];
+// Browser runtime classifier, and the Worker's DEPLOY_TIER source.
+const ENV_SOURCE_FILES = ['scripts/utils/env.js', 'workers/website/utils/deploy-tier.js'];
 // This rule's own allowlist above is the one sanctioned exception to itself —
 // see the comment on ALLOWED_LOCALE_CODES for why it can't just import one of
 // the two real sources instead.

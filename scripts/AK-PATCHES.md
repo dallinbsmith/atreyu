@@ -102,7 +102,7 @@ Comment-only cleanup, no row: comments in `ak.js` and `lazy.js` were shortened t
 
 | # | Function | Change | Class | Why | PR |
 | --- | --- | --- | --- | --- | --- |
-| E1 | `classifyEnv` | Uses loopback as `dev`, the shared Adobe EDS host pattern as `stage`, and a fail-closed `prod` fallback for every other host | Convention | Custom-host staging needs a future Worker-owned signal authors cannot create; until then unknown hosts must not open non-prod tools. | No |
+| E1 | `classifyEnv` | Uses loopback as `dev`, the shared Adobe EDS host pattern as `stage`; every other host reads the Worker-set `<html data-deploy-tier>` (`dev`/`stage`/`prod`), with a fail-closed `prod` fallback when it is missing or invalid. Never reads a `<meta>`. Optional second argument (root element) for tests | Convention | Custom-host staging needs a Worker-owned signal authors cannot create (`DEPLOY_TIER` in `workers/website/`); authors can create `<meta>` through page or bulk metadata. Unknown hosts must not open non-prod tools. | No |
 
 ## scripts/scripts.js
 

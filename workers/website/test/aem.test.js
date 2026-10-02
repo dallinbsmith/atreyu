@@ -18,6 +18,27 @@ const AEM_HEADERS = {
   etag: '"abc123"',
 };
 
+// HTMLRewriter only exists in workerd; this records registrations and passes
+// the response through. Real rewriting is covered in deploy-tier.test.js.
+class FakeRewriter {
+  static instances = [];
+
+  handlers = [];
+
+  constructor() { FakeRewriter.instances.push(this); }
+
+  on = (selector, handler) => { this.handlers.push([selector, handler]); return this; };
+
+  transform = (r) => r;
+}
+
+const useFakeRewriter = (t) => {
+  FakeRewriter.instances = [];
+  globalThis.HTMLRewriter = FakeRewriter;
+  t.after(() => { delete globalThis.HTMLRewriter; });
+  return FakeRewriter.instances;
+};
+
 const capture = (t, status = 200) => {
   const calls = [];
   t.mock.method(globalThis, 'fetch', async (input, init) => {
@@ -188,18 +209,17 @@ test('CSP adds no vendor wildcards and none of the out-of-scope destination host
 });
 
 test('HTML responses get buildCsp with a fresh per-request nonce; non-HTML get no CSP', async (t) => {
-  // HTMLRewriter only exists in workerd; a pass-through stub is enough here.
-  globalThis.HTMLRewriter = class {
-    on = () => this;
-
-    transform = (r) => r;
-  };
-  t.after(() => { delete globalThis.HTMLRewriter; });
+  useFakeRewriter(t);
   t.mock.method(globalThis, 'fetch', async () => new Response('<html></html>', {
     status: 200, headers: { 'content-type': 'text/html; charset=utf-8' },
   }));
-  const a = (await fetchFromAem({ request: req(), cache: true, savedSearch: '' })).headers.get('content-security-policy');
-  const b = (await fetchFromAem({ request: req(), cache: true, savedSearch: '' })).headers.get('content-security-policy');
+  const env = { DEPLOY_TIER: 'prod' };
+  const a = (await fetchFromAem({
+    request: req(), env, cache: true, savedSearch: '',
+  })).headers.get('content-security-policy');
+  const b = (await fetchFromAem({
+    request: req(), env, cache: true, savedSearch: '',
+  })).headers.get('content-security-policy');
   const nonceOf = (csp) => csp.match(/'nonce-([^']+)'/)[1];
   assert.equal(a, buildCsp(nonceOf(a)));
   assert.notEqual(nonceOf(a), nonceOf(b));
@@ -208,4 +228,34 @@ test('HTML responses get buildCsp with a fresh per-request nonce; non-HTML get n
   capture(t, 200);
   const plain = await fetchFromAem({ request: req(), cache: true, savedSearch: '' });
   assert.equal(plain.headers.has('content-security-policy'), false);
+});
+
+test('HTML responses use one rewriter for the nonce markers and the <html> tier attribute', async (t) => {
+  const rewriters = useFakeRewriter(t);
+  t.mock.method(globalThis, 'fetch', async () => new Response('<html></html>', {
+    status: 200, headers: { 'content-type': 'text/html' },
+  }));
+  await fetchFromAem({
+    request: req(), env: { DEPLOY_TIER: 'stage' }, cache: true, savedSearch: '',
+  });
+  assert.equal(rewriters.length, 1);
+  const selectors = rewriters[0].handlers.map(([s]) => s);
+  assert.deepEqual(selectors, ['script[nonce="aem"]', 'link[nonce="aem"]', 'html']);
+  const ops = [];
+  const [, html] = rewriters[0].handlers[2];
+  html.element({
+    removeAttribute: (k) => ops.push(['remove', k]),
+    setAttribute: (k, v) => ops.push(['set', k, v]),
+  });
+  // Remove first, so an upstream value can never survive next to the Worker's.
+  assert.deepEqual(ops, [['remove', 'data-deploy-tier'], ['set', 'data-deploy-tier', 'stage']]);
+});
+
+test('non-HTML responses are not rewritten', async (t) => {
+  const rewriters = useFakeRewriter(t);
+  capture(t, 200);
+  await fetchFromAem({
+    request: req(), env: { DEPLOY_TIER: 'stage' }, cache: true, savedSearch: '',
+  });
+  assert.equal(rewriters.length, 0);
 });

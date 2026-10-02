@@ -13,15 +13,17 @@ Legend: **Built** = merged to `main` and tested. **In progress** = partly built.
 | Personalization and experimentation | Built; zero production reach until consent and the Worker are in place |
 | Worker and routing | Built and tested; deployed to `workers.dev` only, not in front of frame.io |
 | Content migration | A handful of real pages; most landing pages are placeholders |
-| Environments and repository | Environment model decided; Worker tier and staging noindex planned; repository move planned |
+| Environments and repository | Environment model decided; Worker tier and non-prod noindex built, not deployed; repository move planned |
 
 Nothing on frame.io is served by EDS yet.
 
 ## Environments and repository
 
+**Built**
+- Worker `DEPLOY_TIER` per environment, the `<html data-deploy-tier>` attribute read by `scripts/utils/env.js`, and non-prod noindex and `Disallow: /` robots ([worker.md](architecture/worker.md#deploy-tier)). Not yet deployed.
+
 **Planned / decided**
 - Environment model decided: one EDS site with dev, stage and prod ([ADR 0019](decisions/0019-environments.md), [architecture](architecture/environments.md)).
-- Worker-set tier attributes and staging noindex are planned.
 - Moving the repository to the company GitHub org is planned.
 
 ## Foundation

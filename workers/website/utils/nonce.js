@@ -39,13 +39,18 @@ export const generateNonce = () => {
 };
 
 /**
+ * Register the marker-replacing handlers on an existing HTMLRewriter, so
+ * callers can combine them with other element handlers in one pass.
+ */
+export const stampNonce = (rewriter, nonce) => {
+  const stamp = { element: (el) => { el.setAttribute('nonce', nonce); } };
+  return MARKED.reduce((r, selector) => r.on(selector, stamp), rewriter);
+};
+
+/**
  * Replace the `nonce="aem"` marker with the per-request nonce on marked
  * <script>/<link> elements only. Returns a new transformed Response
  * (streaming — no buffering).
  */
-export const addNonceToScripts = (response, nonce) => {
-  const stamp = { element: (el) => { el.setAttribute('nonce', nonce); } };
-  return MARKED
-    .reduce((rewriter, selector) => rewriter.on(selector, stamp), new HTMLRewriter())
-    .transform(response);
-};
+export const addNonceToScripts = (response, nonce) => stampNonce(new HTMLRewriter(), nonce)
+  .transform(response);

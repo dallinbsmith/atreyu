@@ -11,7 +11,9 @@ import worker, {
 const COHORT = ['/blog/', '/glossary/', '/integrations/'];
 const ASSETS = ['/blocks/', '/icons/', '/img/', '/plugins/', '/scripts/', '/styles/', '/system/', '/templates/'];
 
-const ENV = { AEM_ORG: 'dallinbsmith', AEM_SITE: 'atreyu', LEGACY_ORIGIN: 'legacy.example' };
+const ENV = {
+  AEM_ORG: 'dallinbsmith', AEM_SITE: 'atreyu', DA_ORG: 'dallinbsmith', DA_SITE: 'atreyu', LEGACY_ORIGIN: 'legacy.example', DEPLOY_TIER: 'prod',
+};
 const EDS_HOST = 'main--atreyu--dallinbsmith.aem.live';
 
 test('EDS_PATHS and EDS_ASSET_PATHS match the reviewed lists', () => {
@@ -305,4 +307,18 @@ test('EDS requests carry x-forwarded-host from the incoming host', async (t) => 
   assert.equal(new URL(req.url).hostname, 'main--atreyu--dallinbsmith.aem.live');
   assert.equal(req.headers.get('x-forwarded-host'), 'frame.io');
   assert.equal(req.headers.get('x-byo-cdn-type'), 'cloudflare');
+});
+
+// DA_ORG/DA_SITE name the DA content path; AEM_ORG/AEM_SITE name the EDS code
+// origin. They can differ, so each must only drive its own URL.
+test('dasc uses DA_ORG/DA_SITE; the EDS origin uses AEM_ORG/AEM_SITE', async (t) => {
+  const env = {
+    ...ENV, AEM_ORG: 'code-org', AEM_SITE: 'code-site', DA_ORG: 'da-org', DA_SITE: 'da-site',
+  };
+  const { target: dasc } = await route(t, '/features/dasc/a.json', {}, env);
+  assert.equal(dasc.hostname, 'da-sc.adobeaem.workers.dev');
+  assert.equal(dasc.pathname, '/live/da-org/da-site/features/dasc/a.json');
+  t.mock.restoreAll();
+  const { target: page } = await route(t, '/blog/x', {}, env);
+  assert.equal(page.hostname, 'main--code-site--code-org.aem.live');
 });

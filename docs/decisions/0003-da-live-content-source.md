@@ -13,4 +13,4 @@ Content is authored in DA. `fstab.yaml` mounts `https://content.da.live/dallinbs
 ## Consequences
 
 - Pages, fragments, sheets (placeholders, redirects, metadata) and the block Library are DA documents, edited independently of code ([authoring/da-content-structure.md](../authoring/da-content-structure.md)).
-- The org `dallinbsmith/atreyu` is a sandbox. Moving to a Frame.io-owned DA org changes `fstab.yaml`, the Worker's `AEM_ORG`/`AEM_SITE`, and every `dallinbsmith` host in this repo.
+- The org `dallinbsmith/atreyu` is a sandbox. Moving to a Frame.io-owned DA org changes `fstab.yaml`, the Worker's `DA_ORG`/`DA_SITE` (and `AEM_ORG`/`AEM_SITE` if the code repository moves too), and every `dallinbsmith` host in this repo.
