@@ -43,4 +43,4 @@ WTR_PORT=2002 npm test
 
 ## Performance check
 
-AEM Code Sync runs its built-in PSI check on pull requests when the PR description includes a Test URL for the branch preview (`https://{branch}--atreyu--dallinbsmith.aem.page/{path}`). Add the URL when a PR changes visible pages so Code Sync has a page to measure. Dependabot PRs have no Test URL; CI is the gate. The repository does not run a separate Lighthouse workflow or keep local configuration for one.
+AEM Code Sync runs its built-in PSI check on pull requests when the PR description includes a Test URL for the branch preview (`https://{branch}--atreyu--dallinbsmith.aem.page/{path}`). Add the URL when a PR changes visible pages so Code Sync has a page to measure. Dependabot PRs have no Test URL; CI is the gate. The repository does not run a separate performance workflow or keep local configuration for one.
