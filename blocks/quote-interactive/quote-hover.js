@@ -5,13 +5,7 @@ import { loadGsap } from '../../scripts/utils/motion/gsap-loader.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 
 const EASE = 'power2.out';
-
-// Module scope, not per-el: the hover card lives on document.body, OUTSIDE the
-// block's own subtree, so it (and its listeners/rAF) survive a DA Quick Edit
-// DOM swap and would duplicate on re-decoration. Nothing re-runs against the
-// OLD el to clean it up, so the teardown handle can't hang off el — it lives
-// here and is aborted before each new run. See docs/conventions/javascript.md's Block lifecycle.
-let teardownHover = null;
+const hoverState = new WeakMap();
 
 const buildCard = () => {
   const media = createElement('div', { className: 'qi-hover-media' });
@@ -52,34 +46,39 @@ const trackPointer = (el, card, listen) => {
 // can assert the card is in the DOM as soon as initHover is invoked. Async
 // half wires GSAP; null core (shouldAnimate flipped, or load failed) leaves
 // the card mounted-but-invisible via CSS defaults.
-export const initHover = async (blockEl, tabs, slides, mql) => {
-  // Tear down a prior run's out-of-subtree resources before starting a new
-  // one (or before bailing) — the only reliable point to do so, since the old
-  // el is discarded on re-decoration and never re-run. Harmless if the old
-  // card was already removed by a full-body swap: remove() no-ops on a
-  // detached node, abort() no-ops on an already-settled controller.
-  teardownHover?.();
-  teardownHover = null;
-
+export const initHover = async (blockEl, tabs, slides, mql, { signal } = {}) => {
+  if (signal?.aborted) return;
+  hoverState.get(blockEl)?.();
   if (!mql.matches || !shouldAnimate()) return;
 
+  const tabsEl = blockEl.querySelector('.qi-tabs');
+  if (!tabsEl) return;
   const { card, inner, media, logo } = buildCard();
   document.body.append(card);
   const group = listenGroup();
-  const tabsEl = blockEl.querySelector('.qi-tabs');
   const cancelRaf = trackPointer(tabsEl, card, group.listen);
-  teardownHover = () => {
+  let killTweens = () => {};
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    signal?.removeEventListener('abort', cleanup);
     group.end();
     cancelRaf();
+    killTweens();
     card.remove();
+    if (hoverState.get(blockEl) === cleanup) hoverState.delete(blockEl);
   };
+  hoverState.set(blockEl, cleanup);
+  signal?.addEventListener('abort', cleanup, { once: true });
 
   const core = await loadGsap().catch((ex) => {
     getConfig().log(ex);
     return null;
   });
-  if (!core) return;
+  if (!core || signal?.aborted || hoverState.get(blockEl) !== cleanup) return;
   const { gsap } = core;
+  killTweens = () => gsap.killTweensOf([card, inner]);
   const to = (el, vars) => gsap.to(el, { ease: EASE, ...vars });
 
   let active = -1;

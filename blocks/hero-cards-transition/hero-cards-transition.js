@@ -85,8 +85,8 @@ const buildWall = (cards) => {
   return wall;
 };
 
-export default (el) => {
-  if (!guardDecorate(el, 'hct')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'hct')) return;
   el.classList.add('hero-cards-transition');
   const { bg, text: textRows, cards } = collect(el);
   el.replaceChildren(createElement(
@@ -99,7 +99,7 @@ export default (el) => {
   decorateRichText(el);
   if (!shouldAnimate()) return;
   el.classList.add('hc-scrub');
-  // Cleanup discarded: no client routing, so `el` lives for the page lifetime.
-  trackScrollProgress(el);
-  onReveal(el, () => el.classList.add('hc-in'), { threshold: 0 });
+  // The block signal disconnects the shared motion observers on re-decoration.
+  trackScrollProgress(el, undefined, { signal });
+  onReveal(el, () => el.classList.add('hc-in'), { threshold: 0, signal });
 };

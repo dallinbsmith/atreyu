@@ -12,6 +12,7 @@ class FakeIntersectionObserver {
   constructor(callback, options) {
     this.callback = callback;
     this.options = options;
+    this.disconnected = false;
     FakeIntersectionObserver.instances.push(this);
   }
 
@@ -19,7 +20,7 @@ class FakeIntersectionObserver {
 
   unobserve() {}
 
-  disconnect() {}
+  disconnect() { this.disconnected = true; }
 }
 FakeIntersectionObserver.instances = [];
 
@@ -140,6 +141,16 @@ describe('standout-mosaic', () => {
     decorate(el);
     expect(FakeIntersectionObserver.instances).to.have.length(1);
     expect(el.querySelectorAll('.standout-mosaic-card')).to.have.length(8);
+  });
+
+  it('aborting the block signal disconnects the scroll-progress observer', () => {
+    sinon.stub(navigator, 'hardwareConcurrency').value(8);
+    const controller = new AbortController();
+    const el = standard();
+    decorate(el, { signal: controller.signal });
+    expect(FakeIntersectionObserver.instances).to.have.length(1);
+    controller.abort();
+    expect(FakeIntersectionObserver.instances[0].disconnected).to.be.true;
   });
 
   it('static / reduced-motion branch: no observer created, mosaic fully rendered', async () => {

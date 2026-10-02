@@ -60,6 +60,7 @@ describe('carousel-with-touts', () => {
   let fireAria;
   let forceDesktop = null;
   const addedAriaListeners = [];
+  const removedAriaListeners = [];
 
   before(async () => {
     const realMatch = window.matchMedia.bind(window);
@@ -67,7 +68,7 @@ describe('carousel-with-touts', () => {
       media: '(width >= 768px)',
       get matches() { return forceDesktop ?? realMatch('(width >= 768px)').matches; },
       addEventListener: (_type, fn) => { fireAria = fn; addedAriaListeners.push(fn); },
-      removeEventListener: () => {},
+      removeEventListener: (_type, fn) => { removedAriaListeners.push(fn); },
     };
     const stub = sinon.stub(window, 'matchMedia').returns(fake);
     const seed = document.createElement('div');
@@ -76,6 +77,7 @@ describe('carousel-with-touts', () => {
     document.body.append(seed);
     await decorate(seed); // primes the module-level ariaMq to `fake`
     seed.remove();
+    fireAria();
     stub.restore();
   });
 
@@ -86,6 +88,7 @@ describe('carousel-with-touts', () => {
     // Default to a desktop viewport so matchMedia-driven ARIA is the carousel
     // mode unless a test opts into mobile.
     await setViewport({ width: 1024, height: 768 });
+    removedAriaListeners.length = 0;
   });
 
   afterEach(() => {
@@ -96,6 +99,7 @@ describe('carousel-with-touts', () => {
     // module-singleton live region to body once and never re-appends, so wiping
     // body would detach it and break every later announce assertion.
     document.body.querySelectorAll('.carousel-with-touts').forEach((n) => n.remove());
+    fireAria?.();
   });
 
   // ---- structure -----------------------------------------------------------
@@ -125,6 +129,22 @@ describe('carousel-with-touts', () => {
     const first = el.querySelector('.cwt-slide');
     expect(first.querySelector('.cwt-media img[src="x.jpg"]')).to.exist;
     expect(first.querySelector('.cwt-tout-title').textContent).to.equal('X');
+  });
+
+  it('keeps the shared breakpoint listener until the last signalled instance aborts', async () => {
+    const a = new AbortController();
+    const b = new AbortController();
+    const elA = block([slideRow(), slideRow(), slideRow()]);
+    const elB = block([slideRow(), slideRow(), slideRow()]);
+
+    await decorate(elA, { signal: a.signal });
+    await decorate(elB, { signal: b.signal });
+
+    a.abort();
+    expect(removedAriaListeners).to.have.length(0);
+
+    b.abort();
+    expect(removedAriaListeners).to.deep.equal([fireAria]);
   });
 
   it('builds one labelled pagination button per slide with prev/next nav', async () => {

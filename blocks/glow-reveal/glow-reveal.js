@@ -4,10 +4,10 @@ import { onReveal } from '../../scripts/utils/motion/motion.js';
 import { createElement, getCells } from '../../scripts/utils/dom.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
-export default (el) => {
+export default (el, { signal } = {}) => {
   // Guard re-decoration: DA live preview can call decorate again on the same
   // element, and duplicate media layers would stack visibly.
-  if (!guardDecorate(el, 'glowRevealDecorated')) return;
+  if (signal?.aborted || !guardDecorate(el, 'glowRevealDecorated')) return;
 
   // Row meaning is classified by CELL, not by whole row: a row can hold more
   // than one column (children of rows are cells), so a row that pairs the
@@ -29,5 +29,5 @@ export default (el) => {
   const extra = cells.filter((c) => c !== picCell);
   el.replaceChildren(media, ...extra);
 
-  onReveal(el, () => el.classList.add('is-in'));
+  onReveal(el, () => el.classList.add('is-in'), { signal });
 };

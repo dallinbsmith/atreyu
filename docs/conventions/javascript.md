@@ -85,9 +85,9 @@ export default (el, { signal } = {}) => {
 | `signal.aborted` is already `true` when the block runs | Its element was swapped out while the module loaded | Return before starting timers, rAF or observers. An `abort` listener never fires on an already-aborted signal. |
 | Cleanup never runs after the element is removed | `ak.js` aborts at the *next* `loadArea()` sweep, which may never come | Accept it; the signal covers the re-decoration case, which is the one that leaks. |
 | Your block replaces `el` (e.g. `youtube.js` `a.replaceWith(container)`) | The signal belongs to `el`; the next sweep aborts it while the new content is live | Tie the signal only to content that stays in the tree. |
-| Header or footer code | Fragment-rooted blocks are skipped by the sweep (`AK-PATCHES.md` #25) | Keep the existing module-scope `AbortController` abort-before-recreate pattern there. |
+| Header or footer code | Fragment-rooted blocks are skipped by the sweep (`AK-PATCHES.md` #25) | These are the only remaining module-scope `AbortController` abort-before-recreate cases. |
 
-`trackScrollProgress()` in `scripts/utils/motion/scroll.js` returns a cleanup function. Wire it with `signal?.addEventListener('abort', cleanup)`; don't discard it.
+`trackScrollProgress()` in `scripts/utils/motion/scroll.js` returns a cleanup function and accepts `{ signal }` as its third argument. `onReveal()` accepts `{ signal }` in its options object. Prefer passing the block signal into those utilities; they disconnect their observers and shared listeners on abort while preserving the explicit cleanup return for callers that need it.
 
 ## Shared utilities (`scripts/utils/`)
 
@@ -118,10 +118,10 @@ export default (el, { signal } = {}) => {
 | `media/partner-logo.js` | `loadPartnerLogo`, `buildAccessibleLogo` | Name-keyed lookup in `img/partners/` |
 | `media/picture.js` | `createPicture({ src, alt, eager, breakpoints })` | |
 | `media/video.js` | `decorateVideoMedia`, `addVideoPauseControl` | `.mp4` link → looping muted video, gated by `shouldAnimate()` |
-| `modal/modal.js` | `wireModalClose`, `openModal`, `closeModal`, `clampIndex` | |
-| `modal/video-modal.js` | `WISTIA_RE`, `openVideoModal`, `wireVideoModalLinks` | |
-| `motion/motion.js` | `shouldAnimate`, `getTransitionDuration`, `addPauseToggle`, `onReveal` | Gate all motion here |
-| `motion/scroll.js` | `trackScrollProgress(el, cb)` | Shared scroll listener; returns a cleanup function |
+| `modal/modal.js` | `wireModalClose`, `openModal`, `closeModal`, `clampIndex` | `wireModalClose(modal, backdrop, close, { signal })`; `openModal(modal, closeSelector, { signal, onAbort })` |
+| `modal/video-modal.js` | `WISTIA_RE`, `openVideoModal`, `wireVideoModalLinks` | `openVideoModal(id, title, trigger, { signal })`; `wireVideoModalLinks(el, { signal })` |
+| `motion/motion.js` | `shouldAnimate`, `getTransitionDuration`, `addPauseToggle`, `onReveal` | Gate all motion here; `onReveal(el, cb, { signal })` disconnects on abort |
+| `motion/scroll.js` | `trackScrollProgress(el, cb, { signal })` | Shared scroll listener; returns a cleanup function |
 | `motion/gsap-loader.js` | `loadGsap`, `loadGsapPlugin` | Resolves to the library or `null`; see [Async loaders](#async-loaders) |
 | `placeholders.js` | `getPlaceholders`, `getPlaceholder`, `fillPlaceholder` | See [blocks.md](blocks.md#content-and-copy) |
 | `platform-host.js` | `PLATFORM_HOST_MARKERS`, `isPlatformHost` | |

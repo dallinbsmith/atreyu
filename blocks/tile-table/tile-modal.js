@@ -7,7 +7,7 @@ import {
 
 const iconButton = (cls, label) => createElement('button', { className: cls, 'aria-label': label });
 
-export const initTileModal = (items, labels) => {
+export const initTileModal = (items, labels, signal) => {
   let modal;
   let nameEl;
   let detailEl;
@@ -56,21 +56,29 @@ export const initTileModal = (items, labels) => {
     const backdrop = createElement('div', { className: 'tt-modal-backdrop' });
     modal = createElement('div', { className: 'tt-modal' }, backdrop, card);
 
-    prevBtn.addEventListener('click', () => setSlide(current - 1));
-    nextBtn.addEventListener('click', () => setSlide(current + 1));
-    closeBtn.addEventListener('click', close);
-    wireModalClose(modal, backdrop, close);
+    prevBtn.addEventListener('click', () => setSlide(current - 1), { signal });
+    nextBtn.addEventListener('click', () => setSlide(current + 1), { signal });
+    closeBtn.addEventListener('click', close, { signal });
+    wireModalClose(modal, backdrop, close, { signal });
     modal.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' && current > 0) setSlide(current - 1);
       else if (e.key === 'ArrowRight' && current < items.length - 1) setSlide(current + 1);
-    });
+    }, { signal });
   };
 
   return (index, trigger) => {
+    if (signal?.aborted) return;
     if (!modal) build();
     triggerEl = trigger;
     setSlide(index);
-    releaseFocus = openModal(modal, '.tt-modal-close');
+    releaseFocus = openModal(modal, '.tt-modal-close', {
+      signal,
+      onAbort: () => {
+        modal = null;
+        releaseFocus = null;
+        triggerEl = null;
+      },
+    });
     announce(fillPlaceholder(labels.opened, {
       name: items[index].name, current: index + 1, total: items.length,
     }));

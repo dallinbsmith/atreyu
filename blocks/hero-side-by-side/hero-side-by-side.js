@@ -8,10 +8,10 @@ import {
 import { decorateVideoMedia } from '../../scripts/utils/media/video.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
-export default (el) => {
+export default (el, { signal } = {}) => {
   // Idempotency guard — a second decorate() call would otherwise re-find the
   // same cells and re-wire a second click listener onto the video link.
-  if (!guardDecorate(el, 'heroSideBySideDecorated')) return;
+  if (signal?.aborted || !guardDecorate(el, 'heroSideBySideDecorated')) return;
 
   // Cell, not row: a picture cell with sibling text must not sweep the whole
   // row into the media slot.
@@ -21,7 +21,7 @@ export default (el) => {
 
   const content = createElement('div', { className: 'hero-side-by-side-content' }, ...extra);
   classifyCtaParagraphs(content, 'hero-side-by-side-cta');
-  wireVideoModalLinks(content);
+  wireVideoModalLinks(content, { signal });
   const hasText = content.querySelector(`${HEADING_SELECTOR}, p`);
   const media = picCell && createElement(
     'div',

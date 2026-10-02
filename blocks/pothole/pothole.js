@@ -4,9 +4,6 @@
 // overflow, right-aligned, glow-{purple|blue|pink|green}. An optional
 // trailing single-cell `scale: n` row (n a plain decimal number) sets
 // --media-scale when finite and > 0.
-//
-// trackScrollProgress's cleanup handle is discarded: `el` lives for the
-// page lifetime (EDS is full-page-load, no client routing).
 import { decorateRichText } from '../../scripts/utils/richtext.js';
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 import { createElement, getCells } from '../../scripts/utils/dom.js';
@@ -33,8 +30,8 @@ const applyMeta = (el) => {
   if (Number.isFinite(n) && n > 0) el.style.setProperty('--media-scale', String(n));
 };
 
-export default (el) => {
-  if (!guardDecorate(el, 'pothole')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'pothole')) return;
   applyMeta(el);
 
   // Background is whichever cell holds a picture (cell-level, not
@@ -60,5 +57,5 @@ export default (el) => {
     if (!a.classList.contains('btn')) a.classList.add('btn', i === 0 ? 'btn-primary' : 'btn-secondary');
   }
   decorateRichText(el);
-  trackScrollProgress(el);
+  trackScrollProgress(el, undefined, { signal });
 };

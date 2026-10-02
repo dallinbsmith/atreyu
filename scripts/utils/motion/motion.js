@@ -41,12 +41,16 @@ export const addPauseToggle = (container, animatedEl, {
 };
 
 export const onReveal = (el, callback, options = {}) => {
+  const { signal, ...ioOptions } = options;
+  if (signal?.aborted) return () => {};
   if (!shouldAnimate()) {
     callback({ immediate: true });
-    return;
+    return () => {};
   }
-  const opts = { threshold: 0, rootMargin: '-25px 0px', ...options };
+  let cleaned = false;
+  const opts = { threshold: 0, rootMargin: '-25px 0px', ...ioOptions };
   const observer = new IntersectionObserver((entries) => {
+    if (cleaned || signal?.aborted) return;
     for (const entry of entries) {
       if (entry.isIntersecting) {
         observer.unobserve(entry.target);
@@ -55,4 +59,12 @@ export const onReveal = (el, callback, options = {}) => {
     }
   }, opts);
   observer.observe(el);
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    signal?.removeEventListener('abort', cleanup);
+    observer.disconnect();
+  };
+  signal?.addEventListener('abort', cleanup, { once: true });
+  return cleanup;
 };

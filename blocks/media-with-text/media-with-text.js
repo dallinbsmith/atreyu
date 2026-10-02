@@ -9,8 +9,8 @@ import {
 } from '../../scripts/utils/dom.js';
 import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 
-export default (el) => {
-  if (!guardDecorate(el, 'mediaWithText')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'mediaWithText')) return;
 
   parseGlassborderDecoration(el);
 
@@ -30,7 +30,7 @@ export default (el) => {
 
   const media = createElement('div', { className: 'media-with-text-media' }, ...(mediaCell?.children ?? []));
   decorateVideoMedia(media);
-  wireVideoModalLinks(media);
+  wireVideoModalLinks(media, { signal });
 
   el.replaceChildren(media, text);
 };

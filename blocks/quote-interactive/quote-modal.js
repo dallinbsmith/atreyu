@@ -72,11 +72,11 @@ const navButton = (dir) => {
   return btn;
 };
 
-const buildModal = (slides) => {
+const buildModal = (slides, signal) => {
   const closeBtn = createElement('button', {
     className: 'qi-modal-close', 'aria-label': 'Close',
   }, createElement('span', { className: 'qi-modal-close-icon', 'aria-hidden': 'true' }));
-  closeBtn.addEventListener('click', close);
+  closeBtn.addEventListener('click', close, { signal });
 
   const track = createElement('div', { className: 'qi-modal-track' }, ...slides.map(buildModalSlide));
   const carousel = createElement('div', { className: 'qi-modal-carousel' }, track);
@@ -88,17 +88,18 @@ const buildModal = (slides) => {
     className: 'qi-modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Customer quotes',
   }, backdrop, content);
 
-  wireModalClose(el, backdrop, close);
+  wireModalClose(el, backdrop, close, { signal });
   el.addEventListener('keydown', (e) => {
     const delta = { ArrowLeft: -1, ArrowRight: 1 }[e.key];
     if (delta == null) return;
     e.preventDefault();
     goTo(state.current + delta);
-  });
+  }, { signal });
   return el;
 };
 
-export const initModal = (tabs, slides) => async (index) => {
+export const initModal = (tabs, slides, signal) => async (index) => {
+  if (signal?.aborted) return;
   // Same instance's modal already open — just navigate.
   if (state?.slides === slides) {
     goTo(index); return;
@@ -107,10 +108,15 @@ export const initModal = (tabs, slides) => async (index) => {
   // so its state can never be read/overwritten below.
   if (state) teardown();
 
-  const modal = buildModal(slides);
+  const modal = buildModal(slides, signal);
   state = { modal, current: index, releaseTrap: null, triggerTab: tabs[index], slides };
   modal.querySelector('.qi-modal-track').style.setProperty('--carousel-index', index);
-  state.releaseTrap = openModal(modal, '.qi-modal-close');
+  state.releaseTrap = openModal(modal, '.qi-modal-close', {
+    signal,
+    onAbort: () => {
+      if (state?.modal === modal) state = null;
+    },
+  });
   updateNav();
   announce(`Quote carousel opened, slide ${index + 1} of ${slides.length}`);
   // Everything above is synchronous — the modal is fully mounted and

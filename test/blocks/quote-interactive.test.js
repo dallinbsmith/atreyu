@@ -1,6 +1,13 @@
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import decorate from '../../blocks/quote-interactive/quote-interactive.js';
+import { loadArea, setConfig } from '../../scripts/ak.js';
+
+const GSAP_URL = 'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js';
+const SCROLL_TRIGGER_URL = 'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js';
+
+const scriptFor = (src) => [...document.scripts].find((script) => script.getAttribute('src') === src);
+const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
 
 // Polls until `check()` is truthy — used below to await the async close()
 // path (close() awaits loadGsap() before teardown, so the DOM cleanup lands
@@ -37,6 +44,56 @@ const build = (slides) => {
   document.body.append(el);
   return el;
 };
+
+afterEach(async () => {
+  document.body.innerHTML = '';
+  await loadArea({ area: document.createElement('div') });
+  document.head.querySelectorAll('script[src^="https://cdn.jsdelivr.net/npm/gsap@"]').forEach((script) => script.remove());
+  window.gsap = undefined;
+  window.ScrollTrigger = undefined;
+  sinon.restore();
+});
+
+describe('quote-interactive hover signal teardown', () => {
+  it('aborting while GSAP is still loading removes the hover card and pointer listener', async () => {
+    sinon.stub(navigator, 'hardwareConcurrency').value(8);
+    const controller = new AbortController();
+    const el = build([['Sports', 'Great tool', 'Alex'], ['Film', 'Loved it', 'Sam']]);
+    decorate(el, { signal: controller.signal });
+    await Promise.resolve();
+
+    const tabsEl = el.querySelector('.qi-tabs');
+    expect(document.querySelector('.qi-hover')).to.exist;
+
+    controller.abort();
+    expect(document.querySelector('.qi-hover')).to.not.exist;
+    const raf = sinon.spy(window, 'requestAnimationFrame');
+    tabsEl.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+    expect(raf.called).to.be.false;
+
+    const to = sinon.spy();
+    const fromTo = sinon.spy();
+    const timeline = {};
+    timeline.fromTo = () => timeline;
+    window.gsap = {
+      registerPlugin: () => {},
+      killTweensOf: () => {},
+      to,
+      fromTo,
+      timeline: () => timeline,
+    };
+    scriptFor(GSAP_URL)?.dispatchEvent(new Event('load'));
+    await flush();
+    window.ScrollTrigger = {};
+    scriptFor(SCROLL_TRIGGER_URL)?.dispatchEvent(new Event('load'));
+    await flush();
+
+    el.querySelector('.qi-tab').dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    expect(document.querySelector('.qi-hover')).to.not.exist;
+    expect(to.called).to.be.false;
+    expect(fromTo.called).to.be.false;
+  });
+});
 
 describe('quote-interactive', () => {
   it('builds one tab and one panel per slide row', () => {
@@ -162,6 +219,29 @@ describe('quote-interactive modal — cross-instance isolation', () => {
 
     modal.querySelector('.qi-modal-close').click();
   });
+
+  it('aborting one instance clears modal state so another instance can open its own modal', () => {
+    sinon.stub(navigator, 'hardwareConcurrency').value(1);
+    const a = new AbortController();
+    const b = new AbortController();
+    const elA = build([['Sports', 'Great tool from A', 'Alex'], ['Film', 'Loved it from A', 'Sam']]);
+    decorate(elA, { signal: a.signal });
+    elA.querySelector('.qi-tab').click();
+    expect(document.querySelector('.qi-modal').textContent).to.contain('Great tool from A');
+
+    a.abort();
+    expect(document.querySelector('.qi-modal')).to.not.exist;
+    expect(document.body.style.overflow).to.equal('');
+
+    const elB = build([['Design', 'Nice tool from B', 'Kim'], ['Ops', 'Handy from B', 'Lee']]);
+    decorate(elB, { signal: b.signal });
+    elB.querySelector('.qi-tab').click();
+
+    const modal = document.querySelector('.qi-modal');
+    expect(modal).to.exist;
+    expect(modal.textContent).to.contain('Nice tool from B');
+    expect(modal.textContent).to.not.contain('Great tool from A');
+  });
 });
 
 describe('quote-interactive re-decoration idempotency', () => {
@@ -178,28 +258,42 @@ describe('quote-interactive re-decoration idempotency', () => {
     ).to.not.exist;
   });
 
-  // The hover card is a document.body singleton — quote-hover.js tears down the
-  // prior card before mounting a new one, so exactly one may ever exist. Asserted
-  // as an absolute count (not a delta) precisely because that teardown is global:
-  // each decorate() collapses the body to a single card regardless of history.
-  it('double-decorate does not leave a second floating hover card in document.body', () => {
+  it('double-decorate does not leave a second floating hover card for the same block', () => {
     const el = build([['Sports', 'Great tool', 'Alex'], ['Film', 'Loved it', 'Sam']]);
     decorate(el);
     decorate(el);
     expect(document.querySelectorAll('.qi-hover')).to.have.length(1);
   });
 
-  // The guarded same-el path above can't catch the real DA Quick Edit case:
-  // Quick Edit swaps document.body's innerHTML, so re-decoration runs on a
-  // FRESH el that passes guardDecorate. The body-appended hover card lives
-  // outside the block subtree, so without the module-scope abort-before-recreate
-  // teardown in quote-hover.js, each fresh decoration would leak another card.
-  it('decorating a fresh element tears down the prior element\'s body hover card', () => {
-    decorate(build([['Sports', 'Great tool', 'Alex'], ['Film', 'Loved it', 'Sam']]));
-    decorate(build([['Sports', 'Great tool', 'Alex'], ['Film', 'Loved it', 'Sam']]));
+  it('two block instances keep independent hover cards until their own signal aborts', () => {
+    sinon.stub(navigator, 'hardwareConcurrency').value(8);
+    const a = new AbortController();
+    const b = new AbortController();
+    decorate(build([['Sports', 'Great tool', 'Alex'], ['Film', 'Loved it', 'Sam']]), { signal: a.signal });
+    decorate(build([['Design', 'Nice tool', 'Kim'], ['Ops', 'Handy', 'Lee']]), { signal: b.signal });
+    expect(document.querySelectorAll('.qi-hover')).to.have.length(2);
+
+    a.abort();
     expect(
       document.querySelectorAll('.qi-hover'),
-      'the prior element\'s hover card must be removed when a fresh element is decorated',
+      'aborting one instance must not tear down the other instance',
     ).to.have.length(1);
+    b.abort();
+    expect(document.querySelectorAll('.qi-hover')).to.have.length(0);
+  });
+
+  it('loadArea sweep aborts a detached block signal and removes its hover card', async () => {
+    sinon.stub(navigator, 'hardwareConcurrency').value(8);
+    setConfig({
+      components: ['quote-interactive'], hostnames: [], linkBlocks: [], log: () => {},
+    });
+    document.body.innerHTML = `<main><div>${build([['Sports', 'Great tool', 'Alex'], ['Film', 'Loved it', 'Sam']]).outerHTML}</div></main>`;
+    await loadArea();
+    expect(document.querySelectorAll('.qi-hover')).to.have.length(1);
+
+    document.querySelector('.quote-interactive').closest('.section').remove();
+    expect(document.querySelectorAll('.qi-hover')).to.have.length(1);
+    await loadArea({ area: document.createElement('div') });
+    expect(document.querySelectorAll('.qi-hover')).to.have.length(0);
   });
 });

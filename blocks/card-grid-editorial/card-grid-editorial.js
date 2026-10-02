@@ -50,12 +50,12 @@ const buildCard = (row, idx) => {
   return link;
 };
 
-export default async (el) => {
-  if (!guardDecorate(el, 'cge')) return;
+export default async (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'cge')) return;
 
   const cards = [...el.children].map(buildCard).filter(Boolean);
   el.replaceChildren(...cards);
-  onReveal(el, () => el.classList.add('cge-in'));
+  onReveal(el, () => el.classList.add('cge-in'), { signal });
   if (cards.length <= DEFAULT_VISIBLE) return;
 
   cards.slice(DEFAULT_VISIBLE).forEach((card) => card.classList.add('cge-hidden'));

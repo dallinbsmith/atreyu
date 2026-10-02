@@ -55,14 +55,10 @@ const buildLockup = (textCells) => {
   return lockup;
 };
 
-export default (el) => {
-  // Idempotent under DA Quick-Edit re-decoration. trackScrollProgress returns a
-  // disposer we intentionally drop. Its IntersectionObserver stays connected for
-  // `el`'s lifetime -- going off-screen only removes `el` from the util's shared
-  // active Set (halting scroll work), it does NOT disconnect the IO. We accept
-  // that because `el` lives for the whole page (no client-side routing to unmount
-  // it), the same trade-off as hero-cards-transition.js.
-  if (!guardDecorate(el, 'imageCloud')) return;
+export default (el, { signal } = {}) => {
+  // Idempotent under DA Quick-Edit re-decoration; the block signal now owns
+  // the shared scroll observer teardown.
+  if (signal?.aborted || !guardDecorate(el, 'imageCloud')) return;
   const cells = getCells(el);
   // Every authored <picture> is one floating image (a single cell may hold more
   // than one -- none silently vanish), then capped at the nine designed anchor
@@ -85,5 +81,5 @@ export default (el) => {
   // Motion is a pure enhancement over the static cloud already on the page.
   if (!images.length || !shouldAnimate()) return;
   el.classList.add('is-scrubbing');
-  trackScrollProgress(el);
+  trackScrollProgress(el, undefined, { signal });
 };

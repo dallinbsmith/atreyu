@@ -50,16 +50,10 @@ const buildChiclet = (row, i) => {
   return item;
 };
 
-export default (el) => {
-  // Idempotent under DA Quick-Edit re-decoration. Below, trackScrollProgress's
-  // disposer is intentionally discarded: its IntersectionObserver lives in the
-  // scroll.js module (not this element's subtree) and does NOT self-disconnect
-  // when off screen. In prod el is page-lifetime so this never leaks; a DA
-  // Quick-Edit *node swap* would leak the old observer + detached node (bounded,
-  // author-only) -- the accepted page-lifetime trade-off shared with pothole.js
-  // / speedbump.js. If it ever matters, hold the disposer in a module-scope
-  // handle and abort before recreate (see lifecycle.js).
-  if (!guardDecorate(el, 'chicletConstellation')) return;
+export default (el, { signal } = {}) => {
+  // Idempotent under DA Quick-Edit re-decoration; the block signal now owns
+  // the shared scroll observer teardown.
+  if (signal?.aborted || !guardDecorate(el, 'chicletConstellation')) return;
   const items = [...el.children].map(buildChiclet).filter(Boolean);
   // Replace the raw authored rows even when nothing survives, so a malformed
   // constellation never leaves unstyled <div>s behind (see logo-wall.js).
@@ -69,5 +63,5 @@ export default (el) => {
   // Sets --progress (0..1) on el as the section scrolls; CSS drifts/fades each
   // chiclet off it. Progress stops when scrolling stops, so no WCAG 2.2.2 pause
   // control is required (contrast the looping logo-tile-wall marquee).
-  trackScrollProgress(el);
+  trackScrollProgress(el, undefined, { signal });
 };

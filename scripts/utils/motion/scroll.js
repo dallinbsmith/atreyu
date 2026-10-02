@@ -35,6 +35,17 @@ const update = () => {
 
 const schedule = () => { raf ||= requestAnimationFrame(update); };
 
+const removeListeners = () => {
+  if (!listening || active.size) return;
+  listening = false;
+  window.removeEventListener('scroll', schedule);
+  window.removeEventListener('resize', schedule);
+  if (raf) {
+    cancelAnimationFrame(raf);
+    raf = 0;
+  }
+};
+
 const ensureListeners = () => {
   if (listening) return;
   listening = true;
@@ -45,10 +56,12 @@ const ensureListeners = () => {
 // Track `el`: maintains `--progress` (0..1) on it while it is near the viewport, and
 // optionally calls `cb(progress)` for JS-side work (e.g. scrubbing video.currentTime).
 // Returns a cleanup function. Under reduced motion it is a no-op.
-export const trackScrollProgress = (el, cb) => {
-  if (!shouldAnimate()) return () => {};
+export const trackScrollProgress = (el, cb, { signal } = {}) => {
+  if (signal?.aborted || !shouldAnimate()) return () => {};
   const entry = { el, cb };
+  let cleaned = false;
   const io = new IntersectionObserver((entries) => {
+    if (cleaned || signal?.aborted) return;
     entries.forEach((e) => {
       if (e.isIntersecting) {
         active.add(entry);
@@ -56,12 +69,19 @@ export const trackScrollProgress = (el, cb) => {
         schedule();
       } else {
         active.delete(entry);
+        removeListeners();
       }
     });
   }, { rootMargin: '100% 0px' });
   io.observe(el);
-  return () => {
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    signal?.removeEventListener('abort', cleanup);
     io.disconnect();
     active.delete(entry);
+    removeListeners();
   };
+  signal?.addEventListener('abort', cleanup, { once: true });
+  return cleanup;
 };

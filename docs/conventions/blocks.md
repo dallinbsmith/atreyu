@@ -6,6 +6,7 @@ Applies to `blocks/**`. JavaScript language rules are in [javascript.md](javascr
 
 - The default export is `(el) => {}` or `async (el) => {}`. `el` is the block's root `div`; its children are the rows of the authored table, and their children are the cells.
 - A block that holds listeners, observers or timers outside its own subtree, or appends nodes to `document.body`, takes `(el, { signal } = {})`. Always keep the `= {}` default: tests call `default(el)` with no second argument. Full rules and failure modes: [javascript.md → Block lifecycle](javascript.md#block-lifecycle).
+- Pass that `signal` through to shared teardown-aware utilities such as `trackScrollProgress(el, cb, { signal })`, `onReveal(el, cb, { signal })`, `wireVideoModalLinks(el, { signal })` or modal open helpers instead of hand-rolling per-block abort listeners.
 - `ak.js` calls the export as `mod.default(el, { signal })`. It loads the block's JS and `blocks/{name}/{name}.css` in parallel (`Promise.all` in `loadExperience`), so don't assume the CSS is applied when your code runs.
 - Decorate the DOM in place. No virtual DOM, reactivity or state library.
 - Handle missing content: authors leave cells empty and add extra rows.

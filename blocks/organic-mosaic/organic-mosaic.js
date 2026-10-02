@@ -28,8 +28,8 @@ const buildTile = (pic) => {
   return tile;
 };
 
-export default (el) => {
-  if (!guardDecorate(el, 'organicMosaic')) return;
+export default (el, { signal } = {}) => {
+  if (signal?.aborted || !guardDecorate(el, 'organicMosaic')) return;
   // Every authored <picture> is one tile (a cell may hold more than one -- none
   // silently vanish). Document order is preserved so the round-robin below is
   // deterministic and the layout is stable across re-renders.
@@ -50,9 +50,7 @@ export default (el) => {
   // (Trade-off: a mobile->desktop resize without reload gets no parallax --
   // negligible, and consistent with this block's static-first posture.)
   if (!shouldAnimate() || !window.matchMedia(MQ_MD).matches) return;
-  // Cleanup discarded: no client routing, so `el` lives for the page lifetime.
-  // Same convention as hero-cards-transition.js / image-sequence.js -- going
-  // off-screen only halts scroll work, it does not disconnect the IO.
+  // The block signal disconnects the shared scroll observer on re-decoration.
   el.classList.add('is-scrubbing');
-  trackScrollProgress(el);
+  trackScrollProgress(el, undefined, { signal });
 };

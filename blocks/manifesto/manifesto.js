@@ -9,11 +9,11 @@ import { guardDecorate } from '../../scripts/utils/lifecycle.js';
 import { shouldAnimate } from '../../scripts/utils/motion/motion.js';
 import { trackScrollProgress } from '../../scripts/utils/motion/scroll.js';
 
-export default (el) => {
+export default (el, { signal } = {}) => {
   // Idempotent under DA Quick-Edit re-decoration — a second pass would
   // otherwise re-find the cells and re-wire a second click listener onto the
   // still-present Wistia link.
-  if (!guardDecorate(el, 'manifesto')) return;
+  if (signal?.aborted || !guardDecorate(el, 'manifesto')) return;
 
   // Classified by shape, not position: the pure-media cell (a picture/img
   // carrying no text) is the manifesto image; every remaining cell holds the
@@ -42,7 +42,7 @@ export default (el) => {
     // Wire an authored Wistia link (if any) to open the shared accessible video
     // modal instead of navigating. No Wistia link => no-op, so a block authored
     // with just image + statement renders cleanly with no dead CTA.
-    wireVideoModalLinks(content);
+    wireVideoModalLinks(content, { signal });
   }
 
   el.replaceChildren(...[media, content].filter(Boolean));
@@ -51,9 +51,7 @@ export default (el) => {
   el.classList.add('is-animating');
   // Sets --progress (0..1) on el as the section scrolls; CSS fades/drifts the
   // media off it. Progress halts the moment scrolling stops (no continuous
-  // motion), so no WCAG 2.2.2 pause control is required. The disposer is
-  // intentionally discarded — same page-lifetime trade-off documented in
-  // chiclet-constellation.js / pothole.js (scroll.js owns the observer; a DA
-  // node swap leaks a bounded, author-only observer, never a prod concern).
-  trackScrollProgress(el);
+  // motion), so no WCAG 2.2.2 pause control is required. The block signal
+  // disconnects the shared scroll observer during re-decoration sweeps.
+  trackScrollProgress(el, undefined, { signal });
 };
