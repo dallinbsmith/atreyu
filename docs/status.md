@@ -22,15 +22,15 @@ Nothing on frame.io is served by EDS yet.
 - Author-kit page engine with every local change recorded in `scripts/AK-PATCHES.md`, enforced by CI.
 - 53 blocks with a signed-off naming catalog ([block catalog](authoring/block-catalog.md)).
 - Lint (ESLint, Stylelint, custom config-drift, z-index and CSS-layer checks), browser unit tests, Worker tests, all required on every PR.
-- Block teardown signal (`{ signal }`) in `ak.js`, `guardDecorate` for re-entrancy.
+- Block teardown signal (`{ signal }`) in `ak.js`, `guardDecorate` for re-entrancy. Body-level modals, shared scroll/reveal observers and shared media-query listeners clean up on the signal.
+- Experimentation code loads only on pages with an experiment or personalization signal (about 15 KB gz less eager JS on plain pages).
+- Deterministic scroll-timing tests (no real animation-frame waits).
+- Comment convention enforced by lint (`tools/check-comments.mjs`): no dates, bug narratives or internal IDs in code comments.
 - Translatable UI strings via namespaced placeholder sheets.
 - Single shared utilities layer (`scripts/utils/`) with lint-enforced import direction.
 
 **In progress / planned**
-- Migrate the remaining blocks that hold global listeners or timers to the teardown signal.
-- Load experimentation code only on pages that have tests.
 - Move remaining project-specific hooks out of `ak.js` into `scripts.js`.
-- Fix flaky scroll-timing tests.
 - Reduce the header's CSS size.
 
 ## Locale

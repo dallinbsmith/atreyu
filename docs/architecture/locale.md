@@ -32,7 +32,7 @@ Each locale is a top-level folder mirroring the English tree: `/ja-jp/blog/…`,
 
 ## Fragment fallback
 
-Header, footer, the header language menu, the `fragment` block and the `schedule` block load fragments through `loadFragmentWithFallback(path)` in `scripts/utils/fragment.js`. It tries each path from `localeCandidates(path)` in order and returns the first that loads.
+Header, footer, the header language menu, the `fragment` block and the `schedule` block load fragments through `loadFragmentWithFallback(path)` in `scripts/utils/fragment.js`. It tries each path from `localeCandidates(path)` in order and returns the first that loads. The `schedule` block keeps only the pathname of a fragment URL, so an absolute URL to another host loads that path from the current site.
 
 | Page locale | Requested path | Candidates tried |
 |---|---|---|

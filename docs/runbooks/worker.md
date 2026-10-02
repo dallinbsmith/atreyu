@@ -66,6 +66,7 @@ Prerequisites: Cloudflare access to the account that owns the Worker (`npx wrang
    npm run deploy:production    # wrangler deploy --env production, only after staging is checked
    ```
 
+   If the upload fails with `Invalid routing manifest`, `routing-manifest.js` failed validation at module load; the listed errors name the bad entries. The previous version keeps serving. `cd workers/website && npm test` reproduces it locally.
 4. Smoke-check the deployed URL with the table in step 4 above.
 
 ### Rules
