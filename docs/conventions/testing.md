@@ -41,6 +41,6 @@ WTR_PORT=2002 npm test
 
 `npm install` runs the `prepare` script, which points `core.hooksPath` at `.githooks/`. The `pre-commit` hook runs ESLint on staged `.js` files only. CSS is not checked there; CI checks it. Bypass in an emergency with `git commit --no-verify`; CI still runs the full suite.
 
-## Lighthouse
+## Performance check
 
-`.github/workflows/lighthouse-ci.yml` runs Lighthouse CI on PRs that touch `blocks/`, `scripts/`, `styles/`, `head.html` or `workers/`, against the branch preview (`https://{branch}--{site}--{org}.aem.page`). It needs the repository secrets `LHCI_AEM_ORG` and `LHCI_AEM_SITE`. It is not a required check. `npm run lighthouse` runs it locally with `lighthouserc.json`.
+AEM Code Sync runs its built-in PSI check on pull requests when the PR description includes a Test URL for the branch preview (`https://{branch}--atreyu--dallinbsmith.aem.page/{path}`). Add the URL when a PR changes visible pages so Code Sync has a page to measure. The repository does not run a separate Lighthouse workflow or keep local configuration for one.

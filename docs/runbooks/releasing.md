@@ -11,7 +11,7 @@ Code, content and the Worker ship independently.
 ## Code release checklist
 
 1. PR approved, "Lint and Test" green, branch up to date with `main` (required by branch protection).
-2. Checked on the branch preview (`{branch}--atreyu--dallinbsmith.aem.page`).
+2. Checked on the branch preview (`{branch}--atreyu--dallinbsmith.aem.page`), and a Test URL is present in the PR description when visible pages changed so AEM Code Sync can run its built-in PSI check.
 3. If the change alters a block's authored shape, existing DA pages and the Library example are updated in the same release window. A block that expects new rows breaks pages still using the old shape.
 4. If the change needs new placeholders (UI strings), the `system/placeholders/<namespace>` sheet rows are published before or with the merge. Code falls back to its English default if a key is missing.
 5. Merge. Spot-check the affected pages on `main--atreyu--dallinbsmith.aem.live`.
