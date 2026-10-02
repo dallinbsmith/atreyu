@@ -10,12 +10,13 @@ const setSearch = (search = '') => {
 describe('authoring import gates', () => {
   let daPreview;
   let quickEdit;
+  let generateSidekickPayload;
   let loadAuthoringPreviews;
 
   before(async () => {
     setSearch();
     ({ default: daPreview } = await import('../../scripts/da/da.js'));
-    ({ default: quickEdit } = await import('../../scripts/quick-edit/quick-edit.js'));
+    ({ default: quickEdit, generateSidekickPayload } = await import('../../scripts/quick-edit/quick-edit.js'));
     ({ loadAuthoringPreviews } = await import('../../scripts/scripts.js'));
   });
 
@@ -99,6 +100,20 @@ describe('authoring import gates', () => {
     expect(calls).to.deep.equal(['https://da.live/nx/public/plugins/quick-edit/quick-edit.js']);
     expect(Boolean(document.head.querySelector('script[type="importmap"]'))).to.equal(true);
     expect(loaded).to.equal(true);
+  });
+
+  it('uses the proxy URL for loopback Quick Edit sidekick payloads', () => {
+    const doc = document.implementation.createHTMLDocument('');
+    const meta = doc.createElement('meta');
+    meta.setAttribute('property', 'hlx:proxyUrl');
+    meta.content = 'main--atreyu--dallinbsmith.aem.page';
+    doc.head.append(meta);
+
+    for (const host of ['localhost:3000', '127.0.0.1:3000', '[::1]:3000']) {
+      const payload = generateSidekickPayload({ host, pathname: '/blog' }, doc);
+      expect(payload.detail.config.mountpoint).to.equal('https://content.da.live/dallinbsmith/atreyu/');
+      expect(payload.detail.location.pathname).to.equal('/blog');
+    }
   });
 
   it('does not import authoring modules from scripts.js on production hosts', () => {

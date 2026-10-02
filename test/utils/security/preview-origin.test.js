@@ -26,10 +26,13 @@ describe('preview-origin security gates', () => {
     meta.name = 'deploy-tier';
     meta.content = 'dev';
     document.head.append(meta);
-    expect(classifyEnv('main--atreyu--dallinbsmith.aem.live')).to.equal('stage');
-    expect(classifyEnv('feature--atreyu--dallinbsmith.aem.page')).to.equal('stage');
-    expect(classifyEnv('stage.frame.io')).to.equal('prod');
-    meta.remove();
+    try {
+      expect(classifyEnv('main--atreyu--dallinbsmith.aem.live')).to.equal('stage');
+      expect(classifyEnv('feature--atreyu--dallinbsmith.aem.page')).to.equal('stage');
+      expect(classifyEnv('stage.frame.io')).to.equal('prod');
+    } finally {
+      meta.remove();
+    }
   });
 
   it('classifies loopback as dev', () => {

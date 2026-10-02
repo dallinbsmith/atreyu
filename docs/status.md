@@ -21,7 +21,7 @@ Nothing on frame.io is served by EDS yet.
 
 **Planned / decided**
 - Environment model decided: one EDS site with dev, stage and prod ([ADR 0019](decisions/0019-environments.md), [architecture](architecture/environments.md)).
-- Worker tier metadata and staging noindex are planned.
+- Worker-set tier attributes and staging noindex are planned.
 - Moving the repository to the company GitHub org is planned.
 
 ## Foundation

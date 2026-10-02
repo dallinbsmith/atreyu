@@ -1,6 +1,6 @@
 # 0019. Environment model: one EDS site, three tiers
 
-**Status:** Accepted. Partly implemented. Worker tier injection is planned, not yet implemented. `scripts/utils/env.js` EDS and localhost classification is being implemented in a parallel PR; reading Worker tier metadata must land with the Worker change that strips authored copies and injects its own.
+**Status:** Accepted. Partly implemented. Worker tier injection is planned, not yet implemented. Reading a Worker-set tier signal must land with the Worker change that writes an attribute authors cannot create.
 
 ## Decision
 
@@ -8,7 +8,7 @@ Use one EDS site and three tiers.
 
 | Tier | Meaning |
 |---|---|
-| `dev` | Localhost and branch previews. A branch is served at `https://{branch}--atreyu--<owner>.aem.page/` with preview content. |
+| `dev` | Loopback and branch previews. A branch is served at `https://{branch}--atreyu--<owner>.aem.page/` with preview content. |
 | `stage` | A staging Worker in front of `main` code and published content from the live partition. |
 | `prod` | The production Worker on `frame.io`, using `main` code and published content. |
 
@@ -16,18 +16,18 @@ There is no `qa` tier, no long-lived `staging` branch, and no separate EDS site 
 
 Merge to `main` is live on `main--atreyu--<owner>.aem.live` within minutes. The pre-production gate for code is the PR: review, CI, and evidence on the branch preview. Staging rehearses Worker releases, routing cells, consent and analytics, and published content. Staging does not rehearse unreleased code. Staging cannot show unpublished content through the Worker.
 
-The Worker will declare the tier with a required `DEPLOY_TIER` variable in every Wrangler environment. In one change, the Worker will strip any authored `<meta name="deploy-tier">`, inject exactly one Worker-owned tag, and the client will start reading it:
+The Worker will declare the tier with a required `DEPLOY_TIER` variable in every Wrangler environment. In one change, the Worker will set an attribute on `<html>` that authors cannot create, and the client will start reading it:
 
 ```html
-<meta name="deploy-tier" content="dev|stage|prod">
+<html data-deploy-tier="dev|stage|prod">
 ```
 
 `scripts/utils/env.js` keeps the existing `dev`, `stage`, `prod` API and classifies hosts in this order:
 
-1. `localhost` is `dev`.
+1. Loopback is `dev`.
 2. Adobe EDS hosts matching `*--*--*.aem.page` or `*--*--*.aem.live` are `stage`, and any meta tag is ignored.
-3. Other hosts use a valid Worker meta value after the Worker stripping and injection change lands.
-4. Missing or invalid tier metadata is `prod`. Until that change lands, any non-EDS, non-localhost host is `prod`.
+3. Other hosts use a valid Worker-set attribute after the Worker and client change lands.
+4. Missing or invalid tier signals are `prod`. Until that change lands, any non-EDS, non-loopback host is `prod`.
 
 This fails closed. An unknown host does not get non-production tools.
 
@@ -35,7 +35,7 @@ Non-tier questions stay separate:
 
 - Segment loads only when there is a real write key for the current destination.
 - Authoring preview tools use `isAuthoringPreviewAllowed`.
-- `?experiment=` and `?audience=` stay available on every host, but forced variants are not recorded as exposures.
+- `?experiment=` and `?audience=` stay available on every host. Forced variants send no Segment exposure, but RUM checkpoints from the vendored plugin still fire.
 - Staging hosts must be `noindex`. This is a planned Worker change.
 
 ## Consequences

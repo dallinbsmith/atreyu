@@ -66,7 +66,7 @@ Place the table inside the section it changes. Build it with the experiments pan
 | Row | Rule |
 |---|---|
 | `Audience: <id>` | 1 to 3 rows. Each links to a page under `/v/`. Unknown audiences and duplicates are dropped |
-| `Status` | `active` (default) or `inactive`. Inactive only shows in non-production `?audience=` previews |
+| `Status` | `active` (default) or `inactive`. Inactive only shows in `?audience=` previews, which work on every host |
 | `End Date` | Required. `YYYY-MM-DD`, at most 180 days ahead, runs through the end of that day. Missing, invalid or past drops the whole table |
 | `Name`, `Owner` | Labels shown in the panel |
 
