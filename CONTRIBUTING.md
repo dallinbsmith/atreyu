@@ -20,7 +20,7 @@ Commit messages: imperative summary line (`Fix carousel focus trap`), body expla
 Branch protection on `main` requires the **Lint and Test** check (`.github/workflows/ci.yml`) to pass, the branch to be up to date with `main`, and every review conversation to be resolved. It applies to admins too.
 
 - When a PR touches no code paths (for example docs only), the job skips its steps and still reports success.
-- Lighthouse CI runs on PRs that touch blocks, scripts, styles, `head.html` or the Worker. It isn't required, but look at regressions.
+- For visible changes, include a branch-preview Test URL in the PR description (`https://{branch}--atreyu--dallinbsmith.aem.page/{path}`) so AEM Code Sync can run its built-in PSI check. The repository no longer runs a separate performance workflow.
 - After the full suite (which runs in UTC), CI always runs the date-sensitive suites again with `TZ=America/Los_Angeles` ([conventions/testing.md](docs/conventions/testing.md)). A failure in either run fails the job; it is not a retry.
 
 ## Review
