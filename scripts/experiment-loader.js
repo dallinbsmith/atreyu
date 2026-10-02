@@ -13,7 +13,7 @@
 //      that did not run (inactive, expired, audience/consent not met) as
 //      "control", which would pollute the control arm — so read config.run.
 import ENV from './utils/env.js';
-import { getConfig, loadArea, toClassName } from './ak.js';
+import { getConfig, loadArea } from './ak.js';
 import { hasConsent } from './utils/analytics/consent.js';
 import { track, EVENTS } from './utils/analytics/analytics.js';
 import { getVisitorId } from './utils/analytics/visitor-id.js';
@@ -22,15 +22,23 @@ import { applyExperimentBlock } from './utils/experiments/block.js';
 import { applyPersonalizeTables, planAudiences } from './utils/experiments/personalize.js';
 import {
   carryOverSectionMeta,
-  isPluginKey,
-  removeLeftoverConfigBlocks,
   stripPluginSectionMeta,
   withVariantTimeout,
 } from './utils/experiments/guard.js';
+import {
+  catchImportError,
+  hasCompiledExperimentSignal,
+  hasPreviewSignal as isPreview,
+  removeLeftoverConfigBlocks,
+} from './utils/experiments/signals.js';
 
 const ASSIGNMENTS_KEY = 'unified-decisioning-experiments';
 const PLUGIN_CONSENT_KEY = 'experimentation-consented';
-const PREVIEW_PARAMS = ['experiment', 'audience'];
+
+const importPlugin = () => (
+  // eslint-disable-next-line import/no-relative-packages -- no bundler for bare specifiers
+  import('../plugins/experimentation/src/index.js')
+);
 
 export const config = {
   prodHost: 'frame.io',
@@ -41,11 +49,7 @@ export const config = {
   decorateFunction: (el) => loadArea({ area: el }),
 };
 
-export const isEnabled = () => !!(
-  document.head.querySelector('[name^="experiment"],[name^="campaign-"],[name^="audience-"],[property^="campaign:"],[property^="audience:"]')
-  || [...document.querySelectorAll('.section-metadata > div')]
-    .some((row) => isPluginKey(toClassName(row.children[0]?.textContent)))
-);
+export const isEnabled = (doc = document) => hasCompiledExperimentSignal(doc);
 
 const copyKey = (from, to) => {
   try {
@@ -72,11 +76,6 @@ export const persistAssignments = () => {
     return;
   }
   clearAssignments();
-};
-
-const isPreview = () => {
-  const params = new URLSearchParams(window.location.search);
-  return PREVIEW_PARAMS.some((p) => params.has(p));
 };
 
 export const trackExposures = (experiments = []) => {
@@ -110,20 +109,23 @@ const compilePersonalizeTables = (doc) => {
   }
 };
 
-export const runExperimentation = async (doc = document) => {
+export const runExperimentation = async (doc = document, { pluginPromise = null } = {}) => {
   // Always, even without consent: config tables must never render.
   applyExperimentBlock(doc);
   stripPluginSectionMeta(doc.querySelector('main'));
   const plan = compilePersonalizeTables(doc);
   removeLeftoverConfigBlocks(doc.querySelector('main'));
-  if (!isEnabled()) return null;
+  if (!isEnabled(doc)) {
+    catchImportError(pluginPromise, getConfig().log);
+    return null;
+  }
   if (!hasConsent('personalization') && !isPreview()) {
     clearAssignments();
+    catchImportError(pluginPromise, getConfig().log);
     return null;
   }
   try {
-    // eslint-disable-next-line import/no-relative-packages -- no bundler for bare specifiers
-    const plugin = await import('../plugins/experimentation/src/index.js');
+    const plugin = await (pluginPromise ?? importPlugin());
     plugin.updateUserConsent(hasConsent('personalization'));
     restoreAssignments();
     // Plugin publishes results on `window.aem || window.hlx || {}`; without a
@@ -152,8 +154,7 @@ export const runExperimentation = async (doc = document) => {
 export const runExperimentationLazy = async (doc = document) => {
   if (ENV === 'prod') return;
   try {
-    // eslint-disable-next-line import/no-relative-packages -- no bundler for bare specifiers
-    const { loadLazy } = await import('../plugins/experimentation/src/index.js');
+    const { loadLazy } = await importPlugin();
     await loadLazy(doc, config);
   } catch (ex) {
     await getConfig().log(ex);

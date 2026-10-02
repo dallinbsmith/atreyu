@@ -3,6 +3,9 @@
 // getExperimentConfig, v2.0.0) so the authoring panel shows what the plugin
 // will actually do, including its silent split padding/truncation.
 import locales from '../../locales.js';
+import { toClassName } from './class-name.js';
+
+export { toClassName };
 
 export const ACTIVE = ['active', 'on', 'true'];
 const KNOWN_STATUS = [...ACTIVE, 'inactive', 'off', 'false'];
@@ -25,12 +28,6 @@ export const isVariantPath = (path, root = VARIANT_ROOT) => {
   const localized = path.slice(prefix?.length ?? 0) || '/';
   return localized === root.slice(0, -1) || localized.startsWith(root);
 };
-
-// Copy of ak.js's: the panel must not load ak.js (tools/config-sync/panel-no-ak.test.js).
-// Parity with ak.js: test/utils/experiments/to-class-name-parity.test.js.
-export const toClassName = (name) => (typeof name === 'string'
-  ? name.toLowerCase().replace(/[^0-9a-z]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
-  : '');
 
 export const toList = (value) => {
   if (Array.isArray(value)) return value.map((v) => `${v}`.trim()).filter(Boolean);

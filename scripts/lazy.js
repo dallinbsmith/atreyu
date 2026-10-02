@@ -1,7 +1,6 @@
 import ENV from './utils/env.js';
 
 import { getConfig, loadStyle } from './ak.js';
-import { runExperimentationLazy } from './experiment-loader.js';
 
 const loadSidekick = async () => {
   const getSk = () => document.querySelector('aem-sidekick');
@@ -24,13 +23,13 @@ export default async () => {
   const { log } = getConfig();
   await import('./utils/page/footer.js').then(({ default: footer }) => footer()).catch((ex) => log(ex));
 
-  // adobe/aem-experimentation v2 owns `experiment*` metadata.
-  // This call only loads its preview/simulation panel (never in prod).
-  // Header, footer and nav are not personalized by policy (foundation
-  // hardening A2 = iii). Not enforced: the plugin's `experiment-manifest`
-  // fragment path can still target them and gets only loadArea(), not the
-  // blocks' own decoration.
-  await runExperimentationLazy();
+  if (ENV !== 'prod') {
+    // The overlay is author-only; production pages should not fetch the
+    // experimentation loader after LCP when no authoring UI can use it.
+    await import('./experiment-loader.js')
+      .then(({ runExperimentationLazy }) => runExperimentationLazy())
+      .catch((ex) => log(ex));
+  }
 };
 
 (() => {

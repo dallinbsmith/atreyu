@@ -22,21 +22,24 @@ Author-facing instructions: [authoring/personalization.md](../authoring/personal
 
 ## Runtime sequence
 
-`scripts.js` `loadPage()` awaits `runExperimentation()` after `setConfig()` and before `loadArea()`, so variants are swapped in before any decoration or LCP. In order:
+`scripts.js` `loadPage()` sets config, then runs a synchronous raw-signal probe before importing the loader. Plain pages (no Experiment/Personalize table, plugin metadata or plugin Section Metadata row) skip the entire experimentation graph before `loadArea()`. When the probe is true, `scripts.js` starts the loader import and vendored plugin import in parallel, then awaits `runExperimentation()` before `loadArea()`, so variants still swap before decoration or LCP. Non-consented visitors on signal-bearing pages still download the plugin even if the loader later stops; that keeps enabled pages one network hop deep, and the plugin has no import-time side effects. In order:
 
-1. `applyExperimentBlock`: the page's first Experiment table becomes `experiment*` head metadata (replacing any existing experiment metadata), and every Experiment table is removed.
-2. `stripPluginSectionMeta`: removes hand-written `experiment*`/`audience*`/`campaign*` rows from Section Metadata. Section-level configuration comes only from Personalize tables.
-3. `applyPersonalizeTables`: compiles each section's first Personalize table into `Audience: <id>` → `/v/…` rows (rules below) and removes all Personalize tables.
-4. `removeLeftoverConfigBlocks`.
-5. Stop unless the page has experiment/campaign/audience head metadata or plugin Section Metadata keys (`isEnabled`).
-6. **Consent gate:** stop (and clear stored assignments) unless `hasConsent('personalization')` or the URL has `?experiment=` or `?audience=`.
-7. Import the plugin and run `loadEager` with the audience catalog, inside `withVariantTimeout` (a variant fetch slower than 1000 ms is aborted and the original content stays).
-8. Persist assignments to `localStorage` (`unified-decisioning-experiments`) only with consent.
-9. Track one `EVENTS.EXPERIMENT` event per running test (skipped for previews).
+1. `hasExperimentSignal`: checks raw authoring signals (`Experiment`/`Personalize` tables), plugin head metadata and raw plugin Section Metadata rows.
+2. Stop on plain pages without importing `scripts/experiment-loader.js` or `plugins/experimentation/`.
+3. Start importing `scripts/experiment-loader.js` and the vendored plugin in parallel.
+4. `applyExperimentBlock`: the page's first Experiment table becomes `experiment*` head metadata (replacing any existing experiment metadata), and every Experiment table is removed.
+5. `stripPluginSectionMeta`: removes hand-written `experiment*`/`audience*`/`campaign*` rows from Section Metadata. Section-level configuration comes only from Personalize tables.
+6. `applyPersonalizeTables`: compiles each section's first Personalize table into `Audience: <id>` → `/v/…` rows (rules below) and removes all Personalize tables.
+7. `removeLeftoverConfigBlocks`.
+8. Stop unless the compiled page has experiment/campaign/audience head metadata or plugin Section Metadata keys (`isEnabled`).
+9. **Consent gate:** stop (and clear stored assignments) unless `hasConsent('personalization')` or the URL has `?experiment=` or `?audience=`.
+10. Run plugin `loadEager` with the audience catalog, inside `withVariantTimeout` (a variant fetch slower than 1000 ms is aborted and the original content stays).
+11. Persist assignments to `localStorage` (`unified-decisioning-experiments`) only with consent.
+12. Track one `EVENTS.EXPERIMENT` event per running test (skipped for previews).
 
 Any error is logged and the page renders the control.
 
-`runExperimentationLazy()` (from `lazy.js`) loads the plugin's preview overlay on non-production hosts only.
+`lazy.js` dynamically imports `runExperimentationLazy()` only on non-production hosts. Production pages with no experiment signal do not fetch the loader eagerly or lazily.
 
 ## Audiences
 

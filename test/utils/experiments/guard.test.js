@@ -2,12 +2,14 @@ import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import {
   carryOverSectionMeta,
-  findConfigBlocks,
-  removeConfigBlock,
-  removeLeftoverConfigBlocks,
   stripPluginSectionMeta,
   withVariantTimeout,
 } from '../../../scripts/utils/experiments/guard.js';
+import {
+  findConfigBlocks,
+  removeConfigBlock,
+  removeLeftoverConfigBlocks,
+} from '../../../scripts/utils/experiments/signals.js';
 
 describe('scripts/utils/experiments/guard.js', () => {
   const realFetch = window.fetch;
